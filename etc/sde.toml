@@ -1,0 +1,18 @@
+###
+### [http]
+###
+### Controls how the HTTP endpoints are configured.
+###
+
+[http]
+  # The bind address used by the HTTP service.
+  bind-address = ":18633"
+
+  # Determines whether HTTP authentication is enabled.
+  auth-enabled = false
+
+  # The default realm sent back when issuing a basic auth challenge.
+  realm = "StreamSets"
+
+  # The JWT auth shared secret to validate requests using JSON web tokens.
+  shared-secret = ""

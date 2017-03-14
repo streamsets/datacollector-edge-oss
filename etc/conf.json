@@ -1,0 +1,6 @@
+{
+  "fileToTail": "/Users/madhu/Documents/projects/datacollector/dist/target/streamsets-datacollector-2.5.0.0-SNAPSHOT/streamsets-datacollector-2.5.0.0-SNAPSHOT/log/sdc.log",
+  "sdcHttpUrl": "http://localhost:8000",
+  "appId": "test",
+  "debug": false
+}
