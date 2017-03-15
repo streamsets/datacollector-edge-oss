@@ -7,11 +7,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"encoding/json"
+	"runtime"
 )
 
 type dpmAttributes struct {
 	BaseHttpUrl string `json:"baseHttpUrl"`
 	SdeGoVersion string `json:"sdeGoVersion"`
+	SdeGoOS string `json:"sdeGoOS"`
+	SdeGoArch string `json:"sdeGoArch"`
 	SdeBuildDate string `json:"sdeBuildDate"`
 	SdeRepoSha string `json:"sdeRepoSha"`
 	SdeVersion string `json:"sdeVersion"`
@@ -28,7 +31,9 @@ func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo 
 	if (dpmConfig.Enabled && dpmConfig.AppAuthToken != "") {
 		attributes := dpmAttributes{
 			BaseHttpUrl: runtimeInfo.HttpUrl,
-			SdeGoVersion: "TODO",
+			SdeGoVersion: runtime.Version(),
+			SdeGoOS: runtime.GOOS,
+			SdeGoArch: runtime.GOARCH,
 			SdeBuildDate: buildInfo.BuiltDate,
 			SdeRepoSha: buildInfo.BuiltRepoSha,
 			SdeVersion: buildInfo.Version,
@@ -39,8 +44,6 @@ func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo 
 			ComponentId: runtimeInfo.ID,
 			Attributes: attributes,
 		}
-
-		fmt.Println(registrationData)
 
 		jsonValue, err := json.Marshal(registrationData)
 		if (err != nil) {

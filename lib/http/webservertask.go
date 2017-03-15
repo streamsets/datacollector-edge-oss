@@ -27,7 +27,7 @@ func (webServerTask *WebServerTask) homeHandler(w http.ResponseWriter, r *http.R
 func (webServerTask *WebServerTask) startHandler(w http.ResponseWriter, r *http.Request) {
 	if (r.Method == "POST") {
 		go webServerTask.manager.GetRunner().StartPipeline()
-		fmt.Fprintf(w, "Data Extractor %s!", "started successfully")
+		fmt.Fprint(w, "Data Extractor started successfully")
 	} else {
 		fmt.Fprintf(w, "Method %s! is not supported", r.Method)
 	}
@@ -36,7 +36,16 @@ func (webServerTask *WebServerTask) startHandler(w http.ResponseWriter, r *http.
 func (webServerTask *WebServerTask) stopHandler(w http.ResponseWriter, r *http.Request) {
 	if (r.Method == "POST") {
 		go webServerTask.manager.GetRunner().StopPipeline()
-		fmt.Fprintf(w, "Data Extractor %s!", "stopped successfully")
+		fmt.Fprint(w, "Data Extractor stopped successfully")
+	} else {
+		fmt.Fprintf(w, "Method %s! is not supported", r.Method)
+	}
+}
+
+func (webServerTask *WebServerTask) resetOffsetHandler(w http.ResponseWriter, r *http.Request) {
+	if (r.Method == "POST") {
+		go webServerTask.manager.GetRunner().ResetOffset()
+		fmt.Fprint(w, "Reset Origin is successful.")
 	} else {
 		fmt.Fprintf(w, "Method %s! is not supported", r.Method)
 	}
@@ -47,6 +56,7 @@ func (webServerTask *WebServerTask) Run() {
 	http.HandleFunc("/", webServerTask.homeHandler)
 	http.HandleFunc("/rest/v1/pipeline/start", webServerTask.startHandler)
 	http.HandleFunc("/rest/v1/pipeline/stop", webServerTask.stopHandler)
+	http.HandleFunc("/rest/v1/pipeline/resetOffset", webServerTask.resetOffsetHandler)
 	fmt.Println(http.ListenAndServe(webServerTask.config.BindAddress, nil))
 }
 

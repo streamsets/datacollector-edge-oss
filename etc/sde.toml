@@ -16,10 +16,10 @@
 
 [dpm]
   # DPM Enabled
-  enabled = true
+  enabled = false
 
   # Base URL of the DPM
   base-url = "http://localhost:18631"
 
   # Application Token
-  app-auth-token = "MTUzODFmNjctNWNjNy00MWVmLWEwYmEtMDM2Zjk0MWU4ZTg3:YzIwOWU3MjVjYjkwMzZmN2EzODRkZjA0NzQyNTZmMGNjYTZjOTZmYjA2M2M3ODQ5NTU3MzFjNmI2OTE5NTU2YzNjMDk2MjkzY2E1ODM2ZTlmMWYyODU2OTE5YTY3NjEzMTgyMGNmOWUwOGM0MzQyZjU4ZWYzZjY2OWI3NjFhODg="
+  app-auth-token = ""

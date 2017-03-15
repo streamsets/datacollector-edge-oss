@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/streamsets/dataextractor/lib/dataextractor"
 	"fmt"
+	"github.com/streamsets/dataextractor/lib/dataextractor"
 )
 
 func main() {

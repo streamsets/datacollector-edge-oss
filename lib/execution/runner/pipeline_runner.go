@@ -39,7 +39,10 @@ func (pipelineRunner *PipelineRunner) StopPipeline() {
 }
 
 func (pipelineRunner *PipelineRunner) ResetOffset() {
-
+	err := ResetOffset(pipelineRunner.sourceOffset)
+	if (err != nil) {
+		panic(err)
+	}
 }
 
 func New(logger *log.Logger) (*PipelineRunner, error) {

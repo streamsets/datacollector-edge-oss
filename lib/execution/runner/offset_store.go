@@ -4,7 +4,6 @@ import (
 	"os"
 	"io/ioutil"
 	"encoding/json"
-	"fmt"
 )
 
 const (
@@ -29,15 +28,15 @@ func GetOffset() (*SourceOffset, error) {
 }
 
 func SaveOffset(sourceOffset *SourceOffset) (error) {
-	rankingsJson, err := json.Marshal(sourceOffset)
+	offsetJson, err := json.Marshal(sourceOffset)
 	check(err)
-	fmt.Println(rankingsJson)
-	err1 := ioutil.WriteFile(OFFSET_FILE, rankingsJson, 0644)
+	err1 := ioutil.WriteFile(OFFSET_FILE, offsetJson, 0644)
 	return err1
 }
 
-func ResetOffset()  {
-	SaveOffset(&SourceOffset{Version: 1, Offset: DEFAULT_OFFSET})
+func ResetOffset(sourceOffset *SourceOffset) (error) {
+	sourceOffset.Offset = DEFAULT_OFFSET
+	return SaveOffset(sourceOffset)
 }
 
 func check(e error) {

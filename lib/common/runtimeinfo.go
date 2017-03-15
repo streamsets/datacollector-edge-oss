@@ -1,10 +1,10 @@
 package common
 
 import (
-	"bufio"
 	"log"
 	"github.com/satori/go.uuid"
 	"os"
+	"io/ioutil"
 )
 
 const (
@@ -33,14 +33,11 @@ func (runtimeInfo *RuntimeInfo) getSdeId() string {
 		sdeId = uuid.NewV4().String()
 		f.WriteString(sdeId)
 	} else {
-		file, err := os.Open(SDE_ID_FILE)
+		buf, err := ioutil.ReadFile(SDE_ID_FILE)
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer file.Close()
-
-		scanner := bufio.NewScanner(file)
-		sdeId = scanner.Text()
+		sdeId = string(buf)
 	}
 
 	return sdeId

@@ -39,6 +39,9 @@ dist/bin/$(BINARY_NAME): main.go $(DEPENDENCIES_DIR)
 
 $(EXECUTABLES):
 	$(GO) build $(LDFLAGS) -o $@ $<
+	@cp -n -R $(DIR)/etc/ dist/etc 2>/dev/null || :
+	@mkdir -p dist/logs
+	@mkdir -p dist/data
 
 test:
 	$(TEST) -r -cover
@@ -51,13 +54,9 @@ $(PACKAGE): all
 	@echo Packaging Binaries...
 	@mkdir -p tmp/$(APP_NAME)/bin
 	@cp -R dist/bin/ tmp/$(APP_NAME)/bin
-	@cp -R $(DIR)/etc/ dist/etc
 	@cp -R $(DIR)/etc/ tmp/$(APP_NAME)/etc
-	@mkdir dist/logs
 	@mkdir -p tmp/$(APP_NAME)/logs
-	@mkdir dist/data
 	@mkdir -p tmp/$(APP_NAME)/data
-	@mkdir -p $(DIR)/dist/
 	tar -cf $@ -C tmp $(APP_NAME);
 	@rm -rf tmp
 
