@@ -8,11 +8,18 @@
   # The bind address used by the HTTP service.
   bind-address = ":18633"
 
-  # Determines whether HTTP authentication is enabled.
-  auth-enabled = false
+###
+### [dpm]
+###
+### Dataflow Performance Manager
+###
 
-  # The default realm sent back when issuing a basic auth challenge.
-  realm = "StreamSets"
+[dpm]
+  # DPM Enabled
+  enabled = true
 
-  # The JWT auth shared secret to validate requests using JSON web tokens.
-  shared-secret = ""
+  # Base URL of the DPM
+  base-url = "http://localhost:18631"
+
+  # Application Token
+  app-auth-token = "MTUzODFmNjctNWNjNy00MWVmLWEwYmEtMDM2Zjk0MWU4ZTg3:YzIwOWU3MjVjYjkwMzZmN2EzODRkZjA0NzQyNTZmMGNjYTZjOTZmYjA2M2M3ODQ5NTU3MzFjNmI2OTE5NTU2YzNjMDk2MjkzY2E1ODM2ZTlmMWYyODU2OTE5YTY3NjEzMTgyMGNmOWUwOGM0MzQyZjU4ZWYzZjY2OWI3NjFhODg="

@@ -7,6 +7,7 @@ import (
 	"github.com/streamsets/dataextractor/lib/http"
 	"github.com/streamsets/dataextractor/lib/execution/manager"
 	"github.com/streamsets/dataextractor/lib/common"
+	"github.com/streamsets/dataextractor/lib/dpm"
 )
 
 const (
@@ -41,10 +42,15 @@ func newDataExtractor() (*DataExtractor, error) {
 
 	config := NewConfig()
 	config.FromTomlFile(DefaultConfigFilePath)
+
+	hostName, _ := os.Hostname()
+	var httpUrl = "http://" + hostName + config.Http.BindAddress
+
 	buildInfo, _ := common.NewBuildInfo()
-	runtimeInfo, _ := common.NewRuntimeInfo(logger)
+	runtimeInfo, _ := common.NewRuntimeInfo(logger, httpUrl)
 	pipelineManager, _ := manager.New(logger)
 	webServerTask, _ := http.NewWebServerTask(logger, config.Http, buildInfo, pipelineManager)
+	dpm.RegisterWithDPM(config.DPM, buildInfo, runtimeInfo)
 
 	return &DataExtractor{
 		logger: logger,

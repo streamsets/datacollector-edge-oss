@@ -4,6 +4,7 @@ APP_NAME := streamsets-dataextractor
 VERSION := 0.0.1
 DIR=.
 BuiltDate := `date +%FT%T%z`
+BuiltRepoSha := `git rev-parse HEAD`
 
 # Go setup
 GO=go
@@ -15,8 +16,11 @@ DEPENDENCIES := github.com/hpcloud/tail/... \
 
 # Sources and Targets
 EXECUTABLES :=dist/bin/$(BINARY_NAME)
-# Build Binaries setting main.version and main.build vars
-LDFLAGS :=-ldflags "-X github.com/streamsets/dataextractor/lib/common.Version=${VERSION} -X github.com/streamsets/dataextractor/lib/common.BuiltBy=$$USER -X github.com/streamsets/dataextractor/lib/common.BuiltDate=${BuiltDate}"
+# Build Binaries setting BuildInfo vars
+LDFLAGS :=-ldflags "-X github.com/streamsets/dataextractor/lib/common.Version=${VERSION} \
+    -X github.com/streamsets/dataextractor/lib/common.BuiltBy=$$USER \
+    -X github.com/streamsets/dataextractor/lib/common.BuiltDate=${BuiltDate} \
+    -X github.com/streamsets/dataextractor/lib/common.BuiltRepoSha=${BuiltRepoSha}"
 
 # Package target
 PACKAGE :=$(DIR)/dist/$(APP_NAME)-$(VERSION).tar.gz

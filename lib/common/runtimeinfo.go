@@ -12,17 +12,15 @@ const (
 )
 
 type RuntimeInfo struct {
-	id string
+	ID string
+	HttpUrl string
+	DPMEnabled bool
 	logger *log.Logger
 }
 
 func (runtimeInfo *RuntimeInfo) init() error {
-	runtimeInfo.id = runtimeInfo.getSdeId()
+	runtimeInfo.ID = runtimeInfo.getSdeId()
 	return nil
-}
-
-func (runtimeInfo *RuntimeInfo) getId() string {
-	return runtimeInfo.id
 }
 
 func (runtimeInfo *RuntimeInfo) getSdeId() string {
@@ -54,8 +52,8 @@ func check(e error) {
 	}
 }
 
-func NewRuntimeInfo(logger *log.Logger) (*RuntimeInfo, error) {
-	runtimeInfo := RuntimeInfo{logger: logger}
+func NewRuntimeInfo(logger *log.Logger, httpUrl string) (*RuntimeInfo, error) {
+	runtimeInfo := RuntimeInfo{logger: logger, HttpUrl: httpUrl}
 	err := runtimeInfo.init()
 	if err != nil {
 		return nil, err

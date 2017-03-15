@@ -50,8 +50,12 @@ func (webServerTask *WebServerTask) Run() {
 	fmt.Println(http.ListenAndServe(webServerTask.config.BindAddress, nil))
 }
 
-func NewWebServerTask(logger *log.Logger, config Config, buildInfo *common.BuildInfo,
-manager *manager.PipelineManager) (*WebServerTask, error) {
+func NewWebServerTask(
+	logger *log.Logger,
+	config Config,
+	buildInfo *common.BuildInfo,
+	manager *manager.PipelineManager,
+)(*WebServerTask, error) {
 	webServerTask := WebServerTask{logger: logger, config: config, buildInfo: buildInfo, manager: manager}
 	err := webServerTask.Init()
 	if err != nil {
