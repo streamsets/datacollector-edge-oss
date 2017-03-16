@@ -1,17 +1,16 @@
 package dataextractor
 
 import (
-	"github.com/streamsets/dataextractor/lib/http"
+	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/streamsets/dataextractor/lib/dpm"
-	"fmt"
+	"github.com/streamsets/dataextractor/lib/http"
 )
 
 // Config represents the configuration format for the StreamSets Data Extractor binary.
 type Config struct {
 	Http http.Config
-	DPM dpm.Config
-
+	DPM  dpm.Config
 }
 
 // NewConfig returns a new Config with default settings.

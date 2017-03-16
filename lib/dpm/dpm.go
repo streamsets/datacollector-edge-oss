@@ -1,52 +1,52 @@
 package dpm
 
 import (
-	"github.com/streamsets/dataextractor/lib/common"
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"github.com/streamsets/dataextractor/lib/common"
 	"io/ioutil"
 	"net/http"
-	"encoding/json"
 	"runtime"
 )
 
 type dpmAttributes struct {
-	BaseHttpUrl string `json:"baseHttpUrl"`
+	BaseHttpUrl  string `json:"baseHttpUrl"`
 	SdeGoVersion string `json:"sdeGoVersion"`
-	SdeGoOS string `json:"sdeGoOS"`
-	SdeGoArch string `json:"sdeGoArch"`
+	SdeGoOS      string `json:"sdeGoOS"`
+	SdeGoArch    string `json:"sdeGoArch"`
 	SdeBuildDate string `json:"sdeBuildDate"`
-	SdeRepoSha string `json:"sdeRepoSha"`
-	SdeVersion string `json:"sdeVersion"`
+	SdeRepoSha   string `json:"sdeRepoSha"`
+	SdeVersion   string `json:"sdeVersion"`
 }
 
 type registrationData struct {
-	AuthToken string `json:"authToken"`
-	ComponentId string `json:"componentId"`
-	Attributes dpmAttributes `json:"attributes"`
+	AuthToken   string        `json:"authToken"`
+	ComponentId string        `json:"componentId"`
+	Attributes  dpmAttributes `json:"attributes"`
 }
 
-func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo *common.RuntimeInfo)  {
-	fmt.Println(dpmConfig.Enabled);
-	if (dpmConfig.Enabled && dpmConfig.AppAuthToken != "") {
+func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo *common.RuntimeInfo) {
+	fmt.Println(dpmConfig.Enabled)
+	if dpmConfig.Enabled && dpmConfig.AppAuthToken != "" {
 		attributes := dpmAttributes{
-			BaseHttpUrl: runtimeInfo.HttpUrl,
+			BaseHttpUrl:  runtimeInfo.HttpUrl,
 			SdeGoVersion: runtime.Version(),
-			SdeGoOS: runtime.GOOS,
-			SdeGoArch: runtime.GOARCH,
+			SdeGoOS:      runtime.GOOS,
+			SdeGoArch:    runtime.GOARCH,
 			SdeBuildDate: buildInfo.BuiltDate,
-			SdeRepoSha: buildInfo.BuiltRepoSha,
-			SdeVersion: buildInfo.Version,
+			SdeRepoSha:   buildInfo.BuiltRepoSha,
+			SdeVersion:   buildInfo.Version,
 		}
 
 		registrationData := registrationData{
-			AuthToken: dpmConfig.AppAuthToken,
+			AuthToken:   dpmConfig.AppAuthToken,
 			ComponentId: runtimeInfo.ID,
-			Attributes: attributes,
+			Attributes:  attributes,
 		}
 
 		jsonValue, err := json.Marshal(registrationData)
-		if (err != nil) {
+		if err != nil {
 			fmt.Println(err)
 		}
 
@@ -64,7 +64,7 @@ func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo 
 		defer resp.Body.Close()
 
 		fmt.Println("DPM Registration Status:", resp.Status)
-		if (resp.StatusCode != 200) {
+		if resp.StatusCode != 200 {
 			panic("DPM Registration failed")
 		}
 		body, _ := ioutil.ReadAll(resp.Body)

@@ -5,8 +5,7 @@ const (
 )
 
 type Config struct {
-	BindAddress        string `toml:"bind-address"`
-
+	BindAddress string `toml:"bind-address"`
 }
 
 // NewConfig returns a new Config with default settings.

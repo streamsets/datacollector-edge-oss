@@ -1,6 +1,6 @@
-package runner
+package common
 
 type SourceOffset struct {
 	Version int
-	Offset string
+	Offset  string
 }

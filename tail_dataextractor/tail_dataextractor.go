@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/hpcloud/tail"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"github.com/hpcloud/tail"
 	"strconv"
 )
 
@@ -16,13 +16,13 @@ type Configuration struct {
 	FileToTail string
 	SDCHttpUrl string
 	AppId      string
-	Debug 	   bool
+	Debug      bool
 }
 
 type TailDataExtractor struct {
 	logger *log.Logger
 	config Configuration
-	tail *tail.Tail
+	tail   *tail.Tail
 }
 
 func (tailDataExtractor *TailDataExtractor) init() {
@@ -38,7 +38,7 @@ func (tailDataExtractor *TailDataExtractor) Start(offset string) {
 
 	tailConfig := tail.Config{Follow: true}
 
-	if (offset != "") {
+	if offset != "" {
 		intOffset, _ := strconv.ParseInt(offset, 10, 64)
 		tailConfig.Location = &tail.SeekInfo{Offset: intOffset}
 		fmt.Println("Started Offset: ")
@@ -60,7 +60,7 @@ func (tailDataExtractor *TailDataExtractor) Start(offset string) {
 }
 
 func (tailDataExtractor *TailDataExtractor) sendLineToSDC(line string) {
-	if (tailDataExtractor.config.Debug) {
+	if tailDataExtractor.config.Debug {
 		fmt.Println("Start sending line")
 		fmt.Println(line)
 		fmt.Println("URL:>", tailDataExtractor.config.SDCHttpUrl)
@@ -78,7 +78,7 @@ func (tailDataExtractor *TailDataExtractor) sendLineToSDC(line string) {
 	}
 	defer resp.Body.Close()
 
-	if (tailDataExtractor.config.Debug) {
+	if tailDataExtractor.config.Debug {
 		fmt.Println("response Status:", resp.Status)
 		fmt.Println("response Headers:", resp.Header)
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -86,7 +86,7 @@ func (tailDataExtractor *TailDataExtractor) sendLineToSDC(line string) {
 	}
 }
 
-func (tailDataExtractor *TailDataExtractor) Stop() (string, error){
+func (tailDataExtractor *TailDataExtractor) Stop() (string, error) {
 	fmt.Println("Stopping TailDataExtractor ....")
 
 	offset, _ := tailDataExtractor.tail.Tell()

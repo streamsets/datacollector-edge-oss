@@ -1,27 +1,27 @@
 package dataextractor
 
 import (
-	"os"
-	"log"
-	"path"
-	"github.com/streamsets/dataextractor/lib/http"
-	"github.com/streamsets/dataextractor/lib/execution/manager"
 	"github.com/streamsets/dataextractor/lib/common"
 	"github.com/streamsets/dataextractor/lib/dpm"
+	"github.com/streamsets/dataextractor/lib/execution/manager"
+	"github.com/streamsets/dataextractor/lib/http"
+	"log"
+	"os"
+	"path"
 )
 
 const (
-	DefaultLogFilePath = "logs/sde.log"
+	DefaultLogFilePath    = "logs/sde.log"
 	DefaultConfigFilePath = "etc/sde.toml"
 )
 
-type DataExtractor struct {
-	logger *log.Logger
-	config *Config
-	buildInfo *common.BuildInfo
-	runtimeInfo *common.RuntimeInfo
+type DataExtractorMain struct {
+	logger        *log.Logger
+	config        *Config
+	buildInfo     *common.BuildInfo
+	runtimeInfo   *common.RuntimeInfo
 	webServerTask *http.WebServerTask
-	manager *manager.PipelineManager
+	manager       *manager.PipelineManager
 }
 
 func DoMain() {
@@ -29,8 +29,8 @@ func DoMain() {
 	dataExtractor.webServerTask.Run()
 }
 
-func newDataExtractor() (*DataExtractor, error) {
-	loggerFile, _ := os.OpenFile(DefaultLogFilePath,  os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+func newDataExtractor() (*DataExtractorMain, error) {
+	loggerFile, _ := os.OpenFile(DefaultLogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	logger := log.New(loggerFile, "", log.Ldate|log.Ltime|log.Lshortfile)
 
 	ex, err := os.Executable()
@@ -52,12 +52,12 @@ func newDataExtractor() (*DataExtractor, error) {
 	webServerTask, _ := http.NewWebServerTask(logger, config.Http, buildInfo, pipelineManager)
 	dpm.RegisterWithDPM(config.DPM, buildInfo, runtimeInfo)
 
-	return &DataExtractor{
-		logger: logger,
-		config: config,
-		buildInfo: buildInfo,
-		runtimeInfo: runtimeInfo,
+	return &DataExtractorMain{
+		logger:        logger,
+		config:        config,
+		buildInfo:     buildInfo,
+		runtimeInfo:   runtimeInfo,
 		webServerTask: webServerTask,
-		manager: pipelineManager,
+		manager:       pipelineManager,
 	}, nil
 }

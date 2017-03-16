@@ -1,19 +1,20 @@
-package runner
+package store
 
 import (
-	"os"
-	"io/ioutil"
 	"encoding/json"
+	"github.com/streamsets/dataextractor/lib/common"
+	"io/ioutil"
+	"os"
 )
 
 const (
-	DEFAULT_OFFSET string = ""
-	OFFSET_FILE = "data/offset.json"
+	DEFAULT_OFFSET = ""
+	OFFSET_FILE    = "data/offset.json"
 )
 
-func GetOffset() (*SourceOffset, error) {
+func GetOffset() (*common.SourceOffset, error) {
 	if _, err := os.Stat(OFFSET_FILE); os.IsNotExist(err) {
-		return &SourceOffset{Version: 1, Offset: DEFAULT_OFFSET}, nil
+		return &common.SourceOffset{Version: 1, Offset: DEFAULT_OFFSET}, nil
 	} else {
 		file, readError := ioutil.ReadFile(OFFSET_FILE)
 
@@ -21,20 +22,20 @@ func GetOffset() (*SourceOffset, error) {
 			return nil, readError
 		}
 
-		var sourceOffset SourceOffset
+		var sourceOffset common.SourceOffset
 		json.Unmarshal(file, &sourceOffset)
 		return &sourceOffset, nil
 	}
 }
 
-func SaveOffset(sourceOffset *SourceOffset) (error) {
+func SaveOffset(sourceOffset *common.SourceOffset) error {
 	offsetJson, err := json.Marshal(sourceOffset)
 	check(err)
 	err1 := ioutil.WriteFile(OFFSET_FILE, offsetJson, 0644)
 	return err1
 }
 
-func ResetOffset(sourceOffset *SourceOffset) (error) {
+func ResetOffset(sourceOffset *common.SourceOffset) error {
 	sourceOffset.Offset = DEFAULT_OFFSET
 	return SaveOffset(sourceOffset)
 }

@@ -1,10 +1,10 @@
 package common
 
 import (
-	"log"
 	"github.com/satori/go.uuid"
-	"os"
 	"io/ioutil"
+	"log"
+	"os"
 )
 
 const (
@@ -12,10 +12,10 @@ const (
 )
 
 type RuntimeInfo struct {
-	ID string
-	HttpUrl string
+	ID         string
+	HttpUrl    string
 	DPMEnabled bool
-	logger *log.Logger
+	logger     *log.Logger
 }
 
 func (runtimeInfo *RuntimeInfo) init() error {

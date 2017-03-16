@@ -1,19 +1,19 @@
 package common
 
 type BuildInfo struct {
-	BuiltBy string
-	BuiltDate string
-	BuiltRepoSha string
+	BuiltBy           string
+	BuiltDate         string
+	BuiltRepoSha      string
 	SourceMd5Checksum string
-	Version string
+	Version           string
 }
 
 var (
-	BuiltBy string
-	BuiltDate string
-	BuiltRepoSha string
+	BuiltBy           string
+	BuiltDate         string
+	BuiltRepoSha      string
 	SourceMd5Checksum string
-	Version string
+	Version           string
 )
 
 func NewBuildInfo() (*BuildInfo, error) {

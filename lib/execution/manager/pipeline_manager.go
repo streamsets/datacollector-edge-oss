@@ -1,8 +1,8 @@
 package manager
 
 import (
-	"log"
 	"github.com/streamsets/dataextractor/lib/execution/runner"
+	"log"
 )
 
 type PipelineManager struct {

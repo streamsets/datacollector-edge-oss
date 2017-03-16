@@ -1,19 +1,19 @@
 package http
 
 import (
-	"net/http"
-	"fmt"
-	"log"
-	"github.com/streamsets/dataextractor/lib/execution/manager"
 	"encoding/json"
+	"fmt"
 	"github.com/streamsets/dataextractor/lib/common"
+	"github.com/streamsets/dataextractor/lib/execution/manager"
+	"log"
+	"net/http"
 )
 
 type WebServerTask struct {
-	logger *log.Logger
-	config Config
+	logger    *log.Logger
+	config    Config
 	buildInfo *common.BuildInfo
-	manager *manager.PipelineManager
+	manager   *manager.PipelineManager
 }
 
 func (webServerTask *WebServerTask) Init() error {
@@ -25,25 +25,34 @@ func (webServerTask *WebServerTask) homeHandler(w http.ResponseWriter, r *http.R
 }
 
 func (webServerTask *WebServerTask) startHandler(w http.ResponseWriter, r *http.Request) {
-	if (r.Method == "POST") {
-		go webServerTask.manager.GetRunner().StartPipeline()
-		fmt.Fprint(w, "Data Extractor started successfully")
+	if r.Method == "POST" {
+		state, err := webServerTask.manager.GetRunner().StartPipeline()
+		if err == nil {
+			json.NewEncoder(w).Encode(state)
+		} else {
+			fmt.Fprintf(w, "Failed to Start:  %s! ", err)
+		}
+
 	} else {
 		fmt.Fprintf(w, "Method %s! is not supported", r.Method)
 	}
 }
 
 func (webServerTask *WebServerTask) stopHandler(w http.ResponseWriter, r *http.Request) {
-	if (r.Method == "POST") {
-		go webServerTask.manager.GetRunner().StopPipeline()
-		fmt.Fprint(w, "Data Extractor stopped successfully")
+	if r.Method == "POST" {
+		state, err := webServerTask.manager.GetRunner().StopPipeline()
+		if err == nil {
+			json.NewEncoder(w).Encode(state)
+		} else {
+			fmt.Fprintf(w, "Failed to Stop:  %s! ", err)
+		}
 	} else {
 		fmt.Fprintf(w, "Method %s! is not supported", r.Method)
 	}
 }
 
 func (webServerTask *WebServerTask) resetOffsetHandler(w http.ResponseWriter, r *http.Request) {
-	if (r.Method == "POST") {
+	if r.Method == "POST" {
 		go webServerTask.manager.GetRunner().ResetOffset()
 		fmt.Fprint(w, "Reset Origin is successful.")
 	} else {
@@ -65,7 +74,7 @@ func NewWebServerTask(
 	config Config,
 	buildInfo *common.BuildInfo,
 	manager *manager.PipelineManager,
-)(*WebServerTask, error) {
+) (*WebServerTask, error) {
 	webServerTask := WebServerTask{logger: logger, config: config, buildInfo: buildInfo, manager: manager}
 	err := webServerTask.Init()
 	if err != nil {
@@ -73,4 +82,3 @@ func NewWebServerTask(
 	}
 	return &webServerTask, nil
 }
-
