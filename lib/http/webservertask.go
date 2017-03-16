@@ -60,12 +60,22 @@ func (webServerTask *WebServerTask) resetOffsetHandler(w http.ResponseWriter, r 
 	}
 }
 
+func (webServerTask *WebServerTask) statusHandler(w http.ResponseWriter, r *http.Request) {
+	state, err := webServerTask.manager.GetRunner().GetStatus()
+	if err == nil {
+		json.NewEncoder(w).Encode(state)
+	} else {
+		fmt.Fprintf(w, "Failed to get status:  %s! ", err)
+	}
+}
+
 func (webServerTask *WebServerTask) Run() {
 	fmt.Println("Running on URI : http://localhost" + webServerTask.config.BindAddress)
 	http.HandleFunc("/", webServerTask.homeHandler)
 	http.HandleFunc("/rest/v1/pipeline/start", webServerTask.startHandler)
 	http.HandleFunc("/rest/v1/pipeline/stop", webServerTask.stopHandler)
 	http.HandleFunc("/rest/v1/pipeline/resetOffset", webServerTask.resetOffsetHandler)
+	http.HandleFunc("/rest/v1/pipeline/status", webServerTask.statusHandler)
 	fmt.Println(http.ListenAndServe(webServerTask.config.BindAddress, nil))
 }
 

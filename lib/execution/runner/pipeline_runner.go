@@ -46,6 +46,10 @@ func (pipelineRunner *PipelineRunner) init() {
 	fmt.Println(pipelineRunner.pipelineState)
 }
 
+func (pipelineRunner *PipelineRunner) GetStatus() (*common.PipelineState, error) {
+	return pipelineRunner.pipelineState, nil
+}
+
 func (pipelineRunner *PipelineRunner) StartPipeline() (*common.PipelineState, error) {
 	var err error
 	err = pipelineRunner.checkState(common.STARTING)
