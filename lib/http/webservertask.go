@@ -21,14 +21,19 @@ func (webServerTask *WebServerTask) Init() error {
 }
 
 func (webServerTask *WebServerTask) homeHandler(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(webServerTask.buildInfo)
+	encoder :=json.NewEncoder(w)
+	encoder.SetIndent("", "\t")
+	encoder.Encode(webServerTask.buildInfo)
+
 }
 
 func (webServerTask *WebServerTask) startHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		state, err := webServerTask.manager.GetRunner().StartPipeline()
 		if err == nil {
-			json.NewEncoder(w).Encode(state)
+			encoder :=json.NewEncoder(w)
+			encoder.SetIndent("", "\t")
+			encoder.Encode(state)
 		} else {
 			fmt.Fprintf(w, "Failed to Start:  %s! ", err)
 		}
@@ -42,7 +47,9 @@ func (webServerTask *WebServerTask) stopHandler(w http.ResponseWriter, r *http.R
 	if r.Method == "POST" {
 		state, err := webServerTask.manager.GetRunner().StopPipeline()
 		if err == nil {
-			json.NewEncoder(w).Encode(state)
+			encoder :=json.NewEncoder(w)
+			encoder.SetIndent("", "\t")
+			encoder.Encode(state)
 		} else {
 			fmt.Fprintf(w, "Failed to Stop:  %s! ", err)
 		}
@@ -63,7 +70,9 @@ func (webServerTask *WebServerTask) resetOffsetHandler(w http.ResponseWriter, r 
 func (webServerTask *WebServerTask) statusHandler(w http.ResponseWriter, r *http.Request) {
 	state, err := webServerTask.manager.GetRunner().GetStatus()
 	if err == nil {
-		json.NewEncoder(w).Encode(state)
+		encoder :=json.NewEncoder(w)
+		encoder.SetIndent("", "\t")
+		encoder.Encode(state)
 	} else {
 		fmt.Fprintf(w, "Failed to get status:  %s! ", err)
 	}
