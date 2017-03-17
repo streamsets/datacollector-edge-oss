@@ -10,7 +10,7 @@ import (
 	"runtime"
 )
 
-type dpmAttributes struct {
+type Attributes struct {
 	BaseHttpUrl  string `json:"baseHttpUrl"`
 	SdeGoVersion string `json:"sdeGoVersion"`
 	SdeGoOS      string `json:"sdeGoOS"`
@@ -20,16 +20,16 @@ type dpmAttributes struct {
 	SdeVersion   string `json:"sdeVersion"`
 }
 
-type registrationData struct {
-	AuthToken   string        `json:"authToken"`
-	ComponentId string        `json:"componentId"`
-	Attributes  dpmAttributes `json:"attributes"`
+type RegistrationData struct {
+	AuthToken   string     `json:"authToken"`
+	ComponentId string     `json:"componentId"`
+	Attributes  Attributes `json:"attributes"`
 }
 
 func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo *common.RuntimeInfo) {
-	fmt.Println(dpmConfig.Enabled)
+	fmt.Println(dpmConfig)
 	if dpmConfig.Enabled && dpmConfig.AppAuthToken != "" {
-		attributes := dpmAttributes{
+		attributes := Attributes{
 			BaseHttpUrl:  runtimeInfo.HttpUrl,
 			SdeGoVersion: runtime.Version(),
 			SdeGoOS:      runtime.GOOS,
@@ -39,7 +39,7 @@ func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo 
 			SdeVersion:   buildInfo.Version,
 		}
 
-		registrationData := registrationData{
+		registrationData := RegistrationData{
 			AuthToken:   dpmConfig.AppAuthToken,
 			ComponentId: runtimeInfo.ID,
 			Attributes:  attributes,
@@ -50,9 +50,9 @@ func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo 
 			fmt.Println(err)
 		}
 
-		var dpmRegistrationUrl = dpmConfig.BaseUrl + "/security/public-rest/v1/components/registration"
+		var registrationUrl = dpmConfig.BaseUrl + "/security/public-rest/v1/components/registration"
 
-		req, err := http.NewRequest("POST", dpmRegistrationUrl, bytes.NewBuffer(jsonValue))
+		req, err := http.NewRequest("POST", registrationUrl, bytes.NewBuffer(jsonValue))
 		req.Header.Set("X-Requested-By", "SDE")
 		req.Header.Set("Content-Type", "application/json")
 

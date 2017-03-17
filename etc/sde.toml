@@ -23,3 +23,15 @@
 
   # Application Token
   app-auth-token = ""
+
+  # Labels to report the DPM
+  job-labels = ["all"]
+
+  # App to send remote control events
+  events-recipient = "jobrunner-app"
+
+  # Data Extractor Ping Frequency to DPM (in milliseconds)
+  ping-frequency = 5000
+
+  # Frequency to send pipeline status events
+  status-events-interval = 60000

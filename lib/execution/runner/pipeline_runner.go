@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/streamsets/dataextractor/lib/common"
 	"github.com/streamsets/dataextractor/lib/execution/store"
+	"github.com/streamsets/dataextractor/lib/util"
 	"github.com/streamsets/dataextractor/tail_dataextractor"
 	"log"
 	"time"
@@ -103,7 +104,7 @@ func (pipelineRunner *PipelineRunner) ResetOffset() {
 
 func (pipelineRunner *PipelineRunner) checkState(toState string) error {
 	supportedList := pipelineRunner.validTransitions[pipelineRunner.pipelineState.Status]
-	if !common.Contains(supportedList, toState) {
+	if !util.Contains(supportedList, toState) {
 		return errors.New("Cannot change state from " + pipelineRunner.pipelineState.Status +
 			" to " + toState)
 	}
