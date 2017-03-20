@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"github.com/streamsets/dataextractor/lib/common"
 )
 
 type Configuration struct {
@@ -31,6 +32,14 @@ func (tailDataExtractor *TailDataExtractor) init() {
 		panic(err)
 	}
 	tailDataExtractor.config = configuration
+
+
+	_, err1 := loadPipelineConfig()
+	if err1 != nil {
+		panic(err1)
+	}
+
+
 }
 
 func (tailDataExtractor *TailDataExtractor) Start(offset string) {
@@ -120,4 +129,21 @@ func loadConfig() (Configuration, error) {
 	fmt.Println("Using Configuration")
 	fmt.Println(configuration)
 	return configuration, err1
+}
+
+func loadPipelineConfig() (common.PipelineConfiguration, error) {
+	pipelineConfiguration := common.PipelineConfiguration{}
+	file, err := os.Open("etc/pipeline.json")
+	if err != nil {
+		return pipelineConfiguration, err
+	}
+
+	decoder := json.NewDecoder(file)
+	err1 := decoder.Decode(&pipelineConfiguration)
+	if err1 != nil {
+		return pipelineConfiguration, err1
+	}
+	fmt.Println("Using Pipeline Configuration")
+	fmt.Println(pipelineConfiguration)
+	return pipelineConfiguration, err1
 }
