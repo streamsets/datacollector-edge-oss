@@ -1,7 +1,7 @@
 package common
 
 type PipelineConfiguration struct {
-	SchemaVersion        int                 `json:"schemaVersion"`
+	SchemaVersion        int                    `json:"schemaVersion"`
 	Version              int                    `json:"version"`
 	UUID                 string                 `json:"uuid"`
 	Title                string                 `json:"title"`
@@ -31,7 +31,7 @@ type PipelineInfo struct {
 }
 
 type Config struct {
-	Name  string `json:"name"`
+	Name  string      `json:"name"`
 	Value interface{} `json:"value"`
 }
 

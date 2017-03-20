@@ -1,7 +1,7 @@
 {
   "schemaVersion" : 2,
   "version" : 5,
-  "uuid" : "e4622742-7a41-4c8f-8e4c-435e56e94d16",
+  "uuid" : "f0c32f57-337c-463d-95ad-164cdbdbc735",
   "title" : "File Tail",
   "description" : "",
   "configuration" : [ {
@@ -268,7 +268,8 @@
       "name" : "conf.fileInfos",
       "value" : [ {
         "fileRollMode" : "REVERSE_COUNTER",
-        "patternForToken" : ".*"
+        "patternForToken" : ".*",
+        "fileFullPath" : "/Users/madhu/Documents/projects/datacollector/dist/target/streamsets-datacollector-2.5.0.0-SNAPSHOT/streamsets-datacollector-2.5.0.0-SNAPSHOT/log/sdc.log"
       } ]
     }, {
       "name" : "conf.allowLateDirectories",
@@ -285,7 +286,7 @@
     } ],
     "uiInfo" : {
       "outputStreamLabels" : [ "Data", "Metadata" ],
-      "yPos" : 50,
+      "yPos" : 89,
       "stageType" : "SOURCE",
       "rawSource" : {
         "configuration" : [ {
@@ -294,7 +295,7 @@
       },
       "description" : "",
       "label" : "File Tail 1",
-      "xPos" : 60
+      "xPos" : 57
     },
     "inputLanes" : [ ],
     "outputLanes" : [ "FileTail_01OutputLane14899689891270", "FileTail_01OutputLane14899689891271" ],
@@ -576,11 +577,11 @@
     "title" : "File Tail",
     "description" : "",
     "created" : 1489968984710,
-    "lastModified" : 1489969045790,
+    "lastModified" : 1490022292110,
     "creator" : "demo@demo",
     "lastModifier" : "demo@demo",
     "lastRev" : "0",
-    "uuid" : "e4622742-7a41-4c8f-8e4c-435e56e94d16",
+    "uuid" : "f0c32f57-337c-463d-95ad-164cdbdbc735",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]

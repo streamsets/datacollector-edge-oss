@@ -5,45 +5,78 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hpcloud/tail"
+	"github.com/streamsets/dataextractor/lib/common"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
-	"github.com/streamsets/dataextractor/lib/common"
 )
 
-type Configuration struct {
-	FileToTail string
-	SDCHttpUrl string
-	AppId      string
-	Debug      bool
-}
+const DEBUG = false
 
 type TailDataExtractor struct {
-	logger *log.Logger
-	config Configuration
-	tail   *tail.Tail
+	logger         *log.Logger
+	pipelineConfig common.PipelineConfiguration
+	tail           *tail.Tail
+	fileFullPath   string
+	resourceUrl    string
+	headers        []interface{}
 }
 
 func (tailDataExtractor *TailDataExtractor) init() {
-	configuration, err := loadConfig()
-	if err != nil {
-		panic(err)
-	}
-	tailDataExtractor.config = configuration
-
-
-	_, err1 := loadPipelineConfig()
+	pipelineConfig, err1 := loadPipelineConfig()
 	if err1 != nil {
 		panic(err1)
 	}
+	tailDataExtractor.pipelineConfig = pipelineConfig
 
+	tailDataExtractor.initFileTailStage()
+	tailDataExtractor.initHttpTargetStage()
+}
 
+func (tailDataExtractor *TailDataExtractor) initFileTailStage() {
+	fileTailStageInstance := tailDataExtractor.pipelineConfig.Stages[0]
+
+	var fileInfosConfigValue []interface{}
+	for _, config := range fileTailStageInstance.Configuration {
+		if config.Name == "conf.fileInfos" {
+			fileInfosConfigValue = config.Value.([]interface{})
+		}
+	}
+
+	if fileInfosConfigValue == nil {
+		panic("Config conf.fileInfos not found")
+	}
+
+	for _, fileInfos := range fileInfosConfigValue {
+		tailDataExtractor.fileFullPath = fileInfos.(map[string]interface{})["fileFullPath"].(string)
+	}
+}
+
+func (tailDataExtractor *TailDataExtractor) initHttpTargetStage() {
+	for _, stageInstances := range tailDataExtractor.pipelineConfig.Stages {
+		if stageInstances.StageName == "com_streamsets_pipeline_stage_destination_http_HttpClientDTarget" {
+			for _, config := range stageInstances.Configuration {
+				if config.Name == "conf.resourceUrl" {
+					tailDataExtractor.resourceUrl = config.Value.(string)
+				}
+
+				if config.Name == "conf.headers" {
+					tailDataExtractor.headers = config.Value.([]interface{})
+				}
+			}
+			break
+		}
+	}
+
+	if tailDataExtractor.resourceUrl == "" {
+		panic("Config conf.resourceUrl not found")
+	}
 }
 
 func (tailDataExtractor *TailDataExtractor) Start(offset string) {
-	fmt.Println("Started tailing file: " + tailDataExtractor.config.FileToTail)
+	fmt.Println("Started tailing file: " + tailDataExtractor.fileFullPath)
 
 	tailConfig := tail.Config{Follow: true}
 
@@ -54,7 +87,7 @@ func (tailDataExtractor *TailDataExtractor) Start(offset string) {
 		fmt.Println(tailConfig.Location.Offset)
 	}
 
-	t, err := tail.TailFile(tailDataExtractor.config.FileToTail, tailConfig)
+	t, err := tail.TailFile(tailDataExtractor.fileFullPath, tailConfig)
 
 	if err != nil {
 		fmt.Println("error:", err)
@@ -69,15 +102,22 @@ func (tailDataExtractor *TailDataExtractor) Start(offset string) {
 }
 
 func (tailDataExtractor *TailDataExtractor) sendLineToSDC(line string) {
-	if tailDataExtractor.config.Debug {
+	if DEBUG {
 		fmt.Println("Start sending line")
 		fmt.Println(line)
-		fmt.Println("URL:>", tailDataExtractor.config.SDCHttpUrl)
+		fmt.Println("URL:>", tailDataExtractor.resourceUrl)
 	}
 
 	var logTextStr = []byte(line)
-	req, err := http.NewRequest("POST", tailDataExtractor.config.SDCHttpUrl, bytes.NewBuffer(logTextStr))
-	req.Header.Set("X-SDC-APPLICATION-ID", tailDataExtractor.config.AppId)
+	req, err := http.NewRequest("POST", tailDataExtractor.resourceUrl, bytes.NewBuffer(logTextStr))
+
+	if tailDataExtractor.headers != nil {
+		for _, header := range tailDataExtractor.headers {
+			req.Header.Set(header.(map[string]interface{})["key"].(string),
+				header.(map[string]interface{})["value"].(string))
+		}
+	}
+
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
@@ -87,7 +127,7 @@ func (tailDataExtractor *TailDataExtractor) sendLineToSDC(line string) {
 	}
 	defer resp.Body.Close()
 
-	if tailDataExtractor.config.Debug {
+	if DEBUG {
 		fmt.Println("response Status:", resp.Status)
 		fmt.Println("response Headers:", resp.Header)
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -114,23 +154,6 @@ func New(logger *log.Logger) (*TailDataExtractor, error) {
 	return &tailDataExtractor, nil
 }
 
-func loadConfig() (Configuration, error) {
-	configuration := Configuration{}
-	file, err := os.Open("etc/conf.json")
-	if err != nil {
-		return configuration, err
-	}
-
-	decoder := json.NewDecoder(file)
-	err1 := decoder.Decode(&configuration)
-	if err1 != nil {
-		return configuration, err1
-	}
-	fmt.Println("Using Configuration")
-	fmt.Println(configuration)
-	return configuration, err1
-}
-
 func loadPipelineConfig() (common.PipelineConfiguration, error) {
 	pipelineConfiguration := common.PipelineConfiguration{}
 	file, err := os.Open("etc/pipeline.json")
@@ -143,7 +166,10 @@ func loadPipelineConfig() (common.PipelineConfiguration, error) {
 	if err1 != nil {
 		return pipelineConfiguration, err1
 	}
-	fmt.Println("Using Pipeline Configuration")
-	fmt.Println(pipelineConfiguration)
+
+	if DEBUG {
+		fmt.Println("Using Pipeline Configuration")
+		fmt.Println(pipelineConfiguration)
+	}
 	return pipelineConfiguration, err1
 }
