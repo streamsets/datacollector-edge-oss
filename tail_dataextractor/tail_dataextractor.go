@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hpcloud/tail"
-	"github.com/streamsets/dataextractor/lib/common"
+	"github.com/streamsets/dataextractor/container/common"
 	"io/ioutil"
 	"log"
 	"net/http"

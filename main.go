@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/streamsets/dataextractor/lib/dataextractor"
+	"github.com/streamsets/dataextractor/container/dataextractor"
 )
 
 func main() {
