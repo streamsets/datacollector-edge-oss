@@ -21,7 +21,7 @@ func (webServerTask *WebServerTask) Init() error {
 }
 
 func (webServerTask *WebServerTask) homeHandler(w http.ResponseWriter, r *http.Request) {
-	encoder :=json.NewEncoder(w)
+	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "\t")
 	encoder.Encode(webServerTask.buildInfo)
 
@@ -31,7 +31,7 @@ func (webServerTask *WebServerTask) startHandler(w http.ResponseWriter, r *http.
 	if r.Method == "POST" {
 		state, err := webServerTask.manager.GetRunner().StartPipeline("pipeline")
 		if err == nil {
-			encoder :=json.NewEncoder(w)
+			encoder := json.NewEncoder(w)
 			encoder.SetIndent("", "\t")
 			encoder.Encode(state)
 		} else {
@@ -47,7 +47,7 @@ func (webServerTask *WebServerTask) stopHandler(w http.ResponseWriter, r *http.R
 	if r.Method == "POST" {
 		state, err := webServerTask.manager.GetRunner().StopPipeline()
 		if err == nil {
-			encoder :=json.NewEncoder(w)
+			encoder := json.NewEncoder(w)
 			encoder.SetIndent("", "\t")
 			encoder.Encode(state)
 		} else {
@@ -70,7 +70,7 @@ func (webServerTask *WebServerTask) resetOffsetHandler(w http.ResponseWriter, r 
 func (webServerTask *WebServerTask) statusHandler(w http.ResponseWriter, r *http.Request) {
 	state, err := webServerTask.manager.GetRunner().GetStatus()
 	if err == nil {
-		encoder :=json.NewEncoder(w)
+		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "\t")
 		encoder.Encode(state)
 	} else {

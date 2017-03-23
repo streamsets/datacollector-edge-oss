@@ -1,5 +1,7 @@
 package api
 
+import "github.com/streamsets/dataextractor/container/common"
+
 /**
  * Base interface for Data Extractor stages implementations defining their common context and lifecycle.
  *
@@ -20,8 +22,7 @@ type Stage interface {
 	 * @param info the stage information.
 	 * @param context the stage context.
 	 */
-	Init()
-
+	Init(stageConfig common.StageConfiguration)
 
 	/**
 	 * Destroys the stage. It should be used to release any resources held by the stage after initialization or
@@ -34,5 +35,4 @@ type Stage interface {
 	 * initialization failed.
 	 */
 	Destroy()
-
 }

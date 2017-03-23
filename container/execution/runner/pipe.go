@@ -5,6 +5,8 @@ import (
 	"github.com/streamsets/dataextractor/container/validation"
 )
 
+const BATCH_SIZE = 10
+
 type Pipe interface {
 	Init()
 	Process()
@@ -12,31 +14,31 @@ type Pipe interface {
 }
 
 type StagePipe struct {
-	Stage StageRuntime
-	InputLanes []string
+	Stage       StageRuntime
+	InputLanes  []string
 	OutputLanes []string
-	EventLanes []string
+	EventLanes  []string
 }
 
-func (s *StagePipe) Init() ([]validation.Issue)  {
+func (s *StagePipe) Init() []validation.Issue {
 	fmt.Println("Stage Pipe Init")
 	issues := s.Stage.Init()
 	return issues
 }
 
-func (s *StagePipe) Process(pipeBatch *FullPipeBatch)  {
+func (s *StagePipe) Process(pipeBatch *FullPipeBatch) {
 	fmt.Println("Processing Stage - " + s.Stage.config.InstanceName)
 	batchMaker := pipeBatch.StartStage(*s)
 	batchImpl := pipeBatch.GetBatch(*s)
-	s.Stage.Execute("previousOffset", 1, batchImpl, batchMaker)
+	s.Stage.Execute("previousOffset", BATCH_SIZE, batchImpl, batchMaker)
 	pipeBatch.CompleteStage(batchMaker)
 }
 
-func (s *StagePipe) Destroy()  {
+func (s *StagePipe) Destroy() {
 
 }
 
-func NewStagePipe(stage StageRuntime) (StagePipe) {
+func NewStagePipe(stage StageRuntime) StagePipe {
 	stagePipe := StagePipe{}
 	stagePipe.Stage = stage
 	stagePipe.InputLanes = stage.config.InputLanes

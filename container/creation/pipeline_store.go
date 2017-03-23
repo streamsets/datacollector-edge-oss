@@ -1,9 +1,9 @@
 package creation
 
 import (
+	"encoding/json"
 	"github.com/streamsets/dataextractor/container/common"
 	"os"
-	"encoding/json"
 )
 
 const (
@@ -26,14 +26,13 @@ func LoadPipelineConfig(pipelineId string) (common.PipelineConfiguration, error)
 	return pipelineConfiguration, err1
 }
 
-
-func getPipelineFile(pipelineId string) (string) {
+func getPipelineFile(pipelineId string) string {
 	// return getPipelineDir(pipelineId) + PIPELINE_FILE
 
 	// TODO: Use data directory for pipelines
 	return "etc/pipeline.json"
 }
 
-func getPipelineDir(pipelineId string) (string) {
+func getPipelineDir(pipelineId string) string {
 	return "data/pipelines/" + pipelineId + "/"
 }

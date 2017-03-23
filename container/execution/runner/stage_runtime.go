@@ -17,7 +17,7 @@ type StageRuntime struct {
 func (s *StageRuntime) Init() []validation.Issue {
 	var issues []validation.Issue
 	fmt.Println("StageRuntime Init")
-	s.stageBean.Stage.Init()
+	s.stageBean.Stage.Init(s.config)
 	return issues
 }
 

@@ -71,7 +71,6 @@ func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo 
 		fmt.Println("response Body:", string(body))
 		runtimeInfo.DPMEnabled = true
 
-
 		// TODO: Fix Events
 		// SendEvent(dpmConfig, buildInfo, runtimeInfo)
 

@@ -31,13 +31,13 @@ func (p *Pipeline) Init() []validation.Issue {
 func (p *Pipeline) Run() {
 	fmt.Println("Pipeline Run()")
 
-	//for !p.offsetTracker.IsFinished() && !p.stop {
+	for !p.offsetTracker.IsFinished() && !p.stop {
 		p.runBatch()
-	//}
+	}
 
 }
 
-func (p * Pipeline) runBatch() {
+func (p *Pipeline) runBatch() {
 	// var committed bool = false
 	pipeBatch := NewFullPipeBatch(p.offsetTracker, 1)
 
@@ -46,7 +46,6 @@ func (p * Pipeline) runBatch() {
 	for _, pipe := range p.pipes {
 		pipe.Process(pipeBatch)
 	}
-
 
 }
 

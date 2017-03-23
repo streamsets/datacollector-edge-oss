@@ -1,8 +1,8 @@
 package websocket
 
 import (
-	"github.com/streamsets/dataextractor/api"
 	"fmt"
+	"github.com/streamsets/dataextractor/api"
 )
 
 type WebSocketClientDestination struct {

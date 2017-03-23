@@ -7,20 +7,18 @@ import (
 	"github.com/streamsets/dataextractor/container/creation"
 	"github.com/streamsets/dataextractor/container/execution/store"
 	"github.com/streamsets/dataextractor/container/util"
-	"github.com/streamsets/dataextractor/tail_dataextractor"
 	"log"
 	"time"
 )
 
 type StandaloneRunner struct {
-	pipelineId      string
-	logger            *log.Logger
-	validTransitions  map[string][]string
-	tailDataExtractor *tail_dataextractor.TailDataExtractor
-	sourceOffset      *common.SourceOffset
-	pipelineState     *common.PipelineState
-	pipelineConfig    common.PipelineConfiguration
-	prodPipeline      *ProductionPipeline
+	pipelineId       string
+	logger           *log.Logger
+	validTransitions map[string][]string
+	sourceOffset     *common.SourceOffset
+	pipelineState    *common.PipelineState
+	pipelineConfig   common.PipelineConfiguration
+	prodPipeline     *ProductionPipeline
 }
 
 func (standaloneRunner *StandaloneRunner) init() {
@@ -98,7 +96,9 @@ func (standaloneRunner *StandaloneRunner) StopPipeline() (*common.PipelineState,
 		return nil, err
 	}
 
-	standaloneRunner.prodPipeline.Stop()
+	if standaloneRunner.prodPipeline != nil {
+		standaloneRunner.prodPipeline.Stop()
+	}
 
 	/*
 		offset, _ := standaloneRunner.tailDataExtractor.Stop()
@@ -137,8 +137,7 @@ func (standaloneRunner *StandaloneRunner) checkState(toState string) error {
 }
 
 func NewStandaloneRunner(logger *log.Logger) (*StandaloneRunner, error) {
-	tailDataExtractor, _ := tail_dataextractor.New(logger)
-	standaloneRunner := StandaloneRunner{logger: logger, tailDataExtractor: tailDataExtractor}
+	standaloneRunner := StandaloneRunner{logger: logger}
 	standaloneRunner.init()
 	return &standaloneRunner, nil
 }

@@ -1,14 +1,15 @@
 package filetail
 
 import (
-	"github.com/streamsets/dataextractor/api"
 	"fmt"
+	"github.com/streamsets/dataextractor/api"
+	"github.com/streamsets/dataextractor/container/common"
 )
 
 type FileTailOrigin struct {
 }
 
-func (f *FileTailOrigin) Init() {
+func (f *FileTailOrigin) Init(stageConfig common.StageConfiguration) {
 	fmt.Println("FileTailOrigin Init method")
 }
 
@@ -19,11 +20,11 @@ func (f *FileTailOrigin) Destroy() {
 func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {
 	fmt.Println("FileTailOrigin produce method")
 
-	batchMaker.AddRecord(api.Record{Value:1})
-	batchMaker.AddRecord(api.Record{Value:2})
-	batchMaker.AddRecord(api.Record{Value:3})
-	batchMaker.AddRecord(api.Record{Value:4})
-	batchMaker.AddRecord(api.Record{Value:5})
+	batchMaker.AddRecord(api.Record{Value: "value1"})
+	batchMaker.AddRecord(api.Record{Value: "value2"})
+	batchMaker.AddRecord(api.Record{Value: "value3"})
+	batchMaker.AddRecord(api.Record{Value: "value4"})
+	batchMaker.AddRecord(api.Record{Value: "value5"})
 
 	return "", nil
 }

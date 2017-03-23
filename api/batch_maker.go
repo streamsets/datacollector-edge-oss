@@ -3,9 +3,9 @@ package api
 type BatchMaker interface {
 	/**
 	 * Returns the available lane names (stream names) for the stage.
-   	 *
-   	 * @return the available lane names (stream names) for the stage.
-   	 */
+	 *
+	 * @return the available lane names (stream names) for the stage.
+	 */
 	GetLanes() []string
 
 	/**

@@ -8,15 +8,14 @@ type Batch interface {
 	 *
 	 * @return the initial offset of the current batch.
 	 */
-	GetSourceOffset() (string)
-
+	GetSourceOffset() string
 
 	/**
-   	 * Returns an iterator with all the records in the batch for the current stage.
-   	 * <p/>
-   	 * Every time this method is called it returns a new iterator with all records in the batch.
-   	 *
-   	 * @return an iterator with all the records in the batch for the current stage.
-   	 */
-	GetRecords() [] Record
+	 * Returns an iterator with all the records in the batch for the current stage.
+	 * <p/>
+	 * Every time this method is called it returns a new iterator with all records in the batch.
+	 *
+	 * @return an iterator with all the records in the batch for the current stage.
+	 */
+	GetRecords() []Record
 }

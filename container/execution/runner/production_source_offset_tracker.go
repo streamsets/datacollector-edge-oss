@@ -3,8 +3,8 @@ package runner
 import "time"
 
 type ProductionSourceOffsetTracker struct {
-	pipelineName string
-	offsets map[string]string
+	pipelineName  string
+	offsets       map[string]string
 	lastBatchTime time.Time
 }
 
@@ -24,6 +24,6 @@ func (o *ProductionSourceOffsetTracker) GetLastBatchTime() time.Time {
 	return o.lastBatchTime
 }
 
-func NewProductionSourceOffsetTracker(pipelineName string) (*ProductionSourceOffsetTracker){
+func NewProductionSourceOffsetTracker(pipelineName string) *ProductionSourceOffsetTracker {
 	return &ProductionSourceOffsetTracker{pipelineName: pipelineName}
 }

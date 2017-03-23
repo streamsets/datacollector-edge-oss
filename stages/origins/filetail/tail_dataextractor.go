@@ -1,4 +1,4 @@
-package tail_dataextractor
+package filetail
 
 import (
 	"bytes"

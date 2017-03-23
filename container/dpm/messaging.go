@@ -61,7 +61,7 @@ func SendEvent(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo *commo
 		}
 
 		fmt.Println("Client Event JSON:")
-		jsonValue, err := json.Marshal([] ClientEvent{clientEvent})
+		jsonValue, err := json.Marshal([]ClientEvent{clientEvent})
 		if err != nil {
 			fmt.Println(err)
 		}
