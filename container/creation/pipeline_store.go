@@ -30,7 +30,7 @@ func getPipelineFile(pipelineId string) string {
 	// return getPipelineDir(pipelineId) + PIPELINE_FILE
 
 	// TODO: Use data directory for pipelines
-	return "etc/pipeline.json"
+	return "data/pipeline.json"
 }
 
 func getPipelineDir(pipelineId string) string {

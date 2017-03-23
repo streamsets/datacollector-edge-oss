@@ -8,8 +8,8 @@ import (
 	"github.com/streamsets/dataextractor/stages/origins/filetail"
 )
 
-func CreateStageInstance(library string, name string) api.Stage {
-	var instanceKey = library + ":" + name
+func CreateStageInstance(library string, stageName string) api.Stage {
+	var instanceKey = library + ":" + stageName
 	switch instanceKey {
 	case "streamsets-datacollector-dev-lib:com_streamsets_pipeline_stage_devtest_RandomSource":
 		return &dev_random.DevRandom{}
