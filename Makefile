@@ -17,10 +17,10 @@ DEPENDENCIES := github.com/hpcloud/tail/... \
 # Sources and Targets
 EXECUTABLES :=dist/bin/$(BINARY_NAME)
 # Build Binaries setting BuildInfo vars
-LDFLAGS :=-ldflags "-X github.com/streamsets/dataextractor/lib/common.Version=${VERSION} \
-    -X github.com/streamsets/dataextractor/lib/common.BuiltBy=$$USER \
-    -X github.com/streamsets/dataextractor/lib/common.BuiltDate=${BuiltDate} \
-    -X github.com/streamsets/dataextractor/lib/common.BuiltRepoSha=${BuiltRepoSha}"
+LDFLAGS :=-ldflags "-X github.com/streamsets/dataextractor/container/common.Version=${VERSION} \
+    -X github.com/streamsets/dataextractor/container/common.BuiltBy=$$USER \
+    -X github.com/streamsets/dataextractor/container/common.BuiltDate=${BuiltDate} \
+    -X github.com/streamsets/dataextractor/container/common.BuiltRepoSha=${BuiltRepoSha}"
 
 # Package target
 PACKAGE :=$(DIR)/dist/$(APP_NAME)-$(VERSION).tar.gz

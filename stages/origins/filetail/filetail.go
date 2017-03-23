@@ -13,7 +13,7 @@ func (f *FileTailOrigin) Init() {
 }
 
 func (f *FileTailOrigin) Destroy() {
-
+	fmt.Println("FileTailOrigin Destroy method")
 }
 
 func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {

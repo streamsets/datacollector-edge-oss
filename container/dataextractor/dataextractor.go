@@ -12,7 +12,7 @@ import (
 
 const (
 	DefaultLogFilePath    = "logs/sde.log"
-	DefaultConfigFilePath = "etc/sde.toml"
+	DefaultConfigFilePath = "etc/sde.conf"
 )
 
 type DataExtractorMain struct {

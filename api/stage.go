@@ -3,9 +3,8 @@ package api
 /**
  * Base interface for Data Extractor stages implementations defining their common context and lifecycle.
  *
- * @see Source
- * @see Processor
- * @see Target
+ * @see Origin
+ * @see Destination
  */
 type Stage interface {
 

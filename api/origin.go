@@ -5,7 +5,7 @@ type Origin interface {
 	  * When running a pipeline, the Data Collector calls this method from the <code>Origin</code> stage to obtain a batch
 	  * of records for processing.
 	  * <p/>
-	  * <code>Source</code> stages should not block indefinitely within this method if there is no data. They should have
+	  * <code>Origin</code> stages should not block indefinitely within this method if there is no data. They should have
 	  * an internal timeout after which they produce an empty batch. By doing so it gives the chance to other stages in
 	  * pipeline to know that the pipeline is still healthy but there is no data coming; and potentially allowing
 	  * notifications to external systems.
