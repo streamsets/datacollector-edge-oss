@@ -2,7 +2,6 @@ package runner
 
 import (
 	"errors"
-	"fmt"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/creation"
 	"github.com/streamsets/dataextractor/container/execution/store"
@@ -46,7 +45,6 @@ func (standaloneRunner *StandaloneRunner) init() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(standaloneRunner.pipelineState)
 }
 
 func (standaloneRunner *StandaloneRunner) GetPipelineConfig() common.PipelineConfiguration {

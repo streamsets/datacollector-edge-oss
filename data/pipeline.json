@@ -1,8 +1,8 @@
 {
   "schemaVersion" : 2,
   "version" : 5,
-  "uuid" : "d28e1704-207b-40fa-b578-406dc23eb731",
-  "title" : "Random",
+  "uuid" : "f7f91d3b-f0e2-4eb5-893b-7a8332a66f14",
+  "title" : "Data Extractor Pipeline",
   "description" : "",
   "configuration" : [ {
     "name" : "executionMode",
@@ -96,7 +96,7 @@
       "stageType" : "SOURCE"
     },
     "inputLanes" : [ ],
-    "outputLanes" : [ "DevRandomRecordSource_01OutputLane14902452057870" ],
+    "outputLanes" : [ "DevRandomRecordSource_01OutputLane14902822273780" ],
     "eventLanes" : [ ]
   }, {
     "instanceName" : "HTTPClient_01",
@@ -203,7 +203,7 @@
       "name" : "conf.headers",
       "value" : [ {
         "key" : "X-SDC-APPLICATION-ID",
-        "value" : "test"
+        "value" : "dataextractor"
       } ]
     }, {
       "name" : "conf.httpMethod",
@@ -333,7 +333,7 @@
       "yPos" : 50,
       "stageType" : "TARGET"
     },
-    "inputLanes" : [ "DevRandomRecordSource_01OutputLane14902452057870" ],
+    "inputLanes" : [ "DevRandomRecordSource_01OutputLane14902822273780" ],
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   } ],
@@ -355,15 +355,15 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "name" : "e15707e8-4feb-4df5-b6f1-71faf6bbb251",
-    "title" : "Random",
+    "name" : "4b999a4c-8e66-4487-b57c-1268e6ab7d4c",
+    "title" : "Data Extractor Pipeline",
     "description" : "",
-    "created" : 1490245201843,
-    "lastModified" : 1490245241021,
-    "creator" : "admin",
-    "lastModifier" : "admin",
+    "created" : 1490282223879,
+    "lastModified" : 1490282266413,
+    "creator" : "demo@demo",
+    "lastModifier" : "demo@demo",
     "lastRev" : "0",
-    "uuid" : "d28e1704-207b-40fa-b578-406dc23eb731",
+    "uuid" : "f7f91d3b-f0e2-4eb5-893b-7a8332a66f14",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
@@ -373,11 +373,11 @@
     "labels" : [ ]
   },
   "statsAggregatorStage" : null,
+  "previewable" : true,
   "issues" : {
     "pipelineIssues" : [ ],
     "stageIssues" : { },
     "issueCount" : 0
   },
-  "previewable" : true,
   "valid" : true
 }

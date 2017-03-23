@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/streamsets/dataextractor/container/common"
-	"io/ioutil"
 	"net/http"
 	"runtime"
 )
@@ -27,7 +26,6 @@ type RegistrationData struct {
 }
 
 func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo *common.RuntimeInfo) {
-	fmt.Println(dpmConfig)
 	if dpmConfig.Enabled && dpmConfig.AppAuthToken != "" {
 		attributes := Attributes{
 			BaseHttpUrl:  runtimeInfo.HttpUrl,
@@ -67,8 +65,6 @@ func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo 
 		if resp.StatusCode != 200 {
 			panic("DPM Registration failed")
 		}
-		body, _ := ioutil.ReadAll(resp.Body)
-		fmt.Println("response Body:", string(body))
 		runtimeInfo.DPMEnabled = true
 
 		// TODO: Fix Events
