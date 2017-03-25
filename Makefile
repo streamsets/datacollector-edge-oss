@@ -12,7 +12,8 @@ TEST=go test
 
 DEPENDENCIES := github.com/hpcloud/tail/... \
     github.com/BurntSushi/toml \
-    github.com/satori/go.uuid
+    github.com/satori/go.uuid \
+    github.com/gorilla/websocket
 
 # Sources and Targets
 EXECUTABLES :=dist/bin/$(BINARY_NAME)

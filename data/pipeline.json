@@ -1,8 +1,8 @@
 {
   "schemaVersion" : 2,
   "version" : 5,
-  "uuid" : "f7f91d3b-f0e2-4eb5-893b-7a8332a66f14",
-  "title" : "Data Extractor Pipeline",
+  "uuid" : "c28a5e51-8d48-4a9e-afeb-0da1492b3cdc",
+  "title" : "WebSocket Client",
   "description" : "",
   "configuration" : [ {
     "name" : "executionMode",
@@ -96,12 +96,12 @@
       "stageType" : "SOURCE"
     },
     "inputLanes" : [ ],
-    "outputLanes" : [ "DevRandomRecordSource_01OutputLane14902822273780" ],
+    "outputLanes" : [ "DevRandomRecordSource_01OutputLane14903999013640" ],
     "eventLanes" : [ ]
   }, {
-    "instanceName" : "HTTPClient_01",
+    "instanceName" : "WebSocketClient_01",
     "library" : "streamsets-datacollector-basic-lib",
-    "stageName" : "com_streamsets_pipeline_stage_destination_http_HttpClientDTarget",
+    "stageName" : "com_streamsets_pipeline_stage_destination_websocket_WebSocketDTarget",
     "stageVersion" : "1",
     "configuration" : [ {
       "name" : "conf.dataGeneratorFormatConfig.charset",
@@ -132,7 +132,7 @@
       "value" : "MULTIPLE_OBJECTS"
     }, {
       "name" : "conf.dataGeneratorFormatConfig.textFieldPath",
-      "value" : "/text"
+      "value" : "/f1"
     }, {
       "name" : "conf.dataGeneratorFormatConfig.textRecordSeparator",
       "value" : "\\n"
@@ -198,121 +198,13 @@
       "value" : "JSON"
     }, {
       "name" : "conf.resourceUrl",
-      "value" : "http://localhost:8000"
+      "value" : "ws://localhost:8080"
     }, {
       "name" : "conf.headers",
       "value" : [ {
         "key" : "X-SDC-APPLICATION-ID",
-        "value" : "dataextractor"
+        "value" : "test"
       } ]
-    }, {
-      "name" : "conf.httpMethod",
-      "value" : "POST"
-    }, {
-      "name" : "conf.methodExpression",
-      "value" : null
-    }, {
-      "name" : "conf.client.transferEncoding",
-      "value" : "CHUNKED"
-    }, {
-      "name" : "conf.client.connectTimeoutMillis",
-      "value" : 0
-    }, {
-      "name" : "conf.client.readTimeoutMillis",
-      "value" : 0
-    }, {
-      "name" : "conf.client.numThreads",
-      "value" : 1
-    }, {
-      "name" : "conf.client.authType",
-      "value" : "NONE"
-    }, {
-      "name" : "conf.client.useOAuth2",
-      "value" : false
-    }, {
-      "name" : "conf.client.oauth.consumerKey",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth.consumerSecret",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth.token",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth.tokenSecret",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth2.credentialsGrantType",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth2.tokenUrl",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth2.clientId",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth2.clientSecret",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth2.username",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth2.password",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth2.resourceOwnerClientId",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth2.resourceOwnerClientSecret",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth2.algorithm",
-      "value" : "NONE"
-    }, {
-      "name" : "conf.client.oauth2.key",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth2.jwtClaims",
-      "value" : null
-    }, {
-      "name" : "conf.client.oauth2.transferEncoding",
-      "value" : "BUFFERED"
-    }, {
-      "name" : "conf.client.oauth2.additionalValues",
-      "value" : [ ]
-    }, {
-      "name" : "conf.client.basicAuth.username",
-      "value" : null
-    }, {
-      "name" : "conf.client.basicAuth.password",
-      "value" : null
-    }, {
-      "name" : "conf.client.useProxy",
-      "value" : false
-    }, {
-      "name" : "conf.client.proxy.uri",
-      "value" : null
-    }, {
-      "name" : "conf.client.proxy.username",
-      "value" : null
-    }, {
-      "name" : "conf.client.proxy.password",
-      "value" : null
-    }, {
-      "name" : "conf.client.sslConfig.trustStorePath",
-      "value" : null
-    }, {
-      "name" : "conf.client.sslConfig.trustStorePassword",
-      "value" : null
-    }, {
-      "name" : "conf.client.sslConfig.keyStorePath",
-      "value" : null
-    }, {
-      "name" : "conf.client.sslConfig.keyStorePassword",
-      "value" : null
-    }, {
-      "name" : "conf.rateLimit",
-      "value" : 0
     }, {
       "name" : "conf.maxRequestCompletionSecs",
       "value" : 60
@@ -328,12 +220,12 @@
     } ],
     "uiInfo" : {
       "description" : "",
-      "label" : "HTTP Client 1",
+      "label" : "WebSocket Client 1",
       "xPos" : 280,
       "yPos" : 50,
       "stageType" : "TARGET"
     },
-    "inputLanes" : [ "DevRandomRecordSource_01OutputLane14902822273780" ],
+    "inputLanes" : [ "DevRandomRecordSource_01OutputLane14903999013640" ],
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   } ],
@@ -346,7 +238,7 @@
     "uiInfo" : {
       "description" : "",
       "label" : "Error Records - Discard",
-      "xPos" : 500,
+      "xPos" : 280,
       "yPos" : 50,
       "stageType" : "TARGET"
     },
@@ -355,15 +247,15 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "name" : "4b999a4c-8e66-4487-b57c-1268e6ab7d4c",
-    "title" : "Data Extractor Pipeline",
+    "name" : "ecb0cf23-ad37-4f2b-8249-3c2a65bdcdef",
+    "title" : "WebSocket Client",
     "description" : "",
-    "created" : 1490282223879,
-    "lastModified" : 1490282266413,
-    "creator" : "demo@demo",
-    "lastModifier" : "demo@demo",
+    "created" : 1490368501914,
+    "lastModified" : 1490401174651,
+    "creator" : "admin",
+    "lastModifier" : "admin",
     "lastRev" : "0",
-    "uuid" : "f7f91d3b-f0e2-4eb5-893b-7a8332a66f14",
+    "uuid" : "c28a5e51-8d48-4a9e-afeb-0da1492b3cdc",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
@@ -373,11 +265,11 @@
     "labels" : [ ]
   },
   "statsAggregatorStage" : null,
-  "previewable" : true,
   "issues" : {
     "pipelineIssues" : [ ],
     "stageIssues" : { },
     "issueCount" : 0
   },
+  "previewable" : true,
   "valid" : true
 }
