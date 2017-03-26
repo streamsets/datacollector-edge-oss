@@ -11,7 +11,7 @@ import (
 
 type DevRandom struct {
 	fields []string
-	delay float64
+	delay  float64
 }
 
 func (d *DevRandom) Init(stageConfig common.StageConfiguration) {

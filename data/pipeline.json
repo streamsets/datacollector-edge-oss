@@ -1,8 +1,8 @@
 {
   "schemaVersion" : 2,
   "version" : 5,
-  "uuid" : "c28a5e51-8d48-4a9e-afeb-0da1492b3cdc",
-  "title" : "WebSocket Client",
+  "uuid" : "a5c558c7-82d2-4291-8edf-d741e4c3a4dc",
+  "title" : "MQTT Client Publisher",
   "description" : "",
   "configuration" : [ {
     "name" : "executionMode",
@@ -91,19 +91,34 @@
     "uiInfo" : {
       "description" : "",
       "label" : "Dev Random Record Source 1",
-      "xPos" : 60,
-      "yPos" : 50,
+      "xPos" : 56,
+      "yPos" : 49,
       "stageType" : "SOURCE"
     },
     "inputLanes" : [ ],
-    "outputLanes" : [ "DevRandomRecordSource_01OutputLane14903999013640" ],
+    "outputLanes" : [ "DevRandomRecordSource_01OutputLane14905101279190" ],
     "eventLanes" : [ ]
   }, {
-    "instanceName" : "WebSocketClient_01",
+    "instanceName" : "MQTTClient_01",
     "library" : "streamsets-datacollector-basic-lib",
-    "stageName" : "com_streamsets_pipeline_stage_destination_websocket_WebSocketDTarget",
+    "stageName" : "com_streamsets_pipeline_stage_destination_mqtt_MqttClientDTarget",
     "stageVersion" : "1",
     "configuration" : [ {
+      "name" : "conf.brokerUrl",
+      "value" : "tcp://localhost:1883"
+    }, {
+      "name" : "conf.clientId",
+      "value" : "publisher"
+    }, {
+      "name" : "conf.topic",
+      "value" : "test"
+    }, {
+      "name" : "conf.qos",
+      "value" : 0
+    }, {
+      "name" : "conf.dataFormat",
+      "value" : "JSON"
+    }, {
       "name" : "conf.dataGeneratorFormatConfig.charset",
       "value" : "UTF-8"
     }, {
@@ -132,7 +147,7 @@
       "value" : "MULTIPLE_OBJECTS"
     }, {
       "name" : "conf.dataGeneratorFormatConfig.textFieldPath",
-      "value" : "/f1"
+      "value" : "/text"
     }, {
       "name" : "conf.dataGeneratorFormatConfig.textRecordSeparator",
       "value" : "\\n"
@@ -194,21 +209,6 @@
       "name" : "conf.dataGeneratorFormatConfig.checksumAlgorithm",
       "value" : "MD5"
     }, {
-      "name" : "conf.dataFormat",
-      "value" : "JSON"
-    }, {
-      "name" : "conf.resourceUrl",
-      "value" : "ws://localhost:8080"
-    }, {
-      "name" : "conf.headers",
-      "value" : [ {
-        "key" : "X-SDC-APPLICATION-ID",
-        "value" : "test"
-      } ]
-    }, {
-      "name" : "conf.maxRequestCompletionSecs",
-      "value" : 60
-    }, {
       "name" : "stageOnRecordError",
       "value" : "TO_ERROR"
     }, {
@@ -220,12 +220,12 @@
     } ],
     "uiInfo" : {
       "description" : "",
-      "label" : "WebSocket Client 1",
+      "label" : "MQTT Publisher",
       "xPos" : 280,
       "yPos" : 50,
       "stageType" : "TARGET"
     },
-    "inputLanes" : [ "DevRandomRecordSource_01OutputLane14903999013640" ],
+    "inputLanes" : [ "DevRandomRecordSource_01OutputLane14905101279190" ],
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   } ],
@@ -238,7 +238,7 @@
     "uiInfo" : {
       "description" : "",
       "label" : "Error Records - Discard",
-      "xPos" : 280,
+      "xPos" : 500,
       "yPos" : 50,
       "stageType" : "TARGET"
     },
@@ -247,15 +247,15 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "name" : "ecb0cf23-ad37-4f2b-8249-3c2a65bdcdef",
-    "title" : "WebSocket Client",
+    "name" : "8fea961b-dcf5-40e8-a02b-e81276810fc9",
+    "title" : "MQTT Client Publisher",
     "description" : "",
-    "created" : 1490368501914,
-    "lastModified" : 1490401174651,
+    "created" : 1490496670442,
+    "lastModified" : 1490510133336,
     "creator" : "admin",
     "lastModifier" : "admin",
     "lastRev" : "0",
-    "uuid" : "c28a5e51-8d48-4a9e-afeb-0da1492b3cdc",
+    "uuid" : "a5c558c7-82d2-4291-8edf-d741e4c3a4dc",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
@@ -270,6 +270,6 @@
     "stageIssues" : { },
     "issueCount" : 0
   },
-  "previewable" : true,
-  "valid" : true
+  "valid" : true,
+  "previewable" : true
 }

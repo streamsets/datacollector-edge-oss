@@ -1,12 +1,12 @@
 package websocket
 
 import (
+	"encoding/json"
 	"fmt"
-	"log"
+	"github.com/gorilla/websocket"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
-	"github.com/gorilla/websocket"
-	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -30,7 +30,6 @@ func (w *WebSocketClientDestination) Init(stageConfig common.StageConfiguration)
 
 func (w *WebSocketClientDestination) Write(batch api.Batch) error {
 	fmt.Println("WebSocketClientDestination write method = " + w.resourceUrl)
-
 
 	var requestHeader = http.Header{}
 	if w.headers != nil {

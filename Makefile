@@ -13,7 +13,8 @@ TEST=go test
 DEPENDENCIES := github.com/hpcloud/tail/... \
     github.com/BurntSushi/toml \
     github.com/satori/go.uuid \
-    github.com/gorilla/websocket
+    github.com/gorilla/websocket \
+    github.com/eclipse/paho.mqtt.golang
 
 # Sources and Targets
 EXECUTABLES :=dist/bin/$(BINARY_NAME)
