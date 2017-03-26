@@ -1,12 +1,10 @@
 package api
 
+// Destination is a Data Extractor destination stage. Destination stages receive records from origin
+// stages and write them to an external system.
+//
+// Write method, when running a pipeline, the Data Extractor calls this method from the Destination stage to write
+// a batch of records to an external system.
 type Destination interface {
-	/**
-	 * When running a pipeline, the Data Extractor calls this method from the <code>Destination</code> stage to write a batch
-	 * of records to an external system.
-	 * <p/>
-	 * @param batch the batch of record to write to the external system.
-	 * @throws StageException if the <code>Destination</code> had an error while writing to the external system.
-	 */
 	Write(batch Batch) error
 }
