@@ -1,10 +1,10 @@
 package dataextractor
 
 import (
-	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/streamsets/dataextractor/container/dpm"
 	"github.com/streamsets/dataextractor/container/http"
+	"log"
 )
 
 // Config represents the configuration format for the StreamSets Data Extractor binary.
@@ -24,7 +24,7 @@ func NewConfig() *Config {
 // FromTomlFile loads the config from a TOML file.
 func (c *Config) FromTomlFile(fPath string) error {
 	if _, err := toml.DecodeFile(fPath, c); err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		return err
 	}
 	return nil

@@ -16,7 +16,6 @@ const (
 )
 
 type DataExtractorMain struct {
-	logger        *log.Logger
 	config        *Config
 	buildInfo     *common.BuildInfo
 	runtimeInfo   *common.RuntimeInfo
@@ -31,14 +30,15 @@ func DoMain() {
 
 func newDataExtractor() (*DataExtractorMain, error) {
 	loggerFile, _ := os.OpenFile(DefaultLogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	logger := log.New(loggerFile, "", log.Ldate|log.Ltime|log.Lshortfile)
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	log.SetOutput(loggerFile)
 
 	ex, err := os.Executable()
 	if err != nil {
 		panic(err)
 	}
 	exPath := path.Dir(ex)
-	logger.Println("Current Folder: ", exPath)
+	log.Println("Current Folder: ", exPath)
 
 	config := NewConfig()
 	config.FromTomlFile(DefaultConfigFilePath)
@@ -47,13 +47,12 @@ func newDataExtractor() (*DataExtractorMain, error) {
 	var httpUrl = "http://" + hostName + config.Http.BindAddress
 
 	buildInfo, _ := common.NewBuildInfo()
-	runtimeInfo, _ := common.NewRuntimeInfo(logger, httpUrl)
-	pipelineManager, _ := manager.New(logger)
-	webServerTask, _ := http.NewWebServerTask(logger, config.Http, buildInfo, pipelineManager)
+	runtimeInfo, _ := common.NewRuntimeInfo(httpUrl)
+	pipelineManager, _ := manager.New()
+	webServerTask, _ := http.NewWebServerTask(config.Http, buildInfo, pipelineManager)
 	dpm.RegisterWithDPM(config.DPM, buildInfo, runtimeInfo)
 
 	return &DataExtractorMain{
-		logger:        logger,
 		config:        config,
 		buildInfo:     buildInfo,
 		runtimeInfo:   runtimeInfo,

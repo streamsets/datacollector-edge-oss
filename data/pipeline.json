@@ -1,8 +1,9 @@
 {
-  "schemaVersion" : 2,
+  "schemaVersion" : 3,
   "version" : 5,
-  "uuid" : "a5c558c7-82d2-4291-8edf-d741e4c3a4dc",
-  "title" : "MQTT Client Publisher",
+  "pipelineId" : "DataExtractorb162f4b2-d5ad-4839-afb4-919ad835feb1",
+  "uuid" : "88007b3e-d5a7-4ffa-b909-c3287f3b92ab",
+  "title" : "Data Extractor",
   "description" : "",
   "configuration" : [ {
     "name" : "executionMode",
@@ -91,34 +92,19 @@
     "uiInfo" : {
       "description" : "",
       "label" : "Dev Random Record Source 1",
-      "xPos" : 56,
-      "yPos" : 49,
+      "xPos" : 60,
+      "yPos" : 50,
       "stageType" : "SOURCE"
     },
     "inputLanes" : [ ],
-    "outputLanes" : [ "DevRandomRecordSource_01OutputLane14905101279190" ],
+    "outputLanes" : [ "DevRandomRecordSource_01OutputLane14911083224970" ],
     "eventLanes" : [ ]
   }, {
-    "instanceName" : "MQTTClient_01",
+    "instanceName" : "HTTPClient_01",
     "library" : "streamsets-datacollector-basic-lib",
-    "stageName" : "com_streamsets_pipeline_stage_destination_mqtt_MqttClientDTarget",
+    "stageName" : "com_streamsets_pipeline_stage_destination_http_HttpClientDTarget",
     "stageVersion" : "1",
     "configuration" : [ {
-      "name" : "conf.brokerUrl",
-      "value" : "tcp://localhost:1883"
-    }, {
-      "name" : "conf.clientId",
-      "value" : "publisher"
-    }, {
-      "name" : "conf.topic",
-      "value" : "test"
-    }, {
-      "name" : "conf.qos",
-      "value" : 0
-    }, {
-      "name" : "conf.dataFormat",
-      "value" : "JSON"
-    }, {
       "name" : "conf.dataGeneratorFormatConfig.charset",
       "value" : "UTF-8"
     }, {
@@ -209,6 +195,129 @@
       "name" : "conf.dataGeneratorFormatConfig.checksumAlgorithm",
       "value" : "MD5"
     }, {
+      "name" : "conf.dataFormat",
+      "value" : "JSON"
+    }, {
+      "name" : "conf.resourceUrl",
+      "value" : "http://192.168.1.253:8000"
+    }, {
+      "name" : "conf.headers",
+      "value" : [ {
+        "key" : "X-SDC-APPLICATION-ID",
+        "value" : "test"
+      } ]
+    }, {
+      "name" : "conf.httpMethod",
+      "value" : "POST"
+    }, {
+      "name" : "conf.methodExpression",
+      "value" : null
+    }, {
+      "name" : "conf.client.transferEncoding",
+      "value" : "CHUNKED"
+    }, {
+      "name" : "conf.client.connectTimeoutMillis",
+      "value" : 0
+    }, {
+      "name" : "conf.client.readTimeoutMillis",
+      "value" : 0
+    }, {
+      "name" : "conf.client.numThreads",
+      "value" : 1
+    }, {
+      "name" : "conf.client.authType",
+      "value" : "NONE"
+    }, {
+      "name" : "conf.client.useOAuth2",
+      "value" : false
+    }, {
+      "name" : "conf.client.oauth.consumerKey",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth.consumerSecret",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth.token",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth.tokenSecret",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth2.credentialsGrantType",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth2.tokenUrl",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth2.clientId",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth2.clientSecret",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth2.username",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth2.password",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth2.resourceOwnerClientId",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth2.resourceOwnerClientSecret",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth2.algorithm",
+      "value" : "NONE"
+    }, {
+      "name" : "conf.client.oauth2.key",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth2.jwtClaims",
+      "value" : null
+    }, {
+      "name" : "conf.client.oauth2.transferEncoding",
+      "value" : "BUFFERED"
+    }, {
+      "name" : "conf.client.oauth2.additionalValues",
+      "value" : [ ]
+    }, {
+      "name" : "conf.client.basicAuth.username",
+      "value" : null
+    }, {
+      "name" : "conf.client.basicAuth.password",
+      "value" : null
+    }, {
+      "name" : "conf.client.useProxy",
+      "value" : false
+    }, {
+      "name" : "conf.client.proxy.uri",
+      "value" : null
+    }, {
+      "name" : "conf.client.proxy.username",
+      "value" : null
+    }, {
+      "name" : "conf.client.proxy.password",
+      "value" : null
+    }, {
+      "name" : "conf.client.sslConfig.trustStorePath",
+      "value" : null
+    }, {
+      "name" : "conf.client.sslConfig.trustStorePassword",
+      "value" : null
+    }, {
+      "name" : "conf.client.sslConfig.keyStorePath",
+      "value" : null
+    }, {
+      "name" : "conf.client.sslConfig.keyStorePassword",
+      "value" : null
+    }, {
+      "name" : "conf.rateLimit",
+      "value" : 0
+    }, {
+      "name" : "conf.maxRequestCompletionSecs",
+      "value" : 60
+    }, {
       "name" : "stageOnRecordError",
       "value" : "TO_ERROR"
     }, {
@@ -220,12 +329,12 @@
     } ],
     "uiInfo" : {
       "description" : "",
-      "label" : "MQTT Publisher",
+      "label" : "HTTP Client 1",
       "xPos" : 280,
       "yPos" : 50,
       "stageType" : "TARGET"
     },
-    "inputLanes" : [ "DevRandomRecordSource_01OutputLane14905101279190" ],
+    "inputLanes" : [ "DevRandomRecordSource_01OutputLane14911083224970" ],
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   } ],
@@ -238,7 +347,7 @@
     "uiInfo" : {
       "description" : "",
       "label" : "Error Records - Discard",
-      "xPos" : 500,
+      "xPos" : 720,
       "yPos" : 50,
       "stageType" : "TARGET"
     },
@@ -247,15 +356,16 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "name" : "8fea961b-dcf5-40e8-a02b-e81276810fc9",
-    "title" : "MQTT Client Publisher",
+    "name" : "DataExtractorb162f4b2-d5ad-4839-afb4-919ad835feb1",
+    "pipelineId" : "DataExtractorb162f4b2-d5ad-4839-afb4-919ad835feb1",
+    "title" : "Data Extractor",
     "description" : "",
-    "created" : 1490496670442,
-    "lastModified" : 1490510133336,
+    "created" : 1491108318031,
+    "lastModified" : 1491108389030,
     "creator" : "admin",
     "lastModifier" : "admin",
     "lastRev" : "0",
-    "uuid" : "a5c558c7-82d2-4291-8edf-d741e4c3a4dc",
+    "uuid" : "88007b3e-d5a7-4ffa-b909-c3287f3b92ab",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
@@ -270,6 +380,6 @@
     "stageIssues" : { },
     "issueCount" : 0
   },
-  "valid" : true,
-  "previewable" : true
+  "previewable" : true,
+  "valid" : true
 }

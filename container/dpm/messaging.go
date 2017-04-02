@@ -3,9 +3,9 @@ package dpm
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/streamsets/dataextractor/container/common"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -38,7 +38,6 @@ type SDCInfoEvent struct {
 }
 
 func SendEvent(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo *common.RuntimeInfo) {
-	fmt.Println(dpmConfig)
 	if dpmConfig.Enabled && dpmConfig.AppAuthToken != "" {
 
 		sdcInfoEvent := SDCInfoEvent{
@@ -60,13 +59,13 @@ func SendEvent(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo *commo
 			OrgId:        "",
 		}
 
-		fmt.Println("Client Event JSON:")
+		log.Println("Client Event JSON:")
 		jsonValue, err := json.Marshal([]ClientEvent{clientEvent})
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 
-		fmt.Println(string(jsonValue))
+		log.Println(string(jsonValue))
 
 		var eventsUrl = dpmConfig.BaseUrl + "/messaging/rest/v1/events"
 
@@ -83,12 +82,12 @@ func SendEvent(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo *commo
 		}
 		defer resp.Body.Close()
 
-		fmt.Println("DPM Event Status:", resp.Status)
+		log.Println("DPM Event Status:", resp.Status)
 		if resp.StatusCode != 200 {
 			panic("DPM Send event failed")
 		}
 		body, _ := ioutil.ReadAll(resp.Body)
-		fmt.Println("response Body:", string(body))
+		log.Println("response Body:", string(body))
 		runtimeInfo.DPMEnabled = true
 	} else {
 		runtimeInfo.DPMEnabled = false

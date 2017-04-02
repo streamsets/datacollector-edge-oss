@@ -10,7 +10,6 @@ import (
 )
 
 type WebServerTask struct {
-	logger    *log.Logger
 	config    Config
 	buildInfo *common.BuildInfo
 	manager   *manager.PipelineManager
@@ -80,6 +79,7 @@ func (webServerTask *WebServerTask) statusHandler(w http.ResponseWriter, r *http
 
 func (webServerTask *WebServerTask) Run() {
 	fmt.Println("Running on URI : http://localhost" + webServerTask.config.BindAddress)
+	log.Println("Running on URI : http://localhost" + webServerTask.config.BindAddress)
 	http.HandleFunc("/", webServerTask.homeHandler)
 	http.HandleFunc("/rest/v1/pipeline/start", webServerTask.startHandler)
 	http.HandleFunc("/rest/v1/pipeline/stop", webServerTask.stopHandler)
@@ -89,12 +89,11 @@ func (webServerTask *WebServerTask) Run() {
 }
 
 func NewWebServerTask(
-	logger *log.Logger,
 	config Config,
 	buildInfo *common.BuildInfo,
 	manager *manager.PipelineManager,
 ) (*WebServerTask, error) {
-	webServerTask := WebServerTask{logger: logger, config: config, buildInfo: buildInfo, manager: manager}
+	webServerTask := WebServerTask{config: config, buildInfo: buildInfo, manager: manager}
 	err := webServerTask.Init()
 	if err != nil {
 		return nil, err

@@ -2,7 +2,6 @@ package api
 
 import "github.com/streamsets/dataextractor/container/common"
 
-
 // Stage is the base interface for Data Extractor stages implementations defining their common context and lifecycle.
 //
 // Init method initializes the stage.

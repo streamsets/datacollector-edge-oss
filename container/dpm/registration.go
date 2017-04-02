@@ -3,8 +3,8 @@ package dpm
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/streamsets/dataextractor/container/common"
+	"log"
 	"net/http"
 	"runtime"
 )
@@ -45,7 +45,7 @@ func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo 
 
 		jsonValue, err := json.Marshal(registrationData)
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 
 		var registrationUrl = dpmConfig.BaseUrl + "/security/public-rest/v1/components/registration"
@@ -61,7 +61,7 @@ func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo 
 		}
 		defer resp.Body.Close()
 
-		fmt.Println("DPM Registration Status:", resp.Status)
+		log.Println("DPM Registration Status:", resp.Status)
 		if resp.StatusCode != 200 {
 			panic("DPM Registration failed")
 		}

@@ -1,10 +1,10 @@
 package runner
 
 import (
-	"fmt"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/creation"
 	"github.com/streamsets/dataextractor/container/validation"
+	"log"
 )
 
 type Pipeline struct {
@@ -19,7 +19,6 @@ type Pipeline struct {
 
 func (p *Pipeline) Init() []validation.Issue {
 	var issues []validation.Issue
-	fmt.Println("Pipeline Init()")
 	for _, stagePipe := range p.pipes {
 		stageIssues := stagePipe.Init()
 		issues = append(issues, stageIssues...)
@@ -29,7 +28,7 @@ func (p *Pipeline) Init() []validation.Issue {
 }
 
 func (p *Pipeline) Run() {
-	fmt.Println("Pipeline Run()")
+	log.Println("Pipeline Run()")
 
 	for !p.offsetTracker.IsFinished() && !p.stop {
 		p.runBatch()
@@ -50,7 +49,7 @@ func (p *Pipeline) runBatch() {
 }
 
 func (p *Pipeline) Stop() {
-	fmt.Println("Pipeline Stop()")
+	log.Println("Pipeline Stop()")
 	p.stop = true
 }
 

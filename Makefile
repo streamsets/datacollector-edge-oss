@@ -41,6 +41,8 @@ dist/bin/$(BINARY_NAME): main.go $(DEPENDENCIES_DIR)
 
 $(EXECUTABLES):
 	$(GO) build $(LDFLAGS) -o $@ $<
+	# for Raspberry PI Zero W
+	# GOOS=linux GOARCH=arm GOARM=5 $(GO) build $(LDFLAGS) -o $@ $<
 	@cp -n -R $(DIR)/etc/ dist/etc 2>/dev/null || :
 	@cp -n -R $(DIR)/data/ dist/data 2>/dev/null || :
 	@mkdir -p dist/logs

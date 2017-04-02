@@ -2,10 +2,10 @@ package mqtt
 
 import (
 	"encoding/json"
-	"fmt"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
+	"log"
 )
 
 const DEBUG = false
@@ -19,7 +19,7 @@ type MqttClientDestination struct {
 }
 
 func (m *MqttClientDestination) Init(stageConfig common.StageConfiguration) {
-	fmt.Println("HttpClientDestination Init method")
+	log.Println("MqttClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.brokerUrl" {
 			m.brokerUrl = config.Value.(string)
@@ -50,7 +50,7 @@ func (m *MqttClientDestination) Write(batch api.Batch) error {
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}
-	fmt.Println("MqttClientDestination write method")
+	log.Println("MqttClientDestination write method")
 	for _, record := range batch.GetRecords() {
 		m.sendRecordToSDC(record.Value, client)
 	}
@@ -70,8 +70,8 @@ func (h *MqttClientDestination) sendRecordToSDC(recordValue interface{}, client 
 
 //define a function for the default message handler
 func (m *MqttClientDestination) MessageHandler(client MQTT.Client, msg MQTT.Message) {
-	fmt.Printf("TOPIC: %s\n", msg.Topic())
-	fmt.Printf("MSG: %s\n", msg.Payload())
+	log.Printf("TOPIC: %s\n", msg.Topic())
+	log.Printf("MSG: %s\n", msg.Payload())
 }
 
 func (h *MqttClientDestination) Destroy() {

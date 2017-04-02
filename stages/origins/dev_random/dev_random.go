@@ -1,7 +1,6 @@
 package dev_random
 
 import (
-	"fmt"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
 	"math/rand"
@@ -25,7 +24,6 @@ func (d *DevRandom) Init(stageConfig common.StageConfiguration) {
 }
 
 func (d *DevRandom) Destroy() {
-	fmt.Println("DevRandom Destroy method")
 }
 
 func (d *DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {

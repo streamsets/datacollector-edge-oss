@@ -15,7 +15,6 @@ type RuntimeInfo struct {
 	ID         string
 	HttpUrl    string
 	DPMEnabled bool
-	logger     *log.Logger
 }
 
 func (runtimeInfo *RuntimeInfo) init() error {
@@ -49,8 +48,8 @@ func check(e error) {
 	}
 }
 
-func NewRuntimeInfo(logger *log.Logger, httpUrl string) (*RuntimeInfo, error) {
-	runtimeInfo := RuntimeInfo{logger: logger, HttpUrl: httpUrl}
+func NewRuntimeInfo(httpUrl string) (*RuntimeInfo, error) {
+	runtimeInfo := RuntimeInfo{HttpUrl: httpUrl}
 	err := runtimeInfo.init()
 	if err != nil {
 		return nil, err

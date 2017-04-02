@@ -2,7 +2,7 @@ package api
 
 // Origin is Data Extractor origin stage. Origin stages consume data from an external system
 // creating records that can be processed by processor or destination stages.
-// 
+//
 // Produce method - When running a pipeline, the Data Extractor calls this method from the Origin stage to obtain
 // a batch of records for processing.
 // Origin stages should not block indefinitely within this method if there is no data. They should

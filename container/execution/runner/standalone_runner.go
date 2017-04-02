@@ -6,13 +6,11 @@ import (
 	"github.com/streamsets/dataextractor/container/creation"
 	"github.com/streamsets/dataextractor/container/execution/store"
 	"github.com/streamsets/dataextractor/container/util"
-	"log"
 	"time"
 )
 
 type StandaloneRunner struct {
 	pipelineId       string
-	logger           *log.Logger
 	validTransitions map[string][]string
 	sourceOffset     *common.SourceOffset
 	pipelineState    *common.PipelineState
@@ -134,8 +132,8 @@ func (standaloneRunner *StandaloneRunner) checkState(toState string) error {
 	return nil
 }
 
-func NewStandaloneRunner(logger *log.Logger) (*StandaloneRunner, error) {
-	standaloneRunner := StandaloneRunner{logger: logger}
+func NewStandaloneRunner() (*StandaloneRunner, error) {
+	standaloneRunner := StandaloneRunner{}
 	standaloneRunner.init()
 	return &standaloneRunner, nil
 }

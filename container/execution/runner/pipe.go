@@ -1,8 +1,8 @@
 package runner
 
 import (
-	"fmt"
 	"github.com/streamsets/dataextractor/container/validation"
+	"log"
 )
 
 const BATCH_SIZE = 10
@@ -21,13 +21,13 @@ type StagePipe struct {
 }
 
 func (s *StagePipe) Init() []validation.Issue {
-	fmt.Println("Stage Pipe Init")
+	log.Println("Stage Pipe Init")
 	issues := s.Stage.Init()
 	return issues
 }
 
 func (s *StagePipe) Process(pipeBatch *FullPipeBatch) {
-	fmt.Println("Processing Stage - " + s.Stage.config.InstanceName)
+	log.Println("Processing Stage - " + s.Stage.config.InstanceName)
 	batchMaker := pipeBatch.StartStage(*s)
 	batchImpl := pipeBatch.GetBatch(*s)
 	s.Stage.Execute("previousOffset", BATCH_SIZE, batchImpl, batchMaker)

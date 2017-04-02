@@ -2,7 +2,6 @@ package websocket
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
@@ -16,7 +15,7 @@ type WebSocketClientDestination struct {
 }
 
 func (w *WebSocketClientDestination) Init(stageConfig common.StageConfiguration) {
-	fmt.Println("HttpClientDestination Init method")
+	log.Println("WebSocketClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.resourceUrl" {
 			w.resourceUrl = config.Value.(string)
@@ -29,7 +28,7 @@ func (w *WebSocketClientDestination) Init(stageConfig common.StageConfiguration)
 }
 
 func (w *WebSocketClientDestination) Write(batch api.Batch) error {
-	fmt.Println("WebSocketClientDestination write method = " + w.resourceUrl)
+	log.Println("WebSocketClientDestination write method = " + w.resourceUrl)
 
 	var requestHeader = http.Header{}
 	if w.headers != nil {
