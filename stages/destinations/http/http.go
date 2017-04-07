@@ -13,8 +13,9 @@ import (
 const DEBUG = false
 
 type HttpClientDestination struct {
-	resourceUrl string
-	headers     []interface{}
+	resourceUrl           string
+	headers               []interface{}
+	singleRequestPerBatch bool
 }
 
 func (h *HttpClientDestination) Init(stageConfig common.StageConfiguration) {
@@ -27,29 +28,34 @@ func (h *HttpClientDestination) Init(stageConfig common.StageConfiguration) {
 		if config.Name == "conf.headers" {
 			h.headers = config.Value.([]interface{})
 		}
+
+		if config.Name == "conf.singleRequestPerBatch" {
+			h.singleRequestPerBatch = config.Value.(bool)
+		}
 	}
 }
 
 func (h *HttpClientDestination) Write(batch api.Batch) error {
 	log.Println("HttpClientDestination write method")
+	var batchJSONValue []byte
 	for _, record := range batch.GetRecords() {
-		h.sendRecordToSDC(record.Value)
+		jsonValue, err := json.Marshal(record.Value)
+		if err != nil {
+			panic(err)
+		}
+		if h.singleRequestPerBatch {
+			batchJSONValue = append(batchJSONValue, jsonValue...)
+		} else {
+			h.sendToSDC(jsonValue)
+		}
+	}
+	if h.singleRequestPerBatch {
+		h.sendToSDC(batchJSONValue)
 	}
 	return nil
 }
 
-func (h *HttpClientDestination) sendRecordToSDC(recordValue interface{}) {
-	if DEBUG {
-		log.Println("Start sending record")
-		log.Println(recordValue)
-		log.Println("URL:>", h.resourceUrl)
-	}
-
-	jsonValue, err := json.Marshal(recordValue)
-	if err != nil {
-		panic(err)
-	}
-
+func (h *HttpClientDestination) sendToSDC(jsonValue []byte) {
 	req, err := http.NewRequest("POST", h.resourceUrl, bytes.NewBuffer(jsonValue))
 	if h.headers != nil {
 		for _, header := range h.headers {
