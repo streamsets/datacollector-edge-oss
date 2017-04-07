@@ -30,14 +30,12 @@ func NewProductionPipeline(
 	standaloneRunner *StandaloneRunner,
 	pipelineConfiguration common.PipelineConfiguration,
 	runtimeConstants map[string]interface{},
-) *ProductionPipeline {
+) (*ProductionPipeline, error) {
 	var sourceOffsetTracker SourceOffsetTracker
 	sourceOffsetTracker = NewProductionSourceOffsetTracker("pipelineId")
-
-	pipeline := NewPipeline(standaloneRunner, sourceOffsetTracker, runtimeConstants)
-
+	pipeline, err := NewPipeline(standaloneRunner, sourceOffsetTracker, runtimeConstants)
 	return &ProductionPipeline{
 		PipelineConfig: pipelineConfiguration,
 		Pipeline:       pipeline,
-	}
+	}, err
 }

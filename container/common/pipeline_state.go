@@ -19,8 +19,8 @@ const (
 )
 
 type PipelineState struct {
-	Name      string
-	Status    string
-	Message   string
-	TimeStamp time.Time
+	PipelineId string
+	Status     string
+	Message    string
+	TimeStamp  time.Time
 }

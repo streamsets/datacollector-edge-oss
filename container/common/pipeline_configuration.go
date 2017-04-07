@@ -3,9 +3,10 @@ package common
 type PipelineConfiguration struct {
 	SchemaVersion        int                    `json:"schemaVersion"`
 	Version              int                    `json:"version"`
-	UUID                 string                 `json:"uuid"`
+	PipelineId           string                 `json:"pipelineId"`
 	Title                string                 `json:"title"`
 	Description          string                 `json:"description"`
+	UUID                 string                 `json:"uuid"`
 	Configuration        []Config               `json:"configuration"`
 	UiInfo               map[string]interface{} `json:"uiInfo"`
 	Stages               []StageConfiguration   `json:"stages"`
@@ -17,7 +18,7 @@ type PipelineConfiguration struct {
 }
 
 type PipelineInfo struct {
-	Name         string                 `json:"name"`
+	PipelineId   string                 `json:"pipelineId"`
 	Title        string                 `json:"title"`
 	Description  string                 `json:"description"`
 	Created      int64                  `json:"created"`

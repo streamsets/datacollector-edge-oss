@@ -9,17 +9,17 @@ import (
 )
 
 const (
-	DEFAULT_NAME        = "dataextractor"
+	DEFAULT_PIPELINE_ID = "dataextractor"
 	PIPELINE_STATE_FILE = "data/pipelineState.json"
 )
 
 func GetState() (*common.PipelineState, error) {
 	if _, err := os.Stat(PIPELINE_STATE_FILE); os.IsNotExist(err) {
 		pipelineState := &common.PipelineState{
-			Name:      DEFAULT_NAME,
-			Status:    common.EDITED,
-			Message:   "",
-			TimeStamp: time.Now().UTC(),
+			PipelineId: DEFAULT_PIPELINE_ID,
+			Status:     common.EDITED,
+			Message:    "",
+			TimeStamp:  time.Now().UTC(),
 		}
 		err := SaveState(pipelineState)
 		return pipelineState, err

@@ -57,9 +57,13 @@ func NewPipeline(
 	standaloneRunner *StandaloneRunner,
 	sourceOffsetTracker SourceOffsetTracker,
 	runtimeConstants map[string]interface{},
-) *Pipeline {
+) (*Pipeline, error) {
 
-	pipelineBean := creation.NewPipelineBean(standaloneRunner.GetPipelineConfig())
+	pipelineBean, err := creation.NewPipelineBean(standaloneRunner.GetPipelineConfig())
+
+	if err != nil {
+		return nil, err
+	}
 
 	stageRuntimeList := make([]StageRuntime, len(standaloneRunner.pipelineConfig.Stages))
 	pipes := make([]StagePipe, len(standaloneRunner.pipelineConfig.Stages))
@@ -75,5 +79,5 @@ func NewPipeline(
 		pipelineBean:     pipelineBean,
 		pipes:            pipes,
 		offsetTracker:    sourceOffsetTracker,
-	}
+	}, nil
 }

@@ -11,24 +11,34 @@ type PipelineBean struct {
 	StatsAggregatorStage StageBean
 }
 
-func NewPipelineBean(pipelineConfig common.PipelineConfiguration) PipelineBean {
+func NewPipelineBean(pipelineConfig common.PipelineConfiguration) (PipelineBean, error) {
 	var pipelineBean PipelineBean
+	var err error
 
 	pipelineBean.Config = NewPipelineConfigBean(pipelineConfig)
 
 	stageBeans := make([]StageBean, len(pipelineConfig.Stages))
 	for i, stageConfig := range pipelineConfig.Stages {
-		stageBeans[i] = NewStageBean(stageConfig)
+		stageBeans[i], err = NewStageBean(stageConfig)
+		if err != nil {
+			return pipelineBean, err
+		}
 	}
 	pipelineBean.Stages = stageBeans
 
 	if pipelineConfig.ErrorStage.InstanceName != "" {
-		pipelineBean.ErrorStage = NewStageBean(pipelineConfig.ErrorStage)
+		pipelineBean.ErrorStage, err = NewStageBean(pipelineConfig.ErrorStage)
+		if err != nil {
+			return pipelineBean, err
+		}
 	}
 
 	if pipelineConfig.StatsAggregatorStage.InstanceName != "" {
-		pipelineBean.StatsAggregatorStage = NewStageBean(pipelineConfig.StatsAggregatorStage)
+		pipelineBean.StatsAggregatorStage, err = NewStageBean(pipelineConfig.StatsAggregatorStage)
+		if err != nil {
+			return pipelineBean, err
+		}
 	}
 
-	return pipelineBean
+	return pipelineBean, err
 }

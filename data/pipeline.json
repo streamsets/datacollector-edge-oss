@@ -1,10 +1,10 @@
 {
   "schemaVersion" : 3,
-  "version" : 5,
-  "pipelineId" : "DataExtractorb162f4b2-d5ad-4839-afb4-919ad835feb1",
-  "uuid" : "88007b3e-d5a7-4ffa-b909-c3287f3b92ab",
-  "title" : "Data Extractor",
+  "version" : 6,
+  "pipelineId" : "HTTPClientcd809bf3-7e03-4b7f-a8a9-b255f019c28d",
+  "title" : "HTTP Client",
   "description" : "",
+  "uuid" : "b8f8a55f-fea2-4199-8836-91b8f5326f3c",
   "configuration" : [ {
     "name" : "executionMode",
     "value" : "STANDALONE"
@@ -57,6 +57,9 @@
     "name" : "maxRunners",
     "value" : 0
   }, {
+    "name" : "webhookConfigs",
+    "value" : [ ]
+  }, {
     "name" : "statsAggregatorStage",
     "value" : ""
   } ],
@@ -97,7 +100,7 @@
       "stageType" : "SOURCE"
     },
     "inputLanes" : [ ],
-    "outputLanes" : [ "DevRandomRecordSource_01OutputLane14911083224970" ],
+    "outputLanes" : [ "DevRandomRecordSource_01OutputLane14915354344770" ],
     "eventLanes" : [ ]
   }, {
     "instanceName" : "HTTPClient_01",
@@ -199,7 +202,7 @@
       "value" : "JSON"
     }, {
       "name" : "conf.resourceUrl",
-      "value" : "http://192.168.1.253:8000"
+      "value" : "http://localhost:8000"
     }, {
       "name" : "conf.headers",
       "value" : [ {
@@ -318,6 +321,9 @@
       "name" : "conf.maxRequestCompletionSecs",
       "value" : 60
     }, {
+      "name" : "conf.singleRequestPerBatch",
+      "value" : true
+    }, {
       "name" : "stageOnRecordError",
       "value" : "TO_ERROR"
     }, {
@@ -334,7 +340,7 @@
       "yPos" : 50,
       "stageType" : "TARGET"
     },
-    "inputLanes" : [ "DevRandomRecordSource_01OutputLane14911083224970" ],
+    "inputLanes" : [ "DevRandomRecordSource_01OutputLane14915354344770" ],
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   } ],
@@ -356,20 +362,20 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "name" : "DataExtractorb162f4b2-d5ad-4839-afb4-919ad835feb1",
-    "pipelineId" : "DataExtractorb162f4b2-d5ad-4839-afb4-919ad835feb1",
-    "title" : "Data Extractor",
+    "pipelineId" : "HTTPClientcd809bf3-7e03-4b7f-a8a9-b255f019c28d",
+    "title" : "HTTP Client",
     "description" : "",
-    "created" : 1491108318031,
-    "lastModified" : 1491108389030,
+    "created" : 1491535390418,
+    "lastModified" : 1491538585877,
     "creator" : "admin",
     "lastModifier" : "admin",
     "lastRev" : "0",
-    "uuid" : "88007b3e-d5a7-4ffa-b909-c3287f3b92ab",
+    "uuid" : "b8f8a55f-fea2-4199-8836-91b8f5326f3c",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
-    }
+    },
+    "name" : "HTTPClientcd809bf3-7e03-4b7f-a8a9-b255f019c28d"
   },
   "metadata" : {
     "labels" : [ ]

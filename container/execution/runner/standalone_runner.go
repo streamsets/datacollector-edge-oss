@@ -65,11 +65,14 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(pipelineId string) (*com
 		return nil, err
 	}
 
-	standaloneRunner.prodPipeline = NewProductionPipeline(
+	standaloneRunner.prodPipeline, err = NewProductionPipeline(
 		standaloneRunner,
 		standaloneRunner.pipelineConfig,
 		nil,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	go standaloneRunner.prodPipeline.Run()
 

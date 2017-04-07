@@ -12,11 +12,11 @@ type StageBean struct {
 	SystemConfigs StageConfigBean
 }
 
-func NewStageBean(stageConfig common.StageConfiguration) StageBean {
+func NewStageBean(stageConfig common.StageConfiguration) (StageBean, error) {
+	stageInstance, err := stagelibrary.CreateStageInstance(stageConfig.Library, stageConfig.StageName)
 	stageBean := StageBean{}
 	stageBean.Config = stageConfig
-	stageBean.Stage = stagelibrary.CreateStageInstance(stageConfig.Library, stageConfig.StageName)
+	stageBean.Stage = stageInstance
 	stageBean.SystemConfigs = NewStageConfigBean(stageConfig)
-
-	return stageBean
+	return stageBean, err
 }
