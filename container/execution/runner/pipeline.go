@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/creation"
 	"github.com/streamsets/dataextractor/container/validation"
@@ -56,7 +57,7 @@ func (p *Pipeline) Stop() {
 func NewPipeline(
 	standaloneRunner *StandaloneRunner,
 	sourceOffsetTracker SourceOffsetTracker,
-	runtimeConstants map[string]interface{},
+	runtimeParameters map[string]interface{},
 ) (*Pipeline, error) {
 
 	pipelineBean, err := creation.NewPipelineBean(standaloneRunner.GetPipelineConfig())
@@ -69,7 +70,13 @@ func NewPipeline(
 	pipes := make([]StagePipe, len(standaloneRunner.pipelineConfig.Stages))
 
 	for i, stageBean := range pipelineBean.Stages {
-		stageRuntimeList[i] = NewStageRuntime(pipelineBean, stageBean)
+		stageContext := common.StageContext{
+			StageConfig:       stageBean.Config,
+			RuntimeParameters: runtimeParameters,
+		}
+		c := context.Background()
+		contextWithValue := context.WithValue(c, "stageContext", stageContext)
+		stageRuntimeList[i] = NewStageRuntime(pipelineBean, stageBean, contextWithValue)
 		pipes[i] = NewStagePipe(stageRuntimeList[i])
 	}
 

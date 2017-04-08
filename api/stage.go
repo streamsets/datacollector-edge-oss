@@ -1,6 +1,8 @@
 package api
 
-import "github.com/streamsets/dataextractor/container/common"
+import (
+	"context"
+)
 
 // Stage is the base interface for Data Extractor stages implementations defining their common context and lifecycle.
 //
@@ -17,6 +19,6 @@ import "github.com/streamsets/dataextractor/container/common"
 // This method is also called after a failed initialization to allow releasing resources created before the
 // initialization failed.
 type Stage interface {
-	Init(stageConfig common.StageConfiguration)
+	Init(ctx context.Context)
 	Destroy()
 }

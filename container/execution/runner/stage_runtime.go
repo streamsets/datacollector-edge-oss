@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"context"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/creation"
@@ -12,12 +13,13 @@ type StageRuntime struct {
 	pipelineBean creation.PipelineBean
 	config       common.StageConfiguration
 	stageBean    creation.StageBean
+	ctx          context.Context
 }
 
 func (s *StageRuntime) Init() []validation.Issue {
 	var issues []validation.Issue
 	log.Println("StageRuntime Init")
-	s.stageBean.Stage.Init(s.config)
+	s.stageBean.Stage.Init(s.ctx)
 	return issues
 }
 
@@ -34,10 +36,15 @@ func (s *StageRuntime) Execute(
 	}
 }
 
-func NewStageRuntime(pipelineBean creation.PipelineBean, stageBean creation.StageBean) StageRuntime {
+func NewStageRuntime(
+	pipelineBean creation.PipelineBean,
+	stageBean creation.StageBean,
+	ctx context.Context,
+) StageRuntime {
 	return StageRuntime{
 		pipelineBean: pipelineBean,
 		config:       stageBean.Config,
 		stageBean:    stageBean,
+		ctx:          ctx,
 	}
 }

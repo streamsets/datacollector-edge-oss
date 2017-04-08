@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"github.com/streamsets/dataextractor/api"
@@ -14,7 +15,9 @@ type WebSocketClientDestination struct {
 	headers     []interface{}
 }
 
-func (w *WebSocketClientDestination) Init(stageConfig common.StageConfiguration) {
+func (w *WebSocketClientDestination) Init(ctx context.Context) {
+	stageContext := (ctx.Value("stageContext")).(common.StageContext)
+	stageConfig := stageContext.StageConfig
 	log.Println("WebSocketClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.resourceUrl" {

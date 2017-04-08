@@ -1,16 +1,16 @@
 package filetail
 
 import (
+	"context"
 	"fmt"
 	"github.com/streamsets/dataextractor/api"
-	"github.com/streamsets/dataextractor/container/common"
 )
 
 type FileTailOrigin struct {
 }
 
-func (f *FileTailOrigin) Init(stageConfig common.StageConfiguration) {
-	fmt.Println("FileTailOrigin Init method")
+func (f *FileTailOrigin) Init(ctx context.Context) {
+	fmt.Println("FileTailOrigin Init method: ")
 }
 
 func (f *FileTailOrigin) Destroy() {

@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"context"
 	"encoding/json"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/streamsets/dataextractor/api"
@@ -18,7 +19,9 @@ type MqttClientDestination struct {
 	opts      *MQTT.ClientOptions
 }
 
-func (m *MqttClientDestination) Init(stageConfig common.StageConfiguration) {
+func (m *MqttClientDestination) Init(ctx context.Context) {
+	stageContext := (ctx.Value("stageContext")).(common.StageContext)
+	stageConfig := stageContext.StageConfig
 	log.Println("MqttClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.brokerUrl" {

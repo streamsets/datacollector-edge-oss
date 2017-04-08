@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
@@ -14,13 +15,16 @@ import (
 const DEBUG = false
 
 type HttpClientDestination struct {
+	ctx                   context.Context
 	resourceUrl           string
 	headers               []interface{}
 	singleRequestPerBatch bool
 	httpCompression       string
 }
 
-func (h *HttpClientDestination) Init(stageConfig common.StageConfiguration) {
+func (h *HttpClientDestination) Init(ctx context.Context) {
+	stageContext := (ctx.Value("stageContext")).(common.StageContext)
+	stageConfig := stageContext.StageConfig
 	log.Println("HttpClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.resourceUrl" {

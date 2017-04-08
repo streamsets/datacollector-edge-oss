@@ -1,14 +1,14 @@
 package trash
 
 import (
+	"context"
 	"github.com/streamsets/dataextractor/api"
-	"github.com/streamsets/dataextractor/container/common"
 )
 
 type TrashDestination struct {
 }
 
-func (t *TrashDestination) Init(configuration common.StageConfiguration) {
+func (t *TrashDestination) Init(ctx context.Context) {
 
 }
 

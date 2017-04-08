@@ -1,6 +1,7 @@
 package dev_random
 
 import (
+	"context"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
 	"math/rand"
@@ -13,7 +14,9 @@ type DevRandom struct {
 	delay  float64
 }
 
-func (d *DevRandom) Init(stageConfig common.StageConfiguration) {
+func (d *DevRandom) Init(ctx context.Context) {
+	stageContext := (ctx.Value("stageContext")).(common.StageContext)
+	stageConfig := stageContext.StageConfig
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "fields" {
 			d.fields = strings.SplitAfter(config.Value.(string), ",")
