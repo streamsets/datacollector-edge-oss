@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
@@ -16,6 +17,7 @@ type HttpClientDestination struct {
 	resourceUrl           string
 	headers               []interface{}
 	singleRequestPerBatch bool
+	httpCompression       string
 }
 
 func (h *HttpClientDestination) Init(stageConfig common.StageConfiguration) {
@@ -31,6 +33,10 @@ func (h *HttpClientDestination) Init(stageConfig common.StageConfiguration) {
 
 		if config.Name == "conf.singleRequestPerBatch" {
 			h.singleRequestPerBatch = config.Value.(bool)
+		}
+
+		if config.Name == "conf.client.httpCompression" {
+			h.httpCompression = config.Value.(string)
 		}
 	}
 }
@@ -56,7 +62,19 @@ func (h *HttpClientDestination) Write(batch api.Batch) error {
 }
 
 func (h *HttpClientDestination) sendToSDC(jsonValue []byte) {
-	req, err := http.NewRequest("POST", h.resourceUrl, bytes.NewBuffer(jsonValue))
+	var buf bytes.Buffer
+
+	if h.httpCompression == "GZIP" {
+		gz := gzip.NewWriter(&buf)
+		if _, err := gz.Write(jsonValue); err != nil {
+			panic(err)
+		}
+		gz.Close()
+	} else {
+		buf = *bytes.NewBuffer(jsonValue)
+	}
+
+	req, err := http.NewRequest("POST", h.resourceUrl, &buf)
 	if h.headers != nil {
 		for _, header := range h.headers {
 			req.Header.Set(header.(map[string]interface{})["key"].(string),
@@ -64,7 +82,10 @@ func (h *HttpClientDestination) sendToSDC(jsonValue []byte) {
 		}
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/json;charset=UTF-8")
+	if h.httpCompression == "GZIP" {
+		req.Header.Set("Content-Encoding", "gzip")
+	}
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

@@ -1,10 +1,10 @@
 {
   "schemaVersion" : 3,
   "version" : 6,
-  "pipelineId" : "HTTPClientcd809bf3-7e03-4b7f-a8a9-b255f019c28d",
-  "title" : "HTTP Client",
+  "pipelineId" : "Rawfeb15908-a9aa-4686-8967-6015e8edb6a4",
+  "title" : "Raw",
   "description" : "",
-  "uuid" : "b8f8a55f-fea2-4199-8836-91b8f5326f3c",
+  "uuid" : "d439feef-ed70-4d7d-8846-d1b9836d7bd6",
   "configuration" : [ {
     "name" : "executionMode",
     "value" : "STANDALONE"
@@ -100,7 +100,7 @@
       "stageType" : "SOURCE"
     },
     "inputLanes" : [ ],
-    "outputLanes" : [ "DevRandomRecordSource_01OutputLane14915354344770" ],
+    "outputLanes" : [ "DevRandomRecordSource_01OutputLane14916133724500" ],
     "eventLanes" : [ ]
   }, {
     "instanceName" : "HTTPClient_01",
@@ -219,6 +219,9 @@
       "name" : "conf.client.transferEncoding",
       "value" : "CHUNKED"
     }, {
+      "name" : "conf.client.httpCompression",
+      "value" : "GZIP"
+    }, {
       "name" : "conf.client.connectTimeoutMillis",
       "value" : 0
     }, {
@@ -322,7 +325,7 @@
       "value" : 60
     }, {
       "name" : "conf.singleRequestPerBatch",
-      "value" : true
+      "value" : false
     }, {
       "name" : "stageOnRecordError",
       "value" : "TO_ERROR"
@@ -340,7 +343,7 @@
       "yPos" : 50,
       "stageType" : "TARGET"
     },
-    "inputLanes" : [ "DevRandomRecordSource_01OutputLane14915354344770" ],
+    "inputLanes" : [ "DevRandomRecordSource_01OutputLane14916133724500" ],
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   } ],
@@ -353,7 +356,7 @@
     "uiInfo" : {
       "description" : "",
       "label" : "Error Records - Discard",
-      "xPos" : 720,
+      "xPos" : 500,
       "yPos" : 50,
       "stageType" : "TARGET"
     },
@@ -362,20 +365,20 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "pipelineId" : "HTTPClientcd809bf3-7e03-4b7f-a8a9-b255f019c28d",
-    "title" : "HTTP Client",
+    "pipelineId" : "Rawfeb15908-a9aa-4686-8967-6015e8edb6a4",
+    "title" : "Raw",
     "description" : "",
-    "created" : 1491535390418,
-    "lastModified" : 1491538585877,
+    "created" : 1491613365983,
+    "lastModified" : 1491613411607,
     "creator" : "admin",
     "lastModifier" : "admin",
     "lastRev" : "0",
-    "uuid" : "b8f8a55f-fea2-4199-8836-91b8f5326f3c",
+    "uuid" : "d439feef-ed70-4d7d-8846-d1b9836d7bd6",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "HTTPClientcd809bf3-7e03-4b7f-a8a9-b255f019c28d"
+    "name" : "Rawfeb15908-a9aa-4686-8967-6015e8edb6a4"
   },
   "metadata" : {
     "labels" : [ ]
@@ -386,6 +389,6 @@
     "stageIssues" : { },
     "issueCount" : 0
   },
-  "previewable" : true,
-  "valid" : true
+  "valid" : true,
+  "previewable" : true
 }
