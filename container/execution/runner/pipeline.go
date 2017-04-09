@@ -38,15 +38,22 @@ func (p *Pipeline) Run() {
 }
 
 func (p *Pipeline) runBatch() {
-	// var committed bool = false
+	var committed bool = false
 	pipeBatch := NewFullPipeBatch(p.offsetTracker, 1)
-
-	// sourceOffset := pipeBatch.GetPreviousOffset();
-
 	for _, pipe := range p.pipes {
+		if p.pipelineBean.Config.DeliveryGuarantee == "AT_MOST_ONCE" &&
+			len(pipe.OutputLanes) == 0 && // if destination
+			!committed {
+			p.offsetTracker.CommitOffset()
+			committed = true
+		}
+
 		pipe.Process(pipeBatch)
 	}
 
+	if p.pipelineBean.Config.DeliveryGuarantee == "AT_LEAST_ONCE" {
+		p.offsetTracker.CommitOffset()
+	}
 }
 
 func (p *Pipeline) Stop() {
@@ -68,14 +75,14 @@ func NewPipeline(
 
 	stageRuntimeList := make([]StageRuntime, len(standaloneRunner.pipelineConfig.Stages))
 	pipes := make([]StagePipe, len(standaloneRunner.pipelineConfig.Stages))
+	pipelineContext := context.Background()
 
 	for i, stageBean := range pipelineBean.Stages {
 		stageContext := common.StageContext{
 			StageConfig:       stageBean.Config,
 			RuntimeParameters: runtimeParameters,
 		}
-		c := context.Background()
-		contextWithValue := context.WithValue(c, "stageContext", stageContext)
+		contextWithValue := context.WithValue(pipelineContext, "stageContext", stageContext)
 		stageRuntimeList[i] = NewStageRuntime(pipelineBean, stageBean, contextWithValue)
 		pipes[i] = NewStagePipe(stageRuntimeList[i])
 	}

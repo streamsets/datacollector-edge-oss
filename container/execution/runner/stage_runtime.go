@@ -28,12 +28,15 @@ func (s *StageRuntime) Execute(
 	batchSize int,
 	batch *BatchImpl,
 	batchMaker *BatchMakerImpl,
-) {
+) (string, error) {
+	var newOffset string
+	var err error
 	if len(s.config.OutputLanes) > 0 {
-		s.stageBean.Stage.(api.Origin).Produce(previousOffset, batchSize, batchMaker)
+		newOffset, err = s.stageBean.Stage.(api.Origin).Produce(previousOffset, batchSize, batchMaker)
 	} else {
 		s.stageBean.Stage.(api.Destination).Write(batch)
 	}
+	return newOffset, err
 }
 
 func NewStageRuntime(

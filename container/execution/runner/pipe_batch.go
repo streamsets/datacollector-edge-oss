@@ -37,12 +37,12 @@ func (b *FullPipeBatch) GetBatchSize() int {
 	return b.batchSize
 }
 
-func (b *FullPipeBatch) GetPreviousOffset() map[string]string {
-	return b.offsetTracker.GetOffsets()
+func (b *FullPipeBatch) GetPreviousOffset() string {
+	return b.offsetTracker.GetOffset()
 }
 
-func (b *FullPipeBatch) SetNewOffset(map[string]string) {
-	b.offsetTracker.CommitOffset("", "")
+func (b *FullPipeBatch) SetNewOffset(newOffset string) {
+	b.offsetTracker.SetOffset(newOffset)
 }
 
 func (b *FullPipeBatch) GetBatch(pipe StagePipe) *BatchImpl {

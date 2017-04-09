@@ -14,5 +14,6 @@
     curl -X POST http://localhost:18633/rest/v1/pipeline/status
     curl -X POST http://localhost:18633/rest/v1/pipeline/start
     curl -X POST http://localhost:18633/rest/v1/pipeline/stop
+    curl -X POST http://localhost:18633/rest/v1/pipeline/resetOffset
    
 

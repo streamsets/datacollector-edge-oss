@@ -30,12 +30,19 @@ func (s *StagePipe) Process(pipeBatch *FullPipeBatch) {
 	log.Println("Processing Stage - " + s.Stage.config.InstanceName)
 	batchMaker := pipeBatch.StartStage(*s)
 	batchImpl := pipeBatch.GetBatch(*s)
-	s.Stage.Execute("previousOffset", BATCH_SIZE, batchImpl, batchMaker)
+	newOffset, _ := s.Stage.Execute(pipeBatch.GetPreviousOffset(), BATCH_SIZE, batchImpl, batchMaker)
+	if s.isSource() {
+		pipeBatch.SetNewOffset(newOffset)
+	}
 	pipeBatch.CompleteStage(batchMaker)
 }
 
 func (s *StagePipe) Destroy() {
 
+}
+
+func (s *StagePipe) isSource() bool {
+	return len(s.OutputLanes) > 0
 }
 
 func NewStagePipe(stage StageRuntime) StagePipe {

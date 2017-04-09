@@ -12,7 +12,6 @@ import (
 type StandaloneRunner struct {
 	pipelineId       string
 	validTransitions map[string][]string
-	sourceOffset     *common.SourceOffset
 	pipelineState    *common.PipelineState
 	pipelineConfig   common.PipelineConfiguration
 	prodPipeline     *ProductionPipeline
@@ -34,10 +33,6 @@ func (standaloneRunner *StandaloneRunner) init() {
 
 	// load offset from file
 	var err error
-	standaloneRunner.sourceOffset, err = store.GetOffset()
-	if err != nil {
-		panic(err)
-	}
 
 	standaloneRunner.pipelineState, err = store.GetState()
 	if err != nil {
@@ -120,7 +115,7 @@ func (standaloneRunner *StandaloneRunner) StopPipeline() (*common.PipelineState,
 }
 
 func (standaloneRunner *StandaloneRunner) ResetOffset() {
-	err := store.ResetOffset(standaloneRunner.sourceOffset)
+	err := store.ResetOffset()
 	if err != nil {
 		panic(err)
 	}

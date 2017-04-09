@@ -12,13 +12,15 @@ type SourceOffsetTracker interface {
 	 */
 	IsFinished() bool
 
+	SetOffset(newOffset string)
+
 	/**
 	 * Change offset for entity in the tracked offsets map and commit it to persistent store.
 	 *
 	 * @param entity Entity to be changed, null will disable changing the staged object (making this equivalent to commitOffsets() call)
 	 * @param newOffset New offset for given entity, null will remove the entity from tracking map
 	 */
-	CommitOffset(entity string, newOffset string)
+	CommitOffset()
 
 	/**
 	 * Return currently staged offsets map.
@@ -26,7 +28,7 @@ type SourceOffsetTracker interface {
 	 * This method should return immutable version of the offsets map - thus changes to the returned map won't be
 	 * reflected. Use methods on this interface to mutate the state.
 	 */
-	GetOffsets() map[string]string
+	GetOffset() string
 
 	/**
 	 * Get time of lastly committed batch.
