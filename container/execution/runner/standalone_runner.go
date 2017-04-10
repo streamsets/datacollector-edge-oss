@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/creation"
+	"github.com/streamsets/dataextractor/container/execution"
 	"github.com/streamsets/dataextractor/container/execution/store"
 	"github.com/streamsets/dataextractor/container/util"
 	"time"
@@ -11,6 +12,7 @@ import (
 
 type StandaloneRunner struct {
 	pipelineId       string
+	config           execution.Config
 	validTransitions map[string][]string
 	pipelineState    *common.PipelineState
 	pipelineConfig   common.PipelineConfiguration
@@ -61,6 +63,7 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(pipelineId string) (*com
 	}
 
 	standaloneRunner.prodPipeline, err = NewProductionPipeline(
+		standaloneRunner.config,
 		standaloneRunner,
 		standaloneRunner.pipelineConfig,
 		nil,
@@ -70,8 +73,6 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(pipelineId string) (*com
 	}
 
 	go standaloneRunner.prodPipeline.Run()
-
-	// go standaloneRunner.tailDataExtractor.Start(standaloneRunner.sourceOffset.Offset)
 
 	standaloneRunner.pipelineState.Status = common.RUNNING
 	standaloneRunner.pipelineState.TimeStamp = time.Now().UTC()
@@ -93,16 +94,6 @@ func (standaloneRunner *StandaloneRunner) StopPipeline() (*common.PipelineState,
 	if standaloneRunner.prodPipeline != nil {
 		standaloneRunner.prodPipeline.Stop()
 	}
-
-	/*
-		offset, _ := standaloneRunner.tailDataExtractor.Stop()
-		standaloneRunner.sourceOffset.Offset = offset
-		err = store.SaveOffset(standaloneRunner.sourceOffset)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("Stopped Pipeine at offset : " + offset)
-	*/
 
 	standaloneRunner.pipelineState.Status = common.STOPPED
 	standaloneRunner.pipelineState.TimeStamp = time.Now().UTC()
@@ -130,8 +121,8 @@ func (standaloneRunner *StandaloneRunner) checkState(toState string) error {
 	return nil
 }
 
-func NewStandaloneRunner() (*StandaloneRunner, error) {
-	standaloneRunner := StandaloneRunner{}
+func NewStandaloneRunner(config execution.Config) (*StandaloneRunner, error) {
+	standaloneRunner := StandaloneRunner{config: config}
 	standaloneRunner.init()
 	return &standaloneRunner, nil
 }

@@ -3,19 +3,22 @@ package dataextractor
 import (
 	"github.com/BurntSushi/toml"
 	"github.com/streamsets/dataextractor/container/dpm"
+	"github.com/streamsets/dataextractor/container/execution"
 	"github.com/streamsets/dataextractor/container/http"
 	"log"
 )
 
 // Config represents the configuration format for the StreamSets Data Extractor binary.
 type Config struct {
-	Http http.Config
-	DPM  dpm.Config
+	Execution execution.Config
+	Http      http.Config
+	DPM       dpm.Config
 }
 
 // NewConfig returns a new Config with default settings.
 func NewConfig() *Config {
 	c := &Config{}
+	c.Execution = execution.NewConfig()
 	c.Http = http.NewConfig()
 	c.DPM = dpm.NewConfig()
 	return c

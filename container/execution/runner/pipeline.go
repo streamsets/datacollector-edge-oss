@@ -4,12 +4,14 @@ import (
 	"context"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/creation"
+	"github.com/streamsets/dataextractor/container/execution"
 	"github.com/streamsets/dataextractor/container/validation"
 	"log"
 )
 
 type Pipeline struct {
 	name             string
+	config           execution.Config
 	standaloneRunner *StandaloneRunner
 	pipelineConf     common.PipelineConfiguration
 	pipelineBean     creation.PipelineBean
@@ -62,6 +64,7 @@ func (p *Pipeline) Stop() {
 }
 
 func NewPipeline(
+	config execution.Config,
 	standaloneRunner *StandaloneRunner,
 	sourceOffsetTracker SourceOffsetTracker,
 	runtimeParameters map[string]interface{},
@@ -84,7 +87,7 @@ func NewPipeline(
 		}
 		contextWithValue := context.WithValue(pipelineContext, "stageContext", stageContext)
 		stageRuntimeList[i] = NewStageRuntime(pipelineBean, stageBean, contextWithValue)
-		pipes[i] = NewStagePipe(stageRuntimeList[i])
+		pipes[i] = NewStagePipe(stageRuntimeList[i], config)
 	}
 
 	return &Pipeline{

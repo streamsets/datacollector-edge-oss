@@ -3,16 +3,34 @@ package filetail
 import (
 	"context"
 	"fmt"
+	"github.com/hpcloud/tail"
 	"github.com/streamsets/dataextractor/api"
+	"github.com/streamsets/dataextractor/container/common"
+	"os"
 	"strconv"
-	"time"
 )
 
 type FileTailOrigin struct {
+	fileFullPath string
 }
 
 func (f *FileTailOrigin) Init(ctx context.Context) {
 	fmt.Println("FileTailOrigin Init method: ")
+
+	stageContext := (ctx.Value("stageContext")).(common.StageContext)
+	stageConfig := stageContext.StageConfig
+	for _, config := range stageConfig.Configuration {
+		if config.Name == "conf.fileInfos" {
+			fileInfos := config.Value.([]interface{})
+			if len(fileInfos) > 0 {
+				fileInfo := fileInfos[0].(map[string]interface{})
+				f.fileFullPath = fileInfo["fileFullPath"].(string)
+			}
+
+		}
+	}
+
+	fmt.Println("Reading file - " + f.fileFullPath)
 }
 
 func (f *FileTailOrigin) Destroy() {
@@ -20,19 +38,30 @@ func (f *FileTailOrigin) Destroy() {
 }
 
 func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {
-	fmt.Println("FileTailOrigin produce method: lastSourceOffset: " + lastSourceOffset)
-	offset := 0
+	tailConfig := tail.Config{Follow: true}
+
 	if lastSourceOffset != "" {
-		offset, _ = strconv.Atoi(lastSourceOffset)
+		intOffset, _ := strconv.ParseInt(lastSourceOffset, 10, 64)
+		tailConfig.Location = &tail.SeekInfo{Offset: intOffset, Whence: os.SEEK_SET}
 	}
 
-	time.Sleep(time.Duration(3000) * time.Millisecond)
+	tailObj, err := tail.TailFile(f.fileFullPath, tailConfig)
 
-	batchMaker.AddRecord(api.Record{Value: "value1"})
-	batchMaker.AddRecord(api.Record{Value: "value2"})
-	batchMaker.AddRecord(api.Record{Value: "value3"})
-	batchMaker.AddRecord(api.Record{Value: "value4"})
-	batchMaker.AddRecord(api.Record{Value: "value5"})
+	if err != nil {
+		fmt.Println("error:", err)
+		panic(err)
+	}
 
-	return strconv.Itoa(offset + 1), nil
+	recordCount := 0
+	var offset int64
+	for line := range tailObj.Lines {
+		batchMaker.AddRecord(api.Record{Value: line.Text})
+		recordCount++
+		if recordCount > maxBatchSize {
+			offset, _ = tailObj.Tell()
+			break
+		}
+	}
+
+	return strconv.FormatInt(offset, 10), err
 }

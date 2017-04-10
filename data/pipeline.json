@@ -1,10 +1,10 @@
 {
   "schemaVersion" : 3,
   "version" : 6,
-  "pipelineId" : "FileTail5c01cb4e-b585-43c3-821b-4a4c0a6bc346",
-  "title" : "File Tail",
+  "pipelineId" : "FileTaile315a4e7-5aa9-4ccf-b4e3-831504c7c440",
+  "title" : "FileTail",
   "description" : "",
-  "uuid" : "7fe11ce2-70b1-42df-a883-2d571d113c06",
+  "uuid" : "a59352f1-d817-43bc-a5b1-1770055e31e4",
   "configuration" : [ {
     "name" : "executionMode",
     "value" : "STANDALONE"
@@ -272,7 +272,8 @@
       "name" : "conf.fileInfos",
       "value" : [ {
         "fileRollMode" : "REVERSE_COUNTER",
-        "patternForToken" : ".*"
+        "patternForToken" : ".*",
+        "fileFullPath" : "/Users/madhu/Documents/StreamSetsDocuments/development/logs/sdc/sdc.log"
       } ]
     }, {
       "name" : "conf.allowLateDirectories",
@@ -301,7 +302,7 @@
       "xPos" : 60
     },
     "inputLanes" : [ ],
-    "outputLanes" : [ "FileTail_01OutputLane14916264799210", "FileTail_01OutputLane14916264799211" ],
+    "outputLanes" : [ "FileTail_01OutputLane14917781569880", "FileTail_01OutputLane14917781569881" ],
     "eventLanes" : [ ]
   }, {
     "instanceName" : "HTTPClient_01",
@@ -421,7 +422,7 @@
       "value" : "CHUNKED"
     }, {
       "name" : "conf.client.httpCompression",
-      "value" : "GZIP"
+      "value" : "NONE"
     }, {
       "name" : "conf.client.connectTimeoutMillis",
       "value" : 0
@@ -544,23 +545,23 @@
       "yPos" : 40,
       "stageType" : "TARGET"
     },
-    "inputLanes" : [ "FileTail_01OutputLane14916264799210" ],
+    "inputLanes" : [ "FileTail_01OutputLane14917781569880" ],
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   }, {
-    "instanceName" : "Trash_01",
+    "instanceName" : "Trash_02",
     "library" : "streamsets-datacollector-basic-lib",
     "stageName" : "com_streamsets_pipeline_stage_destination_devnull_NullDTarget",
     "stageVersion" : "1",
     "configuration" : [ ],
     "uiInfo" : {
       "description" : "",
-      "label" : "Trash 1",
+      "label" : "Trash 2",
       "xPos" : 280,
       "yPos" : 170,
       "stageType" : "TARGET"
     },
-    "inputLanes" : [ "FileTail_01OutputLane14916264799211" ],
+    "inputLanes" : [ "FileTail_01OutputLane14917781569881" ],
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   } ],
@@ -582,20 +583,20 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "pipelineId" : "FileTail5c01cb4e-b585-43c3-821b-4a4c0a6bc346",
-    "title" : "File Tail",
+    "pipelineId" : "FileTaile315a4e7-5aa9-4ccf-b4e3-831504c7c440",
+    "title" : "FileTail",
     "description" : "",
-    "created" : 1491626475987,
-    "lastModified" : 1491626565673,
-    "creator" : "admin",
-    "lastModifier" : "admin",
+    "created" : 1491778153256,
+    "lastModified" : 1491779369026,
+    "creator" : "demo@demo",
+    "lastModifier" : "demo@demo",
     "lastRev" : "0",
-    "uuid" : "7fe11ce2-70b1-42df-a883-2d571d113c06",
+    "uuid" : "a59352f1-d817-43bc-a5b1-1770055e31e4",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "FileTail5c01cb4e-b585-43c3-821b-4a4c0a6bc346"
+    "name" : "FileTaile315a4e7-5aa9-4ccf-b4e3-831504c7c440"
   },
   "metadata" : {
     "labels" : [ ]
@@ -606,6 +607,6 @@
     "stageIssues" : { },
     "issueCount" : 0
   },
-  "valid" : true,
-  "previewable" : true
+  "previewable" : true,
+  "valid" : true
 }

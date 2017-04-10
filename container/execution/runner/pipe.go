@@ -1,11 +1,10 @@
 package runner
 
 import (
+	"github.com/streamsets/dataextractor/container/execution"
 	"github.com/streamsets/dataextractor/container/validation"
 	"log"
 )
-
-const BATCH_SIZE = 10
 
 type Pipe interface {
 	Init()
@@ -14,6 +13,7 @@ type Pipe interface {
 }
 
 type StagePipe struct {
+	config      execution.Config
 	Stage       StageRuntime
 	InputLanes  []string
 	OutputLanes []string
@@ -30,7 +30,7 @@ func (s *StagePipe) Process(pipeBatch *FullPipeBatch) {
 	log.Println("Processing Stage - " + s.Stage.config.InstanceName)
 	batchMaker := pipeBatch.StartStage(*s)
 	batchImpl := pipeBatch.GetBatch(*s)
-	newOffset, _ := s.Stage.Execute(pipeBatch.GetPreviousOffset(), BATCH_SIZE, batchImpl, batchMaker)
+	newOffset, _ := s.Stage.Execute(pipeBatch.GetPreviousOffset(), s.config.MaxBatchSize, batchImpl, batchMaker)
 	if s.isSource() {
 		pipeBatch.SetNewOffset(newOffset)
 	}
@@ -45,8 +45,9 @@ func (s *StagePipe) isSource() bool {
 	return len(s.OutputLanes) > 0
 }
 
-func NewStagePipe(stage StageRuntime) StagePipe {
+func NewStagePipe(stage StageRuntime, config execution.Config) StagePipe {
 	stagePipe := StagePipe{}
+	stagePipe.config = config
 	stagePipe.Stage = stage
 	stagePipe.InputLanes = stage.config.InputLanes
 	stagePipe.OutputLanes = stage.config.OutputLanes

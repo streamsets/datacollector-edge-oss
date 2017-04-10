@@ -48,7 +48,7 @@ func newDataExtractor() (*DataExtractorMain, error) {
 
 	buildInfo, _ := common.NewBuildInfo()
 	runtimeInfo, _ := common.NewRuntimeInfo(httpUrl)
-	pipelineManager, _ := manager.New()
+	pipelineManager, _ := manager.New(config.Execution)
 	webServerTask, _ := http.NewWebServerTask(config.Http, buildInfo, pipelineManager)
 	dpm.RegisterWithDPM(config.DPM, buildInfo, runtimeInfo)
 
