@@ -47,20 +47,30 @@ func (h *HttpClientDestination) Init(ctx context.Context) {
 
 func (h *HttpClientDestination) Write(batch api.Batch) error {
 	log.Println("HttpClientDestination write method")
-	var batchJSONValue []byte
+	var batchByteArray []byte
 	for _, record := range batch.GetRecords() {
-		jsonValue, err := json.Marshal(record.Value)
-		if err != nil {
-			panic(err)
+
+		var recordByteArray []byte
+		var err error
+		switch record.Value.(type) {
+		case string:
+			recordByteArray = []byte(record.Value.(string))
+		default:
+			recordByteArray, err = json.Marshal(record.Value)
+			if err != nil {
+				panic(err)
+			}
 		}
+
 		if h.singleRequestPerBatch {
-			batchJSONValue = append(batchJSONValue, jsonValue...)
+			batchByteArray = append(batchByteArray, recordByteArray...)
+			batchByteArray = append(batchByteArray, "\n"...)
 		} else {
-			h.sendToSDC(jsonValue)
+			h.sendToSDC(recordByteArray)
 		}
 	}
 	if h.singleRequestPerBatch && len(batch.GetRecords()) > 0 {
-		h.sendToSDC(batchJSONValue)
+		h.sendToSDC(batchByteArray)
 	}
 	return nil
 }
