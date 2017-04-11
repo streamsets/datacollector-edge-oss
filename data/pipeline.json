@@ -527,7 +527,7 @@
       "value" : 60
     }, {
       "name" : "conf.singleRequestPerBatch",
-      "value" : false
+      "value" : true
     }, {
       "name" : "stageOnRecordError",
       "value" : "TO_ERROR"

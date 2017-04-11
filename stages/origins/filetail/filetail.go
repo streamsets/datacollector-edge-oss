@@ -8,10 +8,12 @@ import (
 	"github.com/streamsets/dataextractor/container/common"
 	"os"
 	"strconv"
+	"time"
 )
 
 type FileTailOrigin struct {
-	fileFullPath string
+	fileFullPath    string
+	maxWaitTimeSecs float64
 }
 
 func (f *FileTailOrigin) Init(ctx context.Context) {
@@ -27,6 +29,10 @@ func (f *FileTailOrigin) Init(ctx context.Context) {
 				f.fileFullPath = fileInfo["fileFullPath"].(string)
 			}
 
+		}
+
+		if config.Name == "conf.maxWaitTimeSecs" {
+			f.maxWaitTimeSecs = config.Value.(float64)
 		}
 	}
 
@@ -52,16 +58,23 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 		panic(err)
 	}
 
+	var currentOffset int64
 	recordCount := 0
-	var offset int64
-	for line := range tailObj.Lines {
-		batchMaker.AddRecord(api.Record{Value: line.Text})
-		recordCount++
-		if recordCount > maxBatchSize {
-			offset, _ = tailObj.Tell()
-			break
+	end := false
+	for !end {
+		select {
+		case line := <-tailObj.Lines:
+			batchMaker.AddRecord(api.Record{Value: line.Text})
+			recordCount++
+			if recordCount > maxBatchSize {
+				currentOffset, _ = tailObj.Tell()
+				end = true
+			}
+		case <-time.After(time.Duration(f.maxWaitTimeSecs) * time.Second):
+			currentOffset, _ = tailObj.Tell()
+			end = true
 		}
 	}
 
-	return strconv.FormatInt(offset, 10), err
+	return strconv.FormatInt(currentOffset, 10), err
 }

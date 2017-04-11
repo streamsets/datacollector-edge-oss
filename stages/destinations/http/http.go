@@ -59,7 +59,7 @@ func (h *HttpClientDestination) Write(batch api.Batch) error {
 			h.sendToSDC(jsonValue)
 		}
 	}
-	if h.singleRequestPerBatch {
+	if h.singleRequestPerBatch && len(batch.GetRecords()) > 0 {
 		h.sendToSDC(batchJSONValue)
 	}
 	return nil
