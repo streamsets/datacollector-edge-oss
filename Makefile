@@ -16,8 +16,8 @@ DEPENDENCIES := github.com/hpcloud/tail/... \
     github.com/gorilla/websocket \
     github.com/eclipse/paho.mqtt.golang
 
-# Sources and Targets
 EXECUTABLES :=dist/bin/$(BINARY_NAME)
+
 # Build Binaries setting BuildInfo vars
 LDFLAGS :=-ldflags "-X github.com/streamsets/dataextractor/container/common.Version=${VERSION} \
     -X github.com/streamsets/dataextractor/container/common.BuiltBy=$$USER \
@@ -25,7 +25,7 @@ LDFLAGS :=-ldflags "-X github.com/streamsets/dataextractor/container/common.Vers
     -X github.com/streamsets/dataextractor/container/common.BuiltRepoSha=${BuiltRepoSha}"
 
 # Package target
-PACKAGE :=$(DIR)/dist/$(APP_NAME)-$(VERSION).tar.gz
+PACKAGE :=$(DIR)/dist/$(APP_NAME)-$$GOOS-$$GOARCH-$(VERSION).tar.gz
 
 DEPENDENCIES_DIR := $(DEPENDENCIES)
 
@@ -41,8 +41,6 @@ dist/bin/$(BINARY_NAME): main.go $(DEPENDENCIES_DIR)
 
 $(EXECUTABLES):
 	$(GO) build $(LDFLAGS) -o $@ $<
-	# for Raspberry PI Zero W
-	# GOOS=linux GOARCH=arm GOARM=5 $(GO) build $(LDFLAGS) -o $@ $<
 	@cp -n -R $(DIR)/etc/ dist/etc 2>/dev/null || :
 	@cp -n -R $(DIR)/data/ dist/data 2>/dev/null || :
 	@mkdir -p dist/logs
@@ -64,4 +62,32 @@ $(PACKAGE): all
 	tar -cf $@ -C tmp $(APP_NAME);
 	@rm -rf tmp
 
-dist: $(PACKAGE)
+# for (Mac OS X 10.8 and above and iOS)
+dist-darwin-amd64:
+	export GOOS="darwin"; \
+	export GOARCH="amd64"; \
+	$(MAKE) dist-build
+
+# for linux 64 bit i386
+dist-linux-amd64:
+	export GOOS="linux"; \
+	export GOARCH="amd64"; \
+	$(MAKE) dist-build
+
+# for Raspberry PI Zero W
+dist-linux-arm:
+	export GOOS="linux"; \
+	export GOARCH="arm"; \
+	$(MAKE) dist-build
+
+# for windows 64 bit i386
+dist-windows-amd64:
+	export GOOS="windows"; \
+	export GOARCH="amd64"; \
+	$(MAKE) dist-build
+
+dist-build: $(PACKAGE)
+
+dist: dist-darwin-amd64
+
+dist-all: dist-linux-amd64 dist-linux-arm dist-windows-amd64 dist-darwin-amd64

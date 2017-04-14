@@ -1,10 +1,10 @@
 {
   "schemaVersion" : 3,
   "version" : 6,
-  "pipelineId" : "FileTaile315a4e7-5aa9-4ccf-b4e3-831504c7c440",
-  "title" : "FileTail",
+  "pipelineId" : "DataExtractorDPMLog047131b6-fa2c-4751-9def-d3d8be3f9ada",
+  "title" : "Data Extractor DPM Log",
   "description" : "",
-  "uuid" : "a59352f1-d817-43bc-a5b1-1770055e31e4",
+  "uuid" : "33c0cb97-228c-4948-a514-3c7d655c0eb0",
   "configuration" : [ {
     "name" : "executionMode",
     "value" : "STANDALONE"
@@ -273,7 +273,7 @@
       "value" : [ {
         "fileRollMode" : "REVERSE_COUNTER",
         "patternForToken" : ".*",
-        "fileFullPath" : "/Users/madhu/Documents/StreamSetsDocuments/development/logs/sdc/sdc.log"
+        "fileFullPath" : "/Users/madhu/Documents/StreamSetsDocuments/development/logs/sds/sds.log"
       } ]
     }, {
       "name" : "conf.allowLateDirectories",
@@ -290,7 +290,7 @@
     } ],
     "uiInfo" : {
       "outputStreamLabels" : [ "Data", "Metadata" ],
-      "yPos" : 110,
+      "yPos" : 50,
       "stageType" : "SOURCE",
       "rawSource" : {
         "configuration" : [ {
@@ -302,7 +302,7 @@
       "xPos" : 60
     },
     "inputLanes" : [ ],
-    "outputLanes" : [ "FileTail_01OutputLane14917781569880", "FileTail_01OutputLane14917781569881" ],
+    "outputLanes" : [ "FileTail_01OutputLane14921104146950", "FileTail_01OutputLane14921104146951" ],
     "eventLanes" : [ ]
   }, {
     "instanceName" : "HTTPClient_01",
@@ -401,15 +401,15 @@
       "value" : "MD5"
     }, {
       "name" : "conf.dataFormat",
-      "value" : "JSON"
+      "value" : "TEXT"
     }, {
       "name" : "conf.resourceUrl",
-      "value" : "http://localhost:8000"
+      "value" : "http://localhost:9999"
     }, {
       "name" : "conf.headers",
       "value" : [ {
         "key" : "X-SDC-APPLICATION-ID",
-        "value" : "test"
+        "value" : "dpm"
       } ]
     }, {
       "name" : "conf.httpMethod",
@@ -520,14 +520,14 @@
       "name" : "conf.client.sslConfig.keyStorePassword",
       "value" : null
     }, {
+      "name" : "conf.singleRequestPerBatch",
+      "value" : true
+    }, {
       "name" : "conf.rateLimit",
       "value" : 0
     }, {
       "name" : "conf.maxRequestCompletionSecs",
       "value" : 60
-    }, {
-      "name" : "conf.singleRequestPerBatch",
-      "value" : true
     }, {
       "name" : "stageOnRecordError",
       "value" : "TO_ERROR"
@@ -542,26 +542,26 @@
       "description" : "",
       "label" : "HTTP Client 1",
       "xPos" : 280,
-      "yPos" : 40,
+      "yPos" : 50,
       "stageType" : "TARGET"
     },
-    "inputLanes" : [ "FileTail_01OutputLane14917781569880" ],
+    "inputLanes" : [ "FileTail_01OutputLane14921104146950" ],
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   }, {
-    "instanceName" : "Trash_02",
+    "instanceName" : "Trash_01",
     "library" : "streamsets-datacollector-basic-lib",
     "stageName" : "com_streamsets_pipeline_stage_destination_devnull_NullDTarget",
     "stageVersion" : "1",
     "configuration" : [ ],
     "uiInfo" : {
       "description" : "",
-      "label" : "Trash 2",
+      "label" : "Trash 1",
       "xPos" : 280,
-      "yPos" : 170,
+      "yPos" : 200,
       "stageType" : "TARGET"
     },
-    "inputLanes" : [ "FileTail_01OutputLane14917781569881" ],
+    "inputLanes" : [ "FileTail_01OutputLane14921104146951" ],
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   } ],
@@ -583,20 +583,20 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "pipelineId" : "FileTaile315a4e7-5aa9-4ccf-b4e3-831504c7c440",
-    "title" : "FileTail",
+    "pipelineId" : "DataExtractorDPMLog047131b6-fa2c-4751-9def-d3d8be3f9ada",
+    "title" : "Data Extractor DPM Log",
     "description" : "",
-    "created" : 1491778153256,
-    "lastModified" : 1491779369026,
-    "creator" : "demo@demo",
-    "lastModifier" : "demo@demo",
+    "created" : 1492110407720,
+    "lastModified" : 1492110601576,
+    "creator" : "admin",
+    "lastModifier" : "admin",
     "lastRev" : "0",
-    "uuid" : "a59352f1-d817-43bc-a5b1-1770055e31e4",
+    "uuid" : "33c0cb97-228c-4948-a514-3c7d655c0eb0",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "FileTaile315a4e7-5aa9-4ccf-b4e3-831504c7c440"
+    "name" : "DataExtractorDPMLog047131b6-fa2c-4751-9def-d3d8be3f9ada"
   },
   "metadata" : {
     "labels" : [ ]
