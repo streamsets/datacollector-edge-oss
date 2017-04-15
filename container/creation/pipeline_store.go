@@ -27,10 +27,7 @@ func LoadPipelineConfig(pipelineId string) (common.PipelineConfiguration, error)
 }
 
 func getPipelineFile(pipelineId string) string {
-	// return getPipelineDir(pipelineId) + PIPELINE_FILE
-
-	// TODO: Use data directory for pipelines
-	return "data/pipeline.json"
+	return getPipelineDir(pipelineId) + PIPELINE_FILE
 }
 
 func getPipelineDir(pipelineId string) string {

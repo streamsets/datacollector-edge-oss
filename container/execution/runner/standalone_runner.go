@@ -33,10 +33,8 @@ func (standaloneRunner *StandaloneRunner) init() {
 	standaloneRunner.validTransitions[common.FINISHED] = []string{common.STARTING}
 	standaloneRunner.validTransitions[common.STOPPED] = []string{common.STARTING}
 
-	// load offset from file
 	var err error
-
-	standaloneRunner.pipelineState, err = store.GetState()
+	standaloneRunner.pipelineState, err = store.GetState(standaloneRunner.pipelineId)
 	if err != nil {
 		panic(err)
 	}
@@ -50,19 +48,20 @@ func (standaloneRunner *StandaloneRunner) GetStatus() (*common.PipelineState, er
 	return standaloneRunner.pipelineState, nil
 }
 
-func (standaloneRunner *StandaloneRunner) StartPipeline(pipelineId string) (*common.PipelineState, error) {
+func (standaloneRunner *StandaloneRunner) StartPipeline() (*common.PipelineState, error) {
 	var err error
 	err = standaloneRunner.checkState(common.STARTING)
 	if err != nil {
 		return nil, err
 	}
 
-	standaloneRunner.pipelineConfig, err = creation.LoadPipelineConfig(pipelineId)
+	standaloneRunner.pipelineConfig, err = creation.LoadPipelineConfig(standaloneRunner.pipelineId)
 	if err != nil {
 		return nil, err
 	}
 
 	standaloneRunner.prodPipeline, err = NewProductionPipeline(
+		standaloneRunner.pipelineId,
 		standaloneRunner.config,
 		standaloneRunner,
 		standaloneRunner.pipelineConfig,
@@ -76,7 +75,7 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(pipelineId string) (*com
 
 	standaloneRunner.pipelineState.Status = common.RUNNING
 	standaloneRunner.pipelineState.TimeStamp = time.Now().UTC()
-	err = store.SaveState(standaloneRunner.pipelineState)
+	err = store.SaveState(standaloneRunner.pipelineId, standaloneRunner.pipelineState)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +96,7 @@ func (standaloneRunner *StandaloneRunner) StopPipeline() (*common.PipelineState,
 
 	standaloneRunner.pipelineState.Status = common.STOPPED
 	standaloneRunner.pipelineState.TimeStamp = time.Now().UTC()
-	err = store.SaveState(standaloneRunner.pipelineState)
+	err = store.SaveState(standaloneRunner.pipelineId, standaloneRunner.pipelineState)
 	if err != nil {
 		return nil, err
 	}
@@ -105,11 +104,9 @@ func (standaloneRunner *StandaloneRunner) StopPipeline() (*common.PipelineState,
 	return standaloneRunner.pipelineState, nil
 }
 
-func (standaloneRunner *StandaloneRunner) ResetOffset() {
-	err := store.ResetOffset()
-	if err != nil {
-		panic(err)
-	}
+func (standaloneRunner *StandaloneRunner) ResetOffset() (*common.PipelineState, error) {
+	err := store.ResetOffset(standaloneRunner.pipelineId)
+	return standaloneRunner.pipelineState, err
 }
 
 func (standaloneRunner *StandaloneRunner) checkState(toState string) error {
@@ -121,8 +118,8 @@ func (standaloneRunner *StandaloneRunner) checkState(toState string) error {
 	return nil
 }
 
-func NewStandaloneRunner(config execution.Config) (*StandaloneRunner, error) {
-	standaloneRunner := StandaloneRunner{config: config}
+func NewStandaloneRunner(pipelineId string, config execution.Config) (*StandaloneRunner, error) {
+	standaloneRunner := StandaloneRunner{pipelineId: pipelineId, config: config}
 	standaloneRunner.init()
 	return &standaloneRunner, nil
 }

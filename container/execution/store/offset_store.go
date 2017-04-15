@@ -9,7 +9,7 @@ import (
 
 const (
 	DEFAULT_OFFSET = ""
-	OFFSET_FILE    = "data/offset.json"
+	OFFSET_FILE    = "offset.json"
 )
 
 func GetOffset() (common.SourceOffset, error) {
@@ -29,20 +29,28 @@ func GetOffset() (common.SourceOffset, error) {
 	}
 }
 
-func SaveOffset(sourceOffset common.SourceOffset) error {
+func SaveOffset(pipelineId string, sourceOffset common.SourceOffset) error {
 	offsetJson, err := json.Marshal(sourceOffset)
 	check(err)
-	err1 := ioutil.WriteFile(OFFSET_FILE, offsetJson, 0644)
+	err1 := ioutil.WriteFile(getPipelineOffsetFile(pipelineId), offsetJson, 0644)
 	return err1
 }
 
-func ResetOffset() error {
+func ResetOffset(pipelineId string) error {
 	defaultSourceOffset := common.SourceOffset{Version: 1, Offset: DEFAULT_OFFSET}
-	return SaveOffset(defaultSourceOffset)
+	return SaveOffset(pipelineId, defaultSourceOffset)
 }
 
 func check(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+func getPipelineOffsetFile(pipelineId string) string {
+	return getRunInfoDir(pipelineId) + OFFSET_FILE
+}
+
+func getRunInfoDir(pipelineId string) string {
+	return "data/runInfo/" + pipelineId + "/"
 }

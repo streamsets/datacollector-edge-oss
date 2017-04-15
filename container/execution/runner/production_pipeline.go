@@ -27,12 +27,13 @@ func (p *ProductionPipeline) WasStopped() bool {
 }
 
 func NewProductionPipeline(
+	pipelineId string,
 	config execution.Config,
 	standaloneRunner *StandaloneRunner,
 	pipelineConfiguration common.PipelineConfiguration,
 	runtimeConstants map[string]interface{},
 ) (*ProductionPipeline, error) {
-	var sourceOffsetTracker SourceOffsetTracker = NewProductionSourceOffsetTracker("pipelineId")
+	var sourceOffsetTracker SourceOffsetTracker = NewProductionSourceOffsetTracker(pipelineId)
 	pipeline, err := NewPipeline(config, standaloneRunner, sourceOffsetTracker, runtimeConstants)
 	return &ProductionPipeline{
 		PipelineConfig: pipelineConfiguration,

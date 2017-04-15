@@ -1,21 +1,41 @@
 package manager
 
 import (
+	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/execution"
 	"github.com/streamsets/dataextractor/container/execution/runner"
 )
 
 type PipelineManager struct {
-	runner *runner.StandaloneRunner
+	config    execution.Config
+	runnerMap map[string]*runner.StandaloneRunner
 }
 
-func (pipelineManager *PipelineManager) GetRunner() *runner.StandaloneRunner {
-	return pipelineManager.runner
+func (p *PipelineManager) GetRunner(pipelineId string) *runner.StandaloneRunner {
+	if p.runnerMap[pipelineId] == nil {
+		pRunner, err := runner.NewStandaloneRunner(pipelineId, p.config)
+		if err != nil {
+			panic(err)
+		}
+		p.runnerMap[pipelineId] = pRunner
+	}
+	return p.runnerMap[pipelineId]
+}
+
+func (p *PipelineManager) StartPipeline(pipelineId string) (*common.PipelineState, error) {
+	return p.GetRunner(pipelineId).StartPipeline()
+}
+
+func (p *PipelineManager) StopPipeline(pipelineId string) (*common.PipelineState, error) {
+	return p.GetRunner(pipelineId).StopPipeline()
+}
+
+func (p *PipelineManager) ResetOffset(pipelineId string) (*common.PipelineState, error) {
+	return p.GetRunner(pipelineId).ResetOffset()
 }
 
 func New(config execution.Config) (*PipelineManager, error) {
-	pipelineRunner, _ := runner.NewStandaloneRunner(config)
-	pipelineManager := PipelineManager{runner: pipelineRunner}
+	pipelineManager := PipelineManager{config: config, runnerMap: make(map[string]*runner.StandaloneRunner)}
 
 	return &pipelineManager, nil
 }

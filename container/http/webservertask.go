@@ -26,57 +26,6 @@ func (webServerTask *WebServerTask) homeHandler(w http.ResponseWriter, r *http.R
 
 }
 
-func (webServerTask *WebServerTask) startHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		state, err := webServerTask.manager.GetRunner().StartPipeline("pipeline")
-		if err == nil {
-			encoder := json.NewEncoder(w)
-			encoder.SetIndent("", "\t")
-			encoder.Encode(state)
-		} else {
-			fmt.Fprintf(w, "Failed to Start:  %s! ", err)
-		}
-
-	} else {
-		fmt.Fprintf(w, "Method %s! is not supported", r.Method)
-	}
-}
-
-func (webServerTask *WebServerTask) stopHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		state, err := webServerTask.manager.GetRunner().StopPipeline()
-		if err == nil {
-			encoder := json.NewEncoder(w)
-			encoder.SetIndent("", "\t")
-			encoder.Encode(state)
-		} else {
-			fmt.Fprintf(w, "Failed to Stop:  %s! ", err)
-		}
-	} else {
-		fmt.Fprintf(w, "Method %s! is not supported", r.Method)
-	}
-}
-
-func (webServerTask *WebServerTask) resetOffsetHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		go webServerTask.manager.GetRunner().ResetOffset()
-		fmt.Fprint(w, "Reset Origin is successful.")
-	} else {
-		fmt.Fprintf(w, "Method %s! is not supported", r.Method)
-	}
-}
-
-func (webServerTask *WebServerTask) statusHandler(w http.ResponseWriter, r *http.Request) {
-	state, err := webServerTask.manager.GetRunner().GetStatus()
-	if err == nil {
-		encoder := json.NewEncoder(w)
-		encoder.SetIndent("", "\t")
-		encoder.Encode(state)
-	} else {
-		fmt.Fprintf(w, "Failed to get status:  %s! ", err)
-	}
-}
-
 func (webServerTask *WebServerTask) Run() {
 	fmt.Println("Running on URI : http://localhost" + webServerTask.config.BindAddress)
 	log.Println("Running on URI : http://localhost" + webServerTask.config.BindAddress)

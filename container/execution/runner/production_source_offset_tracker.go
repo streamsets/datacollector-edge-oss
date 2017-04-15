@@ -7,7 +7,7 @@ import (
 )
 
 type ProductionSourceOffsetTracker struct {
-	pipelineName  string
+	pipelineId    string
 	currentOffset common.SourceOffset
 	newOffset     string
 	finished      bool
@@ -26,7 +26,7 @@ func (o *ProductionSourceOffsetTracker) CommitOffset() {
 	o.currentOffset.Offset = o.newOffset
 	o.finished = o.currentOffset.Offset == ""
 	o.newOffset = ""
-	store.SaveOffset(o.currentOffset)
+	store.SaveOffset(o.pipelineId, o.currentOffset)
 }
 
 func (o *ProductionSourceOffsetTracker) GetOffset() string {
@@ -37,10 +37,10 @@ func (o *ProductionSourceOffsetTracker) GetLastBatchTime() time.Time {
 	return o.lastBatchTime
 }
 
-func NewProductionSourceOffsetTracker(pipelineName string) *ProductionSourceOffsetTracker {
+func NewProductionSourceOffsetTracker(pipelineId string) *ProductionSourceOffsetTracker {
 	sourceOffset, _ := store.GetOffset()
 	return &ProductionSourceOffsetTracker{
-		pipelineName:  pipelineName,
+		pipelineId:    pipelineId,
 		currentOffset: sourceOffset,
 	}
 }
