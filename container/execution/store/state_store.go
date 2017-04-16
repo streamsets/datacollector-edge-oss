@@ -6,17 +6,17 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
+	"fmt"
 )
 
 const (
-	DEFAULT_PIPELINE_ID = "dataextractor"
 	PIPELINE_STATE_FILE = "pipelineState.json"
 )
 
 func GetState(pipelineId string) (*common.PipelineState, error) {
-	if _, err := os.Stat(getPipelineOffsetFile(pipelineId)); os.IsNotExist(err) {
+	if _, err := os.Stat(getPipelineStateFile(pipelineId)); os.IsNotExist(err) {
 		pipelineState := &common.PipelineState{
-			PipelineId: DEFAULT_PIPELINE_ID,
+			PipelineId: pipelineId,
 			Status:     common.EDITED,
 			Message:    "",
 			TimeStamp:  time.Now().UTC(),
@@ -27,15 +27,16 @@ func GetState(pipelineId string) (*common.PipelineState, error) {
 		}
 		return pipelineState, err
 	} else {
-		file, readError := ioutil.ReadFile(getPipelineOffsetFile(pipelineId))
+		file, readError := ioutil.ReadFile(getPipelineStateFile(pipelineId))
 
 		if readError != nil {
 			return nil, readError
 		}
 
 		var pipelineState common.PipelineState
-		json.Unmarshal(file, &pipelineState)
-		return &pipelineState, nil
+		err := json.Unmarshal(file, &pipelineState)
+		fmt.Println(pipelineState.PipelineId)
+		return &pipelineState, err
 	}
 }
 

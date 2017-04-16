@@ -273,7 +273,7 @@
       "value" : [ {
         "fileRollMode" : "REVERSE_COUNTER",
         "patternForToken" : ".*",
-        "fileFullPath" : "/Users/madhu/Documents/StreamSetsDocuments/development/logs/sds/sds.log"
+        "fileFullPath" : "/Users/madhu/Documents/projects/domainserver/dist/target/streamsets-domainserver-2.6.0-SNAPSHOT/streamsets-domainserver-2.6.0-SNAPSHOT/log/sds.log"
       } ]
     }, {
       "name" : "conf.allowLateDirectories",

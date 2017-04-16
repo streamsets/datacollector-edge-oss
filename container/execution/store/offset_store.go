@@ -12,12 +12,12 @@ const (
 	OFFSET_FILE    = "offset.json"
 )
 
-func GetOffset() (common.SourceOffset, error) {
+func GetOffset(pipelineId string) (common.SourceOffset, error) {
 	defaultSourceOffset := common.SourceOffset{Version: 1, Offset: DEFAULT_OFFSET}
-	if _, err := os.Stat(OFFSET_FILE); os.IsNotExist(err) {
+	if _, err := os.Stat(getPipelineOffsetFile(pipelineId)); os.IsNotExist(err) {
 		return defaultSourceOffset, nil
 	} else {
-		file, readError := ioutil.ReadFile(OFFSET_FILE)
+		file, readError := ioutil.ReadFile(getPipelineOffsetFile(pipelineId))
 
 		if readError != nil {
 			return defaultSourceOffset, readError

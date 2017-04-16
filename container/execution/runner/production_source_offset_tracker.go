@@ -38,7 +38,7 @@ func (o *ProductionSourceOffsetTracker) GetLastBatchTime() time.Time {
 }
 
 func NewProductionSourceOffsetTracker(pipelineId string) *ProductionSourceOffsetTracker {
-	sourceOffset, _ := store.GetOffset()
+	sourceOffset, _ := store.GetOffset(pipelineId)
 	return &ProductionSourceOffsetTracker{
 		pipelineId:    pipelineId,
 		currentOffset: sourceOffset,
