@@ -6,7 +6,6 @@ import (
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/creation"
 	"github.com/streamsets/dataextractor/container/validation"
-	"log"
 )
 
 type StageRuntime struct {
@@ -18,7 +17,7 @@ type StageRuntime struct {
 
 func (s *StageRuntime) Init() []validation.Issue {
 	var issues []validation.Issue
-	log.Println("StageRuntime Init")
+	// log.Println("StageRuntime Init")
 	s.stageBean.Stage.Init(s.ctx)
 	return issues
 }

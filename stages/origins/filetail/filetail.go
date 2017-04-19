@@ -17,8 +17,6 @@ type FileTailOrigin struct {
 }
 
 func (f *FileTailOrigin) Init(ctx context.Context) {
-	fmt.Println("FileTailOrigin Init method: ")
-
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
 	stageConfig := stageContext.StageConfig
 	for _, config := range stageConfig.Configuration {
@@ -40,11 +38,10 @@ func (f *FileTailOrigin) Init(ctx context.Context) {
 }
 
 func (f *FileTailOrigin) Destroy() {
-	fmt.Println("FileTailOrigin Destroy method")
 }
 
 func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {
-	tailConfig := tail.Config{Follow: true}
+	tailConfig := tail.Config{Follow: true, Logger: tail.DiscardingLogger}
 
 	if lastSourceOffset != "" {
 		intOffset, _ := strconv.ParseInt(lastSourceOffset, 10, 64)

@@ -6,7 +6,6 @@ import (
 	"github.com/streamsets/dataextractor/container/creation"
 	"github.com/streamsets/dataextractor/container/execution"
 	"github.com/streamsets/dataextractor/container/validation"
-	"log"
 )
 
 type Pipeline struct {
@@ -31,7 +30,7 @@ func (p *Pipeline) Init() []validation.Issue {
 }
 
 func (p *Pipeline) Run() {
-	log.Println("Pipeline Run()")
+	// log.Println("Pipeline Run()")
 
 	for !p.offsetTracker.IsFinished() && !p.stop {
 		p.runBatch()
@@ -59,7 +58,7 @@ func (p *Pipeline) runBatch() {
 }
 
 func (p *Pipeline) Stop() {
-	log.Println("Pipeline Stop()")
+	// log.Println("Pipeline Stop()")
 	p.stop = true
 }
 

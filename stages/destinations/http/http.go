@@ -25,7 +25,7 @@ type HttpClientDestination struct {
 func (h *HttpClientDestination) Init(ctx context.Context) {
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
 	stageConfig := stageContext.StageConfig
-	log.Println("HttpClientDestination Init method")
+	// log.Println("HttpClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.resourceUrl" {
 			h.resourceUrl = config.Value.(string)
@@ -46,7 +46,7 @@ func (h *HttpClientDestination) Init(ctx context.Context) {
 }
 
 func (h *HttpClientDestination) Write(batch api.Batch) error {
-	log.Println("HttpClientDestination write method")
+	// log.Println("HttpClientDestination write method")
 	var batchByteArray []byte
 	for _, record := range batch.GetRecords() {
 

@@ -3,7 +3,6 @@ package runner
 import (
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/execution"
-	"log"
 )
 
 type ProductionPipeline struct {
@@ -12,13 +11,13 @@ type ProductionPipeline struct {
 }
 
 func (p *ProductionPipeline) Run() {
-	log.Println("Production Pipeline Run")
+	// log.Println("Production Pipeline Run")
 	p.Pipeline.Init()
 	p.Pipeline.Run()
 }
 
 func (p *ProductionPipeline) Stop() {
-	log.Println("Production Pipeline Stop")
+	// log.Println("Production Pipeline Stop")
 	p.Pipeline.Stop()
 }
 
