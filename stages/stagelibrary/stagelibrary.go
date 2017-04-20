@@ -9,6 +9,7 @@ import (
 	"github.com/streamsets/dataextractor/stages/destinations/websocket"
 	"github.com/streamsets/dataextractor/stages/origins/dev_random"
 	"github.com/streamsets/dataextractor/stages/origins/filetail"
+	"github.com/streamsets/dataextractor/stages/destinations/coap"
 )
 
 func CreateStageInstance(library string, stageName string) (api.Stage, error) {
@@ -29,6 +30,9 @@ func CreateStageInstance(library string, stageName string) (api.Stage, error) {
 
 	case "streamsets-datacollector-basic-lib:com_streamsets_pipeline_stage_destination_mqtt_MqttClientDTarget":
 		return &mqtt.MqttClientDestination{}, nil
+
+	case "streamsets-datacollector-basic-lib:com_streamsets_pipeline_stage_destination_coap_CoapClientDTarget":
+		return &coap.CoapClientDestination{}, nil
 
 	case "streamsets-datacollector-basic-lib:com_streamsets_pipeline_stage_destination_devnull_NullDTarget":
 		return &trash.TrashDestination{}, nil

@@ -14,7 +14,8 @@ DEPENDENCIES := github.com/hpcloud/tail/... \
     github.com/BurntSushi/toml \
     github.com/satori/go.uuid \
     github.com/gorilla/websocket \
-    github.com/eclipse/paho.mqtt.golang
+    github.com/eclipse/paho.mqtt.golang \
+    github.com/dustin/go-coap
 
 EXECUTABLES :=dist/bin/$(BINARY_NAME)
 

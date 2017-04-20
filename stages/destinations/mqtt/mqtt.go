@@ -9,8 +9,6 @@ import (
 	"log"
 )
 
-const DEBUG = false
-
 type MqttClientDestination struct {
 	brokerUrl string
 	clientId  string
