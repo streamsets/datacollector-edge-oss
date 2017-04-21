@@ -2,11 +2,11 @@ package store
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/streamsets/dataextractor/container/common"
 	"io/ioutil"
 	"os"
 	"time"
-	"fmt"
 )
 
 const (

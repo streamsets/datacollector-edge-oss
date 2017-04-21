@@ -3,13 +3,13 @@ package stagelibrary
 import (
 	"errors"
 	"github.com/streamsets/dataextractor/api"
+	"github.com/streamsets/dataextractor/stages/destinations/coap"
 	"github.com/streamsets/dataextractor/stages/destinations/http"
 	"github.com/streamsets/dataextractor/stages/destinations/mqtt"
 	"github.com/streamsets/dataextractor/stages/destinations/trash"
 	"github.com/streamsets/dataextractor/stages/destinations/websocket"
 	"github.com/streamsets/dataextractor/stages/origins/dev_random"
 	"github.com/streamsets/dataextractor/stages/origins/filetail"
-	"github.com/streamsets/dataextractor/stages/destinations/coap"
 )
 
 func CreateStageInstance(library string, stageName string) (api.Stage, error) {

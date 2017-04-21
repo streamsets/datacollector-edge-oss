@@ -3,18 +3,17 @@ package coap
 import (
 	"context"
 	"encoding/json"
+	"github.com/dustin/go-coap"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
 	"log"
-	"github.com/dustin/go-coap"
 	"net/url"
 )
 
 type CoapClientDestination struct {
 	resourceUrl string
-	coapMethod string
+	coapMethod  string
 	requestType string
-
 }
 
 func (c *CoapClientDestination) Init(ctx context.Context) {
@@ -56,9 +55,9 @@ func (c *CoapClientDestination) sendRecordToSDC(recordValue interface{}) {
 	}
 
 	req := coap.Message{
-		Type:      getCoapType(c.requestType),
-		Code:      getCoapMethod(c.coapMethod),
-		Payload:   jsonValue,
+		Type:    getCoapType(c.requestType),
+		Code:    getCoapMethod(c.coapMethod),
+		Payload: jsonValue,
 	}
 	req.SetPathString(parsedURL.Path)
 
@@ -79,7 +78,6 @@ func (c *CoapClientDestination) sendRecordToSDC(recordValue interface{}) {
 
 func (h *CoapClientDestination) Destroy() {
 }
-
 
 func getCoapType(requestType string) coap.COAPType {
 	switch requestType {

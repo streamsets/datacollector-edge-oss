@@ -10,9 +10,10 @@ BuiltRepoSha := `git rev-parse HEAD`
 GO=go
 TEST=go test
 
-DEPENDENCIES := github.com/hpcloud/tail/... \
+DEPENDENCIES := github.com/julienschmidt/httprouter \
     github.com/BurntSushi/toml \
     github.com/satori/go.uuid \
+    github.com/hpcloud/tail/... \
     github.com/gorilla/websocket \
     github.com/eclipse/paho.mqtt.golang \
     github.com/dustin/go-coap

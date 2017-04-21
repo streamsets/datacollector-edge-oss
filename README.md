@@ -16,9 +16,12 @@
     
 ## REST API
 
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/status
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/start
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/stop
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/resetOffset
+    $ curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/status
+    $ curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/start
+    $ curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/stop
+    $ curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/resetOffset
    
 
+## Building for all platforms
+
+    $ make clean dist-all
