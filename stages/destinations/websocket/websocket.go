@@ -6,13 +6,25 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
+	"github.com/streamsets/dataextractor/stages/stagelibrary"
 	"log"
 	"net/http"
+)
+
+const (
+	LIBRARY    = "streamsets-datacollector-basic-lib"
+	STAGE_NAME = "com_streamsets_pipeline_stage_destination_websocket_WebSocketDTarget"
 )
 
 type WebSocketClientDestination struct {
 	resourceUrl string
 	headers     []interface{}
+}
+
+func init() {
+	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
+		return &WebSocketClientDestination{}
+	})
 }
 
 func (w *WebSocketClientDestination) Init(ctx context.Context) {

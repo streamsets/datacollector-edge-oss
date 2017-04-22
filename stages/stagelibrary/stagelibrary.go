@@ -3,43 +3,43 @@ package stagelibrary
 import (
 	"errors"
 	"github.com/streamsets/dataextractor/api"
-	"github.com/streamsets/dataextractor/stages/destinations/coap"
-	"github.com/streamsets/dataextractor/stages/destinations/http"
-	"github.com/streamsets/dataextractor/stages/destinations/mqtt"
-	"github.com/streamsets/dataextractor/stages/destinations/trash"
-	"github.com/streamsets/dataextractor/stages/destinations/websocket"
-	"github.com/streamsets/dataextractor/stages/origins/dev_random"
-	"github.com/streamsets/dataextractor/stages/origins/filetail"
+	"sync"
 )
 
+type NewStageCreator func() api.Stage
+
+var reg *registry
+
+type registry struct {
+	sync.RWMutex
+	newStageCreatorMap map[string]NewStageCreator
+}
+
+func init() {
+	reg = new(registry)
+	reg.newStageCreatorMap = make(map[string]NewStageCreator)
+}
+
+func SetCreator(library string, stageName string, newStageCreator NewStageCreator) {
+	stageKey := library + ":" + stageName
+	reg.Lock()
+	reg.newStageCreatorMap[stageKey] = newStageCreator
+	reg.Unlock()
+}
+
+func GetCreator(library string, stageName string) (NewStageCreator, bool) {
+	stageKey := library + ":" + stageName
+	reg.RLock()
+	s, b := reg.newStageCreatorMap[stageKey]
+	reg.RUnlock()
+	return s, b
+}
+
 func CreateStageInstance(library string, stageName string) (api.Stage, error) {
-	var instanceKey = library + ":" + stageName
-	switch instanceKey {
-
-	case "streamsets-datacollector-dev-lib:com_streamsets_pipeline_stage_devtest_RandomSource":
-		return &dev_random.DevRandom{}, nil
-
-	case "streamsets-datacollector-basic-lib:com_streamsets_pipeline_stage_origin_logtail_FileTailDSource":
-		return &filetail.FileTailOrigin{}, nil
-
-	case "streamsets-datacollector-basic-lib:com_streamsets_pipeline_stage_destination_http_HttpClientDTarget":
-		return &http.HttpClientDestination{}, nil
-
-	case "streamsets-datacollector-basic-lib:com_streamsets_pipeline_stage_destination_websocket_WebSocketDTarget":
-		return &websocket.WebSocketClientDestination{}, nil
-
-	case "streamsets-datacollector-basic-lib:com_streamsets_pipeline_stage_destination_mqtt_MqttClientDTarget":
-		return &mqtt.MqttClientDestination{}, nil
-
-	case "streamsets-datacollector-basic-lib:com_streamsets_pipeline_stage_destination_coap_CoapClientDTarget":
-		return &coap.CoapClientDestination{}, nil
-
-	case "streamsets-datacollector-basic-lib:com_streamsets_pipeline_stage_destination_devnull_NullDTarget":
-		return &trash.TrashDestination{}, nil
-
-	case "streamsets-datacollector-basic-lib:com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget":
-		return &trash.TrashDestination{}, nil
+	if t, ok := GetCreator(library, stageName); ok {
+		v := t()
+		return v, nil
+	} else {
+		return nil, errors.New("No Stage Instance found for : " + library + ", stage: " + stageName)
 	}
-
-	return nil, errors.New("No Stage Instance found for : " + instanceKey)
 }

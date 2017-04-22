@@ -6,14 +6,26 @@ import (
 	"github.com/hpcloud/tail"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
+	"github.com/streamsets/dataextractor/stages/stagelibrary"
 	"os"
 	"strconv"
 	"time"
 )
 
+const (
+	LIBRARY    = "streamsets-datacollector-basic-lib"
+	STAGE_NAME = "com_streamsets_pipeline_stage_origin_logtail_FileTailDSource"
+)
+
 type FileTailOrigin struct {
 	fileFullPath    string
 	maxWaitTimeSecs float64
+}
+
+func init() {
+	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
+		return &FileTailOrigin{}
+	})
 }
 
 func (f *FileTailOrigin) Init(ctx context.Context) {

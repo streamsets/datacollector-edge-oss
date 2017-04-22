@@ -5,14 +5,20 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
+	"github.com/streamsets/dataextractor/stages/stagelibrary"
 	"io/ioutil"
 	"log"
 	"net/http"
 )
 
-const DEBUG = false
+const (
+	DEBUG      = false
+	LIBRARY    = "streamsets-datacollector-basic-lib"
+	STAGE_NAME = "com_streamsets_pipeline_stage_destination_http_HttpClientDTarget"
+)
 
 type HttpClientDestination struct {
 	ctx                   context.Context
@@ -20,6 +26,13 @@ type HttpClientDestination struct {
 	headers               []interface{}
 	singleRequestPerBatch bool
 	httpCompression       string
+}
+
+func init() {
+	fmt.Println("HttpClientDestination init function")
+	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
+		return &HttpClientDestination{}
+	})
 }
 
 func (h *HttpClientDestination) Init(ctx context.Context) {

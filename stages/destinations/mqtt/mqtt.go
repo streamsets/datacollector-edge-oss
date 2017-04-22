@@ -6,7 +6,13 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
+	"github.com/streamsets/dataextractor/stages/stagelibrary"
 	"log"
+)
+
+const (
+	LIBRARY    = "streamsets-datacollector-basic-lib"
+	STAGE_NAME = "com_streamsets_pipeline_stage_destination_mqtt_MqttClientDTarget"
 )
 
 type MqttClientDestination struct {
@@ -15,6 +21,12 @@ type MqttClientDestination struct {
 	topic     string
 	qos       float64
 	opts      *MQTT.ClientOptions
+}
+
+func init() {
+	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
+		return &MqttClientDestination{}
+	})
 }
 
 func (m *MqttClientDestination) Init(ctx context.Context) {

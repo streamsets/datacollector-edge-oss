@@ -6,14 +6,26 @@ import (
 	"github.com/dustin/go-coap"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
+	"github.com/streamsets/dataextractor/stages/stagelibrary"
 	"log"
 	"net/url"
+)
+
+const (
+	LIBRARY    = "streamsets-datacollector-basic-lib"
+	STAGE_NAME = "com_streamsets_pipeline_stage_destination_coap_CoapClientDTarget"
 )
 
 type CoapClientDestination struct {
 	resourceUrl string
 	coapMethod  string
 	requestType string
+}
+
+func init() {
+	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
+		return &CoapClientDestination{}
+	})
 }
 
 func (c *CoapClientDestination) Init(ctx context.Context) {
