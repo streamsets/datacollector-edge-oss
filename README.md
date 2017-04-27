@@ -4,9 +4,16 @@
 
 * Go 1.8
 * make
+
+
+## Clone Repository
+
+* https://golang.org/doc/code.html#Organization
+* Create directory $GOPATH/src/github.com/streamsets
+* Clone this repository in directory $GOPATH/src/github.com/streamsets
+
     
 ## Building
-
     $ make clean dist
     
 ## Running
