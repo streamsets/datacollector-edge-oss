@@ -10,6 +10,14 @@ import (
 	"time"
 )
 
+var RESET_OFFSET_DISALLOWED_STATUSES = []string{
+	common.FINISHING,
+	common.RETRY,
+	common.RUNNING,
+	common.STARTING,
+	common.STOPPING,
+};
+
 type StandaloneRunner struct {
 	pipelineId       string
 	config           execution.Config
@@ -105,12 +113,10 @@ func (standaloneRunner *StandaloneRunner) StopPipeline() (*common.PipelineState,
 }
 
 func (standaloneRunner *StandaloneRunner) ResetOffset() error {
-	var err error
-	err = standaloneRunner.checkState(common.STOPPED)
-	if err != nil {
-		return err
+	if util.Contains(RESET_OFFSET_DISALLOWED_STATUSES, standaloneRunner.pipelineState.Status)  {
+		return errors.New("Cannot reset the source offset when the pipeline is running")
 	}
-	err = store.ResetOffset(standaloneRunner.pipelineId)
+	err := store.ResetOffset(standaloneRunner.pipelineId)
 	return err
 }
 
