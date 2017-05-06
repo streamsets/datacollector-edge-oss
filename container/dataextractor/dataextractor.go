@@ -1,7 +1,9 @@
 package dataextractor
 
 import (
+	"encoding/json"
 	"flag"
+	"fmt"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/dpm"
 	"github.com/streamsets/dataextractor/container/execution/manager"
@@ -31,9 +33,22 @@ type DataExtractorMain struct {
 
 func DoMain() {
 	debugFlag := flag.Bool("debug", false, "Debug flag")
+	startFlag := flag.String("start", "", "Start Pipeline flag")
 	flag.Parse()
+
 	initializeLog(*debugFlag)
 	dataExtractor, _ := newDataExtractor()
+
+	if len(*startFlag) > 0 {
+		fmt.Print("Starting Pipeline: ", *startFlag)
+		state, err := dataExtractor.manager.StartPipeline(*startFlag)
+		if err != nil {
+			panic(err)
+		}
+		stateJson, _ := json.Marshal(state)
+		fmt.Println(string(stateJson))
+	}
+
 	dataExtractor.webServerTask.Run()
 }
 

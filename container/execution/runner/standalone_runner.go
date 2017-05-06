@@ -16,7 +16,7 @@ var RESET_OFFSET_DISALLOWED_STATUSES = []string{
 	common.RUNNING,
 	common.STARTING,
 	common.STOPPING,
-};
+}
 
 type StandaloneRunner struct {
 	pipelineId       string
@@ -113,7 +113,7 @@ func (standaloneRunner *StandaloneRunner) StopPipeline() (*common.PipelineState,
 }
 
 func (standaloneRunner *StandaloneRunner) ResetOffset() error {
-	if util.Contains(RESET_OFFSET_DISALLOWED_STATUSES, standaloneRunner.pipelineState.Status)  {
+	if util.Contains(RESET_OFFSET_DISALLOWED_STATUSES, standaloneRunner.pipelineState.Status) {
 		return errors.New("Cannot reset the source offset when the pipeline is running")
 	}
 	err := store.ResetOffset(standaloneRunner.pipelineId)

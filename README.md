@@ -21,9 +21,17 @@
     $ cd dist
     $ bin/dataextractor
     
+### To start pipeline     
+
+    $ bin/dataextractor -start=<pipelineId>
+
+### To enable DEBUG Log Level    
+    
+    $ bin/dataextractor -debug -start=tailFileToHttp
+    
 ## REST API
 
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/status
+    $ curl -X GET http://localhost:18633/rest/v1/pipeline/:pipelineId/status
     $ curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/start
     $ curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/stop
     $ curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/resetOffset

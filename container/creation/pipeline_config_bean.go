@@ -1,7 +1,6 @@
 package creation
 
 import (
-	"fmt"
 	"github.com/streamsets/dataextractor/container/common"
 )
 
@@ -53,12 +52,12 @@ func NewPipelineConfigBean(pipelineConfig common.PipelineConfiguration) Pipeline
 			break
 		case "constants":
 			constants := config.Value.([]interface{})
-			fmt.Println(constants)
 			pipelineConfigBean.Constants = make(map[string]interface{})
-			/*
-				for _, constant := range constants {
-					pipelineConfigBean.Constants[constant["key"].(string)] = constant["value"].(interface{})
-				}*/
+			for _, constant := range constants {
+				constantMap := constant.(map[string]interface{})
+				key := constantMap["key"]
+				pipelineConfigBean.Constants[key.(string)] = constantMap["value"]
+			}
 			break
 		case "badRecordsHandling":
 			pipelineConfigBean.BadRecordsHandling = config.Value.(string)
