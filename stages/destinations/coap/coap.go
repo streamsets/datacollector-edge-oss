@@ -31,7 +31,7 @@ func init() {
 func (c *CoapClientDestination) Init(ctx context.Context) {
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
 	stageConfig := stageContext.StageConfig
-	log.Println("MqttClientDestination Init method")
+	log.Println("[DEBUG] MqttClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.resourceUrl" {
 			c.resourceUrl = config.Value.(string)
@@ -48,7 +48,7 @@ func (c *CoapClientDestination) Init(ctx context.Context) {
 }
 
 func (c *CoapClientDestination) Write(batch api.Batch) error {
-	log.Println("CoapClientDestination Write method")
+	log.Println("[DEBUG] CoapClientDestination Write method")
 	for _, record := range batch.GetRecords() {
 		c.sendRecordToSDC(record.Value)
 	}
@@ -75,16 +75,16 @@ func (c *CoapClientDestination) sendRecordToSDC(recordValue interface{}) {
 
 	coapClient, err := coap.Dial("udp", parsedURL.Host)
 	if err != nil {
-		log.Printf("Error dialing: %v", err)
+		log.Printf("[ERROR] Error dialing: %v", err)
 	}
 
 	rv, err := coapClient.Send(req)
 	if err != nil {
-		log.Printf("Error sending request: %v", err)
+		log.Printf("[ERROR] Error sending request: %v", err)
 	}
 
 	if rv != nil {
-		log.Printf("Response payload: %s", rv.Payload)
+		log.Printf("[DEBUG] Response payload: %s", rv.Payload)
 	}
 }
 

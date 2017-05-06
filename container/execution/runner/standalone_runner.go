@@ -104,9 +104,14 @@ func (standaloneRunner *StandaloneRunner) StopPipeline() (*common.PipelineState,
 	return standaloneRunner.pipelineState, nil
 }
 
-func (standaloneRunner *StandaloneRunner) ResetOffset() (*common.PipelineState, error) {
-	err := store.ResetOffset(standaloneRunner.pipelineId)
-	return standaloneRunner.pipelineState, err
+func (standaloneRunner *StandaloneRunner) ResetOffset() error {
+	var err error
+	err = standaloneRunner.checkState(common.STOPPED)
+	if err != nil {
+		return err
+	}
+	err = store.ResetOffset(standaloneRunner.pipelineId)
+	return err
 }
 
 func (standaloneRunner *StandaloneRunner) checkState(toState string) error {

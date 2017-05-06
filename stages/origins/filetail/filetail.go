@@ -2,11 +2,11 @@ package filetail
 
 import (
 	"context"
-	"fmt"
 	"github.com/hpcloud/tail"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/stages/stagelibrary"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -46,14 +46,18 @@ func (f *FileTailOrigin) Init(ctx context.Context) {
 		}
 	}
 
-	fmt.Println("Reading file - " + f.fileFullPath)
+	log.Println("[DEBUG] Reading file - " + f.fileFullPath)
 }
 
 func (f *FileTailOrigin) Destroy() {
 }
 
 func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {
-	tailConfig := tail.Config{Follow: true, Logger: tail.DiscardingLogger}
+	tailConfig := tail.Config{
+		MustExist: true,
+		Follow:    true,
+		Logger:    tail.DiscardingLogger,
+	}
 
 	if lastSourceOffset != "" {
 		intOffset, _ := strconv.ParseInt(lastSourceOffset, 10, 64)
@@ -61,10 +65,8 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 	}
 
 	tailObj, err := tail.TailFile(f.fileFullPath, tailConfig)
-
 	if err != nil {
-		fmt.Println("error:", err)
-		panic(err)
+		return lastSourceOffset, err
 	}
 
 	var currentOffset int64

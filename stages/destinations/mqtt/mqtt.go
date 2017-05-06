@@ -32,7 +32,7 @@ func init() {
 func (m *MqttClientDestination) Init(ctx context.Context) {
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
 	stageConfig := stageContext.StageConfig
-	log.Println("MqttClientDestination Init method")
+	log.Println("[DEBUG] MqttClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.brokerUrl" {
 			m.brokerUrl = config.Value.(string)
@@ -63,7 +63,7 @@ func (m *MqttClientDestination) Write(batch api.Batch) error {
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}
-	log.Println("MqttClientDestination write method")
+	log.Println("[DEBUG] MqttClientDestination write method")
 	for _, record := range batch.GetRecords() {
 		m.sendRecordToSDC(record.Value, client)
 	}
@@ -83,8 +83,8 @@ func (h *MqttClientDestination) sendRecordToSDC(recordValue interface{}, client 
 
 //define a function for the default message handler
 func (m *MqttClientDestination) MessageHandler(client MQTT.Client, msg MQTT.Message) {
-	log.Printf("TOPIC: %s\n", msg.Topic())
-	log.Printf("MSG: %s\n", msg.Payload())
+	log.Printf("[DEBUG] TOPIC: %s\n", msg.Topic())
+	log.Printf("[DEBUG] MSG: %s\n", msg.Payload())
 }
 
 func (h *MqttClientDestination) Destroy() {

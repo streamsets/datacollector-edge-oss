@@ -17,7 +17,6 @@ type StageRuntime struct {
 
 func (s *StageRuntime) Init() []validation.Issue {
 	var issues []validation.Issue
-	// log.Println("StageRuntime Init")
 	s.stageBean.Stage.Init(s.ctx)
 	return issues
 }
@@ -33,7 +32,7 @@ func (s *StageRuntime) Execute(
 	if len(s.config.OutputLanes) > 0 {
 		newOffset, err = s.stageBean.Stage.(api.Origin).Produce(previousOffset, batchSize, batchMaker)
 	} else {
-		s.stageBean.Stage.(api.Destination).Write(batch)
+		err = s.stageBean.Stage.(api.Destination).Write(batch)
 	}
 	return newOffset, err
 }

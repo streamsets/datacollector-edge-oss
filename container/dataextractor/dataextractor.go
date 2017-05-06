@@ -1,10 +1,12 @@
 package dataextractor
 
 import (
+	"flag"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/dpm"
 	"github.com/streamsets/dataextractor/container/execution/manager"
 	"github.com/streamsets/dataextractor/container/http"
+	"github.com/streamsets/dataextractor/container/util"
 	"log"
 	"os"
 	"path"
@@ -13,6 +15,10 @@ import (
 const (
 	DefaultLogFilePath    = "logs/sde.log"
 	DefaultConfigFilePath = "etc/sde.conf"
+	DEBUG                 = "DEBUG"
+	WARN                  = "WARN"
+	ERROR                 = "ERROR"
+	INFO                  = "INFO"
 )
 
 type DataExtractorMain struct {
@@ -24,21 +30,20 @@ type DataExtractorMain struct {
 }
 
 func DoMain() {
+	debugFlag := flag.Bool("debug", false, "Debug flag")
+	flag.Parse()
+	initializeLog(*debugFlag)
 	dataExtractor, _ := newDataExtractor()
 	dataExtractor.webServerTask.Run()
 }
 
 func newDataExtractor() (*DataExtractorMain, error) {
-	loggerFile, _ := os.OpenFile(DefaultLogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	log.SetOutput(loggerFile)
-
 	ex, err := os.Executable()
 	if err != nil {
 		panic(err)
 	}
 	exPath := path.Dir(ex)
-	log.Println("Current Folder: ", exPath)
+	log.Println("[INFO] Current Folder: ", exPath)
 
 	config := NewConfig()
 	config.FromTomlFile(DefaultConfigFilePath)
@@ -59,4 +64,25 @@ func newDataExtractor() (*DataExtractorMain, error) {
 		webServerTask: webServerTask,
 		manager:       pipelineManager,
 	}, nil
+}
+
+func initializeLog(debugFlag bool) {
+	minLevel := util.LogLevel(WARN)
+	if debugFlag {
+		minLevel = util.LogLevel(DEBUG)
+	}
+
+	loggerFile, _ := os.OpenFile(DefaultLogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	logFilter := &util.LevelFilter{
+		Levels:   []util.LogLevel{DEBUG, WARN, ERROR, INFO},
+		MinLevel: minLevel,
+		Writer:   loggerFile,
+	}
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	log.SetOutput(logFilter)
+
+	log.Print("[DEBUG] Debugging")         // this will not print
+	log.Print("[WARN] Warning")            // this will
+	log.Print("[ERROR] Erring")            // and so will this
+	log.Print("Message I haven't updated") // and so will this
 }

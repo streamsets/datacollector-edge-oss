@@ -30,7 +30,7 @@ func init() {
 func (w *WebSocketClientDestination) Init(ctx context.Context) {
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
 	stageConfig := stageContext.StageConfig
-	log.Println("WebSocketClientDestination Init method")
+	log.Println("[DEBUG] WebSocketClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.resourceUrl" {
 			w.resourceUrl = config.Value.(string)
@@ -43,7 +43,7 @@ func (w *WebSocketClientDestination) Init(ctx context.Context) {
 }
 
 func (w *WebSocketClientDestination) Write(batch api.Batch) error {
-	log.Println("WebSocketClientDestination write method = " + w.resourceUrl)
+	log.Println("[DEBUG] WebSocketClientDestination write method = " + w.resourceUrl)
 
 	var requestHeader = http.Header{}
 	if w.headers != nil {
@@ -66,7 +66,7 @@ func (w *WebSocketClientDestination) Write(batch api.Batch) error {
 
 		err = c.WriteMessage(websocket.TextMessage, jsonValue)
 		if err != nil {
-			log.Println("write:", err)
+			log.Println("[ERROR] write:", err)
 		}
 	}
 

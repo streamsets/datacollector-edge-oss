@@ -30,7 +30,7 @@ func (p *PipelineManager) StopPipeline(pipelineId string) (*common.PipelineState
 	return p.GetRunner(pipelineId).StopPipeline()
 }
 
-func (p *PipelineManager) ResetOffset(pipelineId string) (*common.PipelineState, error) {
+func (p *PipelineManager) ResetOffset(pipelineId string) error {
 	return p.GetRunner(pipelineId).ResetOffset()
 }
 

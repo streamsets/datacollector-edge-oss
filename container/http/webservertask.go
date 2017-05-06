@@ -29,7 +29,7 @@ func (webServerTask *WebServerTask) homeHandler(w http.ResponseWriter, r *http.R
 
 func (webServerTask *WebServerTask) Run() {
 	fmt.Println("Running on URI : http://localhost" + webServerTask.config.BindAddress)
-	log.Println("Running on URI : http://localhost" + webServerTask.config.BindAddress)
+	log.Println("[INFO] Running on URI : http://localhost" + webServerTask.config.BindAddress)
 	router := httprouter.New()
 	router.GET("/", webServerTask.homeHandler)
 	router.POST("/rest/v1/pipeline/:pipelineId/start", webServerTask.startHandler)

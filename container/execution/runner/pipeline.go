@@ -6,6 +6,7 @@ import (
 	"github.com/streamsets/dataextractor/container/creation"
 	"github.com/streamsets/dataextractor/container/execution"
 	"github.com/streamsets/dataextractor/container/validation"
+	"log"
 )
 
 type Pipeline struct {
@@ -30,7 +31,7 @@ func (p *Pipeline) Init() []validation.Issue {
 }
 
 func (p *Pipeline) Run() {
-	// log.Println("Pipeline Run()")
+	log.Println("[DEBUG] Pipeline Run()")
 
 	for !p.offsetTracker.IsFinished() && !p.stop {
 		p.runBatch()
@@ -49,7 +50,10 @@ func (p *Pipeline) runBatch() {
 			committed = true
 		}
 
-		pipe.Process(pipeBatch)
+		err := pipe.Process(pipeBatch)
+		if err != nil {
+			log.Println("[ERROR] ", err)
+		}
 	}
 
 	if p.pipelineBean.Config.DeliveryGuarantee == "AT_LEAST_ONCE" {
@@ -58,7 +62,7 @@ func (p *Pipeline) runBatch() {
 }
 
 func (p *Pipeline) Stop() {
-	// log.Println("Pipeline Stop()")
+	log.Println("[DEBUG] Pipeline Stop()")
 	p.stop = true
 }
 

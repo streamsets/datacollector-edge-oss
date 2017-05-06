@@ -61,7 +61,7 @@ func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo 
 		}
 		defer resp.Body.Close()
 
-		log.Println("DPM Registration Status:", resp.Status)
+		log.Println("[INFO] DPM Registration Status:", resp.Status)
 		if resp.StatusCode != 200 {
 			panic("DPM Registration failed")
 		}

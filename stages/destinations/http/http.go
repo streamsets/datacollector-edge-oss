@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/stages/stagelibrary"
@@ -29,7 +28,6 @@ type HttpClientDestination struct {
 }
 
 func init() {
-	fmt.Println("HttpClientDestination init function")
 	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
 		return &HttpClientDestination{}
 	})
@@ -38,7 +36,7 @@ func init() {
 func (h *HttpClientDestination) Init(ctx context.Context) {
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
 	stageConfig := stageContext.StageConfig
-	// log.Println("HttpClientDestination Init method")
+	log.Println("[DEBUG] HttpClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.resourceUrl" {
 			h.resourceUrl = config.Value.(string)
@@ -59,19 +57,19 @@ func (h *HttpClientDestination) Init(ctx context.Context) {
 }
 
 func (h *HttpClientDestination) Write(batch api.Batch) error {
-	// log.Println("HttpClientDestination write method")
+	log.Println("[DEBUG] HttpClientDestination write method")
+	var err error
 	var batchByteArray []byte
 	for _, record := range batch.GetRecords() {
 
 		var recordByteArray []byte
-		var err error
 		switch record.Value.(type) {
 		case string:
 			recordByteArray = []byte(record.Value.(string))
 		default:
 			recordByteArray, err = json.Marshal(record.Value)
 			if err != nil {
-				panic(err)
+				return err
 			}
 		}
 
@@ -79,22 +77,25 @@ func (h *HttpClientDestination) Write(batch api.Batch) error {
 			batchByteArray = append(batchByteArray, recordByteArray...)
 			batchByteArray = append(batchByteArray, "\n"...)
 		} else {
-			h.sendToSDC(recordByteArray)
+			err = h.sendToSDC(recordByteArray)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	if h.singleRequestPerBatch && len(batch.GetRecords()) > 0 {
-		h.sendToSDC(batchByteArray)
+		err = h.sendToSDC(batchByteArray)
 	}
-	return nil
+	return err
 }
 
-func (h *HttpClientDestination) sendToSDC(jsonValue []byte) {
+func (h *HttpClientDestination) sendToSDC(jsonValue []byte) error {
 	var buf bytes.Buffer
 
 	if h.httpCompression == "GZIP" {
 		gz := gzip.NewWriter(&buf)
 		if _, err := gz.Write(jsonValue); err != nil {
-			panic(err)
+			return err
 		}
 		gz.Close()
 	} else {
@@ -117,16 +118,18 @@ func (h *HttpClientDestination) sendToSDC(jsonValue []byte) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer resp.Body.Close()
 
 	if DEBUG {
-		log.Println("response Status:", resp.Status)
-		log.Println("response Headers:", resp.Header)
+		log.Println("[DEBUG] response Status:", resp.Status)
+		log.Println("[DEBUG] response Headers:", resp.Header)
 		body, _ := ioutil.ReadAll(resp.Body)
-		log.Println("response Body:", string(body))
+		log.Println("[DEBUG] response Body:", string(body))
 	}
+
+	return nil
 }
 
 func (h *HttpClientDestination) Destroy() {

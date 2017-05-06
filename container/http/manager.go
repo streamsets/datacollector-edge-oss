@@ -34,8 +34,12 @@ func (webServerTask *WebServerTask) stopHandler(w http.ResponseWriter, r *http.R
 
 func (webServerTask *WebServerTask) resetOffsetHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	pipelineId := ps.ByName("pipelineId")
-	go webServerTask.manager.ResetOffset(pipelineId)
-	fmt.Fprint(w, "Reset Origin is successful.")
+	err := webServerTask.manager.ResetOffset(pipelineId)
+	if err == nil {
+		fmt.Fprint(w, "Reset Origin failed:  %s! ", err)
+	} else {
+		fmt.Fprint(w, "Reset Origin is successful.")
+	}
 }
 
 func (webServerTask *WebServerTask) statusHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
