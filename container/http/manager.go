@@ -4,12 +4,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"io"
 	"net/http"
 )
 
 func (webServerTask *WebServerTask) startHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	pipelineId := ps.ByName("pipelineId")
-	state, err := webServerTask.manager.StartPipeline(pipelineId)
+	decoder := json.NewDecoder(r.Body)
+	var runtimeParameters map[string]interface{}
+	err := decoder.Decode(&runtimeParameters)
+	if err != nil {
+		switch {
+		case err == io.EOF:
+			// empty body
+		case err != nil:
+			// other error
+			fmt.Fprintf(w, "Failed to Start: %s", err)
+			return
+		}
+	}
+	defer r.Body.Close()
+
+	state, err := webServerTask.manager.StartPipeline(pipelineId, runtimeParameters)
 	if err == nil {
 		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "\t")
@@ -17,7 +33,6 @@ func (webServerTask *WebServerTask) startHandler(w http.ResponseWriter, r *http.
 	} else {
 		fmt.Fprintf(w, "Failed to Start:  %s! ", err)
 	}
-
 }
 
 func (webServerTask *WebServerTask) stopHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

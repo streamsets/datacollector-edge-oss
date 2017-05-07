@@ -34,14 +34,23 @@ type DataExtractorMain struct {
 func DoMain() {
 	debugFlag := flag.Bool("debug", false, "Debug flag")
 	startFlag := flag.String("start", "", "Start Pipeline flag")
+	runtimeParametersFlag := flag.String("runtimeParameters", "", "Runtime Parameters flag")
 	flag.Parse()
 
 	initializeLog(*debugFlag)
 	dataExtractor, _ := newDataExtractor()
 
 	if len(*startFlag) > 0 {
-		fmt.Print("Starting Pipeline: ", *startFlag)
-		state, err := dataExtractor.manager.StartPipeline(*startFlag)
+		var runtimeParameters map[string]interface{}
+		if len(*runtimeParametersFlag) > 0 {
+			err := json.Unmarshal([]byte(*runtimeParametersFlag), &runtimeParameters)
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		fmt.Println("Starting Pipeline: ", *startFlag)
+		state, err := dataExtractor.manager.StartPipeline(*startFlag, runtimeParameters)
 		if err != nil {
 			panic(err)
 		}

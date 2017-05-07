@@ -1,10 +1,10 @@
 {
   "schemaVersion" : 3,
   "version" : 6,
-  "pipelineId" : "DataExtractorDPMLog047131b6-fa2c-4751-9def-d3d8be3f9ada",
-  "title" : "Data Extractor DPM Log",
+  "pipelineId" : "tailFileToHttp27cc38af-3d14-41c4-970b-411a8d20f61b",
+  "title" : "tailFileToHttp",
   "description" : "",
-  "uuid" : "33c0cb97-228c-4948-a514-3c7d655c0eb0",
+  "uuid" : "7bf6db60-75b8-4e9d-bdf6-4809afd51e2b",
   "configuration" : [ {
     "name" : "executionMode",
     "value" : "STANDALONE"
@@ -31,7 +31,16 @@
     "value" : [ ]
   }, {
     "name" : "constants",
-    "value" : [ ]
+    "value" : [ {
+      "key" : "filePath",
+      "value" : "/Users/madhu/Documents/projects/domainserver/dist/target/streamsets-domainserver-2.6.0-SNAPSHOT/streamsets-domainserver-2.6.0-SNAPSHOT/log/sds.log"
+    }, {
+      "key" : "httpUrl",
+      "value" : "http://localhost:9999"
+    }, {
+      "key" : "sdcAppId",
+      "value" : "dpm"
+    } ]
   }, {
     "name" : "badRecordsHandling",
     "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
@@ -273,7 +282,7 @@
       "value" : [ {
         "fileRollMode" : "REVERSE_COUNTER",
         "patternForToken" : ".*",
-        "fileFullPath" : "/Users/madhu/Documents/projects/domainserver/dist/target/streamsets-domainserver-2.6.0-SNAPSHOT/streamsets-domainserver-2.6.0-SNAPSHOT/log/sds.log"
+        "fileFullPath" : "${filePath}"
       } ]
     }, {
       "name" : "conf.allowLateDirectories",
@@ -308,7 +317,7 @@
     "instanceName" : "HTTPClient_01",
     "library" : "streamsets-datacollector-basic-lib",
     "stageName" : "com_streamsets_pipeline_stage_destination_http_HttpClientDTarget",
-    "stageVersion" : "1",
+    "stageVersion" : "2",
     "configuration" : [ {
       "name" : "conf.dataGeneratorFormatConfig.charset",
       "value" : "UTF-8"
@@ -404,12 +413,12 @@
       "value" : "TEXT"
     }, {
       "name" : "conf.resourceUrl",
-      "value" : "http://localhost:9999"
+      "value" : "${httpUrl}"
     }, {
       "name" : "conf.headers",
       "value" : [ {
         "key" : "X-SDC-APPLICATION-ID",
-        "value" : "dpm"
+        "value" : "${sdcAppId}"
       } ]
     }, {
       "name" : "conf.httpMethod",
@@ -508,18 +517,6 @@
       "name" : "conf.client.proxy.password",
       "value" : null
     }, {
-      "name" : "conf.client.sslConfig.trustStorePath",
-      "value" : null
-    }, {
-      "name" : "conf.client.sslConfig.trustStorePassword",
-      "value" : null
-    }, {
-      "name" : "conf.client.sslConfig.keyStorePath",
-      "value" : null
-    }, {
-      "name" : "conf.client.sslConfig.keyStorePassword",
-      "value" : null
-    }, {
       "name" : "conf.singleRequestPerBatch",
       "value" : true
     }, {
@@ -537,6 +534,51 @@
     }, {
       "name" : "stageRecordPreconditions",
       "value" : [ ]
+    }, {
+      "name" : "conf.client.tlsConfig.trustStoreFilePath",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.trustStorePassword",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.keyStoreFilePath",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.keyStorePassword",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.hasTrustStore",
+      "value" : false
+    }, {
+      "name" : "conf.client.tlsConfig.hasKeyStore",
+      "value" : false
+    }, {
+      "name" : "conf.client.tlsEnabled",
+      "value" : false
+    }, {
+      "name" : "conf.client.tlsConfig.keyStoreType",
+      "value" : "JKS"
+    }, {
+      "name" : "conf.client.tlsConfig.keyStoreAlgorithm",
+      "value" : "SunX509"
+    }, {
+      "name" : "conf.client.tlsConfig.trustStoreType",
+      "value" : "JKS"
+    }, {
+      "name" : "conf.client.tlsConfig.trustStoreAlgorithm",
+      "value" : "SunX509"
+    }, {
+      "name" : "conf.client.tlsConfig.useDefaultProtocols",
+      "value" : true
+    }, {
+      "name" : "conf.client.tlsConfig.protocols",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.useDefaultCiperSuites",
+      "value" : true
+    }, {
+      "name" : "conf.client.tlsConfig.cipherSuites",
+      "value" : null
     } ],
     "uiInfo" : {
       "description" : "",
@@ -583,20 +625,20 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "pipelineId" : "DataExtractorDPMLog047131b6-fa2c-4751-9def-d3d8be3f9ada",
-    "title" : "Data Extractor DPM Log",
+    "pipelineId" : "tailFileToHttp27cc38af-3d14-41c4-970b-411a8d20f61b",
+    "title" : "tailFileToHttp",
     "description" : "",
-    "created" : 1492110407720,
-    "lastModified" : 1492110601576,
+    "created" : 1494102435834,
+    "lastModified" : 1494102525632,
     "creator" : "admin",
     "lastModifier" : "admin",
     "lastRev" : "0",
-    "uuid" : "33c0cb97-228c-4948-a514-3c7d655c0eb0",
+    "uuid" : "7bf6db60-75b8-4e9d-bdf6-4809afd51e2b",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "DataExtractorDPMLog047131b6-fa2c-4751-9def-d3d8be3f9ada"
+    "name" : "tailFileToHttp27cc38af-3d14-41c4-970b-411a8d20f61b"
   },
   "metadata" : {
     "labels" : [ ]

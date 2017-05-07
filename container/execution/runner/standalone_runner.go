@@ -56,7 +56,9 @@ func (standaloneRunner *StandaloneRunner) GetStatus() (*common.PipelineState, er
 	return standaloneRunner.pipelineState, nil
 }
 
-func (standaloneRunner *StandaloneRunner) StartPipeline() (*common.PipelineState, error) {
+func (standaloneRunner *StandaloneRunner) StartPipeline(
+	runtimeParameters map[string]interface{},
+) (*common.PipelineState, error) {
 	var err error
 	err = standaloneRunner.checkState(common.STARTING)
 	if err != nil {
@@ -73,7 +75,7 @@ func (standaloneRunner *StandaloneRunner) StartPipeline() (*common.PipelineState
 		standaloneRunner.config,
 		standaloneRunner,
 		standaloneRunner.pipelineConfig,
-		nil,
+		runtimeParameters,
 	)
 	if err != nil {
 		return nil, err

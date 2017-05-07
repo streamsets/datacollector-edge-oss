@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/stages/stagelibrary"
@@ -39,19 +40,19 @@ func (h *HttpClientDestination) Init(ctx context.Context) {
 	log.Println("[DEBUG] HttpClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.resourceUrl" {
-			h.resourceUrl = config.Value.(string)
+			h.resourceUrl = stageContext.GetResolvedValue(config.Value).(string)
 		}
 
 		if config.Name == "conf.headers" {
-			h.headers = config.Value.([]interface{})
+			h.headers = stageContext.GetResolvedValue(config.Value).([]interface{})
 		}
 
 		if config.Name == "conf.singleRequestPerBatch" {
-			h.singleRequestPerBatch = config.Value.(bool)
+			h.singleRequestPerBatch = stageContext.GetResolvedValue(config.Value).(bool)
 		}
 
 		if config.Name == "conf.client.httpCompression" {
-			h.httpCompression = config.Value.(string)
+			h.httpCompression = stageContext.GetResolvedValue(config.Value).(string)
 		}
 	}
 }
@@ -121,6 +122,11 @@ func (h *HttpClientDestination) sendToSDC(jsonValue []byte) error {
 		return err
 	}
 	defer resp.Body.Close()
+
+	log.Println("[DEBUG] response Status:", resp.Status)
+	if resp.StatusCode != 200 {
+		return errors.New(resp.Status)
+	}
 
 	if DEBUG {
 		log.Println("[DEBUG] response Status:", resp.Status)

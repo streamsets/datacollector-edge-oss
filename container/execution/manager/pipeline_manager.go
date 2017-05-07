@@ -22,8 +22,11 @@ func (p *PipelineManager) GetRunner(pipelineId string) *runner.StandaloneRunner 
 	return p.runnerMap[pipelineId]
 }
 
-func (p *PipelineManager) StartPipeline(pipelineId string) (*common.PipelineState, error) {
-	return p.GetRunner(pipelineId).StartPipeline()
+func (p *PipelineManager) StartPipeline(
+	pipelineId string,
+	runtimeParameters map[string]interface{},
+) (*common.PipelineState, error) {
+	return p.GetRunner(pipelineId).StartPipeline(runtimeParameters)
 }
 
 func (p *PipelineManager) StopPipeline(pipelineId string) (*common.PipelineState, error) {

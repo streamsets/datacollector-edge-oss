@@ -36,13 +36,13 @@ func (f *FileTailOrigin) Init(ctx context.Context) {
 			fileInfos := config.Value.([]interface{})
 			if len(fileInfos) > 0 {
 				fileInfo := fileInfos[0].(map[string]interface{})
-				f.fileFullPath = fileInfo["fileFullPath"].(string)
+				f.fileFullPath = stageContext.GetResolvedValue(fileInfo["fileFullPath"]).(string)
 			}
 
 		}
 
 		if config.Name == "conf.maxWaitTimeSecs" {
-			f.maxWaitTimeSecs = config.Value.(float64)
+			f.maxWaitTimeSecs = stageContext.GetResolvedValue(config.Value).(float64)
 		}
 	}
 
@@ -53,6 +53,8 @@ func (f *FileTailOrigin) Destroy() {
 }
 
 func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {
+	log.Println("[DEBUG] Last Source Offset : ", lastSourceOffset)
+
 	tailConfig := tail.Config{
 		MustExist: true,
 		Follow:    true,

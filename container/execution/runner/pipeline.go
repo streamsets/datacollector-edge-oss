@@ -74,7 +74,6 @@ func NewPipeline(
 ) (*Pipeline, error) {
 
 	pipelineBean, err := creation.NewPipelineBean(standaloneRunner.GetPipelineConfig())
-
 	if err != nil {
 		return nil, err
 	}
@@ -83,10 +82,19 @@ func NewPipeline(
 	pipes := make([]StagePipe, len(standaloneRunner.pipelineConfig.Stages))
 	pipelineContext := context.Background()
 
+	var resolvedParameters = make(map[string]interface{})
+	for k, v := range pipelineBean.Config.Constants {
+		if runtimeParameters != nil && runtimeParameters[k] != nil {
+			resolvedParameters[k] = runtimeParameters[k]
+		} else {
+			resolvedParameters[k] = v
+		}
+	}
+
 	for i, stageBean := range pipelineBean.Stages {
 		stageContext := common.StageContext{
-			StageConfig:       stageBean.Config,
-			RuntimeParameters: runtimeParameters,
+			StageConfig: stageBean.Config,
+			Parameters:  resolvedParameters,
 		}
 		contextWithValue := context.WithValue(pipelineContext, "stageContext", stageContext)
 		stageRuntimeList[i] = NewStageRuntime(pipelineBean, stageBean, contextWithValue)
