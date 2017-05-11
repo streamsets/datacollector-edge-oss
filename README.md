@@ -48,3 +48,20 @@
 ## Building for all platforms
 
     $ make clean dist-all
+
+
+## Docker Build and run the image
+
+
+Invoke Docker from the dataextractor directory to build an image using the Dockerfile:
+
+    
+    $ docker build -t dataextractor .
+
+
+This will fetch the golang base image from Docker Hub, copy the package source to it, build the package inside it, and tag the resulting image as dataextractor.
+
+
+To run a container from the resulting image:
+
+    $ docker run --publish 18633:18633 --name sde --rm dataextractor
