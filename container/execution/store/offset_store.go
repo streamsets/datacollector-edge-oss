@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+var BaseDir = "."
+
 const (
 	DEFAULT_OFFSET = ""
 	OFFSET_FILE    = "offset.json"
@@ -52,5 +54,5 @@ func getPipelineOffsetFile(pipelineId string) string {
 }
 
 func getRunInfoDir(pipelineId string) string {
-	return "data/runInfo/" + pipelineId + "/"
+	return BaseDir + "/data/runInfo/" + pipelineId + "/"
 }

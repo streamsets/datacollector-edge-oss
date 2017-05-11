@@ -12,11 +12,12 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 )
 
 const (
-	DefaultLogFilePath    = "logs/sde.log"
-	DefaultConfigFilePath = "etc/sde.conf"
+	DefaultLogFilePath    = "/logs/sde.log"
+	DefaultConfigFilePath = "/etc/sde.conf"
 	DEBUG                 = "DEBUG"
 	WARN                  = "WARN"
 	ERROR                 = "ERROR"
@@ -37,8 +38,7 @@ func DoMain() {
 	runtimeParametersFlag := flag.String("runtimeParameters", "", "Runtime Parameters flag")
 	flag.Parse()
 
-	initializeLog(*debugFlag)
-	dataExtractor, _ := newDataExtractor()
+	dataExtractor, _ := newDataExtractor(*debugFlag)
 
 	if len(*startFlag) > 0 {
 		var runtimeParameters map[string]interface{}
@@ -61,23 +61,27 @@ func DoMain() {
 	dataExtractor.webServerTask.Run()
 }
 
-func newDataExtractor() (*DataExtractorMain, error) {
+func newDataExtractor(debugFlag bool) (*DataExtractorMain, error) {
 	ex, err := os.Executable()
 	if err != nil {
 		panic(err)
 	}
-	exPath := path.Dir(ex)
-	log.Println("[INFO] Current Folder: ", exPath)
+	baseDir := strings.TrimSuffix(path.Dir(ex), "/bin")
+	initializeLog(debugFlag, baseDir)
+
+	log.Println("[INFO] Base Dir: ", baseDir)
+	fmt.Println("Base Dir: ", baseDir)
 
 	config := NewConfig()
-	config.FromTomlFile(DefaultConfigFilePath)
+	config.FromTomlFile(baseDir + DefaultConfigFilePath)
 
 	hostName, _ := os.Hostname()
 	var httpUrl = "http://" + hostName + config.Http.BindAddress
 
 	buildInfo, _ := common.NewBuildInfo()
-	runtimeInfo, _ := common.NewRuntimeInfo(httpUrl)
-	pipelineManager, _ := manager.New(config.Execution)
+	runtimeInfo, _ := common.NewRuntimeInfo(httpUrl, baseDir)
+
+	pipelineManager, _ := manager.New(config.Execution, *runtimeInfo)
 	webServerTask, _ := http.NewWebServerTask(config.Http, buildInfo, pipelineManager)
 	dpm.RegisterWithDPM(config.DPM, buildInfo, runtimeInfo)
 
@@ -90,13 +94,13 @@ func newDataExtractor() (*DataExtractorMain, error) {
 	}, nil
 }
 
-func initializeLog(debugFlag bool) {
+func initializeLog(debugFlag bool, baseDir string) {
 	minLevel := util.LogLevel(WARN)
 	if debugFlag {
 		minLevel = util.LogLevel(DEBUG)
 	}
 
-	loggerFile, _ := os.OpenFile(DefaultLogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	loggerFile, _ := os.OpenFile(baseDir+DefaultLogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	logFilter := &util.LevelFilter{
 		Levels:   []util.LogLevel{DEBUG, WARN, ERROR, INFO},
 		MinLevel: minLevel,

@@ -39,7 +39,7 @@
       "value" : "http://localhost:9999"
     }, {
       "key" : "sdcAppId",
-      "value" : "dpm"
+      "value" : "sde"
     } ]
   }, {
     "name" : "badRecordsHandling",

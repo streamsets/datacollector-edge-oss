@@ -19,6 +19,7 @@ var RESET_OFFSET_DISALLOWED_STATUSES = []string{
 }
 
 type StandaloneRunner struct {
+	runtimeInfo      common.RuntimeInfo
 	pipelineId       string
 	config           execution.Config
 	validTransitions map[string][]string
@@ -65,7 +66,10 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(
 		return nil, err
 	}
 
-	standaloneRunner.pipelineConfig, err = creation.LoadPipelineConfig(standaloneRunner.pipelineId)
+	standaloneRunner.pipelineConfig, err = creation.LoadPipelineConfig(
+		standaloneRunner.runtimeInfo,
+		standaloneRunner.pipelineId,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -131,8 +135,17 @@ func (standaloneRunner *StandaloneRunner) checkState(toState string) error {
 	return nil
 }
 
-func NewStandaloneRunner(pipelineId string, config execution.Config) (*StandaloneRunner, error) {
-	standaloneRunner := StandaloneRunner{pipelineId: pipelineId, config: config}
+func NewStandaloneRunner(
+	pipelineId string,
+	config execution.Config,
+	runtimeInfo common.RuntimeInfo,
+) (*StandaloneRunner, error) {
+	standaloneRunner := StandaloneRunner{
+		pipelineId:  pipelineId,
+		config:      config,
+		runtimeInfo: runtimeInfo,
+	}
+	store.BaseDir = runtimeInfo.BaseDir
 	standaloneRunner.init()
 	return &standaloneRunner, nil
 }

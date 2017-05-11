@@ -7,13 +7,14 @@ import (
 )
 
 type PipelineManager struct {
-	config    execution.Config
-	runnerMap map[string]*runner.StandaloneRunner
+	config      execution.Config
+	runnerMap   map[string]*runner.StandaloneRunner
+	runtimeInfo common.RuntimeInfo
 }
 
 func (p *PipelineManager) GetRunner(pipelineId string) *runner.StandaloneRunner {
 	if p.runnerMap[pipelineId] == nil {
-		pRunner, err := runner.NewStandaloneRunner(pipelineId, p.config)
+		pRunner, err := runner.NewStandaloneRunner(pipelineId, p.config, p.runtimeInfo)
 		if err != nil {
 			panic(err)
 		}
@@ -37,8 +38,12 @@ func (p *PipelineManager) ResetOffset(pipelineId string) error {
 	return p.GetRunner(pipelineId).ResetOffset()
 }
 
-func New(config execution.Config) (*PipelineManager, error) {
-	pipelineManager := PipelineManager{config: config, runnerMap: make(map[string]*runner.StandaloneRunner)}
+func New(config execution.Config, runtimeInfo common.RuntimeInfo) (*PipelineManager, error) {
+	pipelineManager := PipelineManager{
+		config:      config,
+		runnerMap:   make(map[string]*runner.StandaloneRunner),
+		runtimeInfo: runtimeInfo,
+	}
 
 	return &pipelineManager, nil
 }

@@ -27,7 +27,7 @@
     
 ### To pass runtime parameters   
         
-    $ bin/dataextractor -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"dpm"}'
+    $ bin/dataextractor -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ### To enable DEBUG Log Level    
     
@@ -42,7 +42,7 @@
     
 ### To pass runtime parameters during start
 
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/tailFileToHttp/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"dpm"}'
+    $ curl -X POST http://localhost:18633/rest/v1/pipeline/tailFileToHttp/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
        
 
 ## Building for all platforms
@@ -56,7 +56,7 @@
 Invoke Docker from the dataextractor directory to build an image using the Dockerfile:
 
     
-    $ docker build -t dataextractor .
+    $ docker build -t streamsets/dataextractor .
 
 
 This will fetch the golang base image from Docker Hub, copy the package source to it, build the package inside it, and tag the resulting image as dataextractor.
@@ -64,4 +64,8 @@ This will fetch the golang base image from Docker Hub, copy the package source t
 
 To run a container from the resulting image:
 
-    $ docker run --publish 18633:18633 --name sde --rm dataextractor
+    $ docker run --publish 18633:18633 --name sde --rm streamsets/dataextractor
+
+Getting inside the container
+
+    $ docker exec -it sde /bin/sh 
