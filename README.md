@@ -59,7 +59,7 @@ Invoke Docker from the dataextractor directory to build an image using the Docke
     $ docker build -t streamsets/dataextractor .
 
 
-This will fetch the golang base image from Docker Hub, copy the package source to it, build the package inside it, and tag the resulting image as dataextractor.
+This will fetch the alpine base image from Docker Hub, copy the already built package (linux/amd64), and tag the resulting image as streamsets/dataextractor.
 
 
 To run a container from the resulting image:

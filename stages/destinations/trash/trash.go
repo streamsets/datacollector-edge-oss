@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/stages/stagelibrary"
+	"encoding/json"
+	"log"
 )
 
 const (
@@ -33,5 +35,13 @@ func (t *TrashDestination) Destroy() {
 }
 
 func (t *TrashDestination) Write(batch api.Batch) error {
+	for _, record := range batch.GetRecords() {
+		jsonValue, err := json.Marshal(record.Value)
+		if err != nil {
+			panic(err)
+		}
+
+		log.Println("[DEBUG] Trash record: ", string(jsonValue))
+	}
 	return nil
 }
