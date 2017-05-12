@@ -61,7 +61,7 @@ $(PACKAGE): all
 	@cp -R $(DIR)/etc/ tmp/$(APP_NAME)/etc
 	@cp -R $(DIR)/data/ tmp/$(APP_NAME)/data
 	@mkdir -p tmp/$(APP_NAME)/logs
-	tar -cf $@ -C tmp $(APP_NAME);
+	tar -czvf $@ -C tmp $(APP_NAME);
 	@rm -rf tmp
 
 # for (Mac OS X 10.8 and above and iOS)
