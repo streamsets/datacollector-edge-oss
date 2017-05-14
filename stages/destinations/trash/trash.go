@@ -2,9 +2,9 @@ package trash
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/stages/stagelibrary"
-	"encoding/json"
 	"log"
 )
 

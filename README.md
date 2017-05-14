@@ -8,10 +8,9 @@
 
 ## Clone Repository
 
-* https://golang.org/doc/code.html#Organization
 * Create directory $GOPATH/src/github.com/streamsets
 * Clone this repository in directory $GOPATH/src/github.com/streamsets
-
+* Reference - https://golang.org/doc/code.html#Organization
     
 ## Building
     $ make clean dist

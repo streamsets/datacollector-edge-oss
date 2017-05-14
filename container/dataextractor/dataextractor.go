@@ -50,7 +50,13 @@ func DoMain() {
 		}
 
 		fmt.Println("Starting Pipeline: ", *startFlag)
-		state, err := dataExtractor.manager.StartPipeline(*startFlag, runtimeParameters)
+		state, err := dataExtractor.manager.GetRunner(*startFlag).GetStatus()
+		if state != nil && state.Status == common.RUNNING {
+			// If status is running, change it back to stopped
+			dataExtractor.manager.StopPipeline(*startFlag)
+		}
+
+		state, err = dataExtractor.manager.StartPipeline(*startFlag, runtimeParameters)
 		if err != nil {
 			panic(err)
 		}

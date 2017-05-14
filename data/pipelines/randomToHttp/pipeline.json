@@ -1,10 +1,10 @@
 {
   "schemaVersion" : 3,
   "version" : 6,
-  "pipelineId" : "samplefa7df49b-d437-48a1-a454-049de73feaa6",
-  "title" : "sample",
+  "pipelineId" : "randomToHttpc21e33d1-8f2e-449b-a3bb-749e30335b25",
+  "title" : "randomToHttp",
   "description" : "",
-  "uuid" : "d85d74d3-0620-4f1d-a535-59e9e1b7d0f4",
+  "uuid" : "da7d0f1f-de80-4a81-bb9c-adf799528031",
   "configuration" : [ {
     "name" : "executionMode",
     "value" : "STANDALONE"
@@ -31,7 +31,13 @@
     "value" : [ ]
   }, {
     "name" : "constants",
-    "value" : [ ]
+    "value" : [ {
+      "key" : "httpUrl",
+      "value" : "http://localhost:9999"
+    }, {
+      "key" : "sdcAppId",
+      "value" : "sde"
+    } ]
   }, {
     "name" : "badRecordsHandling",
     "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
@@ -106,7 +112,7 @@
     "instanceName" : "HTTPClient_01",
     "library" : "streamsets-datacollector-basic-lib",
     "stageName" : "com_streamsets_pipeline_stage_destination_http_HttpClientDTarget",
-    "stageVersion" : "1",
+    "stageVersion" : "2",
     "configuration" : [ {
       "name" : "conf.dataGeneratorFormatConfig.charset",
       "value" : "UTF-8"
@@ -202,12 +208,12 @@
       "value" : "JSON"
     }, {
       "name" : "conf.resourceUrl",
-      "value" : "http://localhost:8000"
+      "value" : "${httpUrl}"
     }, {
       "name" : "conf.headers",
       "value" : [ {
         "key" : "X-SDC-APPLICATION-ID",
-        "value" : "test"
+        "value" : "${sdcAppId}"
       } ]
     }, {
       "name" : "conf.httpMethod",
@@ -306,18 +312,6 @@
       "name" : "conf.client.proxy.password",
       "value" : null
     }, {
-      "name" : "conf.client.sslConfig.trustStorePath",
-      "value" : null
-    }, {
-      "name" : "conf.client.sslConfig.trustStorePassword",
-      "value" : null
-    }, {
-      "name" : "conf.client.sslConfig.keyStorePath",
-      "value" : null
-    }, {
-      "name" : "conf.client.sslConfig.keyStorePassword",
-      "value" : null
-    }, {
       "name" : "conf.singleRequestPerBatch",
       "value" : true
     }, {
@@ -335,6 +329,51 @@
     }, {
       "name" : "stageRecordPreconditions",
       "value" : [ ]
+    }, {
+      "name" : "conf.client.tlsConfig.trustStoreFilePath",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.trustStorePassword",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.keyStoreFilePath",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.keyStorePassword",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.hasTrustStore",
+      "value" : false
+    }, {
+      "name" : "conf.client.tlsConfig.hasKeyStore",
+      "value" : false
+    }, {
+      "name" : "conf.client.tlsEnabled",
+      "value" : false
+    }, {
+      "name" : "conf.client.tlsConfig.keyStoreType",
+      "value" : "JKS"
+    }, {
+      "name" : "conf.client.tlsConfig.keyStoreAlgorithm",
+      "value" : "SunX509"
+    }, {
+      "name" : "conf.client.tlsConfig.trustStoreType",
+      "value" : "JKS"
+    }, {
+      "name" : "conf.client.tlsConfig.trustStoreAlgorithm",
+      "value" : "SunX509"
+    }, {
+      "name" : "conf.client.tlsConfig.useDefaultProtocols",
+      "value" : true
+    }, {
+      "name" : "conf.client.tlsConfig.protocols",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.useDefaultCiperSuites",
+      "value" : true
+    }, {
+      "name" : "conf.client.tlsConfig.cipherSuites",
+      "value" : null
     } ],
     "uiInfo" : {
       "description" : "",
@@ -365,30 +404,30 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "pipelineId" : "samplefa7df49b-d437-48a1-a454-049de73feaa6",
-    "title" : "sample",
+    "pipelineId" : "randomToHttpc21e33d1-8f2e-449b-a3bb-749e30335b25",
+    "title" : "randomToHttp",
     "description" : "",
-    "created" : 1492292718924,
-    "lastModified" : 1492294291181,
+    "created" : 1494773669042,
+    "lastModified" : 1494773769028,
     "creator" : "admin",
     "lastModifier" : "admin",
     "lastRev" : "0",
-    "uuid" : "d85d74d3-0620-4f1d-a535-59e9e1b7d0f4",
+    "uuid" : "da7d0f1f-de80-4a81-bb9c-adf799528031",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "samplefa7df49b-d437-48a1-a454-049de73feaa6"
+    "name" : "randomToHttpc21e33d1-8f2e-449b-a3bb-749e30335b25"
   },
   "metadata" : {
     "labels" : [ ]
   },
   "statsAggregatorStage" : null,
   "previewable" : true,
-  "valid" : true,
   "issues" : {
-    "pipelineIssues" : [ ],
     "stageIssues" : { },
-    "issueCount" : 0
-  }
+    "issueCount" : 0,
+    "pipelineIssues" : [ ]
+  },
+  "valid" : true
 }
