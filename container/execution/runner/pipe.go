@@ -44,7 +44,7 @@ func (s *StagePipe) Process(pipeBatch *FullPipeBatch) error {
 }
 
 func (s *StagePipe) Destroy() {
-
+	s.Stage.Destroy()
 }
 
 func (s *StagePipe) isSource() bool {

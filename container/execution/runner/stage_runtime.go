@@ -37,6 +37,10 @@ func (s *StageRuntime) Execute(
 	return newOffset, err
 }
 
+func (s *StageRuntime) Destroy() {
+	s.stageBean.Stage.Destroy()
+}
+
 func NewStageRuntime(
 	pipelineBean creation.PipelineBean,
 	stageBean creation.StageBean,

@@ -63,6 +63,9 @@ func (p *Pipeline) runBatch() {
 
 func (p *Pipeline) Stop() {
 	log.Println("[DEBUG] Pipeline Stop()")
+	for _, stagePipe := range p.pipes {
+		stagePipe.Destroy()
+	}
 	p.stop = true
 }
 

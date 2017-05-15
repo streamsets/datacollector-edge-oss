@@ -2,6 +2,7 @@ package common
 
 import (
 	"strings"
+	"strconv"
 )
 
 type StageContext struct {
@@ -47,5 +48,10 @@ func (s *StageContext) IsParameter(configValue string) bool {
 func (s *StageContext) GetParameterValue(paramName string) interface{} {
 	paramName = strings.Replace(paramName, PARAMETER_PREFIX, "", 1)
 	paramName = strings.Replace(paramName, PARAMETER_SUFFIX, "", 1)
+
+	if p, err := strconv.ParseInt(s.Parameters[paramName].(string),10,64); err == nil {
+		return p
+	}
+
 	return s.Parameters[paramName]
 }
