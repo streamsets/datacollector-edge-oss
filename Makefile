@@ -49,7 +49,7 @@ $(EXECUTABLES):
 	@mkdir -p dist/logs
 
 test:
-	$(TEST) -r -cover
+	$(TEST) -v ./... -cover
 
 clean:
 	@echo Cleaning Workspace...

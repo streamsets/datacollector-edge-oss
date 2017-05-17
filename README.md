@@ -68,3 +68,8 @@ To run a container from the resulting image:
 Getting inside the container
 
     $ docker exec -it sde /bin/sh 
+
+
+## To run tests
+
+    $ make test

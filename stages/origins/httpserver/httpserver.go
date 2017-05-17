@@ -5,10 +5,10 @@ import (
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/stages/stagelibrary"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
-	"io/ioutil"
 )
 
 const (
@@ -17,9 +17,9 @@ const (
 )
 
 type HttpServerOrigin struct {
-	port    int64
-	appId string
-	httpServer *http.Server
+	port         int64
+	appId        string
+	httpServer   *http.Server
 	incomingData chan interface{}
 }
 
@@ -75,7 +75,7 @@ func (h *HttpServerOrigin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *HttpServerOrigin) startHttpServer() *http.Server {
 	srv := &http.Server{
-		Addr: ":" + strconv.FormatInt(h.port, 10),
+		Addr:    ":" + strconv.FormatInt(h.port, 10),
 		Handler: h,
 	}
 
