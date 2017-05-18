@@ -81,10 +81,12 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 			recordCount++
 			if recordCount > maxBatchSize {
 				currentOffset, _ = tailObj.Tell()
+				tailObj.Stop()
 				end = true
 			}
 		case <-time.After(time.Duration(f.maxWaitTimeSecs) * time.Second):
 			currentOffset, _ = tailObj.Tell()
+			tailObj.Stop()
 			end = true
 		}
 	}
