@@ -31,6 +31,8 @@ type CoapClientDestination struct {
 	requestType string
 }
 
+var mid uint16
+
 func init() {
 	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
 		return &CoapClientDestination{}
@@ -55,6 +57,7 @@ func (c *CoapClientDestination) Init(ctx context.Context) error {
 		}
 	}
 
+	mid = 0;
 	return nil
 }
 
@@ -83,6 +86,7 @@ func (c *CoapClientDestination) sendRecordToSDC(recordValue interface{}) error {
 	req := coap.Message{
 		Type:    getCoapType(c.requestType),
 		Code:    getCoapMethod(c.coapMethod),
+		MessageID: mid,
 		Payload: jsonValue,
 	}
 	req.SetPathString(parsedURL.Path)
@@ -103,6 +107,7 @@ func (c *CoapClientDestination) sendRecordToSDC(recordValue interface{}) error {
 		log.Printf("[DEBUG] Response payload: %s", rv.Payload)
 	}
 
+	mid++
 	return nil
 }
 

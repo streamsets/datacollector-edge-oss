@@ -208,7 +208,7 @@
       "value" : "POST"
     }, {
       "name" : "conf.requestType",
-      "value" : "NONCONFIRMABLE"
+      "value" : "CONFIRMABLE"
     }, {
       "name" : "conf.connectTimeoutMillis",
       "value" : 2000
