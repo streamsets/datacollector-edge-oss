@@ -34,7 +34,7 @@ func init() {
 	})
 }
 
-func (h *HttpClientDestination) Init(ctx context.Context) {
+func (h *HttpClientDestination) Init(ctx context.Context) error {
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
 	stageConfig := stageContext.StageConfig
 	log.Println("[DEBUG] HttpClientDestination Init method")
@@ -55,6 +55,7 @@ func (h *HttpClientDestination) Init(ctx context.Context) {
 			h.httpCompression = stageContext.GetResolvedValue(config.Value).(string)
 		}
 	}
+	return nil
 }
 
 func (h *HttpClientDestination) Write(batch api.Batch) error {
@@ -138,6 +139,6 @@ func (h *HttpClientDestination) sendToSDC(jsonValue []byte) error {
 	return nil
 }
 
-func (h *HttpClientDestination) Destroy() {
-
+func (h *HttpClientDestination) Destroy() error {
+	return nil
 }

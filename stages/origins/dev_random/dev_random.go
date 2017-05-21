@@ -29,7 +29,7 @@ func init() {
 	})
 }
 
-func (d DevRandom) Init(ctx context.Context) {
+func (d DevRandom) Init(ctx context.Context) error {
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
 	stageConfig := stageContext.StageConfig
 	for _, config := range stageConfig.Configuration {
@@ -39,9 +39,11 @@ func (d DevRandom) Init(ctx context.Context) {
 			d.delay = config.Value.(float64)
 		}
 	}
+	return nil
 }
 
-func (d DevRandom) Destroy() {
+func (d DevRandom) Destroy() error {
+	return nil
 }
 
 func (d DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {

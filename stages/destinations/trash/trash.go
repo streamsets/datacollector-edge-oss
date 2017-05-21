@@ -26,12 +26,12 @@ func init() {
 	})
 }
 
-func (t *TrashDestination) Init(ctx context.Context) {
-
+func (t *TrashDestination) Init(ctx context.Context) error {
+	return nil
 }
 
-func (t *TrashDestination) Destroy() {
-
+func (t *TrashDestination) Destroy() error {
+	return nil
 }
 
 func (t *TrashDestination) Write(batch api.Batch) error {

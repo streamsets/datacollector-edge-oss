@@ -12,8 +12,17 @@ import (
 )
 
 const (
-	LIBRARY    = "streamsets-datacollector-basic-lib"
-	STAGE_NAME = "com_streamsets_pipeline_stage_destination_coap_CoapClientDTarget"
+	LIBRARY            = "streamsets-datacollector-basic-lib"
+	STAGE_NAME         = "com_streamsets_pipeline_stage_destination_coap_CoapClientDTarget"
+	CONF_RESOURCE_URL  = "conf.resourceUrl"
+	CONF_COAP_METHOD   = "conf.coapMethod"
+	CONF_RESOURCE_TYPE = "conf.requestType"
+	CONFIRMABLE        = "CONFIRMABLE"
+	NONCONFIRMABLE     = "NONCONFIRMABLE"
+	GET                = "GET"
+	POST               = "POST"
+	PUT                = "PUT"
+	DELETE             = "DELETE"
 )
 
 type CoapClientDestination struct {
@@ -28,42 +37,47 @@ func init() {
 	})
 }
 
-func (c *CoapClientDestination) Init(ctx context.Context) {
+func (c *CoapClientDestination) Init(ctx context.Context) error {
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
 	stageConfig := stageContext.StageConfig
-	log.Println("[DEBUG] MqttClientDestination Init method")
+	log.Println("[DEBUG] CoapClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
-		if config.Name == "conf.resourceUrl" {
+		if config.Name == CONF_RESOURCE_URL {
 			c.resourceUrl = config.Value.(string)
 		}
 
-		if config.Name == "conf.coapMethod" {
+		if config.Name == CONF_COAP_METHOD {
 			c.coapMethod = config.Value.(string)
 		}
 
-		if config.Name == "conf.requestType" {
+		if config.Name == CONF_RESOURCE_TYPE {
 			c.requestType = config.Value.(string)
 		}
 	}
+
+	return nil
 }
 
 func (c *CoapClientDestination) Write(batch api.Batch) error {
 	log.Println("[DEBUG] CoapClientDestination Write method")
 	for _, record := range batch.GetRecords() {
-		c.sendRecordToSDC(record.Value)
+		err := c.sendRecordToSDC(record.Value)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func (c *CoapClientDestination) sendRecordToSDC(recordValue interface{}) {
+func (c *CoapClientDestination) sendRecordToSDC(recordValue interface{}) error {
 	jsonValue, err := json.Marshal(recordValue)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	parsedURL, err := url.Parse(c.resourceUrl)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	req := coap.Message{
@@ -76,26 +90,31 @@ func (c *CoapClientDestination) sendRecordToSDC(recordValue interface{}) {
 	coapClient, err := coap.Dial("udp", parsedURL.Host)
 	if err != nil {
 		log.Printf("[ERROR] Error dialing: %v", err)
+		return err
 	}
 
 	rv, err := coapClient.Send(req)
 	if err != nil {
 		log.Printf("[ERROR] Error sending request: %v", err)
+		return err
 	}
 
 	if rv != nil {
 		log.Printf("[DEBUG] Response payload: %s", rv.Payload)
 	}
+
+	return nil
 }
 
-func (h *CoapClientDestination) Destroy() {
+func (h *CoapClientDestination) Destroy() error {
+	return nil
 }
 
 func getCoapType(requestType string) coap.COAPType {
 	switch requestType {
-	case "CONFIRMABLE":
+	case CONFIRMABLE:
 		return coap.Confirmable
-	case "NONCONFIRMABLE":
+	case NONCONFIRMABLE:
 		return coap.NonConfirmable
 	}
 	return coap.NonConfirmable
@@ -103,13 +122,13 @@ func getCoapType(requestType string) coap.COAPType {
 
 func getCoapMethod(coapMethod string) coap.COAPCode {
 	switch coapMethod {
-	case "GET":
+	case GET:
 		return coap.GET
-	case "POST":
+	case POST:
 		return coap.POST
-	case "PUT":
+	case PUT:
 		return coap.PUT
-	case "DELETE":
+	case DELETE:
 		return coap.DELETE
 	}
 	return coap.POST

@@ -46,7 +46,7 @@ func (b *FullPipeBatch) SetNewOffset(newOffset string) {
 }
 
 func (b *FullPipeBatch) GetBatch(pipe StagePipe) *BatchImpl {
-	return NewBatchImpl(pipe.Stage.config.InstanceName, b.fullPayload, "sourceOffset")
+	return NewBatchImpl(pipe.Stage.config.InstanceName, b.fullPayload, b.offsetTracker.GetOffset())
 }
 
 func (b *FullPipeBatch) StartStage(pipe StagePipe) *BatchMakerImpl {

@@ -19,6 +19,6 @@ import (
 // This method is also called after a failed initialization to allow releasing resources created before the
 // initialization failed.
 type Stage interface {
-	Init(ctx context.Context)
-	Destroy()
+	Init(ctx context.Context) error
+	Destroy() error
 }

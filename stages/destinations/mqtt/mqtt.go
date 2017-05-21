@@ -29,7 +29,7 @@ func init() {
 	})
 }
 
-func (m *MqttClientDestination) Init(ctx context.Context) {
+func (m *MqttClientDestination) Init(ctx context.Context) error {
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
 	stageConfig := stageContext.StageConfig
 	log.Println("[DEBUG] MqttClientDestination Init method")
@@ -55,6 +55,7 @@ func (m *MqttClientDestination) Init(ctx context.Context) {
 	m.opts = MQTT.NewClientOptions().AddBroker(m.brokerUrl)
 	m.opts.SetClientID(m.clientId)
 	m.opts.SetDefaultPublishHandler(m.MessageHandler)
+	return nil
 }
 
 func (m *MqttClientDestination) Write(batch api.Batch) error {
@@ -87,6 +88,6 @@ func (m *MqttClientDestination) MessageHandler(client MQTT.Client, msg MQTT.Mess
 	log.Printf("[DEBUG] MSG: %s\n", msg.Payload())
 }
 
-func (h *MqttClientDestination) Destroy() {
-
+func (h *MqttClientDestination) Destroy() error {
+	return nil
 }

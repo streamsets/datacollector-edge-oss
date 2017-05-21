@@ -27,7 +27,7 @@ func init() {
 	})
 }
 
-func (w *WebSocketClientDestination) Init(ctx context.Context) {
+func (w *WebSocketClientDestination) Init(ctx context.Context) error {
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
 	stageConfig := stageContext.StageConfig
 	log.Println("[DEBUG] WebSocketClientDestination Init method")
@@ -40,6 +40,7 @@ func (w *WebSocketClientDestination) Init(ctx context.Context) {
 			w.headers = config.Value.([]interface{})
 		}
 	}
+	return nil
 }
 
 func (w *WebSocketClientDestination) Write(batch api.Batch) error {
@@ -74,6 +75,6 @@ func (w *WebSocketClientDestination) Write(batch api.Batch) error {
 	return nil
 }
 
-func (w *WebSocketClientDestination) Destroy() {
-
+func (w *WebSocketClientDestination) Destroy() error {
+	return nil
 }

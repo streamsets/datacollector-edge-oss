@@ -29,7 +29,7 @@ func init() {
 	})
 }
 
-func (h *HttpServerOrigin) Init(ctx context.Context) {
+func (h *HttpServerOrigin) Init(ctx context.Context) error {
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
 	stageConfig := stageContext.StageConfig
 	for _, config := range stageConfig.Configuration {
@@ -43,13 +43,15 @@ func (h *HttpServerOrigin) Init(ctx context.Context) {
 
 	h.httpServer = h.startHttpServer()
 	h.incomingData = make(chan interface{})
+	return nil
 }
 
-func (h *HttpServerOrigin) Destroy() {
+func (h *HttpServerOrigin) Destroy() error {
 	if err := h.httpServer.Shutdown(nil); err != nil {
 		panic(err)
 	}
 	log.Println("[DEBUG] HTTP Server - server shutdown successfully")
+	return nil
 }
 
 func (h *HttpServerOrigin) Produce(

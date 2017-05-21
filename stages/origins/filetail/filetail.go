@@ -28,7 +28,7 @@ func init() {
 	})
 }
 
-func (f *FileTailOrigin) Init(ctx context.Context) {
+func (f *FileTailOrigin) Init(ctx context.Context) error {
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
 	stageConfig := stageContext.StageConfig
 	for _, config := range stageConfig.Configuration {
@@ -47,9 +47,11 @@ func (f *FileTailOrigin) Init(ctx context.Context) {
 	}
 
 	log.Println("[DEBUG] Reading file - " + f.fileFullPath)
+	return nil
 }
 
-func (f *FileTailOrigin) Destroy() {
+func (f *FileTailOrigin) Destroy() error {
+	return nil
 }
 
 func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {
