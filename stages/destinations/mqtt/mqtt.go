@@ -3,10 +3,10 @@ package mqtt
 import (
 	"context"
 	"encoding/json"
-	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/stages/stagelibrary"
+	mqttlib "github.com/streamsets/dataextractor/stages/lib/mqtt"
 	"log"
 )
 
@@ -16,11 +16,8 @@ const (
 )
 
 type MqttClientDestination struct {
-	brokerUrl string
-	clientId  string
+	mqttlib.MqttConnector
 	topic     string
-	qos       float64
-	opts      *MQTT.ClientOptions
 }
 
 func init() {
@@ -29,65 +26,46 @@ func init() {
 	})
 }
 
-func (m *MqttClientDestination) Init(ctx context.Context) error {
+
+func (md *MqttClientDestination) Init(ctx context.Context) error {
 	stageContext := (ctx.Value("stageContext")).(common.StageContext)
-	stageConfig := stageContext.StageConfig
 	log.Println("[DEBUG] MqttClientDestination Init method")
-	for _, config := range stageConfig.Configuration {
-		if config.Name == "conf.brokerUrl" {
-			m.brokerUrl = config.Value.(string)
-		}
 
-		if config.Name == "conf.clientId" {
-			m.clientId = config.Value.(string)
-		}
+	md.MqttConnector = mqttlib.MqttConnector{}
 
-		if config.Name == "conf.topic" {
-			m.topic = config.Value.(string)
-		}
-
-		if config.Name == "conf.qos" {
-			m.qos = config.Value.(float64)
-
+	for _, config := range stageContext.StageConfig.Configuration {
+		configName, configValue := config.Name, stageContext.GetResolvedValue(config.Value)
+		if configName == "publisherConf.topic" {
+			md.topic = configValue.(string)
+		} else {
+			md.InitConfig(configName, configValue)
 		}
 	}
 
-	m.opts = MQTT.NewClientOptions().AddBroker(m.brokerUrl)
-	m.opts.SetClientID(m.clientId)
-	m.opts.SetDefaultPublishHandler(m.MessageHandler)
-	return nil
+	return md.InitializeClient()
 }
 
-func (m *MqttClientDestination) Write(batch api.Batch) error {
-	//create and start a client using the above ClientOptions
-	client := MQTT.NewClient(m.opts)
-	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		panic(token.Error())
-	}
+func (md *MqttClientDestination) Write(batch api.Batch) error {
 	log.Println("[DEBUG] MqttClientDestination write method")
 	for _, record := range batch.GetRecords() {
-		m.sendRecordToSDC(record.Value, client)
+		md.sendRecordToSDC(record.Value)
 	}
-	client.Disconnect(250)
 	return nil
 }
 
-func (h *MqttClientDestination) sendRecordToSDC(recordValue interface{}, client MQTT.Client) {
-	jsonValue, err := json.Marshal(recordValue)
-	if err != nil {
+func (md *MqttClientDestination) sendRecordToSDC(recordValue interface{}) {
+	if jsonValue, err := json.Marshal(recordValue); err == nil {
+		if token := md.Client.Publish(md.topic, byte(md.Qos), false, jsonValue);
+			token.Wait() && token.Error() != nil {
+			panic(token.Error())
+		}
+	} else {
 		panic(err)
 	}
-
-	token := client.Publish(h.topic, byte(h.qos), false, jsonValue)
-	token.Wait()
 }
 
-//define a function for the default message handler
-func (m *MqttClientDestination) MessageHandler(client MQTT.Client, msg MQTT.Message) {
-	log.Printf("[DEBUG] TOPIC: %s\n", msg.Topic())
-	log.Printf("[DEBUG] MSG: %s\n", msg.Payload())
-}
-
-func (h *MqttClientDestination) Destroy() error {
+func (md *MqttClientDestination) Destroy() error {
+	log.Println("[DEBUG] MqttClientDestination Destroy method")
+	md.Client.Disconnect(250)
 	return nil
 }
