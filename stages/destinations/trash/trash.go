@@ -36,7 +36,7 @@ func (t *TrashDestination) Destroy() error {
 
 func (t *TrashDestination) Write(batch api.Batch) error {
 	for _, record := range batch.GetRecords() {
-		jsonValue, err := json.Marshal(record.Value)
+		jsonValue, err := json.Marshal(record.GetValue())
 		if err != nil {
 			panic(err)
 		}

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
-	"github.com/streamsets/dataextractor/stages/stagelibrary"
 	mqttlib "github.com/streamsets/dataextractor/stages/lib/mqtt"
+	"github.com/streamsets/dataextractor/stages/stagelibrary"
 	"log"
 )
 
@@ -17,7 +17,7 @@ const (
 
 type MqttClientDestination struct {
 	mqttlib.MqttConnector
-	topic     string
+	topic string
 }
 
 func init() {
@@ -26,14 +26,14 @@ func init() {
 	})
 }
 
-
 func (md *MqttClientDestination) Init(ctx context.Context) error {
-	stageContext := (ctx.Value("stageContext")).(common.StageContext)
+	stageContext := common.GetStageContext(ctx)
+	stageConfig := stageContext.StageConfig
 	log.Println("[DEBUG] MqttClientDestination Init method")
 
 	md.MqttConnector = mqttlib.MqttConnector{}
 
-	for _, config := range stageContext.StageConfig.Configuration {
+	for _, config := range stageConfig.Configuration {
 		configName, configValue := config.Name, stageContext.GetResolvedValue(config.Value)
 		if configName == "publisherConf.topic" {
 			md.topic = configValue.(string)
@@ -48,15 +48,14 @@ func (md *MqttClientDestination) Init(ctx context.Context) error {
 func (md *MqttClientDestination) Write(batch api.Batch) error {
 	log.Println("[DEBUG] MqttClientDestination write method")
 	for _, record := range batch.GetRecords() {
-		md.sendRecordToSDC(record.Value)
+		md.sendRecordToSDC(record.GetValue())
 	}
 	return nil
 }
 
 func (md *MqttClientDestination) sendRecordToSDC(recordValue interface{}) {
 	if jsonValue, err := json.Marshal(recordValue); err == nil {
-		if token := md.Client.Publish(md.topic, byte(md.Qos), false, jsonValue);
-			token.Wait() && token.Error() != nil {
+		if token := md.Client.Publish(md.topic, byte(md.Qos), false, jsonValue); token.Wait() && token.Error() != nil {
 			panic(token.Error())
 		}
 	} else {

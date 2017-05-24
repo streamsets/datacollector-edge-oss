@@ -35,7 +35,7 @@ func init() {
 }
 
 func (h *HttpClientDestination) Init(ctx context.Context) error {
-	stageContext := (ctx.Value("stageContext")).(common.StageContext)
+	stageContext := common.GetStageContext(ctx)
 	stageConfig := stageContext.StageConfig
 	log.Println("[DEBUG] HttpClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
@@ -63,13 +63,13 @@ func (h *HttpClientDestination) Write(batch api.Batch) error {
 	var err error
 	var batchByteArray []byte
 	for _, record := range batch.GetRecords() {
-
 		var recordByteArray []byte
-		switch record.Value.(type) {
+		value := record.GetValue()
+		switch value.(type) {
 		case string:
-			recordByteArray = []byte(record.Value.(string))
+			recordByteArray = []byte(value.(string))
 		default:
-			recordByteArray, err = json.Marshal(record.Value)
+			recordByteArray, err = json.Marshal(value)
 			if err != nil {
 				return err
 			}

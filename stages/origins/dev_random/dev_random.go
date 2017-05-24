@@ -30,7 +30,7 @@ func init() {
 }
 
 func (d DevRandom) Init(ctx context.Context) error {
-	stageContext := (ctx.Value("stageContext")).(common.StageContext)
+	stageContext := common.GetStageContext(ctx)
 	stageConfig := stageContext.StageConfig
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "fields" {
@@ -59,7 +59,7 @@ func (d DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMaker
 			for _, field := range d.fields {
 				recordValue[field] = r.Int()
 			}
-			batchMaker.AddRecord(api.Record{Value: recordValue})
+			batchMaker.AddRecord(common.CreateRecord("dev-random", recordValue))
 		}
 	}
 
@@ -84,7 +84,10 @@ type TestData struct {
 func (d DevRandom) produceTestDataForDemo(maxBatchSize int, batchMaker api.BatchMaker) {
 	time.Sleep(time.Duration(d.delay) * time.Millisecond)
 	for i := 0; i < maxBatchSize; i++ {
-		batchMaker.AddRecord(api.Record{Value: getData()})
+		batchMaker.AddRecord(
+			common.CreateRecord(
+				"dev-random",
+				getData()))
 	}
 }
 

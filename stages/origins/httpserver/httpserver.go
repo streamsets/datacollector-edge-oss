@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 const (
@@ -30,7 +31,7 @@ func init() {
 }
 
 func (h *HttpServerOrigin) Init(ctx context.Context) error {
-	stageContext := (ctx.Value("stageContext")).(common.StageContext)
+	stageContext := common.GetStageContext(ctx)
 	stageConfig := stageContext.StageConfig
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "httpConfigs.port" {
@@ -62,7 +63,7 @@ func (h *HttpServerOrigin) Produce(
 	log.Println("[DEBUG] HTTP Server - Produce method")
 	value := <-h.incomingData
 	log.Println("[DEBUG] Incoming Data: ", value)
-	batchMaker.AddRecord(api.Record{Value: value})
+	batchMaker.AddRecord(common.CreateRecord(time.Now().String(), value))
 	return "", nil
 }
 

@@ -2,14 +2,13 @@ package mqtt
 
 import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	"log"
 )
 
 type MqttConnector struct {
 	BrokerUrl string
 	ClientId  string
 	Qos       float64
-	Client MQTT.Client
+	Client    MQTT.Client
 }
 
 func (m *MqttConnector) InitConfig(configName string, configValue interface{}) {

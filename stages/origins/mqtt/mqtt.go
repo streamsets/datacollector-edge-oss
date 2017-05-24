@@ -2,12 +2,13 @@ package mqtt
 
 import (
 	"context"
-	"github.com/streamsets/dataextractor/api"
-	"github.com/streamsets/dataextractor/stages/stagelibrary"
-	"github.com/streamsets/dataextractor/container/common"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+	"github.com/streamsets/dataextractor/api"
+	"github.com/streamsets/dataextractor/container/common"
 	mqttlib "github.com/streamsets/dataextractor/stages/lib/mqtt"
+	"github.com/streamsets/dataextractor/stages/stagelibrary"
 	"log"
+	"strconv"
 )
 
 const (
@@ -17,8 +18,8 @@ const (
 
 type MqttClientSource struct {
 	mqttlib.MqttConnector
-	topicFilters []string
-	incomingData chan interface{}
+	topicFilters    []string
+	incomingRecords chan api.Record
 }
 
 func init() {
@@ -27,7 +28,7 @@ func init() {
 	})
 }
 
-func(ms *MqttClientSource) getTopicFilterAndQosMap() map[string]byte {
+func (ms *MqttClientSource) getTopicFilterAndQosMap() map[string]byte {
 	topicFilters := make(map[string]byte, len(ms.topicFilters))
 	for _, topicFilter := range ms.topicFilters {
 		topicFilters[topicFilter] = byte(ms.Qos)
@@ -41,7 +42,7 @@ func (ms *MqttClientSource) Init(ctx context.Context) error {
 
 	ms.MqttConnector = mqttlib.MqttConnector{}
 	ms.topicFilters = []string{}
-	ms.incomingData = make(chan interface{})
+	ms.incomingRecords = make(chan api.Record)
 
 	for _, config := range stageContext.StageConfig.Configuration {
 		configName, configValue := config.Name, stageContext.GetResolvedValue(config.Value)
@@ -56,8 +57,7 @@ func (ms *MqttClientSource) Init(ctx context.Context) error {
 
 	err := ms.InitializeClient()
 	if err == nil {
-		if token := ms.Client.SubscribeMultiple(ms.getTopicFilterAndQosMap(), ms.MessageHandler);
-			token.Wait() && token.Error()!= nil {
+		if token := ms.Client.SubscribeMultiple(ms.getTopicFilterAndQosMap(), ms.MessageHandler); token.Wait() && token.Error() != nil {
 			err = token.Error()
 		}
 	}
@@ -66,9 +66,8 @@ func (ms *MqttClientSource) Init(ctx context.Context) error {
 
 func (ms *MqttClientSource) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {
 	log.Println("[DEBUG] MqttClientSource - Produce method")
-	value := <-ms.incomingData
-	log.Println("[DEBUG] Incoming Data: ", value)
-	batchMaker.AddRecord(api.Record{Value: value})
+	record := <-ms.incomingRecords
+	batchMaker.AddRecord(record)
 	return "", nil
 }
 
@@ -77,12 +76,14 @@ func (ms *MqttClientSource) Destroy() error {
 	ms.Client.Unsubscribe(ms.topicFilters...).Wait()
 	ms.Client.Disconnect(250)
 	//Close channel after unsubscribe and disconnect
-	close(ms.incomingData)
+	close(ms.incomingRecords)
 	return nil
 }
 
 func (md *MqttClientSource) MessageHandler(client MQTT.Client, msg MQTT.Message) {
-	//Need to have header support so we can populate the topic (msg.Topic()) in header
-	md.incomingData <- string(msg.Payload())
+	value := string(msg.Payload())
+	msgId := strconv.FormatUint(uint64(msg.MessageID()), 10)
+	log.Println("[DEBUG] Incoming Data: ", value)
+	record := common.CreateRecord(msgId, value)
+	md.incomingRecords <- record
 }
-

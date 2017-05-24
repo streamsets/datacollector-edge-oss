@@ -29,7 +29,7 @@ func init() {
 }
 
 func (f *FileTailOrigin) Init(ctx context.Context) error {
-	stageContext := (ctx.Value("stageContext")).(common.StageContext)
+	stageContext := common.GetStageContext(ctx)
 	stageConfig := stageContext.StageConfig
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.fileInfos" {
@@ -79,7 +79,11 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 	for !end {
 		select {
 		case line := <-tailObj.Lines:
-			batchMaker.AddRecord(api.Record{Value: line.Text})
+			batchMaker.AddRecord(
+				common.CreateRecord(
+					tailObj.Filename+"::"+
+						strconv.FormatInt(currentOffset, 10),
+					line.Text))
 			recordCount++
 			if recordCount > maxBatchSize {
 				currentOffset, _ = tailObj.Tell()

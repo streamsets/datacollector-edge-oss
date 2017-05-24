@@ -28,7 +28,7 @@ func init() {
 }
 
 func (w *WebSocketClientDestination) Init(ctx context.Context) error {
-	stageContext := (ctx.Value("stageContext")).(common.StageContext)
+	stageContext := common.GetStageContext(ctx)
 	stageConfig := stageContext.StageConfig
 	log.Println("[DEBUG] WebSocketClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
@@ -60,7 +60,7 @@ func (w *WebSocketClientDestination) Write(batch api.Batch) error {
 	}
 
 	for _, record := range batch.GetRecords() {
-		jsonValue, err := json.Marshal(record.Value)
+		jsonValue, err := json.Marshal(record.GetValue())
 		if err != nil {
 			panic(err)
 		}

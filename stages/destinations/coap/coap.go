@@ -40,7 +40,7 @@ func init() {
 }
 
 func (c *CoapClientDestination) Init(ctx context.Context) error {
-	stageContext := (ctx.Value("stageContext")).(common.StageContext)
+	stageContext := common.GetStageContext(ctx)
 	stageConfig := stageContext.StageConfig
 	log.Println("[DEBUG] CoapClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
@@ -57,14 +57,14 @@ func (c *CoapClientDestination) Init(ctx context.Context) error {
 		}
 	}
 
-	mid = 0;
+	mid = 0
 	return nil
 }
 
 func (c *CoapClientDestination) Write(batch api.Batch) error {
 	log.Println("[DEBUG] CoapClientDestination Write method")
 	for _, record := range batch.GetRecords() {
-		err := c.sendRecordToSDC(record.Value)
+		err := c.sendRecordToSDC(record.GetValue())
 		if err != nil {
 			return err
 		}
@@ -84,10 +84,10 @@ func (c *CoapClientDestination) sendRecordToSDC(recordValue interface{}) error {
 	}
 
 	req := coap.Message{
-		Type:    getCoapType(c.requestType),
-		Code:    getCoapMethod(c.coapMethod),
+		Type:      getCoapType(c.requestType),
+		Code:      getCoapMethod(c.coapMethod),
 		MessageID: mid,
-		Payload: jsonValue,
+		Payload:   jsonValue,
 	}
 	req.SetPathString(parsedURL.Path)
 
