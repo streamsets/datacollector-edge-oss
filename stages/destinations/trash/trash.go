@@ -1,9 +1,9 @@
 package trash
 
 import (
-	"context"
 	"encoding/json"
 	"github.com/streamsets/dataextractor/api"
+	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/stages/stagelibrary"
 	"log"
 )
@@ -15,23 +15,20 @@ const (
 )
 
 type TrashDestination struct {
+	*common.BaseStage
 }
 
 func init() {
 	stagelibrary.SetCreator(LIBRARY, ERROR_STAGE_NAME, func() api.Stage {
-		return &TrashDestination{}
+		return &TrashDestination{BaseStage: &common.BaseStage{}}
 	})
 	stagelibrary.SetCreator(LIBRARY, NULL_STAGE_NAME, func() api.Stage {
-		return &TrashDestination{}
+		return &TrashDestination{BaseStage: &common.BaseStage{}}
 	})
 }
 
-func (t *TrashDestination) Init(ctx context.Context) error {
-	return nil
-}
-
-func (t *TrashDestination) Destroy() error {
-	return nil
+func (t *TrashDestination) Init(stageContext api.StageContext) error {
+	return t.BaseStage.Init(stageContext)
 }
 
 func (t *TrashDestination) Write(batch api.Batch) error {

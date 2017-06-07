@@ -3,7 +3,6 @@ package http
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/json"
 	"errors"
 	"github.com/streamsets/dataextractor/api"
@@ -21,7 +20,7 @@ const (
 )
 
 type HttpClientDestination struct {
-	ctx                   context.Context
+	*common.BaseStage
 	resourceUrl           string
 	headers               []interface{}
 	singleRequestPerBatch bool
@@ -30,13 +29,15 @@ type HttpClientDestination struct {
 
 func init() {
 	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
-		return &HttpClientDestination{}
+		return &HttpClientDestination{BaseStage: &common.BaseStage{}}
 	})
 }
 
-func (h *HttpClientDestination) Init(ctx context.Context) error {
-	stageContext := common.GetStageContext(ctx)
-	stageConfig := stageContext.StageConfig
+func (h *HttpClientDestination) Init(stageContext api.StageContext) error {
+	if err:= h.BaseStage.Init(stageContext); err != nil {
+		return err
+	}
+	stageConfig := h.GetStageConfig()
 	log.Println("[DEBUG] HttpClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.resourceUrl" {
@@ -136,9 +137,5 @@ func (h *HttpClientDestination) sendToSDC(jsonValue []byte) error {
 		log.Println("[DEBUG] response Body:", string(body))
 	}
 
-	return nil
-}
-
-func (h *HttpClientDestination) Destroy() error {
 	return nil
 }

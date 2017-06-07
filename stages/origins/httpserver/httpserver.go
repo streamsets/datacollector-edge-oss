@@ -1,7 +1,6 @@
 package httpserver
 
 import (
-	"context"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/stages/stagelibrary"
@@ -18,6 +17,7 @@ const (
 )
 
 type HttpServerOrigin struct {
+	*common.BaseStage
 	port         int64
 	appId        string
 	httpServer   *http.Server
@@ -26,13 +26,15 @@ type HttpServerOrigin struct {
 
 func init() {
 	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
-		return &HttpServerOrigin{}
+		return &HttpServerOrigin{BaseStage: &common.BaseStage{}}
 	})
 }
 
-func (h *HttpServerOrigin) Init(ctx context.Context) error {
-	stageContext := common.GetStageContext(ctx)
-	stageConfig := stageContext.StageConfig
+func (h *HttpServerOrigin) Init(stageContext api.StageContext) error {
+	if err:= h.BaseStage.Init(stageContext); err != nil {
+		return err
+	}
+	stageConfig := h.GetStageConfig()
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "httpConfigs.port" {
 			h.port = stageContext.GetResolvedValue(config.Value).(int64)
@@ -63,7 +65,7 @@ func (h *HttpServerOrigin) Produce(
 	log.Println("[DEBUG] HTTP Server - Produce method")
 	value := <-h.incomingData
 	log.Println("[DEBUG] Incoming Data: ", value)
-	batchMaker.AddRecord(common.CreateRecord(time.Now().String(), value))
+	batchMaker.AddRecord(h.GetStageContext().CreateRecord(time.Now().String(), value))
 	return "", nil
 }
 

@@ -1,7 +1,6 @@
 package filetail
 
 import (
-	"context"
 	"github.com/hpcloud/tail"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
@@ -18,19 +17,22 @@ const (
 )
 
 type FileTailOrigin struct {
+	*common.BaseStage
 	fileFullPath    string
 	maxWaitTimeSecs float64
 }
 
 func init() {
 	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
-		return &FileTailOrigin{}
+		return &FileTailOrigin{BaseStage: &common.BaseStage{}}
 	})
 }
 
-func (f *FileTailOrigin) Init(ctx context.Context) error {
-	stageContext := common.GetStageContext(ctx)
-	stageConfig := stageContext.StageConfig
+func (f *FileTailOrigin) Init(stageContext api.StageContext) error {
+	if err:= f.BaseStage.Init(stageContext); err != nil {
+		return err
+	}
+	stageConfig := f.GetStageConfig()
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.fileInfos" {
 			fileInfos := config.Value.([]interface{})
@@ -47,10 +49,6 @@ func (f *FileTailOrigin) Init(ctx context.Context) error {
 	}
 
 	log.Println("[DEBUG] Reading file - " + f.fileFullPath)
-	return nil
-}
-
-func (f *FileTailOrigin) Destroy() error {
 	return nil
 }
 
@@ -80,7 +78,7 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 		select {
 		case line := <-tailObj.Lines:
 			batchMaker.AddRecord(
-				common.CreateRecord(
+				f.GetStageContext().CreateRecord(
 					tailObj.Filename+"::"+
 						strconv.FormatInt(currentOffset, 10),
 					line.Text))

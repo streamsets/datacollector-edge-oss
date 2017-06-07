@@ -1,7 +1,6 @@
 package dev_random
 
 import (
-	"context"
 	"github.com/jmcvetta/randutil"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
@@ -19,19 +18,22 @@ const (
 )
 
 type DevRandom struct {
+	*common.BaseStage
 	fields []string
 	delay  float64
 }
 
 func init() {
 	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
-		return &DevRandom{}
+		return &DevRandom{BaseStage: &common.BaseStage{}}
 	})
 }
 
-func (d DevRandom) Init(ctx context.Context) error {
-	stageContext := common.GetStageContext(ctx)
-	stageConfig := stageContext.StageConfig
+func (d DevRandom) Init(stageContext api.StageContext) error {
+	if err:= d.BaseStage.Init(stageContext); err != nil {
+		return err
+	}
+	stageConfig := d.GetStageConfig()
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "fields" {
 			d.fields = strings.SplitAfter(config.Value.(string), ",")
@@ -39,10 +41,6 @@ func (d DevRandom) Init(ctx context.Context) error {
 			d.delay = config.Value.(float64)
 		}
 	}
-	return nil
-}
-
-func (d DevRandom) Destroy() error {
 	return nil
 }
 
@@ -59,7 +57,7 @@ func (d DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMaker
 			for _, field := range d.fields {
 				recordValue[field] = r.Int()
 			}
-			batchMaker.AddRecord(common.CreateRecord("dev-random", recordValue))
+			batchMaker.AddRecord(d.GetStageContext().CreateRecord("dev-random", recordValue))
 		}
 	}
 
@@ -85,7 +83,7 @@ func (d DevRandom) produceTestDataForDemo(maxBatchSize int, batchMaker api.Batch
 	time.Sleep(time.Duration(d.delay) * time.Millisecond)
 	for i := 0; i < maxBatchSize; i++ {
 		batchMaker.AddRecord(
-			common.CreateRecord(
+			d.GetStageContext().CreateRecord(
 				"dev-random",
 				getData()))
 	}

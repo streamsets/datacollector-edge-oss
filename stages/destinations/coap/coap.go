@@ -1,7 +1,6 @@
 package coap
 
 import (
-	"context"
 	"encoding/json"
 	"github.com/dustin/go-coap"
 	"github.com/streamsets/dataextractor/api"
@@ -26,6 +25,7 @@ const (
 )
 
 type CoapClientDestination struct {
+	*common.BaseStage
 	resourceUrl string
 	coapMethod  string
 	requestType string
@@ -35,13 +35,15 @@ var mid uint16
 
 func init() {
 	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
-		return &CoapClientDestination{}
+		return &CoapClientDestination{BaseStage: &common.BaseStage{}}
 	})
 }
 
-func (c *CoapClientDestination) Init(ctx context.Context) error {
-	stageContext := common.GetStageContext(ctx)
-	stageConfig := stageContext.StageConfig
+func (c *CoapClientDestination) Init(stageContext api.StageContext) error {
+	if err:= c.BaseStage.Init(stageContext); err != nil {
+		return err
+	}
+	stageConfig := c.GetStageConfig()
 	log.Println("[DEBUG] CoapClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == CONF_RESOURCE_URL {
@@ -108,10 +110,6 @@ func (c *CoapClientDestination) sendRecordToSDC(recordValue interface{}) error {
 	}
 
 	mid++
-	return nil
-}
-
-func (h *CoapClientDestination) Destroy() error {
 	return nil
 }
 

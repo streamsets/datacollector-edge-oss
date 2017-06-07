@@ -1,9 +1,5 @@
 package api
 
-import (
-	"context"
-)
-
 // Stage is the base interface for Data Extractor stages implementations defining their common context and lifecycle.
 //
 // Init method initializes the stage.
@@ -19,6 +15,6 @@ import (
 // This method is also called after a failed initialization to allow releasing resources created before the
 // initialization failed.
 type Stage interface {
-	Init(ctx context.Context) error
+	Init(stageContext StageContext) error
 	Destroy() error
 }

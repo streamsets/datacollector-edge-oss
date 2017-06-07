@@ -129,7 +129,7 @@ func (h *HeaderImpl) setSourceRecord(sourceRecord *RecordImpl) {
 	h.sourceRecord = sourceRecord
 }
 
-func CreateRecord(recordSourceId string, value interface{}) api.Record {
+func createRecord(recordSourceId string, value interface{}) api.Record {
 	headerImpl := &HeaderImpl{attributes: make(map[string]interface{})}
 	r := &RecordImpl{header: headerImpl, value: value}
 	headerImpl.SetSourceId(recordSourceId)

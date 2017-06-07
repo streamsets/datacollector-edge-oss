@@ -1,7 +1,6 @@
 package mqtt
 
 import (
-	"context"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
@@ -17,14 +16,15 @@ const (
 )
 
 type MqttClientSource struct {
-	mqttlib.MqttConnector
+	*common.BaseStage
+	*mqttlib.MqttConnector
 	topicFilters    []string
 	incomingRecords chan api.Record
 }
 
 func init() {
 	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
-		return &MqttClientSource{}
+		return &MqttClientSource{BaseStage: &common.BaseStage{}, MqttConnector: &mqttlib.MqttConnector{}}
 	})
 }
 
@@ -36,15 +36,16 @@ func (ms *MqttClientSource) getTopicFilterAndQosMap() map[string]byte {
 	return topicFilters
 }
 
-func (ms *MqttClientSource) Init(ctx context.Context) error {
-	stageContext := (ctx.Value("stageContext")).(common.StageContext)
+func (ms *MqttClientSource) Init(stageContext api.StageContext) error {
 	log.Println("[DEBUG] MqttClientSource Init method")
+	if err:= ms.BaseStage.Init(stageContext); err != nil {
+		return err
+	}
 
-	ms.MqttConnector = mqttlib.MqttConnector{}
 	ms.topicFilters = []string{}
 	ms.incomingRecords = make(chan api.Record)
 
-	for _, config := range stageContext.StageConfig.Configuration {
+	for _, config := range ms.GetStageConfig().Configuration {
 		configName, configValue := config.Name, stageContext.GetResolvedValue(config.Value)
 		if configName == "subscriberConf.topicFilters" {
 			for _, topicFilter := range configValue.([]interface{}) {
@@ -84,6 +85,6 @@ func (md *MqttClientSource) MessageHandler(client MQTT.Client, msg MQTT.Message)
 	value := string(msg.Payload())
 	msgId := strconv.FormatUint(uint64(msg.MessageID()), 10)
 	log.Println("[DEBUG] Incoming Data: ", value)
-	record := common.CreateRecord(msgId, value)
+	record := md.GetStageContext().CreateRecord(msgId, value)
 	md.incomingRecords <- record
 }

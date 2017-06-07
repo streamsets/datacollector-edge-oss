@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"context"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/creation"
 	"github.com/streamsets/dataextractor/container/execution"
@@ -19,6 +18,11 @@ type Pipeline struct {
 	offsetTracker    SourceOffsetTracker
 	stop             bool
 }
+
+const (
+	AT_MOST_ONCE  = "AT_MOST_ONCE"
+	AT_LEAST_ONCE = "AT_LEAST_ONCE"
+)
 
 func (p *Pipeline) Init() []validation.Issue {
 	var issues []validation.Issue
@@ -43,7 +47,7 @@ func (p *Pipeline) runBatch() {
 	var committed bool = false
 	pipeBatch := NewFullPipeBatch(p.offsetTracker, 1)
 	for _, pipe := range p.pipes {
-		if p.pipelineBean.Config.DeliveryGuarantee == "AT_MOST_ONCE" &&
+		if p.pipelineBean.Config.DeliveryGuarantee == AT_MOST_ONCE &&
 			len(pipe.OutputLanes) == 0 && // if destination
 			!committed {
 			p.offsetTracker.CommitOffset()
@@ -56,7 +60,7 @@ func (p *Pipeline) runBatch() {
 		}
 	}
 
-	if p.pipelineBean.Config.DeliveryGuarantee == "AT_LEAST_ONCE" {
+	if p.pipelineBean.Config.DeliveryGuarantee == AT_LEAST_ONCE {
 		p.offsetTracker.CommitOffset()
 	}
 }
@@ -83,7 +87,6 @@ func NewPipeline(
 
 	stageRuntimeList := make([]StageRuntime, len(standaloneRunner.pipelineConfig.Stages))
 	pipes := make([]StagePipe, len(standaloneRunner.pipelineConfig.Stages))
-	pipelineContext := context.Background()
 
 	var resolvedParameters = make(map[string]interface{})
 	for k, v := range pipelineBean.Config.Constants {
@@ -95,12 +98,11 @@ func NewPipeline(
 	}
 
 	for i, stageBean := range pipelineBean.Stages {
-		stageContext := common.StageContext{
+		stageContext := &common.StageContextImpl{
 			StageConfig: stageBean.Config,
 			Parameters:  resolvedParameters,
 		}
-		contextWithValue := context.WithValue(pipelineContext, "stageContext", stageContext)
-		stageRuntimeList[i] = NewStageRuntime(pipelineBean, stageBean, contextWithValue)
+		stageRuntimeList[i] = NewStageRuntime(pipelineBean, stageBean, stageContext)
 		pipes[i] = NewStagePipe(stageRuntimeList[i], config)
 	}
 

@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"context"
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"github.com/streamsets/dataextractor/api"
@@ -17,19 +16,22 @@ const (
 )
 
 type WebSocketClientDestination struct {
+	*common.BaseStage
 	resourceUrl string
 	headers     []interface{}
 }
 
 func init() {
 	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
-		return &WebSocketClientDestination{}
+		return &WebSocketClientDestination{BaseStage: &common.BaseStage{}}
 	})
 }
 
-func (w *WebSocketClientDestination) Init(ctx context.Context) error {
-	stageContext := common.GetStageContext(ctx)
-	stageConfig := stageContext.StageConfig
+func (w *WebSocketClientDestination) Init(stageContext api.StageContext) error {
+	if err:= w.BaseStage.Init(stageContext); err != nil {
+		return err
+	}
+	stageConfig := w.GetStageConfig()
 	log.Println("[DEBUG] WebSocketClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
 		if config.Name == "conf.resourceUrl" {
@@ -72,9 +74,5 @@ func (w *WebSocketClientDestination) Write(batch api.Batch) error {
 	}
 
 	defer c.Close()
-	return nil
-}
-
-func (w *WebSocketClientDestination) Destroy() error {
 	return nil
 }

@@ -1,11 +1,12 @@
 package common
 
 import (
+	"github.com/streamsets/dataextractor/api"
 	"strconv"
 	"strings"
 )
 
-type StageContext struct {
+type StageContextImpl struct {
 	StageConfig StageConfiguration
 	Parameters  map[string]interface{}
 }
@@ -15,7 +16,7 @@ const (
 	PARAMETER_SUFFIX = "}"
 )
 
-func (s *StageContext) GetResolvedValue(configValue interface{}) interface{} {
+func (s *StageContextImpl) GetResolvedValue(configValue interface{}) interface{} {
 	switch t := configValue.(type) {
 	case string:
 		if s.IsParameter(configValue.(string)) {
@@ -40,12 +41,12 @@ func (s *StageContext) GetResolvedValue(configValue interface{}) interface{} {
 	return configValue
 }
 
-func (s *StageContext) IsParameter(configValue string) bool {
+func (s *StageContextImpl) IsParameter(configValue string) bool {
 	return strings.HasPrefix(configValue, PARAMETER_PREFIX) &&
 		strings.HasSuffix(configValue, PARAMETER_SUFFIX)
 }
 
-func (s *StageContext) GetParameterValue(paramName string) interface{} {
+func (s *StageContextImpl) GetParameterValue(paramName string) interface{} {
 	paramName = strings.Replace(paramName, PARAMETER_PREFIX, "", 1)
 	paramName = strings.Replace(paramName, PARAMETER_SUFFIX, "", 1)
 
@@ -54,4 +55,8 @@ func (s *StageContext) GetParameterValue(paramName string) interface{} {
 	}
 
 	return s.Parameters[paramName]
+}
+
+func (s *StageContextImpl) CreateRecord(recordSourceId string, value interface{}) api.Record {
+	return createRecord(recordSourceId, value)
 }

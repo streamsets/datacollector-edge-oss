@@ -1,7 +1,6 @@
 package mqtt
 
 import (
-	"context"
 	"encoding/json"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
@@ -16,24 +15,24 @@ const (
 )
 
 type MqttClientDestination struct {
-	mqttlib.MqttConnector
+	*common.BaseStage
+	*mqttlib.MqttConnector
 	topic string
 }
 
 func init() {
 	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
-		return &MqttClientDestination{}
+		return &MqttClientDestination{BaseStage: &common.BaseStage{}, MqttConnector: &mqttlib.MqttConnector{}}
 	})
 }
 
-func (md *MqttClientDestination) Init(ctx context.Context) error {
-	stageContext := common.GetStageContext(ctx)
-	stageConfig := stageContext.StageConfig
+func (md *MqttClientDestination) Init(stageContext api.StageContext) error {
 	log.Println("[DEBUG] MqttClientDestination Init method")
+	if err:= md.BaseStage.Init(stageContext); err != nil {
+		return err
+	}
 
-	md.MqttConnector = mqttlib.MqttConnector{}
-
-	for _, config := range stageConfig.Configuration {
+	for _, config := range md.GetStageConfig().Configuration {
 		configName, configValue := config.Name, stageContext.GetResolvedValue(config.Value)
 		if configName == "publisherConf.topic" {
 			md.topic = configValue.(string)
