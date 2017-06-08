@@ -102,13 +102,18 @@ func (s *StagePipe) Process(pipeBatch *FullPipeBatch) error {
 	s.outputRecordsMeter.Mark(outputRecordsCount)
 	s.outputRecordsHistogram.Update(outputRecordsCount)
 
-	// TODO: Update below metrics once error handling feature is done
-	s.errorRecordsCounter.Inc(0)
-	s.errorRecordsMeter.Mark(0)
-	s.errorRecordsHistogram.Update(0)
-	s.stageErrorsCounter.Inc(0)
-	s.stageErrorsMeter.Mark(0)
-	s.stageErrorsHistogram.Update(0)
+	instanceName := s.Stage.config.InstanceName
+	errorSink := pipeBatch.GetErrorSink()
+
+	stageErrorRecordsCount := int64(len(errorSink.GetStageErrorRecords(instanceName)))
+	stageErrorMessagesCount := int64(len(errorSink.GetStageErrorMessages(instanceName)))
+
+	s.errorRecordsCounter.Inc(stageErrorRecordsCount)
+	s.errorRecordsMeter.Mark(stageErrorRecordsCount)
+	s.errorRecordsHistogram.Update(stageErrorRecordsCount)
+	s.stageErrorsCounter.Inc(stageErrorMessagesCount)
+	s.stageErrorsMeter.Mark(stageErrorMessagesCount)
+	s.stageErrorsHistogram.Update(stageErrorMessagesCount)
 
 	return nil
 }

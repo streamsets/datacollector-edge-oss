@@ -2,6 +2,7 @@ package runner
 
 import (
 	"github.com/streamsets/dataextractor/api"
+	"github.com/streamsets/dataextractor/container/common"
 )
 
 type PipeBatch interface {
@@ -16,7 +17,7 @@ type PipeBatch interface {
 	GetLaneOutputRecords(pipelineLanes []string) map[string][]api.Record
 	OverrideStageOutput(pipe StagePipe, stageOutput StageOutput)
 	GetSnapshotsOfAllStagesOutput() []StageOutput
-	GetErrorSink() ErrorSink
+	GetErrorSink() *common.ErrorSink
 	GetEventSink() EventSink
 	MoveLane(inputLane string, outputLane string)
 	MoveLaneCopying(inputLane string, outputLanes []string)
@@ -33,6 +34,7 @@ type FullPipeBatch struct {
 	fullPayload   []api.Record
 	inputRecords  int64
 	outputRecords int64
+	errorSink     *common.ErrorSink
 }
 
 func (b *FullPipeBatch) GetBatchSize() int {
@@ -65,6 +67,11 @@ func (b *FullPipeBatch) CompleteStage(batchMaker *BatchMakerImpl) {
 	b.fullPayload = batchMaker.GetStageOutput()
 }
 
+func (b *FullPipeBatch) GetErrorSink() *common.ErrorSink {
+	return b.errorSink
+}
+
+
 func (b *FullPipeBatch) GetInputRecords() int64 {
 	return b.inputRecords
 }
@@ -74,16 +81,17 @@ func (b *FullPipeBatch) GetOutputRecords() int64 {
 }
 
 func (b *FullPipeBatch) GetErrorRecords() int64 {
-	return 0
+	return b.errorSink.GetTotalErrorRecords()
 }
 
 func (b *FullPipeBatch) GetErrorMessages() int64 {
-	return 0
+	return b.errorSink.GetTotalErrorMessages()
 }
 
-func NewFullPipeBatch(tracker SourceOffsetTracker, batchSize int) *FullPipeBatch {
+func NewFullPipeBatch(tracker SourceOffsetTracker, batchSize int, errorSink *common.ErrorSink) *FullPipeBatch {
 	return &FullPipeBatch{
 		offsetTracker: tracker,
 		batchSize:     batchSize,
+		errorSink:     errorSink,
 	}
 }

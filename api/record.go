@@ -18,23 +18,15 @@ type Header interface {
 
 	GetStagesPath() string
 
-	GetRaw() []byte
-
-	GetRawMimeType() string
-
 	GetErrorDataCollectorId() string
 
 	GetErrorPipelineName() string
-
-	GetErrorCode() string
 
 	GetErrorMessage() string
 
 	GetErrorStage() string
 
 	GetErrorTimestamp() int64
-
-	GetErrorStackTrace() string
 
 	GetAttributeNames() []string
 

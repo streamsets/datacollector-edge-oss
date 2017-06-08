@@ -12,14 +12,16 @@ import (
 )
 
 type Pipeline struct {
-	name                        string
-	config                      execution.Config
-	standaloneRunner            *StandaloneRunner
-	pipelineConf                common.PipelineConfiguration
-	pipelineBean                creation.PipelineBean
-	pipes                       []Pipe
-	offsetTracker               SourceOffsetTracker
-	stop                        bool
+	name             string
+	config           execution.Config
+	standaloneRunner *StandaloneRunner
+	pipelineConf     common.PipelineConfiguration
+	pipelineBean     creation.PipelineBean
+	pipes            []Pipe
+	offsetTracker    SourceOffsetTracker
+	stop             bool
+	errorSink        *common.ErrorSink
+
 	MetricRegistry              metrics.Registry
 	batchProcessingTimer        metrics.Timer
 	batchCountCounter           metrics.Counter
@@ -75,7 +77,11 @@ func (p *Pipeline) Run() {
 func (p *Pipeline) runBatch() {
 	var committed bool = false
 	start := time.Now()
-	pipeBatch := NewFullPipeBatch(p.offsetTracker, 1)
+
+	p.errorSink.ClearErrorRecordsAndMesssages()
+
+	pipeBatch := NewFullPipeBatch(p.offsetTracker, 1, p.errorSink)
+
 	for _, pipe := range p.pipes {
 		if p.pipelineBean.Config.DeliveryGuarantee == AT_MOST_ONCE &&
 			pipe.IsTarget() && // if destination
@@ -137,6 +143,7 @@ func NewPipeline(
 
 	stageRuntimeList := make([]StageRuntime, len(standaloneRunner.pipelineConfig.Stages))
 	pipes := make([]Pipe, len(standaloneRunner.pipelineConfig.Stages))
+	errorSink := common.NewErrorSink()
 
 	var resolvedParameters = make(map[string]interface{})
 	for k, v := range pipelineBean.Config.Constants {
@@ -152,6 +159,7 @@ func NewPipeline(
 			StageConfig: stageBean.Config,
 			Parameters:  resolvedParameters,
 			Metrics:     metricRegistry,
+			ErrorSink:   errorSink,
 		}
 		stageRuntimeList[i] = NewStageRuntime(pipelineBean, stageBean, stageContext)
 		pipes[i] = NewStagePipe(stageRuntimeList[i], config)
@@ -162,6 +170,7 @@ func NewPipeline(
 		pipelineConf:     standaloneRunner.GetPipelineConfig(),
 		pipelineBean:     pipelineBean,
 		pipes:            pipes,
+		errorSink:        errorSink,
 		offsetTracker:    sourceOffsetTracker,
 		MetricRegistry:   metricRegistry,
 	}

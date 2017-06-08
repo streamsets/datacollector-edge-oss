@@ -7,4 +7,6 @@ type StageContext interface {
 	GetResolvedValue(configValue interface{}) interface{}
 	CreateRecord(recordSourceId string, value interface{}) Record
 	GetMetrics() metrics.Registry
+	ToError(err error, record Record)
+	ReportError(err error)
 }

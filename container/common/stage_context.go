@@ -3,14 +3,17 @@ package common
 import (
 	"github.com/rcrowley/go-metrics"
 	"github.com/streamsets/dataextractor/api"
+	"github.com/streamsets/dataextractor/container/util"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type StageContextImpl struct {
 	StageConfig StageConfiguration
 	Parameters  map[string]interface{}
 	Metrics     metrics.Registry
+	ErrorSink   *ErrorSink
 }
 
 const (
@@ -63,6 +66,32 @@ func (s *StageContextImpl) GetMetrics() metrics.Registry {
 	return s.Metrics
 }
 
+
 func (s *StageContextImpl) CreateRecord(recordSourceId string, value interface{}) api.Record {
 	return createRecord(recordSourceId, value)
+}
+
+func (s *StageContextImpl) ToError(err error, record api.Record) {
+	s.ErrorSink.ToError(
+		s.StageConfig.InstanceName,
+		constructErrorRecord(s.StageConfig.InstanceName, err, record),
+	)
+}
+
+func (s *StageContextImpl) ReportError(err error) {
+	s.ErrorSink.ReportError(
+		s.StageConfig.InstanceName,
+		err,
+	)
+}
+
+func constructErrorRecord(instanceName string, err error, record api.Record) api.Record {
+	//TODO: revisit this if we support processors
+	//no need to clone the record, look for original record to be added to error lane
+	//as the record is not transformed anywhere (i.e no processors in between at the moment)
+	headerImplForRecord := record.GetHeader().(*HeaderImpl)
+	headerImplForRecord.SetErrorStageInstance(instanceName)
+	headerImplForRecord.SetErrorMessage(err.Error())
+	headerImplForRecord.SetErrorTimeStamp(util.ConvertTimeToLong(time.Now()))
+	return record
 }
