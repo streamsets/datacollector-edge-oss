@@ -38,7 +38,7 @@ func (ms *MqttClientSource) getTopicFilterAndQosMap() map[string]byte {
 
 func (ms *MqttClientSource) Init(stageContext api.StageContext) error {
 	log.Println("[DEBUG] MqttClientSource Init method")
-	if err:= ms.BaseStage.Init(stageContext); err != nil {
+	if err := ms.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
 

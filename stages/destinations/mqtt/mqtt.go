@@ -28,7 +28,7 @@ func init() {
 
 func (md *MqttClientDestination) Init(stageContext api.StageContext) error {
 	log.Println("[DEBUG] MqttClientDestination Init method")
-	if err:= md.BaseStage.Init(stageContext); err != nil {
+	if err := md.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
 

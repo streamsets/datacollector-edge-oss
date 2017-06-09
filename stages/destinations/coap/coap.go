@@ -40,7 +40,7 @@ func init() {
 }
 
 func (c *CoapClientDestination) Init(stageContext api.StageContext) error {
-	if err:= c.BaseStage.Init(stageContext); err != nil {
+	if err := c.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
 	stageConfig := c.GetStageConfig()

@@ -28,7 +28,7 @@ func init() {
 }
 
 func (w *WebSocketClientDestination) Init(stageContext api.StageContext) error {
-	if err:= w.BaseStage.Init(stageContext); err != nil {
+	if err := w.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
 	stageConfig := w.GetStageConfig()

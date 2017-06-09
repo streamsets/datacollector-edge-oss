@@ -30,7 +30,7 @@ func init() {
 }
 
 func (d DevRandom) Init(stageContext api.StageContext) error {
-	if err:= d.BaseStage.Init(stageContext); err != nil {
+	if err := d.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
 	stageConfig := d.GetStageConfig()

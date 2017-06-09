@@ -31,7 +31,7 @@ func init() {
 }
 
 func (h *HttpServerOrigin) Init(stageContext api.StageContext) error {
-	if err:= h.BaseStage.Init(stageContext); err != nil {
+	if err := h.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
 	stageConfig := h.GetStageConfig()

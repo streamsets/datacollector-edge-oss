@@ -29,7 +29,7 @@ func init() {
 }
 
 func (f *FileTailOrigin) Init(stageContext api.StageContext) error {
-	if err:= f.BaseStage.Init(stageContext); err != nil {
+	if err := f.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
 	stageConfig := f.GetStageConfig()

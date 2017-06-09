@@ -1,7 +1,6 @@
 package coap
 
 import (
-	"context"
 	"github.com/streamsets/dataextractor/api"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/execution/runner"
@@ -9,7 +8,7 @@ import (
 	"testing"
 )
 
-func getContext(resourceUrl string, coapMethod string, messageType string) context.Context {
+func getStageContext(resourceUrl string, coapMethod string, messageType string) api.StageContext {
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = LIBRARY
 	stageConfig.StageName = STAGE_NAME
@@ -27,22 +26,21 @@ func getContext(resourceUrl string, coapMethod string, messageType string) conte
 		Value: messageType,
 	}
 
-	stageContext := common.StageContext{
+	return &common.StageContextImpl{
 		StageConfig: stageConfig,
 		Parameters:  nil,
 	}
-	return context.WithValue(context.Background(), "stageContext", stageContext)
 }
 
 func TestConfirmableMessage(t *testing.T) {
-	pipelineContext := getContext("coap://localhost:56831/sdc", POST, CONFIRMABLE)
+	stageContext := getStageContext("coap://localhost:56831/sdc", POST, CONFIRMABLE)
 	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
 	if err != nil {
 		t.Error(err)
 	}
-	stageInstance.Init(pipelineContext)
+	stageInstance.Init(stageContext)
 	records := make([]api.Record, 1)
-	records[0] = common.CreateRecord("1", "TestData")
+	records[0] = stageContext.CreateRecord("1", "TestData")
 	batch := runner.NewBatchImpl("random", records, "randomOffset")
 	err = stageInstance.(api.Destination).Write(batch)
 	if err == nil {
@@ -52,16 +50,16 @@ func TestConfirmableMessage(t *testing.T) {
 }
 
 func TestNonConfirmableMessage(t *testing.T) {
-	pipelineContext := getContext("coap://localhost:45/sdc", POST, NONCONFIRMABLE)
+	stageContext := getStageContext("coap://localhost:45/sdc", POST, NONCONFIRMABLE)
 	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
 	if err != nil {
 		t.Error(err)
 	}
 	records := make([]api.Record, 1)
-	records[0] = common.CreateRecord("1", "test data")
+	records[0] = stageContext.CreateRecord("1", "test data")
 	batch := runner.NewBatchImpl("random", records, "randomOffset")
 
-	stageInstance.Init(pipelineContext)
+	stageInstance.Init(stageContext)
 	err = stageInstance.(api.Destination).Write(batch)
 	if err != nil {
 		t.Error("Not excepted error message for invalid CoAP URL with confirmable message")
