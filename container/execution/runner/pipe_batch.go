@@ -71,7 +71,6 @@ func (b *FullPipeBatch) GetErrorSink() *common.ErrorSink {
 	return b.errorSink
 }
 
-
 func (b *FullPipeBatch) GetInputRecords() int64 {
 	return b.inputRecords
 }

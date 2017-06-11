@@ -5,9 +5,9 @@ import (
 )
 
 type ErrorSink struct {
-	stageErrorMessages  map[string][]error
-	stageErrorRecords map[string][]api.Record
-	totalErrorRecords int64
+	stageErrorMessages map[string][]error
+	stageErrorRecords  map[string][]api.Record
+	totalErrorRecords  int64
 	totalErrorMessages int64
 }
 
