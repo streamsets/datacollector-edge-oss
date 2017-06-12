@@ -96,4 +96,4 @@ dist: dist-darwin-amd64
 docker-build:
 	docker build -t streamsets/dataextractor .
 
-dist-all: dist-linux-amd64 dist-linux-arm dist-windows-amd64 dist-darwin-amd64 docker-build
+dist-all: dist-linux-amd64 dist-linux-arm dist-windows-amd64 dist-darwin-amd64 docker-build test

@@ -17,7 +17,7 @@ func (b *BatchMakerImpl) AddRecord(record api.Record) {
 	b.stageOutput = append(b.stageOutput, record)
 }
 
-func (b *BatchMakerImpl) getStageOutput() []api.Record {
+func (b *BatchMakerImpl) GetStageOutput() []api.Record {
 	return b.stageOutput
 }
 

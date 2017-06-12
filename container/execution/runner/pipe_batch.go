@@ -54,7 +54,7 @@ func (b *FullPipeBatch) StartStage(pipe StagePipe) *BatchMakerImpl {
 }
 
 func (b *FullPipeBatch) CompleteStage(batchMaker *BatchMakerImpl) {
-	b.fullPayload = batchMaker.getStageOutput()
+	b.fullPayload = batchMaker.GetStageOutput()
 }
 
 func NewFullPipeBatch(tracker SourceOffsetTracker, batchSize int) *FullPipeBatch {

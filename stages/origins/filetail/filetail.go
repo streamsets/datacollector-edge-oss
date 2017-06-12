@@ -12,8 +12,11 @@ import (
 )
 
 const (
-	LIBRARY    = "streamsets-datacollector-basic-lib"
-	STAGE_NAME = "com_streamsets_pipeline_stage_origin_logtail_FileTailDSource"
+	LIBRARY                 = "streamsets-datacollector-basic-lib"
+	STAGE_NAME              = "com_streamsets_pipeline_stage_origin_logtail_FileTailDSource"
+	CONF_FILE_INFOS         = "conf.fileInfos"
+	CONF_MAX_WAIT_TIME_SECS = "conf.maxWaitTimeSecs"
+	CONF_FILE_FULL_PATH     = "fileFullPath"
 )
 
 type FileTailOrigin struct {
@@ -34,16 +37,16 @@ func (f *FileTailOrigin) Init(stageContext api.StageContext) error {
 	}
 	stageConfig := f.GetStageConfig()
 	for _, config := range stageConfig.Configuration {
-		if config.Name == "conf.fileInfos" {
+		if config.Name == CONF_FILE_INFOS {
 			fileInfos := config.Value.([]interface{})
 			if len(fileInfos) > 0 {
 				fileInfo := fileInfos[0].(map[string]interface{})
-				f.fileFullPath = stageContext.GetResolvedValue(fileInfo["fileFullPath"]).(string)
+				f.fileFullPath = stageContext.GetResolvedValue(fileInfo[CONF_FILE_FULL_PATH]).(string)
 			}
 
 		}
 
-		if config.Name == "conf.maxWaitTimeSecs" {
+		if config.Name == CONF_MAX_WAIT_TIME_SECS {
 			f.maxWaitTimeSecs = stageContext.GetResolvedValue(config.Value).(float64)
 		}
 	}
@@ -77,23 +80,46 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 	for !end {
 		select {
 		case line := <-tailObj.Lines:
-			batchMaker.AddRecord(
-				f.GetStageContext().CreateRecord(
-					tailObj.Filename+"::"+
-						strconv.FormatInt(currentOffset, 10),
-					line.Text))
-			recordCount++
-			if recordCount > maxBatchSize {
-				currentOffset, _ = tailObj.Tell()
-				tailObj.Stop()
-				end = true
+			if line != nil {
+				batchMaker.AddRecord(
+					f.GetStageContext().CreateRecord(
+						tailObj.Filename+"::"+
+							strconv.FormatInt(currentOffset, 10),
+						line.Text))
+				recordCount++
+				if recordCount >= maxBatchSize {
+					currentOffset, _ = tailObj.Tell()
+					log.Println("[DEBUG] Calling stop for max record size")
+					end = true
+				}
 			}
 		case <-time.After(time.Duration(f.maxWaitTimeSecs) * time.Second):
+			log.Println("[DEBUG] Calling stop for max Wait TimeSecs")
 			currentOffset, _ = tailObj.Tell()
-			tailObj.Stop()
 			end = true
 		}
 	}
 
+	go f.stopTailing(tailObj)
+
 	return strconv.FormatInt(currentOffset, 10), err
+}
+
+func (f *FileTailOrigin) stopTailing(tailObj *tail.Tail) {
+	tailObj.Kill(nil)
+	time.Sleep(time.Microsecond)
+
+	end := false
+	for !end {
+		select {
+		case _, ok := <-tailObj.Lines:
+			if !ok {
+				end = true
+			}
+		default:
+			end = true
+		}
+	}
+
+	tailObj.Wait()
 }
