@@ -62,7 +62,7 @@ func TestNonConfirmableMessage(t *testing.T) {
 	stageInstance.Init(stageContext)
 	err = stageInstance.(api.Destination).Write(batch)
 	if err != nil {
-		t.Error("Not excepted error message for invalid CoAP URL with confirmable message")
+		t.Error("Not excepted error message for invalid CoAP URL with non confirmable message")
 	}
 	stageInstance.Destroy()
 }

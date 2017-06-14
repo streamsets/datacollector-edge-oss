@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/streamsets/dataextractor/container/util"
 	"io"
 	"net/http"
 )
@@ -66,5 +67,17 @@ func (webServerTask *WebServerTask) statusHandler(w http.ResponseWriter, r *http
 		encoder.Encode(state)
 	} else {
 		fmt.Fprintf(w, "Failed to get status:  %s! ", err)
+	}
+}
+
+func (webServerTask *WebServerTask) metricsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	pipelineId := ps.ByName("pipelineId")
+	metricRegistry, err := webServerTask.manager.GetRunner(pipelineId).GetMetrics()
+	if err == nil {
+		encoder := json.NewEncoder(w)
+		encoder.SetIndent("", "\t")
+		encoder.Encode(util.FormatMetricsRegistry(metricRegistry))
+	} else {
+		fmt.Fprintf(w, "Failed to get metrics:  %s! ", err)
 	}
 }

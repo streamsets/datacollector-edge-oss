@@ -2,6 +2,7 @@ package runner
 
 import (
 	"errors"
+	"github.com/rcrowley/go-metrics"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/creation"
 	"github.com/streamsets/dataextractor/container/execution"
@@ -55,6 +56,10 @@ func (standaloneRunner *StandaloneRunner) GetPipelineConfig() common.PipelineCon
 
 func (standaloneRunner *StandaloneRunner) GetStatus() (*common.PipelineState, error) {
 	return standaloneRunner.pipelineState, nil
+}
+
+func (standaloneRunner *StandaloneRunner) GetMetrics() (metrics.Registry, error) {
+	return standaloneRunner.prodPipeline.MetricRegistry, nil
 }
 
 func (standaloneRunner *StandaloneRunner) StartPipeline(

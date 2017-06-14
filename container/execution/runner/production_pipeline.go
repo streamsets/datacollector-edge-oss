@@ -1,6 +1,7 @@
 package runner
 
 import (
+	"github.com/rcrowley/go-metrics"
 	"github.com/streamsets/dataextractor/container/common"
 	"github.com/streamsets/dataextractor/container/execution"
 	"log"
@@ -9,6 +10,7 @@ import (
 type ProductionPipeline struct {
 	PipelineConfig common.PipelineConfiguration
 	Pipeline       *Pipeline
+	MetricRegistry metrics.Registry
 }
 
 func (p *ProductionPipeline) Run() {
@@ -33,10 +35,12 @@ func NewProductionPipeline(
 	pipelineConfiguration common.PipelineConfiguration,
 	runtimeParameters map[string]interface{},
 ) (*ProductionPipeline, error) {
-	var sourceOffsetTracker SourceOffsetTracker = NewProductionSourceOffsetTracker(pipelineId)
-	pipeline, err := NewPipeline(config, standaloneRunner, sourceOffsetTracker, runtimeParameters)
+	sourceOffsetTracker := NewProductionSourceOffsetTracker(pipelineId)
+	metricRegistry := metrics.NewRegistry()
+	pipeline, err := NewPipeline(config, standaloneRunner, sourceOffsetTracker, runtimeParameters, metricRegistry)
 	return &ProductionPipeline{
 		PipelineConfig: pipelineConfiguration,
 		Pipeline:       pipeline,
+		MetricRegistry: metricRegistry,
 	}, err
 }

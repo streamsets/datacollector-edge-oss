@@ -1,6 +1,7 @@
 package common
 
 import (
+	"github.com/rcrowley/go-metrics"
 	"github.com/streamsets/dataextractor/api"
 	"strconv"
 	"strings"
@@ -9,6 +10,7 @@ import (
 type StageContextImpl struct {
 	StageConfig StageConfiguration
 	Parameters  map[string]interface{}
+	Metrics     metrics.Registry
 }
 
 const (
@@ -55,6 +57,10 @@ func (s *StageContextImpl) GetParameterValue(paramName string) interface{} {
 	}
 
 	return s.Parameters[paramName]
+}
+
+func (s *StageContextImpl) GetMetrics() metrics.Registry {
+	return s.Metrics
 }
 
 func (s *StageContextImpl) CreateRecord(recordSourceId string, value interface{}) api.Record {

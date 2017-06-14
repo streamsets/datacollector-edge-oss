@@ -99,14 +99,10 @@ func (c *CoapClientDestination) sendRecordToSDC(recordValue interface{}) error {
 		return err
 	}
 
-	rv, err := coapClient.Send(req)
+	_, err = coapClient.Send(req)
 	if err != nil {
 		log.Printf("[ERROR] Error sending request: %v", err)
 		return err
-	}
-
-	if rv != nil {
-		log.Printf("[DEBUG] Response payload: %s", rv.Payload)
 	}
 
 	mid++
