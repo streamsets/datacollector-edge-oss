@@ -65,7 +65,7 @@ func (d DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMaker
 }
 
 // Sample code for demo purpose
-// bin/dataextractor -start=randomToHttp -runtimeParameters='{"httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+// bin/dataextractor -start=randomToHttp -runtimeParameters='{"httpUrl":"http://localhost:9999","sdcAppId":"sdc2go"}'
 
 type TestData struct {
 	Firmware         string                 `json:"firmware"`

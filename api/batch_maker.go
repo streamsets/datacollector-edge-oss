@@ -1,7 +1,7 @@
 package api
 
 // BatchMaker is the interface that wraps the basic methods for adding record to pipeline.
-// Data Extractor origin stages receive an instance of a BatchMaker to write to the pipeline the records they
+// sdc2go origin stages receive an instance of a BatchMaker to write to the pipeline the records they
 // create or process.
 //
 // GetLanes returns the available lane names (stream names) for the stage.

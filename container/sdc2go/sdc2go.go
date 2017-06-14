@@ -1,4 +1,4 @@
-package dataextractor
+package sdc2go
 
 import (
 	"encoding/json"
@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	DefaultLogFilePath    = "/logs/sde.log"
-	DefaultConfigFilePath = "/etc/sde.conf"
+	DefaultLogFilePath    = "/log/sdc2go.log"
+	DefaultConfigFilePath = "/etc/sdc2go.conf"
 	DEBUG                 = "DEBUG"
 	WARN                  = "WARN"
 	ERROR                 = "ERROR"

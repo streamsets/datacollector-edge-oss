@@ -1,4 +1,4 @@
-# StreamSets Data Extractor 
+# StreamSets Data Collector To Go (SDC2Go) 
 
 ## Minimum Requirements
 
@@ -18,19 +18,19 @@
 ## Running
 
     $ cd dist
-    $ bin/dataextractor
+    $ bin/sdc2go
     
 ### To start pipeline on SDE start
 
-    $ bin/dataextractor -start=<pipelineId>
+    $ bin/sdc2go -start=<pipelineId>
     
 ### To pass runtime parameters   
         
-    $ bin/dataextractor -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    $ bin/sdc2go -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ### To enable DEBUG Log Level    
     
-    $ bin/dataextractor -debug -start=tailFileToHttp    
+    $ bin/sdc2go -debug -start=tailFileToHttp    
     
 ## REST API
 
@@ -52,18 +52,18 @@
 ## Docker Build and run the image
 
 
-Invoke Docker from the dataextractor directory to build an image using the Dockerfile:
+Invoke Docker from the sdc2go directory to build an image using the Dockerfile:
 
     
-    $ docker build -t streamsets/dataextractor .
+    $ docker build -t streamsets/sdc2go .
 
 
-This will fetch the alpine base image from Docker Hub, copy the already built package (linux/amd64), and tag the resulting image as streamsets/dataextractor.
+This will fetch the alpine base image from Docker Hub, copy the already built package (linux/amd64), and tag the resulting image as streamsets/sdc2go.
 
 
 To run a container from the resulting image:
 
-    $ docker run --publish 18633:18633 --name sde --rm streamsets/dataextractor
+    $ docker run --publish 18633:18633 --name sde --rm streamsets/sdc2go
 
 Getting inside the container
 

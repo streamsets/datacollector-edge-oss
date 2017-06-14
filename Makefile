@@ -1,6 +1,6 @@
 .PHONY: all dist clean
-BINARY_NAME := dataextractor
-APP_NAME := streamsets-dataextractor
+BINARY_NAME := sdc2go
+APP_NAME := streamsets-sdc2go
 VERSION := 0.0.1
 DIR=.
 BuiltDate := `date +%FT%T%z`
@@ -22,10 +22,10 @@ DEPENDENCIES := github.com/julienschmidt/httprouter \
 EXECUTABLES :=dist/bin/$(BINARY_NAME)
 
 # Build Binaries setting BuildInfo vars
-LDFLAGS :=-ldflags "-X github.com/streamsets/dataextractor/container/common.Version=${VERSION} \
-    -X github.com/streamsets/dataextractor/container/common.BuiltBy=$$USER \
-    -X github.com/streamsets/dataextractor/container/common.BuiltDate=${BuiltDate} \
-    -X github.com/streamsets/dataextractor/container/common.BuiltRepoSha=${BuiltRepoSha}"
+LDFLAGS :=-ldflags "-X github.com/streamsets/sdc2go/container/common.Version=${VERSION} \
+    -X github.com/streamsets/sdc2go/container/common.BuiltBy=$$USER \
+    -X github.com/streamsets/sdc2go/container/common.BuiltDate=${BuiltDate} \
+    -X github.com/streamsets/sdc2go/container/common.BuiltRepoSha=${BuiltRepoSha}"
 
 # Package target
 PACKAGE :=$(DIR)/dist/$(APP_NAME)-$$GOOS-$$GOARCH-$(VERSION).tar.gz
@@ -46,7 +46,7 @@ $(EXECUTABLES):
 	$(GO) build $(LDFLAGS) -o $@ $<
 	@cp -n -R $(DIR)/etc/ dist/etc 2>/dev/null || :
 	@cp -n -R $(DIR)/data/ dist/data 2>/dev/null || :
-	@mkdir -p dist/logs
+	@mkdir -p dist/log
 
 test:
 	$(TEST) -v ./... -cover
@@ -61,7 +61,7 @@ $(PACKAGE): all
 	@cp -R dist/bin/ tmp/$(APP_NAME)/bin
 	@cp -R $(DIR)/etc/ tmp/$(APP_NAME)/etc
 	@cp -R $(DIR)/data/ tmp/$(APP_NAME)/data
-	@mkdir -p tmp/$(APP_NAME)/logs
+	@mkdir -p tmp/$(APP_NAME)/log
 	tar -czvf $@ -C tmp $(APP_NAME);
 	@rm -rf tmp
 
@@ -94,6 +94,6 @@ dist-build: $(PACKAGE)
 dist: dist-darwin-amd64
 
 docker-build:
-	docker build -t streamsets/dataextractor .
+	docker build -t streamsets/sdc2go .
 
 dist-all: dist-linux-amd64 dist-linux-arm dist-windows-amd64 dist-darwin-amd64 docker-build test

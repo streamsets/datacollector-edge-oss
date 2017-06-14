@@ -10,13 +10,13 @@ import (
 )
 
 type Attributes struct {
-	BaseHttpUrl  string `json:"baseHttpUrl"`
-	SdeGoVersion string `json:"sdeGoVersion"`
-	SdeGoOS      string `json:"sdeGoOS"`
-	SdeGoArch    string `json:"sdeGoArch"`
-	SdeBuildDate string `json:"sdeBuildDate"`
-	SdeRepoSha   string `json:"sdeRepoSha"`
-	SdeVersion   string `json:"sdeVersion"`
+	BaseHttpUrl     string `json:"baseHttpUrl"`
+	Sdc2GoGoVersion string `json:"sdc2goGoVersion"`
+	Sdc2GoGoOS      string `json:"sdc2goGoOS"`
+	Sdc2GoGoArch    string `json:"sdc2goGoArch"`
+	Sdc2GoBuildDate string `json:"sdc2goBuildDate"`
+	Sdc2GoRepoSha   string `json:"sdc2goRepoSha"`
+	Sdc2GoVersion   string `json:"sdc2goVersion"`
 }
 
 type RegistrationData struct {
@@ -28,13 +28,13 @@ type RegistrationData struct {
 func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo *common.RuntimeInfo) {
 	if dpmConfig.Enabled && dpmConfig.AppAuthToken != "" {
 		attributes := Attributes{
-			BaseHttpUrl:  runtimeInfo.HttpUrl,
-			SdeGoVersion: runtime.Version(),
-			SdeGoOS:      runtime.GOOS,
-			SdeGoArch:    runtime.GOARCH,
-			SdeBuildDate: buildInfo.BuiltDate,
-			SdeRepoSha:   buildInfo.BuiltRepoSha,
-			SdeVersion:   buildInfo.Version,
+			BaseHttpUrl:     runtimeInfo.HttpUrl,
+			Sdc2GoGoVersion: runtime.Version(),
+			Sdc2GoGoOS:      runtime.GOOS,
+			Sdc2GoGoArch:    runtime.GOARCH,
+			Sdc2GoBuildDate: buildInfo.BuiltDate,
+			Sdc2GoRepoSha:   buildInfo.BuiltRepoSha,
+			Sdc2GoVersion:   buildInfo.Version,
 		}
 
 		registrationData := RegistrationData{
@@ -51,7 +51,7 @@ func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo 
 		var registrationUrl = dpmConfig.BaseUrl + "/security/public-rest/v1/components/registration"
 
 		req, err := http.NewRequest("POST", registrationUrl, bytes.NewBuffer(jsonValue))
-		req.Header.Set("X-Requested-By", "SDE")
+		req.Header.Set("X-Requested-By", "SDC2GO")
 		req.Header.Set("Content-Type", "application/json")
 
 		client := &http.Client{}

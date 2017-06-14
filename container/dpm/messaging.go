@@ -31,20 +31,20 @@ type ServerEvent struct {
 }
 
 type SDCInfoEvent struct {
-	SdeId        string            `json:"sdcId"`
-	HttpUrl      string            `json:"httpUrl"`
-	SdeBuildInfo *common.BuildInfo `json:"sdeBuildInfo"`
-	Labels       []string          `json:"labels"`
+	SdeId           string            `json:"sdcId"`
+	HttpUrl         string            `json:"httpUrl"`
+	Sdc2GoBuildInfo *common.BuildInfo `json:"sdc2goBuildInfo"`
+	Labels          []string          `json:"labels"`
 }
 
 func SendEvent(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo *common.RuntimeInfo) {
 	if dpmConfig.Enabled && dpmConfig.AppAuthToken != "" {
 
 		sdcInfoEvent := SDCInfoEvent{
-			SdeId:        runtimeInfo.ID,
-			HttpUrl:      runtimeInfo.HttpUrl,
-			SdeBuildInfo: buildInfo,
-			Labels:       dpmConfig.JobLabels,
+			SdeId:           runtimeInfo.ID,
+			HttpUrl:         runtimeInfo.HttpUrl,
+			Sdc2GoBuildInfo: buildInfo,
+			Labels:          dpmConfig.JobLabels,
 		}
 
 		sdcInfoEventJson, _ := json.Marshal(sdcInfoEvent)
@@ -72,7 +72,7 @@ func SendEvent(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo *commo
 		req, err := http.NewRequest("POST", eventsUrl, bytes.NewBuffer(jsonValue))
 		req.Header.Set("X-SS-App-Auth-Token", dpmConfig.AppAuthToken)
 		req.Header.Set("X-SS-App-Component-Id", runtimeInfo.ID)
-		req.Header.Set("X-Requested-By", "SDE")
+		req.Header.Set("X-Requested-By", "SDC2GO")
 		req.Header.Set("Content-Type", "application/json")
 
 		client := &http.Client{}

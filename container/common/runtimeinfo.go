@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	SDE_ID_FILE = "/data/sde.id"
+	SDC2GO_ID_FILE = "/data/sdc2go.id"
 )
 
 type RuntimeInfo struct {
@@ -24,27 +24,27 @@ func (r *RuntimeInfo) init() error {
 }
 
 func (r *RuntimeInfo) getSdeId() string {
-	var sdeId string
+	var sdc2goId string
 	if _, err := os.Stat(r.getSdeIdFilePath()); os.IsNotExist(err) {
 		f, err := os.Create(r.getSdeIdFilePath())
 		check(err)
 
 		defer f.Close()
-		sdeId = uuid.NewV4().String()
-		f.WriteString(sdeId)
+		sdc2goId = uuid.NewV4().String()
+		f.WriteString(sdc2goId)
 	} else {
 		buf, err := ioutil.ReadFile(r.getSdeIdFilePath())
 		if err != nil {
 			log.Fatal(err)
 		}
-		sdeId = string(buf)
+		sdc2goId = string(buf)
 	}
 
-	return sdeId
+	return sdc2goId
 }
 
 func (r *RuntimeInfo) getSdeIdFilePath() string {
-	return r.BaseDir + SDE_ID_FILE
+	return r.BaseDir + SDC2GO_ID_FILE
 }
 
 func check(e error) {

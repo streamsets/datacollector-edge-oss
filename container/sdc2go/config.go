@@ -1,4 +1,4 @@
-package dataextractor
+package sdc2go
 
 import (
 	"github.com/BurntSushi/toml"
@@ -8,7 +8,7 @@ import (
 	"log"
 )
 
-// Config represents the configuration format for the StreamSets Data Extractor binary.
+// Config represents the configuration format for the sdc2go binary.
 type Config struct {
 	Execution execution.Config
 	Http      http.Config
