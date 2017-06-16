@@ -2,9 +2,9 @@ package sdc2go
 
 import (
 	"github.com/BurntSushi/toml"
-	"github.com/streamsets/dataextractor/container/dpm"
-	"github.com/streamsets/dataextractor/container/execution"
-	"github.com/streamsets/dataextractor/container/http"
+	"github.com/streamsets/sdc2go/container/dpm"
+	"github.com/streamsets/sdc2go/container/execution"
+	"github.com/streamsets/sdc2go/container/http"
 	"log"
 )
 

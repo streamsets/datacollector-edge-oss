@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/streamsets/dataextractor/container/sdc2go"
-	_ "github.com/streamsets/dataextractor/stages/destinations"
-	_ "github.com/streamsets/dataextractor/stages/origins"
+	"github.com/streamsets/sdc2go/container/sdc2go"
+	_ "github.com/streamsets/sdc2go/stages/destinations"
+	_ "github.com/streamsets/sdc2go/stages/origins"
 	"runtime"
 )
 

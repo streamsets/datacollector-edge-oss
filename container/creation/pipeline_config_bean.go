@@ -1,7 +1,7 @@
 package creation
 
 import (
-	"github.com/streamsets/dataextractor/container/common"
+	"github.com/streamsets/sdc2go/container/common"
 )
 
 type PipelineConfigBean struct {

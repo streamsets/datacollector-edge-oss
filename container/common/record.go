@@ -1,7 +1,7 @@
 package common
 
 import (
-	"github.com/streamsets/dataextractor/api"
+	"github.com/streamsets/sdc2go/api"
 )
 
 type RecordImpl struct {

@@ -1,10 +1,10 @@
 package runner
 
 import (
-	"github.com/streamsets/dataextractor/api"
-	"github.com/streamsets/dataextractor/container/common"
-	"github.com/streamsets/dataextractor/container/creation"
-	"github.com/streamsets/dataextractor/container/validation"
+	"github.com/streamsets/sdc2go/api"
+	"github.com/streamsets/sdc2go/container/common"
+	"github.com/streamsets/sdc2go/container/creation"
+	"github.com/streamsets/sdc2go/container/validation"
 )
 
 type StageRuntime struct {

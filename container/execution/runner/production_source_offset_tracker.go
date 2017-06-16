@@ -1,8 +1,8 @@
 package runner
 
 import (
-	"github.com/streamsets/dataextractor/container/common"
-	"github.com/streamsets/dataextractor/container/execution/store"
+	"github.com/streamsets/sdc2go/container/common"
+	"github.com/streamsets/sdc2go/container/execution/store"
 	"time"
 )
 

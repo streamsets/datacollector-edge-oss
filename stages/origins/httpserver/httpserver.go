@@ -1,9 +1,9 @@
 package httpserver
 
 import (
-	"github.com/streamsets/dataextractor/api"
-	"github.com/streamsets/dataextractor/container/common"
-	"github.com/streamsets/dataextractor/stages/stagelibrary"
+	"github.com/streamsets/sdc2go/api"
+	"github.com/streamsets/sdc2go/container/common"
+	"github.com/streamsets/sdc2go/stages/stagelibrary"
 	"io/ioutil"
 	"log"
 	"net/http"

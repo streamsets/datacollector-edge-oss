@@ -2,7 +2,7 @@ package store
 
 import (
 	"encoding/json"
-	"github.com/streamsets/dataextractor/container/common"
+	"github.com/streamsets/sdc2go/container/common"
 	"io/ioutil"
 	"os"
 )

@@ -1,6 +1,6 @@
 package runner
 
-import "github.com/streamsets/dataextractor/container/common"
+import "github.com/streamsets/sdc2go/container/common"
 
 type Runner interface {
 	GetPipelineConfig() common.PipelineConfiguration

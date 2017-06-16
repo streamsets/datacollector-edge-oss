@@ -2,8 +2,8 @@ package common
 
 import (
 	"github.com/rcrowley/go-metrics"
-	"github.com/streamsets/dataextractor/api"
-	"github.com/streamsets/dataextractor/container/util"
+	"github.com/streamsets/sdc2go/api"
+	"github.com/streamsets/sdc2go/container/util"
 	"strconv"
 	"strings"
 	"time"

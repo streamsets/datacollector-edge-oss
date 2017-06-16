@@ -2,10 +2,10 @@ package mqtt
 
 import (
 	"encoding/json"
-	"github.com/streamsets/dataextractor/api"
-	"github.com/streamsets/dataextractor/container/common"
-	mqttlib "github.com/streamsets/dataextractor/stages/lib/mqtt"
-	"github.com/streamsets/dataextractor/stages/stagelibrary"
+	"github.com/streamsets/sdc2go/api"
+	"github.com/streamsets/sdc2go/container/common"
+	mqttlib "github.com/streamsets/sdc2go/stages/lib/mqtt"
+	"github.com/streamsets/sdc2go/stages/stagelibrary"
 	"log"
 )
 

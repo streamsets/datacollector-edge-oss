@@ -3,7 +3,7 @@ package store
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/streamsets/dataextractor/container/common"
+	"github.com/streamsets/sdc2go/container/common"
 	"io/ioutil"
 	"os"
 	"time"

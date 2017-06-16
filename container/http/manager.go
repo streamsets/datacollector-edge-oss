@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
-	"github.com/streamsets/dataextractor/container/util"
+	"github.com/streamsets/sdc2go/container/util"
 	"io"
 	"net/http"
 )

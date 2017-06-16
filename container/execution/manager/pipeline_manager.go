@@ -1,9 +1,9 @@
 package manager
 
 import (
-	"github.com/streamsets/dataextractor/container/common"
-	"github.com/streamsets/dataextractor/container/execution"
-	"github.com/streamsets/dataextractor/container/execution/runner"
+	"github.com/streamsets/sdc2go/container/common"
+	"github.com/streamsets/sdc2go/container/execution"
+	"github.com/streamsets/sdc2go/container/execution/runner"
 )
 
 type PipelineManager struct {

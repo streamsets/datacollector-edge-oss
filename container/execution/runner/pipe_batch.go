@@ -1,8 +1,8 @@
 package runner
 
 import (
-	"github.com/streamsets/dataextractor/api"
-	"github.com/streamsets/dataextractor/container/common"
+	"github.com/streamsets/sdc2go/api"
+	"github.com/streamsets/sdc2go/container/common"
 )
 
 type PipeBatch interface {

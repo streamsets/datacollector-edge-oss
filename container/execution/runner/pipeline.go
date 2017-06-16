@@ -2,11 +2,11 @@ package runner
 
 import (
 	"github.com/rcrowley/go-metrics"
-	"github.com/streamsets/dataextractor/container/common"
-	"github.com/streamsets/dataextractor/container/creation"
-	"github.com/streamsets/dataextractor/container/execution"
-	"github.com/streamsets/dataextractor/container/util"
-	"github.com/streamsets/dataextractor/container/validation"
+	"github.com/streamsets/sdc2go/container/common"
+	"github.com/streamsets/sdc2go/container/creation"
+	"github.com/streamsets/sdc2go/container/execution"
+	"github.com/streamsets/sdc2go/container/util"
+	"github.com/streamsets/sdc2go/container/validation"
 	"log"
 	"time"
 )

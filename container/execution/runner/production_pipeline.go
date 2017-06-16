@@ -2,8 +2,8 @@ package runner
 
 import (
 	"github.com/rcrowley/go-metrics"
-	"github.com/streamsets/dataextractor/container/common"
-	"github.com/streamsets/dataextractor/container/execution"
+	"github.com/streamsets/sdc2go/container/common"
+	"github.com/streamsets/sdc2go/container/execution"
 	"log"
 )
 
