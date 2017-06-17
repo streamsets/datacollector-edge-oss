@@ -45,8 +45,8 @@ dist/bin/$(BINARY_NAME): main.go $(DEPENDENCIES_DIR)
 
 $(EXECUTABLES):
 	$(GO) build $(LDFLAGS) -o $@ $<
-	@cp -n -R $(DIR)/etc/ dist/etc 2>/dev/null || :
-	@cp -n -R $(DIR)/data/ dist/data 2>/dev/null || :
+	@cp -n -R $(DIR)/etc/ dist/etc/ 2>/dev/null || :
+	@cp -n -R $(DIR)/data/ dist/data/ 2>/dev/null || :
 	@mkdir -p dist/log
 
 test:
@@ -59,9 +59,9 @@ clean:
 $(PACKAGE): all
 	@echo Packaging Binaries...
 	@mkdir -p tmp/$(APP_NAME)/bin
-	@cp -R dist/bin/ tmp/$(APP_NAME)/bin
-	@cp -R $(DIR)/etc/ tmp/$(APP_NAME)/etc
-	@cp -R $(DIR)/data/ tmp/$(APP_NAME)/data
+	@cp -R dist/bin/. tmp/$(APP_NAME)/bin
+	@cp -R $(DIR)/etc/ tmp/$(APP_NAME)/etc/
+	@cp -R $(DIR)/data/ tmp/$(APP_NAME)/data/
 	@mkdir -p tmp/$(APP_NAME)/log
 	tar -czvf $@ -C tmp $(APP_NAME);
 	@rm -rf tmp

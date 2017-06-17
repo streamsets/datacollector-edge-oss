@@ -66,8 +66,8 @@ This will fetch the alpine base image from Docker Hub, copy the already built pa
 
 To run a container from the resulting image:
 
-    $ docker run --publish 18633:18633 --name sde --rm streamsets/sdc2go
+    $ docker run --publish 18633:18633 --name sdc2go --rm streamsets/sdc2go
 
 Getting inside the container
 
-    $ docker exec -it sde /bin/sh
+    $ docker exec -it sdc2go /bin/sh

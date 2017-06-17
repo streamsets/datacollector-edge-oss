@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	fmt.Println("StreamSets sdc2go: ")
+	fmt.Println("StreamSets Data Collector To Go (SDC2Go): ")
 	fmt.Printf("OS: %s\nArchitecture: %s\n", runtime.GOOS, runtime.GOARCH)
 	sdc2go.DoMain()
 }
