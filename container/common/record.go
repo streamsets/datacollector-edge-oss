@@ -18,62 +18,62 @@ func (r *RecordImpl) GetValue() interface{} {
 }
 
 type HeaderImpl struct {
-	stageCreator         string
-	sourceId             string
-	stagesPath           string
-	trackingId           string
-	previousTrackingId   string
-	errorDataCollectorId string
-	errorPipelineName    string
-	errorStageInstance   string
-	errorMessage         string
-	errorTimestamp       int64
-	attributes           map[string]interface{}
+	StageCreator         string                 `json:"stageCreator"`
+	SourceId             string                 `json:"sourceId"`
+	StagesPath           string                 `json:"stagesPath"`
+	TrackingId           string                 `json:"trackingId"`
+	PreviousTrackingId   string                 `json:"previousTrackingId"`
+	ErrorDataCollectorId string                 `json:"errorDataCollectorId"`
+	ErrorPipelineName    string                 `json:"errorPipelineName"`
+	ErrorStageInstance   string                 `json:"errorStage"`
+	ErrorMessage         string                 `json:"errorMessage"`
+	ErrorTimestamp       int64                  `json:"errorTimestamp"`
+	Attributes           map[string]interface{} `json:"values"`
 }
 
 func (h *HeaderImpl) GetStageCreator() string {
-	return h.stageCreator
+	return h.StageCreator
 }
 
 func (h *HeaderImpl) GetSourceId() string {
-	return h.sourceId
+	return h.SourceId
 }
 
 func (h *HeaderImpl) GetTrackingId() string {
-	return h.trackingId
+	return h.TrackingId
 }
 
 func (h *HeaderImpl) GetPreviousTrackingId() string {
-	return h.previousTrackingId
+	return h.PreviousTrackingId
 }
 
 func (h *HeaderImpl) GetStagesPath() string {
-	return h.stagesPath
+	return h.StagesPath
 }
 
 func (h *HeaderImpl) GetErrorDataCollectorId() string {
-	return h.errorDataCollectorId
+	return h.ErrorDataCollectorId
 }
 
 func (h *HeaderImpl) GetErrorPipelineName() string {
-	return h.errorPipelineName
+	return h.ErrorPipelineName
 }
 
 func (h *HeaderImpl) GetErrorMessage() string {
-	return h.errorMessage
+	return h.ErrorMessage
 }
 
 func (h *HeaderImpl) GetErrorStage() string {
-	return h.errorStageInstance
+	return h.ErrorStageInstance
 }
 
 func (h *HeaderImpl) GetErrorTimestamp() int64 {
-	return h.errorTimestamp
+	return h.ErrorTimestamp
 }
 
 func (h *HeaderImpl) GetAttributeNames() []string {
 	var attributeNames []string
-	for k := range h.attributes {
+	for k := range h.Attributes {
 		attributeNames = append(attributeNames, k)
 	}
 	return attributeNames
@@ -82,50 +82,50 @@ func (h *HeaderImpl) GetAttributeNames() []string {
 func (h *HeaderImpl) GetAttributes() map[string]string {
 	//Copy map
 	attributes := make(map[string]string)
-	for k := range h.attributes {
-		attributes[k] = h.attributes[k].(string)
+	for k := range h.Attributes {
+		attributes[k] = h.Attributes[k].(string)
 	}
 	return attributes
 }
 
 func (h *HeaderImpl) SetAttribute(name string, value string) {
-	h.attributes[name] = value
+	h.Attributes[name] = value
 }
 
 func (h *HeaderImpl) SetStageCreator(stageCreator string) {
-	h.stageCreator = stageCreator
+	h.StageCreator = stageCreator
 }
 
 func (h *HeaderImpl) SetSourceId(sourceId string) {
-	h.sourceId = sourceId
+	h.SourceId = sourceId
 }
 
 func (h *HeaderImpl) SetTrackingId(trackingId string) {
-	h.trackingId = trackingId
+	h.TrackingId = trackingId
 }
 
 func (h *HeaderImpl) SetErrorTimeStamp(timeStamp int64) {
-	h.errorTimestamp = timeStamp
+	h.ErrorTimestamp = timeStamp
 }
 
 func (h *HeaderImpl) SetErrorStageInstance(errorStageInstance string) {
-	h.errorStageInstance = errorStageInstance
+	h.ErrorStageInstance = errorStageInstance
 }
 
 func (h *HeaderImpl) SetErrorMessage(errorMessage string) {
-	h.errorMessage = errorMessage
+	h.ErrorMessage = errorMessage
 }
 
 func (h *HeaderImpl) SetErrorPipelineName(errorPipelineName string) {
-	h.errorPipelineName = errorPipelineName
+	h.ErrorPipelineName = errorPipelineName
 }
 
 func (h *HeaderImpl) SetErrorDataCollectorId(errorDataCollectorId string) {
-	h.errorDataCollectorId = errorDataCollectorId
+	h.ErrorDataCollectorId = errorDataCollectorId
 }
 
 func createRecord(recordSourceId string, value interface{}) api.Record {
-	headerImpl := &HeaderImpl{attributes: make(map[string]interface{})}
+	headerImpl := &HeaderImpl{Attributes: make(map[string]interface{})}
 	r := &RecordImpl{header: headerImpl, value: value}
 	headerImpl.SetSourceId(recordSourceId)
 	return r

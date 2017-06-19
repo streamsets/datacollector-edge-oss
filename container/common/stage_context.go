@@ -67,7 +67,10 @@ func (s *StageContextImpl) GetMetrics() metrics.Registry {
 }
 
 func (s *StageContextImpl) CreateRecord(recordSourceId string, value interface{}) api.Record {
-	return createRecord(recordSourceId, value)
+	record := createRecord(recordSourceId, value)
+	headerImplForRecord := record.GetHeader().(*HeaderImpl)
+	headerImplForRecord.SetStageCreator(s.StageConfig.InstanceName)
+	return record
 }
 
 func (s *StageContextImpl) ToError(err error, record api.Record) {
