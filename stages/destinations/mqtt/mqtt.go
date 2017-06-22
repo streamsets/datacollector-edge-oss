@@ -47,19 +47,23 @@ func (md *MqttClientDestination) Init(stageContext api.StageContext) error {
 func (md *MqttClientDestination) Write(batch api.Batch) error {
 	log.Println("[DEBUG] MqttClientDestination write method")
 	for _, record := range batch.GetRecords() {
-		md.sendRecordToSDC(record.GetValue())
+		err := md.sendRecordToSDC(record.GetValue())
+		if err != nil {
+			log.Println("[Error] Error Writing Record", err)
+			md.GetStageContext().ToError(err, record)
+		}
 	}
 	return nil
 }
 
-func (md *MqttClientDestination) sendRecordToSDC(recordValue interface{}) {
-	if jsonValue, err := json.Marshal(recordValue); err == nil {
+func (md *MqttClientDestination) sendRecordToSDC(recordValue interface{}) error {
+	var err error = nil
+	if jsonValue, e := json.Marshal(recordValue); e == nil {
 		if token := md.Client.Publish(md.topic, byte(md.Qos), false, jsonValue); token.Wait() && token.Error() != nil {
-			panic(token.Error())
+			err = token.Error()
 		}
-	} else {
-		panic(err)
 	}
+	return err
 }
 
 func (md *MqttClientDestination) Destroy() error {

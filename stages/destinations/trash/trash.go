@@ -1,11 +1,11 @@
 package trash
 
 import (
-	"encoding/json"
 	"github.com/streamsets/sdc2go/api"
 	"github.com/streamsets/sdc2go/container/common"
 	"github.com/streamsets/sdc2go/stages/stagelibrary"
 	"log"
+	"encoding/json"
 )
 
 const (
@@ -35,9 +35,9 @@ func (t *TrashDestination) Write(batch api.Batch) error {
 	for _, record := range batch.GetRecords() {
 		jsonValue, err := json.Marshal(record.GetValue())
 		if err != nil {
-			panic(err)
+			log.Println("[Error] Json Serialization Error", err)
+			t.GetStageContext().ToError(err, record)
 		}
-
 		log.Println("[DEBUG] Trash record: ", string(jsonValue))
 	}
 	return nil

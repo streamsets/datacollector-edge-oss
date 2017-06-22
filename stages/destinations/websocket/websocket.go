@@ -58,18 +58,21 @@ func (w *WebSocketClientDestination) Write(batch api.Batch) error {
 
 	c, _, err := websocket.DefaultDialer.Dial(w.resourceUrl, requestHeader)
 	if err != nil {
-		log.Fatal("dial:", err)
+		return err
 	}
 
 	for _, record := range batch.GetRecords() {
 		jsonValue, err := json.Marshal(record.GetValue())
 		if err != nil {
-			panic(err)
+			log.Println("[ERROR] Marshalling:", err)
+			w.GetStageContext().ToError(err, record)
+			continue
 		}
 
 		err = c.WriteMessage(websocket.TextMessage, jsonValue)
 		if err != nil {
 			log.Println("[ERROR] write:", err)
+			w.GetStageContext().ToError(err, record)
 		}
 	}
 

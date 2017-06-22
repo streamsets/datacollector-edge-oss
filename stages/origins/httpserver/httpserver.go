@@ -51,7 +51,7 @@ func (h *HttpServerOrigin) Init(stageContext api.StageContext) error {
 
 func (h *HttpServerOrigin) Destroy() error {
 	if err := h.httpServer.Shutdown(nil); err != nil {
-		panic(err)
+		return err
 	}
 	log.Println("[DEBUG] HTTP Server - server shutdown successfully")
 	return nil
@@ -73,6 +73,7 @@ func (h *HttpServerOrigin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Println("[DEBUG] HTTP Server error reading request body : ", err)
+		h.GetStageContext().ReportError(err)
 	} else {
 		h.incomingData <- string(body)
 	}
@@ -88,6 +89,7 @@ func (h *HttpServerOrigin) startHttpServer() *http.Server {
 		log.Println("[DEBUG] HTTP Server - Running on URI : http://localhost:", h.port)
 		if err := srv.ListenAndServe(); err != nil {
 			log.Printf("[ERROR] Httpserver: ListenAndServe() error: %s", err)
+			h.GetStageContext().ReportError(err)
 		}
 	}()
 
