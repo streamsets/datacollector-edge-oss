@@ -9,6 +9,7 @@ import (
 	"github.com/streamsets/sdc2go/container/validation"
 	"log"
 	"time"
+	"github.com/streamsets/sdc2go/api"
 )
 
 type Pipeline struct {
@@ -18,6 +19,7 @@ type Pipeline struct {
 	pipelineConf     common.PipelineConfiguration
 	pipelineBean     creation.PipelineBean
 	pipes            []Pipe
+	errorStageRuntime StageRuntime
 	offsetTracker    SourceOffsetTracker
 	stop             bool
 	errorSink        *common.ErrorSink
@@ -62,6 +64,9 @@ func (p *Pipeline) Init() []validation.Issue {
 		issues = append(issues, stageIssues...)
 	}
 
+	errorStageissues:= p.errorStageRuntime.Init()
+	issues = append(issues, errorStageissues...)
+
 	return issues
 }
 
@@ -69,16 +74,22 @@ func (p *Pipeline) Run() {
 	log.Println("[DEBUG] Pipeline Run()")
 
 	for !p.offsetTracker.IsFinished() && !p.stop {
-		p.runBatch()
+		err := p.runBatch()
+		if err != nil {
+			log.Println("[Error] Error happened when processing batch", err)
+			log.Println("[Error] Stopping Pipeline")
+			p.Stop()
+		}
 	}
-
 }
 
-func (p *Pipeline) runBatch() {
+func (p *Pipeline) runBatch() error {
 	var committed bool = false
 	start := time.Now()
 
 	p.errorSink.ClearErrorRecordsAndMesssages()
+
+	previousOffset := p.offsetTracker.GetOffset()
 
 	pipeBatch := NewFullPipeBatch(p.offsetTracker, 1, p.errorSink)
 
@@ -93,6 +104,21 @@ func (p *Pipeline) runBatch() {
 		err := pipe.Process(pipeBatch)
 		if err != nil {
 			log.Println("[ERROR] ", err)
+		}
+	}
+
+	errorRecords := []api.Record{}
+	for _, stageBean := range p.pipelineBean.Stages {
+		errorRecordsForThisStage := p.errorSink.GetStageErrorRecords(stageBean.Config.InstanceName)
+		if errorRecordsForThisStage != nil && len(errorRecordsForThisStage) > 0 {
+			errorRecords = append(errorRecords, errorRecordsForThisStage...)
+		}
+	}
+	if len(errorRecords) > 0 {
+		batch := NewBatchImpl(p.errorStageRuntime.config.InstanceName, errorRecords, previousOffset)
+		_, err := p.errorStageRuntime.Execute(previousOffset, -1, batch, nil)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -119,6 +145,7 @@ func (p *Pipeline) runBatch() {
 	p.batchErrorMessagesHistogram.Update(pipeBatch.GetErrorMessages())
 	p.batchErrorRecordsHistogram.Update(pipeBatch.GetErrorRecords())
 
+	return nil
 }
 
 func (p *Pipeline) Stop() {
@@ -126,6 +153,7 @@ func (p *Pipeline) Stop() {
 	for _, stagePipe := range p.pipes {
 		stagePipe.Destroy()
 	}
+	p.errorStageRuntime.Destroy()
 	p.stop = true
 }
 
@@ -144,6 +172,8 @@ func NewPipeline(
 	stageRuntimeList := make([]StageRuntime, len(standaloneRunner.pipelineConfig.Stages))
 	pipes := make([]Pipe, len(standaloneRunner.pipelineConfig.Stages))
 	errorSink := common.NewErrorSink()
+
+	var errorStageRuntime StageRuntime
 
 	var resolvedParameters = make(map[string]interface{})
 	for k, v := range pipelineBean.Config.Constants {
@@ -165,11 +195,21 @@ func NewPipeline(
 		pipes[i] = NewStagePipe(stageRuntimeList[i], config)
 	}
 
+	log.Println("[DEBUG] Error Stage:", pipelineBean.ErrorStage.Config.InstanceName)
+	errorStageContext := &common.StageContextImpl{
+		StageConfig: pipelineBean.ErrorStage.Config,
+		Parameters:  resolvedParameters,
+		Metrics:     metricRegistry,
+		ErrorSink:   errorSink,
+	}
+	errorStageRuntime = NewStageRuntime(pipelineBean, pipelineBean.ErrorStage, errorStageContext)
+
 	p := &Pipeline{
 		standaloneRunner: standaloneRunner,
 		pipelineConf:     standaloneRunner.GetPipelineConfig(),
 		pipelineBean:     pipelineBean,
 		pipes:            pipes,
+		errorStageRuntime: errorStageRuntime,
 		errorSink:        errorSink,
 		offsetTracker:    sourceOffsetTracker,
 		MetricRegistry:   metricRegistry,
