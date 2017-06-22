@@ -70,7 +70,7 @@ func TestWriteRecord(t *testing.T) {
 	}
 }
 
-func checkRecord(t *testing.T, r api.Record,sourceId string,value interface{}, headersToCheck map[string]string) {
+func checkRecord(t *testing.T, r api.Record, sourceId string, value interface{}, headersToCheck map[string]string) {
 	isError := false
 
 	if r.GetHeader().GetSourceId() != sourceId {
@@ -174,7 +174,6 @@ func TestReadAndWriteRecord(t *testing.T) {
 	record3.GetHeader().SetAttribute("Sample Attribute", "Sample Value3")
 	expectedRecords = append(expectedRecords, record3)
 
-
 	bufferWriter := bytes.NewBuffer([]byte{})
 
 	recordWriterFactory := &SDCRecordWriterFactoryImpl{}
@@ -227,7 +226,7 @@ func TestReadAndWriteRecord(t *testing.T) {
 		)
 	}
 
-	for i:=0;i<len(expectedRecords);i++ {
+	for i := 0; i < len(expectedRecords); i++ {
 		expectedRecord := expectedRecords[i]
 		checkRecord(
 			t,

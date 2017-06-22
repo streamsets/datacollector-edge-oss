@@ -12,6 +12,7 @@ const (
 	LIBRARY          = "streamsets-datacollector-basic-lib"
 	ERROR_STAGE_NAME = "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget"
 	NULL_STAGE_NAME  = "com_streamsets_pipeline_stage_destination_devnull_NullDTarget"
+	STATS_DPM_DIRECTLY_STAGE_NAME  = "com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget"
 )
 
 type TrashDestination struct {
@@ -23,6 +24,9 @@ func init() {
 		return &TrashDestination{BaseStage: &common.BaseStage{}}
 	})
 	stagelibrary.SetCreator(LIBRARY, NULL_STAGE_NAME, func() api.Stage {
+		return &TrashDestination{BaseStage: &common.BaseStage{}}
+	})
+	stagelibrary.SetCreator(LIBRARY, STATS_DPM_DIRECTLY_STAGE_NAME, func() api.Stage {
 		return &TrashDestination{BaseStage: &common.BaseStage{}}
 	})
 }

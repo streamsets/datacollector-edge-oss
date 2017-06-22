@@ -5,6 +5,7 @@ import (
 	"github.com/streamsets/sdc2go/container/sdc2go"
 	_ "github.com/streamsets/sdc2go/stages/destinations"
 	_ "github.com/streamsets/sdc2go/stages/origins"
+	_ "github.com/streamsets/sdc2go/stages/processors"
 	"runtime"
 )
 

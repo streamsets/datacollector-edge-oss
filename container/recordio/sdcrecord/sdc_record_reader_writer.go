@@ -74,7 +74,7 @@ func (srr *SDCRecordReaderImpl) ReadRecord() (api.Record, error) {
 	sdcRecord := new(SDCRecord)
 	err := srr.decoder.Decode(sdcRecord)
 	if err != nil {
-		if (err == io.EOF) {
+		if err == io.EOF {
 			return nil, nil
 		}
 		return nil, err

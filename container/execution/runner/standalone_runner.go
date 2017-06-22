@@ -59,7 +59,10 @@ func (standaloneRunner *StandaloneRunner) GetStatus() (*common.PipelineState, er
 }
 
 func (standaloneRunner *StandaloneRunner) GetMetrics() (metrics.Registry, error) {
-	return standaloneRunner.prodPipeline.MetricRegistry, nil
+	if standaloneRunner.prodPipeline != nil {
+		return standaloneRunner.prodPipeline.MetricRegistry, nil
+	}
+	return nil, errors.New("Pipeline is not running")
 }
 
 func (standaloneRunner *StandaloneRunner) StartPipeline(

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/streamsets/sdc2go/container/common"
 	"os"
+	"errors"
 )
 
 const (
@@ -18,12 +19,16 @@ func LoadPipelineConfig(runtimeInfo common.RuntimeInfo, pipelineId string) (comm
 	}
 
 	decoder := json.NewDecoder(file)
-	err1 := decoder.Decode(&pipelineConfiguration)
-	if err1 != nil {
-		return pipelineConfiguration, err1
+	err = decoder.Decode(&pipelineConfiguration)
+	if err != nil {
+		return pipelineConfiguration, err
 	}
 
-	return pipelineConfiguration, err1
+	if pipelineConfiguration.PipelineId == "" {
+		err = errors.New("Invalid pipeline configuration")
+	}
+
+	return pipelineConfiguration, err
 }
 
 func getPipelineFile(runtimeInfo common.RuntimeInfo, pipelineId string) string {

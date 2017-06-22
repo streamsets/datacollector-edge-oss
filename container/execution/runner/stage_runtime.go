@@ -28,9 +28,11 @@ func (s *StageRuntime) Execute(
 ) (string, error) {
 	var newOffset string
 	var err error
-	if len(s.config.OutputLanes) > 0 {
+	if s.stageBean.IsSource() {
 		newOffset, err = s.stageBean.Stage.(api.Origin).Produce(previousOffset, batchSize, batchMaker)
-	} else {
+	} else if s.stageBean.IsProcessor() {
+		err = s.stageBean.Stage.(api.Processor).Process(batch, batchMaker)
+	} else if s.stageBean.IsTarget() {
 		err = s.stageBean.Stage.(api.Destination).Write(batch)
 	}
 	return newOffset, err

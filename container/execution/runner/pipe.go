@@ -22,6 +22,7 @@ type Pipe interface {
 	Process(pipeBatch *FullPipeBatch) error
 	Destroy()
 	IsSource() bool
+	IsProcessor() bool
 	IsTarget() bool
 }
 
@@ -123,11 +124,15 @@ func (s *StagePipe) Destroy() {
 }
 
 func (s *StagePipe) IsSource() bool {
-	return len(s.OutputLanes) > 0
+	return s.Stage.stageBean.IsSource()
+}
+
+func (s *StagePipe) IsProcessor() bool {
+	return s.Stage.stageBean.IsProcessor()
 }
 
 func (s *StagePipe) IsTarget() bool {
-	return len(s.OutputLanes) == 0
+	return s.Stage.stageBean.IsTarget()
 }
 
 func NewStagePipe(stage StageRuntime, config execution.Config) Pipe {
