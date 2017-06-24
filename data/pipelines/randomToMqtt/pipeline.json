@@ -1,8 +1,8 @@
 {
     "schemaVersion" : 3,
     "version" : 6,
-    "pipelineId" : "mosquitto2da9485e-e9ae-4f95-bb30-64eb76f8cc73",
-    "title" : "devToMqtt",
+    "pipelineId" : "randomToMqtt",
+    "title" : "randomToMqtt",
     "description" : "",
     "uuid" : "08c36d02-6a35-4320-9f3f-92e443028e2b",
     "configuration" : [ {
@@ -326,8 +326,8 @@
       "eventLanes" : [ ]
     },
     "info" : {
-      "pipelineId" : "mosquitto2da9485e-e9ae-4f95-bb30-64eb76f8cc73",
-      "title" : "devToMqtt",
+      "pipelineId" : "randomToMqtt",
+      "title" : "randomToMqtt",
       "description" : "",
       "created" : 1495212647755,
       "lastModified" : 1495498334347,
@@ -339,7 +339,7 @@
       "metadata" : {
         "labels" : [ ]
       },
-      "name" : "mosquitto2da9485e-e9ae-4f95-bb30-64eb76f8cc73"
+      "name" : "randomToMqtt"
     },
     "metadata" : {
       "labels" : [ ]

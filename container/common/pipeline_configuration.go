@@ -1,5 +1,10 @@
 package common
 
+const (
+	PIPELINE_CONFIG_SCHEMA_VERSION = 3
+	PIPELINE_CONFIG_VERSION        = 6
+)
+
 type PipelineConfiguration struct {
 	SchemaVersion        int                    `json:"schemaVersion"`
 	Version              int                    `json:"version"`
@@ -46,4 +51,10 @@ type StageConfiguration struct {
 	InputLanes    []string               `json:"inputLanes"`
 	OutputLanes   []string               `json:"outputLanes"`
 	EventLanes    []string               `json:"eventLanes"`
+}
+
+type PipelineEnvelope struct {
+	PipelineConfig     PipelineConfiguration  `json:"pipelineConfig"`
+	PipelineRules      map[string]interface{} `json:"pipelineRules"`
+	LibraryDefinitions map[string]interface{} `json:"libraryDefinitions"`
 }

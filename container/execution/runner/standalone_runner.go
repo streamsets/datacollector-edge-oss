@@ -4,9 +4,9 @@ import (
 	"errors"
 	"github.com/rcrowley/go-metrics"
 	"github.com/streamsets/sdc2go/container/common"
-	"github.com/streamsets/sdc2go/container/creation"
 	"github.com/streamsets/sdc2go/container/execution"
 	"github.com/streamsets/sdc2go/container/execution/store"
+	pipelineStore "github.com/streamsets/sdc2go/container/store"
 	"github.com/streamsets/sdc2go/container/util"
 	"time"
 )
@@ -20,13 +20,14 @@ var RESET_OFFSET_DISALLOWED_STATUSES = []string{
 }
 
 type StandaloneRunner struct {
-	runtimeInfo      common.RuntimeInfo
-	pipelineId       string
-	config           execution.Config
-	validTransitions map[string][]string
-	pipelineState    *common.PipelineState
-	pipelineConfig   common.PipelineConfiguration
-	prodPipeline     *ProductionPipeline
+	runtimeInfo       common.RuntimeInfo
+	pipelineId        string
+	config            execution.Config
+	validTransitions  map[string][]string
+	pipelineState     *common.PipelineState
+	pipelineConfig    common.PipelineConfiguration
+	prodPipeline      *ProductionPipeline
+	pipelineStoreTask pipelineStore.PipelineStoreTask
 }
 
 func (standaloneRunner *StandaloneRunner) init() {
@@ -74,8 +75,7 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(
 		return nil, err
 	}
 
-	standaloneRunner.pipelineConfig, err = creation.LoadPipelineConfig(
-		standaloneRunner.runtimeInfo,
+	standaloneRunner.pipelineConfig, err = standaloneRunner.pipelineStoreTask.LoadPipelineConfig(
 		standaloneRunner.pipelineId,
 	)
 	if err != nil {
@@ -147,11 +147,13 @@ func NewStandaloneRunner(
 	pipelineId string,
 	config execution.Config,
 	runtimeInfo common.RuntimeInfo,
+	pipelineStoreTask pipelineStore.PipelineStoreTask,
 ) (*StandaloneRunner, error) {
 	standaloneRunner := StandaloneRunner{
-		pipelineId:  pipelineId,
-		config:      config,
-		runtimeInfo: runtimeInfo,
+		pipelineId:        pipelineId,
+		config:            config,
+		runtimeInfo:       runtimeInfo,
+		pipelineStoreTask: pipelineStoreTask,
 	}
 	store.BaseDir = runtimeInfo.BaseDir
 	standaloneRunner.init()

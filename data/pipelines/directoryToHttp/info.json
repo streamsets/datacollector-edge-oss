@@ -1,0 +1,16 @@
+{
+  "pipelineId" : "directoryToHttp",
+  "title" : "directoryToHttp",
+  "description" : "",
+  "created" : 1497506221687,
+  "lastModified" : 1497506785103,
+  "creator" : "admin",
+  "lastModifier" : "admin",
+  "lastRev" : "0",
+  "uuid" : "ecb7f7c8-f487-4d00-9fe0-463241847d23",
+  "valid" : true,
+  "metadata" : {
+    "labels" : [ ]
+  },
+  "name" : "directoryToHttp"
+}

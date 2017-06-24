@@ -1,0 +1,16 @@
+{
+  "pipelineId" : "tailFileToHttp",
+  "title" : "tailFileToHttp",
+  "description" : "",
+  "created" : 1494102435834,
+  "lastModified" : 1494102525632,
+  "creator" : "admin",
+  "lastModifier" : "admin",
+  "lastRev" : "0",
+  "uuid" : "7bf6db60-75b8-4e9d-bdf6-4809afd51e2b",
+  "valid" : true,
+  "metadata" : {
+    "labels" : [ ]
+  },
+  "name" : "tailFileToHttp"
+}

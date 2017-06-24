@@ -1,7 +1,7 @@
 {
   "schemaVersion" : 3,
   "version" : 6,
-  "pipelineId" : "mosquitto2ade3fdf-6fb7-4872-96c5-8fbd567dfe29",
+  "pipelineId" : "mqttToHttp",
   "title" : "mqttToHttp",
   "description" : "",
   "uuid" : "3f1bf9dd-3199-4166-abbd-2e3cbbc08324",
@@ -656,7 +656,7 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "pipelineId" : "mosquitto2ade3fdf-6fb7-4872-96c5-8fbd567dfe29",
+    "pipelineId" : "mqttToHttp",
     "title" : "mqttToHttp",
     "description" : "",
     "created" : 1495212703174,
@@ -669,7 +669,7 @@
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "mosquitto2ade3fdf-6fb7-4872-96c5-8fbd567dfe29"
+    "name" : "mqttToHttp"
   },
   "metadata" : {
     "labels" : [ ]

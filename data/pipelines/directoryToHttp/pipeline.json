@@ -1,8 +1,8 @@
 {
   "schemaVersion" : 3,
   "version" : 6,
-  "pipelineId" : "directorytohttp0b4b14e9-fcd2-4338-b94e-ec99a21e05de",
-  "title" : "directory_to_http",
+  "pipelineId" : "directoryToHttp",
+  "title" : "directoryToHttp",
   "description" : "",
   "uuid" : "ecb7f7c8-f487-4d00-9fe0-463241847d23",
   "configuration" : [ {
@@ -604,8 +604,8 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "pipelineId" : "directorytohttp0b4b14e9-fcd2-4338-b94e-ec99a21e05de",
-    "title" : "directory_to_http",
+    "pipelineId" : "directoryToHttp",
+    "title" : "directoryToHttp",
     "description" : "",
     "created" : 1497506221687,
     "lastModified" : 1497506785103,
@@ -617,7 +617,7 @@
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "directorytohttp0b4b14e9-fcd2-4338-b94e-ec99a21e05de"
+    "name" : "directoryToHttp"
   },
   "metadata" : {
     "labels" : [ ]

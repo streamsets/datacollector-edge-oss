@@ -1,0 +1,16 @@
+{
+  "pipelineId" : "httpServerToTrash",
+  "title" : "HTTP Server",
+  "description" : "",
+  "created" : 1494779775365,
+  "lastModified" : 1494806547726,
+  "creator" : "admin",
+  "lastModifier" : "admin",
+  "lastRev" : "0",
+  "uuid" : "73d56c43-b113-4a28-8722-6d42ee5f0d62",
+  "valid" : true,
+  "metadata" : {
+    "labels" : [ ]
+  },
+  "name" : "httpServerToTrash"
+}

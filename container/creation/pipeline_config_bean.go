@@ -76,3 +76,57 @@ func NewPipelineConfigBean(pipelineConfig common.PipelineConfiguration) Pipeline
 
 	return pipelineConfigBean
 }
+
+func GetDefaultPipelineConfigs() []common.Config {
+	pipelineConfigs := []common.Config{
+		common.Config{Name: "executionMode", Value: "STANDALONE"},
+		common.Config{Name: "deliveryGuarantee", Value: "AT_LEAST_ONCE"},
+		common.Config{Name: "shouldRetry", Value: true},
+		common.Config{Name: "retryAttempts", Value: -1},
+		common.Config{Name: "memoryLimit", Value: "${jvm:maxMemoryMB() * 0.65}"},
+		common.Config{Name: "memoryLimitExceeded", Value: "STOP_PIPELINE"},
+		common.Config{Name: "notifyOnStates", Value: []string{"RUN_ERROR", "STOPPED", "FINISHED"}},
+		common.Config{Name: "emailIDs", Value: []string{}},
+		common.Config{Name: "constants", Value: []string{}},
+		common.Config{Name: "badRecordsHandling", Value: "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"},
+		common.Config{Name: "clusterSlaveMemory", Value: 1024},
+		common.Config{Name: "clusterSlaveJavaOpts", Value: "-XX:+UseConcMarkSweepGC -XX:+UseParNewGC -Dlog4j.debug"},
+		common.Config{Name: "clusterLauncherEnv", Value: []string{}},
+		common.Config{Name: "mesosDispatcherURL", Value: nil},
+		common.Config{Name: "hdfsS3ConfDir", Value: nil},
+		common.Config{Name: "rateLimit", Value: 0},
+		common.Config{Name: "maxRunners", Value: 0},
+		common.Config{Name: "webhookConfigs", Value: []interface{}{}},
+		common.Config{Name: "statsAggregatorStage", Value: "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget::1"},
+	}
+
+	return pipelineConfigs
+}
+
+func GetTrashErrorStageInstance() common.StageConfiguration {
+	return common.StageConfiguration{
+		InstanceName:  "Discard_ErrorStage",
+		Library:       "streamsets-datacollector-basic-lib",
+		StageName:     "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
+		StageVersion:  "1",
+		Configuration: []common.Config{},
+		UiInfo:        map[string]interface{}{},
+		InputLanes:    []string{},
+		OutputLanes:   []string{},
+		EventLanes:    []string{},
+	}
+}
+
+func GetDefaultStatsAggregatorStageInstance() common.StageConfiguration {
+	return common.StageConfiguration{
+		InstanceName:  "WritetoDPMdirectly_StatsAggregatorStage",
+		Library:       "streamsets-datacollector-basic-lib",
+		StageName:     "com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget",
+		StageVersion:  "1",
+		Configuration: []common.Config{},
+		UiInfo:        map[string]interface{}{},
+		InputLanes:    []string{},
+		OutputLanes:   []string{},
+		EventLanes:    []string{},
+	}
+}

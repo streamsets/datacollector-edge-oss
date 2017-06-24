@@ -1,0 +1,16 @@
+{
+  "pipelineId" : "randomToCoap",
+  "title" : "CoAP Client Target",
+  "description" : "",
+  "created" : 1492664450398,
+  "lastModified" : 1492664496271,
+  "creator" : "admin",
+  "lastModifier" : "admin",
+  "lastRev" : "0",
+  "uuid" : "d216aa31-f569-4316-a9d5-ba1c0526583a",
+  "valid" : true,
+  "metadata" : {
+    "labels" : [ ]
+  },
+  "name" : "randomToCoap"
+}

@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	STAGE_TYPE       = "stageType"
-	SOURCE           = "SOURCE"
-	PROCESSOR        = "PROCESSOR"
-	TARGET           = "TARGET"
+	STAGE_TYPE = "stageType"
+	SOURCE     = "SOURCE"
+	PROCESSOR  = "PROCESSOR"
+	TARGET     = "TARGET"
 )
 
 type StageBean struct {

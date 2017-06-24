@@ -2,6 +2,7 @@ package runner
 
 import (
 	"github.com/rcrowley/go-metrics"
+	"github.com/streamsets/sdc2go/api"
 	"github.com/streamsets/sdc2go/container/common"
 	"github.com/streamsets/sdc2go/container/creation"
 	"github.com/streamsets/sdc2go/container/execution"
@@ -9,20 +10,19 @@ import (
 	"github.com/streamsets/sdc2go/container/validation"
 	"log"
 	"time"
-	"github.com/streamsets/sdc2go/api"
 )
 
 type Pipeline struct {
-	name             string
-	config           execution.Config
-	standaloneRunner *StandaloneRunner
-	pipelineConf     common.PipelineConfiguration
-	pipelineBean     creation.PipelineBean
-	pipes            []Pipe
+	name              string
+	config            execution.Config
+	standaloneRunner  *StandaloneRunner
+	pipelineConf      common.PipelineConfiguration
+	pipelineBean      creation.PipelineBean
+	pipes             []Pipe
 	errorStageRuntime StageRuntime
-	offsetTracker    SourceOffsetTracker
-	stop             bool
-	errorSink        *common.ErrorSink
+	offsetTracker     SourceOffsetTracker
+	stop              bool
+	errorSink         *common.ErrorSink
 
 	MetricRegistry              metrics.Registry
 	batchProcessingTimer        metrics.Timer
@@ -64,7 +64,7 @@ func (p *Pipeline) Init() []validation.Issue {
 		issues = append(issues, stageIssues...)
 	}
 
-	errorStageissues:= p.errorStageRuntime.Init()
+	errorStageissues := p.errorStageRuntime.Init()
 	issues = append(issues, errorStageissues...)
 
 	return issues
@@ -205,14 +205,14 @@ func NewPipeline(
 	errorStageRuntime = NewStageRuntime(pipelineBean, pipelineBean.ErrorStage, errorStageContext)
 
 	p := &Pipeline{
-		standaloneRunner: standaloneRunner,
-		pipelineConf:     standaloneRunner.GetPipelineConfig(),
-		pipelineBean:     pipelineBean,
-		pipes:            pipes,
+		standaloneRunner:  standaloneRunner,
+		pipelineConf:      standaloneRunner.GetPipelineConfig(),
+		pipelineBean:      pipelineBean,
+		pipes:             pipes,
 		errorStageRuntime: errorStageRuntime,
-		errorSink:        errorSink,
-		offsetTracker:    sourceOffsetTracker,
-		MetricRegistry:   metricRegistry,
+		errorSink:         errorSink,
+		offsetTracker:     sourceOffsetTracker,
+		MetricRegistry:    metricRegistry,
 	}
 
 	p.batchProcessingTimer = util.CreateTimer(metricRegistry, PIPELINE_BATCH_PROCESSING)

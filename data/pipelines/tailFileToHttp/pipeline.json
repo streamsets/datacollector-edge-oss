@@ -1,7 +1,7 @@
 {
   "schemaVersion" : 3,
   "version" : 6,
-  "pipelineId" : "tailFileToHttp27cc38af-3d14-41c4-970b-411a8d20f61b",
+  "pipelineId" : "tailFileToHttp",
   "title" : "tailFileToHttp",
   "description" : "",
   "uuid" : "7bf6db60-75b8-4e9d-bdf6-4809afd51e2b",
@@ -33,7 +33,7 @@
     "name" : "constants",
     "value" : [ {
       "key" : "filePath",
-      "value" : "/Users/madhu/Documents/projects/domainserver/dist/target/streamsets-domainserver-2.6.0-SNAPSHOT/streamsets-domainserver-2.6.0-SNAPSHOT/log/sds.log"
+      "value" : "/Users/tempUser/log/sds.log"
     }, {
       "key" : "httpUrl",
       "value" : "http://localhost:9999"
@@ -625,7 +625,7 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "pipelineId" : "tailFileToHttp27cc38af-3d14-41c4-970b-411a8d20f61b",
+    "pipelineId" : "tailFileToHttp",
     "title" : "tailFileToHttp",
     "description" : "",
     "created" : 1494102435834,
@@ -638,7 +638,7 @@
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "tailFileToHttp27cc38af-3d14-41c4-970b-411a8d20f61b"
+    "name" : "tailFileToHttp"
   },
   "metadata" : {
     "labels" : [ ]

@@ -8,6 +8,7 @@ import (
 	"github.com/streamsets/sdc2go/container/dpm"
 	"github.com/streamsets/sdc2go/container/execution/manager"
 	"github.com/streamsets/sdc2go/container/http"
+	"github.com/streamsets/sdc2go/container/store"
 	"github.com/streamsets/sdc2go/container/util"
 	"log"
 	"os"
@@ -86,9 +87,9 @@ func newDataExtractor(debugFlag bool) (*DataExtractorMain, error) {
 
 	buildInfo, _ := common.NewBuildInfo()
 	runtimeInfo, _ := common.NewRuntimeInfo(httpUrl, baseDir)
-
-	pipelineManager, _ := manager.New(config.Execution, *runtimeInfo)
-	webServerTask, _ := http.NewWebServerTask(config.Http, buildInfo, pipelineManager)
+	pipelineStoreTask := store.NewFilePipelineStoreTask(*runtimeInfo)
+	pipelineManager, _ := manager.NewManager(config.Execution, *runtimeInfo, pipelineStoreTask)
+	webServerTask, _ := http.NewWebServerTask(config.Http, buildInfo, pipelineManager, pipelineStoreTask)
 	dpm.RegisterWithDPM(config.DPM, buildInfo, runtimeInfo)
 
 	return &DataExtractorMain{

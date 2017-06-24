@@ -1,0 +1,16 @@
+{
+  "pipelineId" : "mqttToHttp",
+  "title" : "mqttToHttp",
+  "description" : "",
+  "created" : 1495212703174,
+  "lastModified" : 1495225335440,
+  "creator" : "admin",
+  "lastModifier" : "admin",
+  "lastRev" : "0",
+  "uuid" : "3f1bf9dd-3199-4166-abbd-2e3cbbc08324",
+  "valid" : true,
+  "metadata" : {
+    "labels" : [ ]
+  },
+  "name" : "mqttToHttp"
+}

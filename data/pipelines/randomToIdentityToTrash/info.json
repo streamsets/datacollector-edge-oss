@@ -1,0 +1,16 @@
+{
+  "pipelineId" : "randomToIdentityToTrash",
+  "title" : "randomToIdentityToTrash",
+  "description" : "",
+  "created" : 1498104667509,
+  "lastModified" : 1498105014851,
+  "creator" : "admin",
+  "lastModifier" : "admin",
+  "lastRev" : "0",
+  "uuid" : "e24863ea-da1a-4ca1-8686-b2e43a2a70dc",
+  "valid" : true,
+  "metadata" : {
+    "labels" : [ ]
+  },
+  "name" : "randomToIdentityToTrash"
+}

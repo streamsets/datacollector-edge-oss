@@ -1,0 +1,16 @@
+{
+  "pipelineId" : "randomToHttpc21e33d1-8f2e-449b-a3bb-749e30335b25",
+  "title" : "randomToHttp",
+  "description" : "",
+  "created" : 1494773669042,
+  "lastModified" : 1494773769028,
+  "creator" : "admin",
+  "lastModifier" : "admin",
+  "lastRev" : "0",
+  "uuid" : "da7d0f1f-de80-4a81-bb9c-adf799528031",
+  "valid" : true,
+  "metadata" : {
+    "labels" : [ ]
+  },
+  "name" : "randomToHttpc21e33d1-8f2e-449b-a3bb-749e30335b25"
+}

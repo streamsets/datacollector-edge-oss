@@ -1,7 +1,7 @@
 {
   "schemaVersion" : 3,
   "version" : 6,
-  "pipelineId" : "randomToHttpc21e33d1-8f2e-449b-a3bb-749e30335b25",
+  "pipelineId" : "randomToHttp",
   "title" : "randomToHttp",
   "description" : "",
   "uuid" : "da7d0f1f-de80-4a81-bb9c-adf799528031",
@@ -404,7 +404,7 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "pipelineId" : "randomToHttpc21e33d1-8f2e-449b-a3bb-749e30335b25",
+    "pipelineId" : "randomToHttp",
     "title" : "randomToHttp",
     "description" : "",
     "created" : 1494773669042,
@@ -417,7 +417,7 @@
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "randomToHttpc21e33d1-8f2e-449b-a3bb-749e30335b25"
+    "name" : "randomToHttp"
   },
   "metadata" : {
     "labels" : [ ]

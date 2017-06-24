@@ -6,14 +6,16 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/streamsets/sdc2go/container/common"
 	"github.com/streamsets/sdc2go/container/execution/manager"
+	"github.com/streamsets/sdc2go/container/store"
 	"log"
 	"net/http"
 )
 
 type WebServerTask struct {
-	config    Config
-	buildInfo *common.BuildInfo
-	manager   *manager.PipelineManager
+	config            Config
+	buildInfo         *common.BuildInfo
+	manager           *manager.PipelineManager
+	pipelineStoreTask store.PipelineStoreTask
 }
 
 func (webServerTask *WebServerTask) Init() error {
@@ -32,11 +34,20 @@ func (webServerTask *WebServerTask) Run() {
 	log.Println("[INFO] Running on URI : http://localhost" + webServerTask.config.BindAddress)
 	router := httprouter.New()
 	router.GET("/", webServerTask.homeHandler)
+
+	// Manager APIs
 	router.POST("/rest/v1/pipeline/:pipelineId/start", webServerTask.startHandler)
 	router.POST("/rest/v1/pipeline/:pipelineId/stop", webServerTask.stopHandler)
 	router.POST("/rest/v1/pipeline/:pipelineId/resetOffset", webServerTask.resetOffsetHandler)
 	router.GET("/rest/v1/pipeline/:pipelineId/status", webServerTask.statusHandler)
 	router.GET("/rest/v1/pipeline/:pipelineId/metrics", webServerTask.metricsHandler)
+
+	// Pipeline Store APIs
+	router.GET("/rest/v1/pipelines", webServerTask.getPipelines)
+	router.GET("/rest/v1/pipeline/:pipelineId", webServerTask.getPipeline)
+	router.PUT("/rest/v1/pipeline/:pipelineTitle", webServerTask.createPipeline)
+	router.POST("/rest/v1/pipeline/:pipelineId", webServerTask.savePipeline)
+
 	fmt.Println(http.ListenAndServe(webServerTask.config.BindAddress, router))
 }
 
@@ -44,8 +55,14 @@ func NewWebServerTask(
 	config Config,
 	buildInfo *common.BuildInfo,
 	manager *manager.PipelineManager,
+	pipelineStoreTask store.PipelineStoreTask,
 ) (*WebServerTask, error) {
-	webServerTask := WebServerTask{config: config, buildInfo: buildInfo, manager: manager}
+	webServerTask := WebServerTask{
+		config:            config,
+		buildInfo:         buildInfo,
+		manager:           manager,
+		pipelineStoreTask: pipelineStoreTask,
+	}
 	err := webServerTask.Init()
 	if err != nil {
 		return nil, err

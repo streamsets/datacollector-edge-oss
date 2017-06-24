@@ -1,7 +1,7 @@
 {
   "schemaVersion" : 3,
   "version" : 6,
-  "pipelineId" : "CoAPClientTargetaa09b274-4dce-4090-b521-d158252e9127",
+  "pipelineId" : "randomToCoap",
   "title" : "CoAP Client Target",
   "description" : "",
   "uuid" : "d216aa31-f569-4316-a9d5-ba1c0526583a",
@@ -251,7 +251,7 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "pipelineId" : "CoAPClientTargetaa09b274-4dce-4090-b521-d158252e9127",
+    "pipelineId" : "randomToCoap",
     "title" : "CoAP Client Target",
     "description" : "",
     "created" : 1492664450398,
@@ -264,7 +264,7 @@
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "CoAPClientTargetaa09b274-4dce-4090-b521-d158252e9127"
+    "name" : "randomToCoap"
   },
   "metadata" : {
     "labels" : [ ]

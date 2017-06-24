@@ -1,7 +1,7 @@
 {
   "schemaVersion" : 3,
   "version" : 6,
-  "pipelineId" : "HTTPServer0fa7af6d-a372-4933-a087-4992b0ee85e7",
+  "pipelineId" : "httpServerToTrash",
   "title" : "HTTP Server",
   "description" : "",
   "uuid" : "73d56c43-b113-4a28-8722-6d42ee5f0d62",
@@ -368,7 +368,7 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "pipelineId" : "HTTPServer0fa7af6d-a372-4933-a087-4992b0ee85e7",
+    "pipelineId" : "httpServerToTrash",
     "title" : "HTTP Server",
     "description" : "",
     "created" : 1494779775365,
@@ -381,7 +381,7 @@
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "HTTPServer0fa7af6d-a372-4933-a087-4992b0ee85e7"
+    "name" : "httpServerToTrash"
   },
   "metadata" : {
     "labels" : [ ]

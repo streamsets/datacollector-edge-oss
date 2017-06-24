@@ -1,8 +1,7 @@
 {
-
   "schemaVersion" : 3,
   "version" : 7,
-  "pipelineId" : "SDC2GoPipeline6e94d51b-631a-4826-aba8-8d6421968043",
+  "pipelineId" : "randomToIdentityToTrash",
   "title" : "randomToIdentityToTrash",
   "description" : "",
   "uuid" : "e24863ea-da1a-4ca1-8686-b2e43a2a70dc",
@@ -166,7 +165,7 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "pipelineId" : "SDC2GoPipeline6e94d51b-631a-4826-aba8-8d6421968043",
+    "pipelineId" : "randomToIdentityToTrash",
     "title" : "randomToIdentityToTrash",
     "description" : "",
     "created" : 1498104667509,
@@ -179,7 +178,7 @@
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "SDC2GoPipeline6e94d51b-631a-4826-aba8-8d6421968043"
+    "name" : "randomToIdentityToTrash"
   },
   "metadata" : {
     "labels" : [ ]

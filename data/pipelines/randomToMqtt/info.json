@@ -1,0 +1,16 @@
+{
+  "pipelineId" : "randomToMqtt",
+  "title" : "randomToMqtt",
+  "description" : "",
+  "created" : 1495212647755,
+  "lastModified" : 1495498334347,
+  "creator" : "admin",
+  "lastModifier" : "admin",
+  "lastRev" : "0",
+  "uuid" : "08c36d02-6a35-4320-9f3f-92e443028e2b",
+  "valid" : true,
+  "metadata" : {
+    "labels" : [ ]
+  },
+  "name" : "randomToMqtt"
+}
