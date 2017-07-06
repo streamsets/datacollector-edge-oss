@@ -40,6 +40,7 @@ func (webServerTask *WebServerTask) Run() {
 	router.POST("/rest/v1/pipeline/:pipelineId/stop", webServerTask.stopHandler)
 	router.POST("/rest/v1/pipeline/:pipelineId/resetOffset", webServerTask.resetOffsetHandler)
 	router.GET("/rest/v1/pipeline/:pipelineId/status", webServerTask.statusHandler)
+	router.GET("/rest/v1/pipeline/:pipelineId/history", webServerTask.historyHandler)
 	router.GET("/rest/v1/pipeline/:pipelineId/metrics", webServerTask.metricsHandler)
 
 	// Pipeline Store APIs

@@ -70,6 +70,18 @@ func (webServerTask *WebServerTask) statusHandler(w http.ResponseWriter, r *http
 	}
 }
 
+func (webServerTask *WebServerTask) historyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	pipelineId := ps.ByName("pipelineId")
+	pipelineHistoryStates, err := webServerTask.manager.GetRunner(pipelineId).GetHistory()
+	if err == nil {
+		encoder := json.NewEncoder(w)
+		encoder.SetIndent("", "\t")
+		encoder.Encode(pipelineHistoryStates)
+	} else {
+		fmt.Fprintf(w, "Failed to get history:  %s! ", err)
+	}
+}
+
 func (webServerTask *WebServerTask) metricsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	pipelineId := ps.ByName("pipelineId")
 	metricRegistry, err := webServerTask.manager.GetRunner(pipelineId).GetMetrics()

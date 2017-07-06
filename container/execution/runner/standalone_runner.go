@@ -59,6 +59,10 @@ func (standaloneRunner *StandaloneRunner) GetStatus() (*common.PipelineState, er
 	return standaloneRunner.pipelineState, nil
 }
 
+func (standaloneRunner *StandaloneRunner) GetHistory() ([]*common.PipelineState, error) {
+	return store.GetHistory(standaloneRunner.pipelineId)
+}
+
 func (standaloneRunner *StandaloneRunner) GetMetrics() (metrics.Registry, error) {
 	if standaloneRunner.prodPipeline != nil {
 		return standaloneRunner.prodPipeline.MetricRegistry, nil
