@@ -23,14 +23,14 @@ func (o *ProductionSourceOffsetTracker) SetOffset(newOffset string) {
 }
 
 func (o *ProductionSourceOffsetTracker) CommitOffset() {
-	o.currentOffset.Offset = o.newOffset
-	o.finished = o.currentOffset.Offset == ""
+	o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY] = o.newOffset
+	o.finished = o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY] == ""
 	o.newOffset = ""
 	store.SaveOffset(o.pipelineId, o.currentOffset)
 }
 
 func (o *ProductionSourceOffsetTracker) GetOffset() string {
-	return o.currentOffset.Offset
+	return o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY]
 }
 
 func (o *ProductionSourceOffsetTracker) GetLastBatchTime() time.Time {

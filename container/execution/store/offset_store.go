@@ -10,12 +10,11 @@ import (
 var BaseDir = "."
 
 const (
-	DEFAULT_OFFSET = ""
-	OFFSET_FILE    = "offset.json"
+	OFFSET_FILE = "offset.json"
 )
 
 func GetOffset(pipelineId string) (common.SourceOffset, error) {
-	defaultSourceOffset := common.SourceOffset{Version: 1, Offset: DEFAULT_OFFSET}
+	defaultSourceOffset := common.GetDefaultOffset()
 	if _, err := os.Stat(getPipelineOffsetFile(pipelineId)); os.IsNotExist(err) {
 		return defaultSourceOffset, nil
 	} else {
@@ -39,8 +38,7 @@ func SaveOffset(pipelineId string, sourceOffset common.SourceOffset) error {
 }
 
 func ResetOffset(pipelineId string) error {
-	defaultSourceOffset := common.SourceOffset{Version: 1, Offset: DEFAULT_OFFSET}
-	return SaveOffset(pipelineId, defaultSourceOffset)
+	return SaveOffset(pipelineId, common.GetDefaultOffset())
 }
 
 func check(e error) {

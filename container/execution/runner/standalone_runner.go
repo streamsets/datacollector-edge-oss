@@ -11,13 +11,21 @@ import (
 	"time"
 )
 
-var RESET_OFFSET_DISALLOWED_STATUSES = []string{
-	common.FINISHING,
-	common.RETRY,
-	common.RUNNING,
-	common.STARTING,
-	common.STOPPING,
-}
+var (
+	RESET_OFFSET_DISALLOWED_STATUSES = []string{
+		common.FINISHING,
+		common.RETRY,
+		common.RUNNING,
+		common.STARTING,
+		common.STOPPING,
+	}
+
+	UPDATE_OFFSET_ALLOWED_STATUSES = []string{
+		common.EDITED,
+		common.FINISHED,
+		common.STOPPED,
+	}
+)
 
 type StandaloneRunner struct {
 	runtimeInfo       common.RuntimeInfo
@@ -136,6 +144,18 @@ func (standaloneRunner *StandaloneRunner) ResetOffset() error {
 	}
 	err := store.ResetOffset(standaloneRunner.pipelineId)
 	return err
+}
+
+func (standaloneRunner *StandaloneRunner) CommitOffset(sourceOffset common.SourceOffset) error {
+	if util.Contains(UPDATE_OFFSET_ALLOWED_STATUSES, standaloneRunner.pipelineState.Status) {
+		return store.SaveOffset(standaloneRunner.pipelineId, sourceOffset)
+	} else {
+		return errors.New("Cannot update the source offset when the pipeline is running")
+	}
+}
+
+func (standaloneRunner *StandaloneRunner) GetOffset() (common.SourceOffset, error) {
+	return store.GetOffset(standaloneRunner.pipelineId)
 }
 
 func (standaloneRunner *StandaloneRunner) checkState(toState string) error {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/streamsets/sdc2go/container/common"
 	"github.com/streamsets/sdc2go/container/util"
 	"io"
 	"net/http"
@@ -55,6 +56,38 @@ func (webServerTask *WebServerTask) resetOffsetHandler(w http.ResponseWriter, r 
 		fmt.Fprint(w, "Reset Origin is successful.")
 	} else {
 		fmt.Fprint(w, "Reset Origin failed: ", err)
+	}
+}
+
+func (webServerTask *WebServerTask) getOffsetHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	pipelineId := ps.ByName("pipelineId")
+	sourceOffset, err := webServerTask.manager.GetRunner(pipelineId).GetOffset()
+	if err == nil {
+		encoder := json.NewEncoder(w)
+		encoder.SetIndent("", "\t")
+		encoder.Encode(sourceOffset)
+	} else {
+		fmt.Fprintf(w, "Failed to get status:  %s! ", err)
+	}
+}
+
+func (webServerTask *WebServerTask) updateOffsetHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	pipelineId := ps.ByName("pipelineId")
+	decoder := json.NewDecoder(r.Body)
+	defer r.Body.Close()
+	var sourceOffset common.SourceOffset
+	err := decoder.Decode(&sourceOffset)
+	if err == nil {
+		err = webServerTask.manager.GetRunner(pipelineId).CommitOffset(sourceOffset)
+	}
+	if err != nil {
+		if err == io.EOF {
+			// empty body
+			fmt.Fprint(w, "Failed to updateOffsets: %s", "Offset Data is missing in the request body")
+		} else {
+			// other error
+			fmt.Fprintf(w, "Failed to updateOffsets: %s", err)
+		}
 	}
 }
 
