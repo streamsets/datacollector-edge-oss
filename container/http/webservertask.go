@@ -46,7 +46,6 @@ func (webServerTask *WebServerTask) Run() {
 	router.GET("/rest/v1/pipeline/:pipelineId/metrics", webServerTask.metricsHandler)
 	router.GET("/rest/v1/pipeline/:pipelineId/committedOffsets", webServerTask.getOffsetHandler)
 
-
 	// Pipeline Store APIs
 	router.GET("/rest/v1/pipelines", webServerTask.getPipelines)
 	router.GET("/rest/v1/pipeline/:pipelineId", webServerTask.getPipeline)

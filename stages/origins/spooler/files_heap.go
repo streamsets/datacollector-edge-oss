@@ -1,9 +1,11 @@
 package spooler
 
 import (
+	"container/heap"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -78,7 +80,6 @@ func (atf *AtomicFileInformation) createOffset() string {
 		strconv.FormatInt(f.modTime.UnixNano(), 10)
 }
 
-//TODO make it more thread safe
 type FilesHeap []*AtomicFileInformation
 
 var readOrder string = LAST_MODIFIED //TODO
@@ -124,4 +125,33 @@ func (h *FilesHeap) Pop() interface{} {
 		return x
 	}
 	return nil
+}
+
+type SynchronizedFilesHeap struct {
+	filesQueue *FilesHeap
+	lock       *sync.RWMutex
+}
+
+func (sfh *SynchronizedFilesHeap) Push(atf *AtomicFileInformation) {
+	sfh.lock.Lock()
+	defer sfh.lock.Unlock()
+	heap.Push(sfh.filesQueue, atf)
+}
+
+func (sfh *SynchronizedFilesHeap) Pop() *AtomicFileInformation {
+	sfh.lock.Lock()
+	defer sfh.lock.Unlock()
+	return heap.Pop(sfh.filesQueue).(*AtomicFileInformation)
+}
+
+func (sfh *SynchronizedFilesHeap) Contains(path string) bool {
+	sfh.lock.Lock()
+	defer sfh.lock.Unlock()
+	return sfh.filesQueue.Contains(path)
+}
+
+func NewSynchronizedFilesHeap() *SynchronizedFilesHeap {
+	filesQueue := &FilesHeap{}
+	heap.Init(filesQueue)
+	return &SynchronizedFilesHeap{filesQueue: filesQueue, lock: &sync.RWMutex{}}
 }

@@ -1,7 +1,6 @@
 package spooler
 
 import (
-	"container/heap"
 	"log"
 	"os"
 	"path/filepath"
@@ -15,7 +14,7 @@ type DirectorySpooler struct {
 	processSubDirs          bool
 	maxNumberOfFiles        int
 	destroyNotificationChan chan (bool)
-	filesQueue              *FilesHeap //TODO: Make it blocking
+	filesQueue              *SynchronizedFilesHeap
 	spoolWaitDuration       time.Duration
 	readOrder               string
 	filePattern             string
@@ -50,7 +49,7 @@ func (d *DirectorySpooler) addPathToQueueIfEligible(
 		fileInfo := NewAtomicFileInformation(path, modTime, 0)
 		if !d.filesQueue.Contains(fileInfo.getFullPath()) {
 			log.Printf("[DEBUG] Pushing %s to queue", fileInfo.createOffset())
-			heap.Push(d.filesQueue, fileInfo)
+			d.filesQueue.Push(fileInfo)
 		}
 	} else {
 		log.Printf("[DEBUG] File '%s' ignored because it is not eligible", path)
@@ -89,8 +88,7 @@ func (d *DirectorySpooler) walkDirectoryPath(currentFileInfo *AtomicFileInformat
 
 func (d *DirectorySpooler) Init() {
 	d.destroyNotificationChan = make(chan (bool))
-	d.filesQueue = &FilesHeap{}
-	heap.Init(d.filesQueue)
+	d.filesQueue = NewSynchronizedFilesHeap()
 	d.currentFileChange = make(chan (*AtomicFileInformation))
 	//Starting Spooler immediately and after that at regular intervals
 	d.walkDirectoryPath(d.currentFileInfo)
@@ -119,13 +117,14 @@ func (d *DirectorySpooler) getCurrentFileInfo() *AtomicFileInformation {
 }
 
 func (d *DirectorySpooler) NextFile() *AtomicFileInformation {
-	for d.filesQueue.Len() > 0 {
-		fi := heap.Pop(d.filesQueue).(*AtomicFileInformation)
-		if fi != nil && isFileEligible(fi.getFullPath(), fi.getModTime(), d.currentFileInfo, d.readOrder) {
+	fi := d.filesQueue.Pop()
+	for fi != nil  {
+		if isFileEligible(fi.getFullPath(), fi.getModTime(), d.currentFileInfo, d.readOrder) {
 			log.Printf("[DEBUG] File '%s' is picked for ingestion", fi.getFullPath())
 			d.setCurrentFileInfo(fi)
 			return fi
 		}
+		fi = d.filesQueue.Pop()
 	}
 	return nil
 }
