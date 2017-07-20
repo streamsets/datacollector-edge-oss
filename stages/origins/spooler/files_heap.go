@@ -25,7 +25,9 @@ func (atf *AtomicFileInformation) get() *FileInformation {
 	fileInfo := atf.fInfoStore.Load().(FileInformation)
 	return &fileInfo
 }
-func (atf *AtomicFileInformation) set(f *FileInformation) { atf.fInfoStore.Store(*f) }
+func (atf *AtomicFileInformation) set(f *FileInformation) {
+	atf.fInfoStore.Store(*f)
+}
 
 func NewAtomicFileInformation(path string, modTime time.Time, offsetToRead int64) *AtomicFileInformation {
 	fileInfo := FileInformation{
@@ -49,7 +51,6 @@ func (atf *AtomicFileInformation) setOffsetToRead(offset int64) {
 	fInfo := atf.get()
 	fInfo.offsetToRead = offset
 	atf.set(fInfo)
-
 }
 
 func (atf *AtomicFileInformation) getOffsetToRead() int64 {
@@ -141,7 +142,10 @@ func (sfh *SynchronizedFilesHeap) Push(atf *AtomicFileInformation) {
 func (sfh *SynchronizedFilesHeap) Pop() *AtomicFileInformation {
 	sfh.lock.Lock()
 	defer sfh.lock.Unlock()
-	return heap.Pop(sfh.filesQueue).(*AtomicFileInformation)
+	if len(*(sfh.filesQueue)) > 0 {
+		return heap.Pop(sfh.filesQueue).(*AtomicFileInformation)
+	}
+	return nil
 }
 
 func (sfh *SynchronizedFilesHeap) Contains(path string) bool {

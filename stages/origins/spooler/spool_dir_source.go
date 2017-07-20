@@ -29,10 +29,13 @@ const (
 	INITIAL_FILE_TO_PROCESS = "conf.initialFileToProcess"
 	PROCESS_SUB_DIRECTORIES = "conf.processSubdirectories"
 	FILE_PATTERN            = "conf.filePattern"
+	PATH_MATHER_MODE        = "conf.pathMatcherMode"
 
 	FILE      = "file"
 	FILE_NAME = "filename"
 	OFFSET    = "offset"
+	GLOB      = "GLOB"
+	REGEX     = "REGEX"
 )
 
 type SpoolDirSource struct {
@@ -40,6 +43,7 @@ type SpoolDirSource struct {
 	spooler              *DirectorySpooler
 	bufReader            *bufio.Reader
 	initialFileToProcess string
+	file                 *os.File
 }
 
 func init() {
@@ -54,6 +58,7 @@ func (s *SpoolDirSource) Init(stageContext api.StageContext) error {
 	}
 	stageConfig := s.GetStageConfig()
 	s.spooler = &DirectorySpooler{}
+
 	for _, config := range stageConfig.Configuration {
 		value := s.GetStageContext().GetResolvedValue(config.Value)
 		switch config.Name {
@@ -62,8 +67,12 @@ func (s *SpoolDirSource) Init(stageContext api.StageContext) error {
 		case USE_LAST_MODIFIED:
 			s.spooler.readOrder = value.(string)
 			readOrder = s.spooler.readOrder
-		case FILE_PATTERN:
-			//TODO: Handle regex
+		case PATH_MATHER_MODE:
+			s.spooler.pathMatcherMode = value.(string)
+			if s.spooler.pathMatcherMode != GLOB && s.spooler.pathMatcherMode != REGEX {
+				return errors.New("Unsupported Path Matcher mode :" + s.spooler.pathMatcherMode)
+			}
+ 		case FILE_PATTERN:
 			s.spooler.filePattern = value.(string)
 		case PROCESS_SUB_DIRECTORIES:
 			s.spooler.processSubDirs = value.(bool)
@@ -94,19 +103,20 @@ func (s *SpoolDirSource) Init(stageContext api.StageContext) error {
 	return err
 }
 
-func (s *SpoolDirSource) initializeBuffReader() (*os.File, error) {
+func (s *SpoolDirSource) initializeBuffReaderIfNeeded() error {
 	fInfo := s.spooler.getCurrentFileInfo()
-	f, err := os.Open(fInfo.getFullPath())
-	if err != nil {
-		return f, err
+	if s.file == nil {
+		f, err := os.Open(fInfo.getFullPath())
+		if err != nil {
+			return err
+		}
+		s.file = f
+		if _, err := s.file.Seek(fInfo.getOffsetToRead(), 0); err != nil {
+			return err
+		}
+		s.bufReader = bufio.NewReader(s.file)
 	}
-	_, er := f.Seek(fInfo.getOffsetToRead(), 0)
-	if er != nil {
-		return f, er
-	}
-	s.bufReader = bufio.NewReader(f)
-	return f, nil
-
+	return nil
 }
 
 func (s *SpoolDirSource) initCurrentFileIfNeeded(lastSourceOffset string) (bool, error) {
@@ -204,11 +214,12 @@ func (s *SpoolDirSource) readAndCreateRecords(
 		if isEof {
 			log.Printf("[DEBUG] Reached End of File '%s'", s.spooler.getCurrentFileInfo().getFullPath())
 			s.spooler.getCurrentFileInfo().setOffsetToRead(EOF_OFFSET)
+			s.resetFileAndBuffReader()
 			break
 		}
-
 		s.spooler.getCurrentFileInfo().incOffsetToRead(int64(bytesRead))
 	}
+
 	return s.spooler.getCurrentFileInfo().getOffsetToRead(), nil
 }
 
@@ -246,9 +257,7 @@ func (s *SpoolDirSource) Produce(
 			return lastSourceOffset, nil
 		}
 
-		//TODO Always seeks, we can do better
-		f, err := s.initializeBuffReader()
-		defer f.Close()
+		err = s.initializeBuffReaderIfNeeded()
 
 		if err != nil {
 			s.GetStageContext().ReportError(err)
@@ -266,7 +275,23 @@ func (s *SpoolDirSource) Produce(
 	return lastSourceOffset, err
 }
 
+func (s *SpoolDirSource) resetFileAndBuffReader() {
+	if s.file != nil {
+		//Close Quietly
+		if err := s.file.Close(); err != nil {
+			log.Printf(
+				"[ERROR] Error During file '%s' close  : %s",
+				s.file.Name(),
+				err.Error(),
+			)
+		}
+		s.file = nil
+	}
+	s.bufReader = nil
+}
+
 func (s *SpoolDirSource) Destroy() error {
+	s.resetFileAndBuffReader()
 	s.spooler.Destroy()
 	return nil
 }

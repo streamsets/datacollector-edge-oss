@@ -1,9 +1,11 @@
 package spooler
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -18,6 +20,7 @@ type DirectorySpooler struct {
 	spoolWaitDuration       time.Duration
 	readOrder               string
 	filePattern             string
+	pathMatcherMode         string
 	currentFileChange       chan (*AtomicFileInformation)
 }
 
@@ -27,17 +30,59 @@ func isFileEligible(
 	currentFileInformation *AtomicFileInformation,
 	readOrder string,
 ) bool {
-	if currentFileInformation == nil {
-		return true
+	if currentFileInformation != nil {
+		return (readOrder == LAST_MODIFIED &&
+			(modTime.After(currentFileInformation.getModTime()) ||
+				(modTime.Equal(currentFileInformation.getModTime()) &&
+					strings.Compare(path, currentFileInformation.getFullPath()) > 0))) ||
+			(readOrder == LEXICOGRAPHICAL &&
+				(strings.Compare(path, currentFileInformation.getFullPath()) > 0 ||
+					(strings.Compare(path, currentFileInformation.getFullPath()) == 0 &&
+						modTime.After(currentFileInformation.getModTime()))))
 	}
-	return (readOrder == LAST_MODIFIED &&
-		(modTime.After(currentFileInformation.getModTime()) ||
-			(modTime.Equal(currentFileInformation.getModTime()) &&
-				strings.Compare(path, currentFileInformation.getFullPath()) > 0))) ||
-		(readOrder == LEXICOGRAPHICAL &&
-			(strings.Compare(path, currentFileInformation.getFullPath()) > 0 ||
-				(strings.Compare(path, currentFileInformation.getFullPath()) == 0 &&
-					modTime.After(currentFileInformation.getModTime()))))
+	return true
+}
+
+func isMatch(pathMatcherMode string, fileName string, filePattern string) (bool, error) {
+	if pathMatcherMode == GLOB {
+		return filepath.Match(filePattern, fileName)
+	} else {
+		return regexp.MatchString(filePattern, fileName)
+	}
+}
+
+func (d *DirectorySpooler) findAndAddMatchingFilesInTheDirectory() error {
+	if d.pathMatcherMode == REGEX {
+		allFileInfos, err := ioutil.ReadDir(d.dirPath)
+		if err == nil {
+			for _, fileInfo := range allFileInfos {
+				if matched, err := isMatch(d.pathMatcherMode, fileInfo.Name(), d.filePattern); err == nil && matched {
+					d.addPathToQueueIfEligible(
+						d.dirPath+"/"+fileInfo.Name(),
+						fileInfo.ModTime(),
+						d.currentFileInfo,
+					)
+				}
+			}
+		}
+		return err
+	} else {
+		filePaths, err := filepath.Glob(d.dirPath + "/" + d.filePattern)
+		if err == nil {
+			for _, fileMatch := range filePaths {
+				fileInfo, err := os.Stat(fileMatch)
+				if err != nil {
+					return err
+				}
+				d.addPathToQueueIfEligible(
+					d.dirPath+"/"+fileInfo.Name(),
+					fileInfo.ModTime(),
+					d.currentFileInfo,
+				)
+			}
+		}
+		return err
+	}
 }
 
 func (d *DirectorySpooler) addPathToQueueIfEligible(
@@ -58,38 +103,28 @@ func (d *DirectorySpooler) addPathToQueueIfEligible(
 
 func (d *DirectorySpooler) walkDirectoryPath(currentFileInfo *AtomicFileInformation) error {
 	log.Println("[INFO] Spooler Starting")
-	//TODO: Guard against links
 	if d.processSubDirs {
 		return filepath.Walk(d.dirPath, func(path string, info os.FileInfo, err error) error {
 			if err == nil && path != d.dirPath {
 				if !info.IsDir() {
-					matched, err := filepath.Match(d.filePattern, info.Name())
-					if err == nil && matched {
+					if matched, err := isMatch(d.pathMatcherMode, info.Name(), d.filePattern); err == nil && matched {
 						d.addPathToQueueIfEligible(path, info.ModTime(), currentFileInfo)
 					}
 				}
-
 			}
 			return err
 		})
 	}
-	file_matches, err := filepath.Glob(d.dirPath + "/" + d.filePattern)
-	if err == nil {
-		for _, file_match := range file_matches {
-			file_info, err := os.Stat(file_match)
-			if err != nil {
-				return err
-			}
-			d.addPathToQueueIfEligible(file_match, file_info.ModTime(), currentFileInfo)
-		}
-	}
-	return err
+	return d.findAndAddMatchingFilesInTheDirectory()
 }
 
 func (d *DirectorySpooler) Init() {
 	d.destroyNotificationChan = make(chan (bool))
 	d.filesQueue = NewSynchronizedFilesHeap()
 	d.currentFileChange = make(chan (*AtomicFileInformation))
+	if strings.HasSuffix(d.dirPath, "/") {
+		d.dirPath = strings.TrimRight(d.dirPath, "/")
+	}
 	//Starting Spooler immediately and after that at regular intervals
 	d.walkDirectoryPath(d.currentFileInfo)
 	go func(currentFileInfo *AtomicFileInformation) {
@@ -118,7 +153,7 @@ func (d *DirectorySpooler) getCurrentFileInfo() *AtomicFileInformation {
 
 func (d *DirectorySpooler) NextFile() *AtomicFileInformation {
 	fi := d.filesQueue.Pop()
-	for fi != nil  {
+	for fi != nil {
 		if isFileEligible(fi.getFullPath(), fi.getModTime(), d.currentFileInfo, d.readOrder) {
 			log.Printf("[DEBUG] File '%s' is picked for ingestion", fi.getFullPath())
 			d.setCurrentFileInfo(fi)

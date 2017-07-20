@@ -1,6 +1,7 @@
 package spooler
 
 import (
+	"bytes"
 	"github.com/streamsets/sdc2go/api"
 	"github.com/streamsets/sdc2go/container/common"
 	"github.com/streamsets/sdc2go/container/execution/runner"
@@ -16,6 +17,7 @@ import (
 func createStageContext(
 	dirPath string,
 	processSubDirectories bool,
+	pathMatherMode string,
 	filePattern string,
 	useLastModified bool,
 	initialFileToProcess string,
@@ -24,7 +26,7 @@ func createStageContext(
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = LIBRARY
 	stageConfig.StageName = STAGE_NAME
-	stageConfig.Configuration = make([]common.Config, 6)
+	stageConfig.Configuration = make([]common.Config, 7)
 
 	stageConfig.Configuration[0] = common.Config{
 		Name:  SPOOL_DIR_PATH,
@@ -37,6 +39,11 @@ func createStageContext(
 	}
 
 	stageConfig.Configuration[2] = common.Config{
+		Name:  PATH_MATHER_MODE,
+		Value: pathMatherMode,
+	}
+
+	stageConfig.Configuration[3] = common.Config{
 		Name:  FILE_PATTERN,
 		Value: filePattern,
 	}
@@ -47,17 +54,17 @@ func createStageContext(
 		readOrder = LAST_MODIFIED
 	}
 
-	stageConfig.Configuration[3] = common.Config{
+	stageConfig.Configuration[4] = common.Config{
 		Name:  USE_LAST_MODIFIED,
 		Value: readOrder,
 	}
 
-	stageConfig.Configuration[4] = common.Config{
+	stageConfig.Configuration[5] = common.Config{
 		Name:  INITIAL_FILE_TO_PROCESS,
 		Value: initialFileToProcess,
 	}
 
-	stageConfig.Configuration[5] = common.Config{
+	stageConfig.Configuration[6] = common.Config{
 		Name:  POLLING_TIMEOUT_SECONDS,
 		Value: float64(pollingTimeoutSeconds),
 	}
@@ -101,12 +108,7 @@ func createFileAndWriteContents(t *testing.T, filePath string, data string) {
 	}
 }
 
-func createSpoolerAndRun(
-	t *testing.T,
-	stageContext api.StageContext,
-	lastSourceOffset string,
-	batchSize int,
-) (string, []api.Record) {
+func createSpooler(t *testing.T, stageContext api.StageContext) api.Stage {
 	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
 	if err != nil {
 		t.Fatal(err)
@@ -115,7 +117,16 @@ func createSpoolerAndRun(
 	if err != nil {
 		t.Fatal(err)
 	}
+	return stageInstance
+}
 
+func createSpoolerAndRun(
+	t *testing.T,
+	stageContext api.StageContext,
+	lastSourceOffset string,
+	batchSize int,
+) (string, []api.Record) {
+	stageInstance := createSpooler(t, stageContext)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
 	offset, err := stageInstance.(api.Origin).Produce(lastSourceOffset, batchSize, batchMaker)
@@ -158,7 +169,6 @@ func checkRecord(
 				expectedHeaderVal,
 				actualHeaderVal,
 			)
-
 		}
 	}
 
@@ -192,7 +202,7 @@ func TestUseLastModified(t *testing.T) {
 		filepath.Join(testDir, "b.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
-	stageContext := createStageContext(testDir, false, "*", true, "", 1)
+	stageContext := createStageContext(testDir, false, REGEX, "(.*)[.]txt", true, "", 1)
 
 	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
 
@@ -298,7 +308,7 @@ func TestLexicographical(t *testing.T) {
 		filepath.Join(testDir, "c.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
-	stageContext := createStageContext(testDir, false, "*", false, "", 1)
+	stageContext := createStageContext(testDir, false, GLOB, "*", false, "", 1)
 
 	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
 
@@ -385,7 +395,7 @@ func TestSubDirectories(t *testing.T) {
 	testDir := createTestDirectory(t)
 	defer deleteTestDirectory(t, testDir)
 
-	all_letters := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	allLetters := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 	pathsToCreate := []string{
 		"a/b",
@@ -411,7 +421,7 @@ func TestSubDirectories(t *testing.T) {
 		}
 		fileToCreate := filepath.Join(
 			pathToCreate,
-			string(all_letters[rand.Intn(len(all_letters)-1)]))
+			string(allLetters[rand.Intn(len(allLetters)-1)]))
 		createFileAndWriteContents(t, fileToCreate, "sample text")
 		os.Chtimes(
 			fileToCreate, currentTime,
@@ -420,7 +430,7 @@ func TestSubDirectories(t *testing.T) {
 		createdFiles = append(createdFiles, fileToCreate)
 	}
 
-	stageContext := createStageContext(testDir, true, "*", true, "", 1)
+	stageContext := createStageContext(testDir, true, GLOB, "*", true, "", 1)
 
 	var offset string = ""
 	var records []api.Record
@@ -443,5 +453,54 @@ func TestSubDirectories(t *testing.T) {
 		}
 
 		checkRecord(t, records[0], "sample text", expectedHeaders)
+	}
+}
+
+func TestReadingFileAcrossBatches(t *testing.T) {
+	testDir := createTestDirectory(t)
+	defer deleteTestDirectory(t, testDir)
+
+	allLetters := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+	expectedRecordContents := []string{}
+	contents := bytes.NewBuffer([]byte{})
+
+	totalLines, totalCharactersInLine := 100, 20
+
+	for line := 0; line < totalLines; line++ {
+		var currentLine string = ""
+		for lineLetters := 0; lineLetters < totalCharactersInLine; lineLetters++ {
+			currentLine = currentLine + string(allLetters[rand.Intn(len(allLetters)-1)])
+
+		}
+		expectedRecordContents = append(expectedRecordContents, currentLine)
+		contents.WriteString(currentLine + "\n")
+	}
+
+	//Create a.txt,c.txt,b.txt with different mod times
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), contents.String())
+
+	stageInstance := createSpooler(t, createStageContext(testDir, false, REGEX, ".*", true, "", 1))
+	defer stageInstance.Destroy()
+
+	noOfRecords := 0
+
+	lastSourceOffset := ""
+
+	for noOfRecords < totalLines {
+		batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
+		lastSourceOffset, _ = stageInstance.(api.Origin).Produce(lastSourceOffset, rand.Intn(19)+1, batchMaker)
+		records := batchMaker.GetStageOutput()
+		for rIdx, record := range records {
+			checkRecord(t, record, expectedRecordContents[noOfRecords+rIdx], map[string]string{})
+		}
+		noOfRecords += len(records)
+	}
+
+	//No more records to read
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
+	lastSourceOffset, _ = stageInstance.(api.Origin).Produce(lastSourceOffset, rand.Intn(19)+1, batchMaker)
+	if len(batchMaker.GetStageOutput()) != 0 {
+		t.Fatal("Read more number of records than expected")
 	}
 }
