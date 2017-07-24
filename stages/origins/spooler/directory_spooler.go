@@ -120,7 +120,7 @@ func (d *DirectorySpooler) walkDirectoryPath(currentFileInfo *AtomicFileInformat
 
 func (d *DirectorySpooler) Init() {
 	d.destroyNotificationChan = make(chan (bool))
-	d.filesQueue = NewSynchronizedFilesHeap()
+	d.filesQueue = NewSynchronizedFilesHeap(d.readOrder)
 	d.currentFileChange = make(chan (*AtomicFileInformation))
 	if strings.HasSuffix(d.dirPath, "/") {
 		d.dirPath = strings.TrimRight(d.dirPath, "/")

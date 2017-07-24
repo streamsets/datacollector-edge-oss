@@ -66,7 +66,6 @@ func (s *SpoolDirSource) Init(stageContext api.StageContext) error {
 			s.spooler.dirPath = value.(string)
 		case USE_LAST_MODIFIED:
 			s.spooler.readOrder = value.(string)
-			readOrder = s.spooler.readOrder
 		case PATH_MATHER_MODE:
 			s.spooler.pathMatcherMode = value.(string)
 			if s.spooler.pathMatcherMode != GLOB && s.spooler.pathMatcherMode != REGEX {
