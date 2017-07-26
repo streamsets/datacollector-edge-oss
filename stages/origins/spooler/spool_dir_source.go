@@ -71,7 +71,7 @@ func (s *SpoolDirSource) Init(stageContext api.StageContext) error {
 			if s.spooler.pathMatcherMode != GLOB && s.spooler.pathMatcherMode != REGEX {
 				return errors.New("Unsupported Path Matcher mode :" + s.spooler.pathMatcherMode)
 			}
- 		case FILE_PATTERN:
+		case FILE_PATTERN:
 			s.spooler.filePattern = value.(string)
 		case PROCESS_SUB_DIRECTORIES:
 			s.spooler.processSubDirs = value.(bool)

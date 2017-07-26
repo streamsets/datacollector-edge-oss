@@ -3,6 +3,8 @@ package http
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"github.com/streamsets/sdc2go/api"
@@ -25,6 +27,8 @@ type HttpClientDestination struct {
 	headers               []interface{}
 	singleRequestPerBatch bool
 	httpCompression       string
+	tlsEnabled            bool
+	trustStoreFilePath    string
 }
 
 func init() {
@@ -54,6 +58,14 @@ func (h *HttpClientDestination) Init(stageContext api.StageContext) error {
 
 		if config.Name == "conf.client.httpCompression" {
 			h.httpCompression = stageContext.GetResolvedValue(config.Value).(string)
+		}
+
+		if config.Name == "conf.client.tlsConfig.tlsEnabled" {
+			h.tlsEnabled = stageContext.GetResolvedValue(config.Value).(bool)
+		}
+
+		if config.Name == "conf.client.tlsConfig.trustStoreFilePath" {
+			h.trustStoreFilePath = stageContext.GetResolvedValue(config.Value).(string)
 		}
 	}
 	return nil
@@ -118,7 +130,28 @@ func (h *HttpClientDestination) sendToSDC(jsonValue []byte) error {
 		req.Header.Set("Content-Encoding", "gzip")
 	}
 
-	client := &http.Client{}
+	var client *http.Client
+
+	if h.tlsEnabled {
+		caCert, err := ioutil.ReadFile(h.trustStoreFilePath)
+		if err != nil {
+			return err
+		}
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+
+		client = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					RootCAs:            caCertPool,
+					InsecureSkipVerify: true,
+				},
+			},
+		}
+	} else {
+		client = &http.Client{}
+	}
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -128,13 +161,6 @@ func (h *HttpClientDestination) sendToSDC(jsonValue []byte) error {
 	log.Println("[DEBUG] response Status:", resp.Status)
 	if resp.StatusCode != 200 {
 		return errors.New(resp.Status)
-	}
-
-	if DEBUG {
-		log.Println("[DEBUG] response Status:", resp.Status)
-		log.Println("[DEBUG] response Headers:", resp.Header)
-		body, _ := ioutil.ReadAll(resp.Body)
-		log.Println("[DEBUG] response Body:", string(body))
 	}
 
 	return nil

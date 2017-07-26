@@ -81,7 +81,7 @@ func (sfh *SynchronizedFilesHeap) Contains(path string) bool {
 }
 
 func NewSynchronizedFilesHeap(readOrder string) *SynchronizedFilesHeap {
-	filesQueue := &FilesHeap{fileInfos: FileInfos{},readOrder:readOrder}
+	filesQueue := &FilesHeap{fileInfos: FileInfos{}, readOrder: readOrder}
 	heap.Init(filesQueue)
 	return &SynchronizedFilesHeap{filesHeap: filesQueue, lock: &sync.RWMutex{}}
 }

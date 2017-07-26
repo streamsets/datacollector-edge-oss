@@ -2,9 +2,9 @@ package spooler
 
 import (
 	"path/filepath"
-	"time"
 	"strconv"
 	"sync/atomic"
+	"time"
 )
 
 type FileInformation struct {
