@@ -10,6 +10,7 @@ BuiltRepoSha := `git rev-parse HEAD`
 GO=go
 TEST=go test
 
+
 DEPENDENCIES := github.com/julienschmidt/httprouter \
     github.com/BurntSushi/toml \
     github.com/satori/go.uuid \
@@ -19,7 +20,10 @@ DEPENDENCIES := github.com/julienschmidt/httprouter \
     github.com/dustin/go-coap \
     github.com/jmcvetta/randutil \
     github.com/rcrowley/go-metrics \
-    github.com/madhukard/govaluate
+    github.com/madhukard/govaluate \
+    golang.org/x/sys/windows/... \
+    $(PLATFORM_SPECIFIC_DEPENDENCIES)
+
 
 EXECUTABLES :=dist/bin/$(BINARY_NAME)
 
@@ -89,7 +93,7 @@ dist-linux-arm:
 dist-windows-amd64:
 	export GOOS="windows"; \
 	export GOARCH="amd64"; \
-	$(MAKE) dist-build
+	$(MAKE) PLATFORM_SPECIFIC_DEPENDENCIES=github.com/AllenDang/w32 dist-build
 
 dist-build: $(PACKAGE)
 
