@@ -71,3 +71,18 @@ To run a container from the resulting image:
 Getting inside the container
 
     $ docker exec -it sdc2go /bin/sh
+
+
+## Pipeline Templates
+
+* [Tail File To Http](data/pipelines/tailFileToHttp)
+* [Directory Spooler to Http](data/pipelines/directoryToHttp)
+* [MQTT To HTTP](data/pipelines/mqttToHttp)
+* [Random Data to MQTT](data/pipelines/randomToMqtt)
+* [Random Data to CoAP](data/pipelines/randomToCoap)
+* [Random Data To Http](data/pipelines/randomToHttp)
+* [HTTP Server To Trash](data/pipelines/httpServerToTrash)
+* [Random Data To Identity Processor To Trash](data/pipelines/randomToIdentityToTrash)
+
+
+
