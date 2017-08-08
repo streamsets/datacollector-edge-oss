@@ -25,7 +25,9 @@ func (elEvaluator *ELEvaluator) Evaluate(expression string) (interface{}, error)
 		return expression, nil
 	}
 	expression = strings.Replace(expression, PARAMETER_PREFIX, "", 1)
-	expression = strings.Replace(expression, PARAMETER_SUFFIX, "", 1)
+	if strings.HasSuffix(expression, PARAMETER_SUFFIX) {
+		expression = expression[:len(expression)-1]
+	}
 
 	evaluableExpression, err := govaluate.NewEvaluableExpressionWithFunctions(expression, elEvaluator.functions)
 	if err != nil {
