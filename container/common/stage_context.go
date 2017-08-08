@@ -3,6 +3,7 @@ package common
 import (
 	"github.com/rcrowley/go-metrics"
 	"github.com/streamsets/sdc2go/api"
+	"github.com/streamsets/sdc2go/container/el"
 	"github.com/streamsets/sdc2go/container/util"
 	"strconv"
 	"strings"
@@ -15,11 +16,6 @@ type StageContextImpl struct {
 	Metrics     metrics.Registry
 	ErrorSink   *ErrorSink
 }
-
-const (
-	PARAMETER_PREFIX = "${"
-	PARAMETER_SUFFIX = "}"
-)
 
 func (s *StageContextImpl) GetResolvedValue(configValue interface{}) interface{} {
 	switch t := configValue.(type) {
@@ -47,13 +43,13 @@ func (s *StageContextImpl) GetResolvedValue(configValue interface{}) interface{}
 }
 
 func (s *StageContextImpl) IsParameter(configValue string) bool {
-	return strings.HasPrefix(configValue, PARAMETER_PREFIX) &&
-		strings.HasSuffix(configValue, PARAMETER_SUFFIX)
+	return strings.HasPrefix(configValue, el.PARAMETER_PREFIX) &&
+		strings.HasSuffix(configValue, el.PARAMETER_SUFFIX)
 }
 
 func (s *StageContextImpl) GetParameterValue(paramName string) interface{} {
-	paramName = strings.Replace(paramName, PARAMETER_PREFIX, "", 1)
-	paramName = strings.Replace(paramName, PARAMETER_SUFFIX, "", 1)
+	paramName = strings.Replace(paramName, el.PARAMETER_PREFIX, "", 1)
+	paramName = strings.Replace(paramName, el.PARAMETER_SUFFIX, "", 1)
 
 	if p, err := strconv.ParseInt(s.Parameters[paramName].(string), 10, 64); err == nil {
 		return p
@@ -88,9 +84,9 @@ func (s *StageContextImpl) ReportError(err error) {
 }
 
 func constructErrorRecord(instanceName string, err error, record api.Record) api.Record {
-	//TODO: revisit this if we support processors
-	//no need to clone the record, look for original record to be added to error lane
-	//as the record is not transformed anywhere (i.e no processors in between at the moment)
+	// TODO: revisit this if we support processors
+	// no need to clone the record, look for original record to be added to error lane
+	// as the record is not transformed anywhere (i.e no processors in between at the moment)
 	headerImplForRecord := record.GetHeader().(*HeaderImpl)
 	headerImplForRecord.SetErrorStageInstance(instanceName)
 	headerImplForRecord.SetErrorMessage(err.Error())

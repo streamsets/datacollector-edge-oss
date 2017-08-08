@@ -18,7 +18,8 @@ DEPENDENCIES := github.com/julienschmidt/httprouter \
     github.com/eclipse/paho.mqtt.golang \
     github.com/dustin/go-coap \
     github.com/jmcvetta/randutil \
-    github.com/rcrowley/go-metrics
+    github.com/rcrowley/go-metrics \
+    github.com/madhukard/govaluate
 
 EXECUTABLES :=dist/bin/$(BINARY_NAME)
 
