@@ -2,10 +2,10 @@ FROM alpine
 MAINTAINER Madhu <madhu@streamsets.com>
 
 # Copy the dist tar file to the container's workspace.
-ADD dist/streamsets-sdc2go-linux-amd64-0.0.1.tar.gz /
+ADD dist/streamsets-datacollector-edge-linux-amd64-0.0.1.tar.gz /
 
 # Run the dataextractor command by default when the container starts.
-CMD ["/streamsets-sdc2go/bin/sdc2go"]
+CMD ["/streamsets-datacollector-edge/bin/edge"]
 
 # Document that the service listens on port 18633.
 EXPOSE 18633

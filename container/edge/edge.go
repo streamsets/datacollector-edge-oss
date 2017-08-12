@@ -1,4 +1,4 @@
-package sdc2go
+package edge
 
 import (
 	"encoding/json"
@@ -17,15 +17,15 @@ import (
 )
 
 const (
-	DefaultLogFilePath    = "/log/sdc2go.log"
-	DefaultConfigFilePath = "/etc/sdc2go.conf"
+	DefaultLogFilePath    = "/log/edge.log"
+	DefaultConfigFilePath = "/etc/edge.conf"
 	DEBUG                 = "DEBUG"
 	WARN                  = "WARN"
 	ERROR                 = "ERROR"
 	INFO                  = "INFO"
 )
 
-type DataExtractorMain struct {
+type DataCollectorEdgeMain struct {
 	config        *Config
 	buildInfo     *common.BuildInfo
 	runtimeInfo   *common.RuntimeInfo
@@ -39,7 +39,7 @@ func DoMain() {
 	runtimeParametersFlag := flag.String("runtimeParameters", "", "Runtime Parameters flag")
 	flag.Parse()
 
-	dataExtractor, _ := newDataExtractor(*debugFlag)
+	dataExtractor, _ := newDataCollectorEdge(*debugFlag)
 
 	if len(*startFlag) > 0 {
 		var runtimeParameters map[string]interface{}
@@ -68,7 +68,7 @@ func DoMain() {
 	dataExtractor.webServerTask.Run()
 }
 
-func newDataExtractor(debugFlag bool) (*DataExtractorMain, error) {
+func newDataCollectorEdge(debugFlag bool) (*DataCollectorEdgeMain, error) {
 	ex, err := os.Executable()
 	if err != nil {
 		panic(err)
@@ -92,7 +92,7 @@ func newDataExtractor(debugFlag bool) (*DataExtractorMain, error) {
 	webServerTask, _ := http.NewWebServerTask(config.Http, buildInfo, pipelineManager, pipelineStoreTask)
 	dpm.RegisterWithDPM(config.DPM, buildInfo, runtimeInfo)
 
-	return &DataExtractorMain{
+	return &DataCollectorEdgeMain{
 		config:        config,
 		buildInfo:     buildInfo,
 		runtimeInfo:   runtimeInfo,

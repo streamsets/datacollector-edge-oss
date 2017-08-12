@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	SDC2GO_ID_FILE = "/data/sdc2go.id"
+	EDGE_ID_FILE = "/data/edge.id"
 )
 
 type RuntimeInfo struct {
@@ -44,7 +44,7 @@ func (r *RuntimeInfo) getSdeId() string {
 }
 
 func (r *RuntimeInfo) getSdeIdFilePath() string {
-	return r.BaseDir + SDC2GO_ID_FILE
+	return r.BaseDir + EDGE_ID_FILE
 }
 
 func check(e error) {

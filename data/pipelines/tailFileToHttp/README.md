@@ -2,11 +2,11 @@
 
 ### To start pipeline on SDE start
 
-    $ bin/sdc2go -start=tailFileToHttp
+    $ bin/edge -start=tailFileToHttp
 
 ### To pass runtime parameters
 
-    $ bin/sdc2go -start=tailFileToHttp -runtimeParameters='{"filePath":"/Users/tempUser/log/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    $ bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/Users/tempUser/log/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ## REST API
 

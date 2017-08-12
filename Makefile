@@ -1,6 +1,6 @@
 .PHONY: all dist clean
-BINARY_NAME := sdc2go
-APP_NAME := streamsets-sdc2go
+BINARY_NAME := edge
+APP_NAME := streamsets-datacollector-edge
 VERSION := 0.0.1
 DIR=.
 BuiltDate := `date +%FT%T%z`
@@ -96,6 +96,6 @@ dist-build: $(PACKAGE)
 dist: dist-darwin-amd64
 
 docker-build:
-	docker build -t streamsets/sdc2go .
+	docker build -t streamsets/datacollector-edge .
 
 dist-all: dist-linux-amd64 dist-linux-arm dist-windows-amd64 dist-darwin-amd64 docker-build test

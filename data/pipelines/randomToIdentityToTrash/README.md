@@ -2,7 +2,7 @@
 
 ### To start pipeline on SDE start
 
-    $ bin/sdc2go -start=randomToIdentityToTrash
+    $ bin/edge -start=randomToIdentityToTrash
 
 ## REST API
 

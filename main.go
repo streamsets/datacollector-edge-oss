@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/streamsets/sdc2go/container/sdc2go"
+	"github.com/streamsets/sdc2go/container/edge"
 	_ "github.com/streamsets/sdc2go/stages/destinations"
 	_ "github.com/streamsets/sdc2go/stages/origins"
 	_ "github.com/streamsets/sdc2go/stages/processors"
@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	fmt.Println("StreamSets Data Collector To Go (SDC2Go): ")
+	fmt.Println("StreamSets Data Collector Edge (SDCe): ")
 	fmt.Printf("OS: %s\nArchitecture: %s\n", runtime.GOOS, runtime.GOARCH)
-	sdc2go.DoMain()
+	edge.DoMain()
 }

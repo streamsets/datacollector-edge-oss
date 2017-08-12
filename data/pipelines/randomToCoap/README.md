@@ -2,7 +2,7 @@
 
 ### To start pipeline on SDE start
 
-    $ bin/sdc2go -start=randomToCoap
+    $ bin/edge -start=randomToCoap
 
 ## REST API
 

@@ -2,11 +2,11 @@
 
 ### To start pipeline on SDE start
 
-    $ bin/sdc2go -start=randomToHttp
+    $ bin/edge -start=randomToHttp
 
 ### To pass runtime parameters
 
-    $ bin/sdc2go -start=randomToHttp -runtimeParameters='{"httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    $ bin/edge -start=randomToHttp -runtimeParameters='{"httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ## REST API
 

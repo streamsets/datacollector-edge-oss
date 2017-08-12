@@ -1,4 +1,4 @@
-# StreamSets Data Collector To Go (SDC2Go)
+# StreamSets Data Collector Edge (SDCe)
 
 ## Minimum Requirements
 
@@ -26,19 +26,19 @@
 ## Running
 
     $ cd dist
-    $ bin/sdc2go
+    $ bin/edge
 
 ### To start pipeline on SDE start
 
-    $ bin/sdc2go -start=<pipelineId>
+    $ bin/edge -start=<pipelineId>
 
 ### To pass runtime parameters
 
-    $ bin/sdc2go -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    $ bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ### To enable DEBUG Log Level
 
-    $ bin/sdc2go -debug -start=tailFileToHttp
+    $ bin/edge -debug -start=tailFileToHttp
 
 ## REST API
 
@@ -55,22 +55,22 @@
 ## Docker Build and run the image
 
 
-Invoke Docker from the sdc2go directory to build an image using the Dockerfile:
+Invoke Docker from the edge directory to build an image using the Dockerfile:
 
 
-    $ docker build -t streamsets/sdc2go .
+    $ docker build -t streamsets/datacollector-edge .
 
 
-This will fetch the alpine base image from Docker Hub, copy the already built package (linux/amd64), and tag the resulting image as streamsets/sdc2go.
+This will fetch the alpine base image from Docker Hub, copy the already built package (linux/amd64), and tag the resulting image as streamsets/datacollector-edge.
 
 
 To run a container from the resulting image:
 
-    $ docker run --publish 18633:18633 --name sdc2go --rm streamsets/sdc2go
+    $ docker run --publish 18633:18633 --name edge --rm streamsets/datacollector-edge
 
 Getting inside the container
 
-    $ docker exec -it sdc2go /bin/sh
+    $ docker exec -it datacollector-edge /bin/sh
 
 
 ## Pipeline Templates

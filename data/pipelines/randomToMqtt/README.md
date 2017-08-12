@@ -2,11 +2,11 @@
 
 ### To start pipeline on SDE start
 
-    $ bin/sdc2go -start=randomToMqtt
+    $ bin/edge -start=randomToMqtt
 
 ### To pass runtime parameters
 
-    $ bin/sdc2go -start=randomToMqtt -runtimeParameters='{"mqttClientId":"sdeMqttPublisher","mqttBrokerUrl":"http://localhost:9999","mqttTopic":"sample"}'
+    $ bin/edge -start=randomToMqtt -runtimeParameters='{"mqttClientId":"sdeMqttPublisher","mqttBrokerUrl":"http://localhost:9999","mqttTopic":"sample"}'
 
 ## REST API
 

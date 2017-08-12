@@ -32,7 +32,7 @@ func NewSdcRecordFromRecord(r api.Record) (*SDCRecord, error) {
 	val := r.GetValue()
 	//Supporting primitives only (and other complex types are simple byte arrays
 	// which has to be parsed out in SDC),
-	// as currently we don't want to support any parsing inside SDC2Go
+	// as currently we don't want to support any parsing inside Data Collector Edge
 	//It is the responsibility of stages to basically create records with either primitives or
 	//pass in complex types as byte arrays
 	switch val.(type) {

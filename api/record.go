@@ -1,6 +1,6 @@
 package api
 
-// Record represents the unit of data sdc2go pipelines process.
+// Record represents the unit of data Data Collector Edge pipelines process.
 type Record interface {
 	GetHeader() Header
 	GetValue() interface{}

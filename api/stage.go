@@ -1,6 +1,6 @@
 package api
 
-// Stage is the base interface for sdc2go stages implementations defining their common context and lifecycle.
+// Stage is the base interface for Data Collector Edge stages implementations defining their common context and lifecycle.
 //
 // Init method initializes the stage.
 // This method is called once when the pipeline is being initialized before the processing any data.

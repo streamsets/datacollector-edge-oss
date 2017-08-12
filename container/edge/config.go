@@ -1,4 +1,4 @@
-package sdc2go
+package edge
 
 import (
 	"github.com/BurntSushi/toml"
@@ -8,7 +8,7 @@ import (
 	"log"
 )
 
-// Config represents the configuration format for the sdc2go binary.
+// Config represents the configuration format for the Data Collector Edge binary.
 type Config struct {
 	Execution execution.Config
 	Http      http.Config
