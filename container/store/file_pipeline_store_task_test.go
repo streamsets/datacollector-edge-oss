@@ -2,7 +2,7 @@ package store
 
 import (
 	"fmt"
-	"github.com/streamsets/sdc2go/container/common"
+	"github.com/streamsets/datacollector-edge/container/common"
 	"io/ioutil"
 	"os"
 	"testing"

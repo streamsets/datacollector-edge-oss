@@ -1,7 +1,7 @@
 package runner
 
 import (
-	"github.com/streamsets/sdc2go/api"
+	"github.com/streamsets/datacollector-edge/api"
 )
 
 type BatchMakerImpl struct {

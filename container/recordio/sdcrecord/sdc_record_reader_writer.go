@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/streamsets/sdc2go/api"
-	"github.com/streamsets/sdc2go/container/recordio"
+	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/container/recordio"
 	"io"
 )
 

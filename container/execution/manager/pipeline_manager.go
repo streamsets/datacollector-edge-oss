@@ -1,10 +1,10 @@
 package manager
 
 import (
-	"github.com/streamsets/sdc2go/container/common"
-	"github.com/streamsets/sdc2go/container/execution"
-	"github.com/streamsets/sdc2go/container/execution/runner"
-	"github.com/streamsets/sdc2go/container/store"
+	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/execution"
+	"github.com/streamsets/datacollector-edge/container/execution/runner"
+	"github.com/streamsets/datacollector-edge/container/store"
 )
 
 type PipelineManager struct {

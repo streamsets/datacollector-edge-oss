@@ -2,9 +2,9 @@ package common
 
 import (
 	"github.com/rcrowley/go-metrics"
-	"github.com/streamsets/sdc2go/api"
-	"github.com/streamsets/sdc2go/container/el"
-	"github.com/streamsets/sdc2go/container/util"
+	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/container/el"
+	"github.com/streamsets/datacollector-edge/container/util"
 	"strconv"
 	"strings"
 	"time"

@@ -2,10 +2,10 @@ package mqtt
 
 import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	"github.com/streamsets/sdc2go/api"
-	"github.com/streamsets/sdc2go/container/common"
-	mqttlib "github.com/streamsets/sdc2go/stages/lib/mqtt"
-	"github.com/streamsets/sdc2go/stages/stagelibrary"
+	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/container/common"
+	mqttlib "github.com/streamsets/datacollector-edge/stages/lib/mqtt"
+	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"log"
 	"strconv"
 )

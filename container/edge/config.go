@@ -2,9 +2,9 @@ package edge
 
 import (
 	"github.com/BurntSushi/toml"
-	"github.com/streamsets/sdc2go/container/dpm"
-	"github.com/streamsets/sdc2go/container/execution"
-	"github.com/streamsets/sdc2go/container/http"
+	"github.com/streamsets/datacollector-edge/container/dpm"
+	"github.com/streamsets/datacollector-edge/container/execution"
+	"github.com/streamsets/datacollector-edge/container/http"
 	"log"
 )
 

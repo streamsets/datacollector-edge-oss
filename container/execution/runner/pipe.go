@@ -2,9 +2,9 @@ package runner
 
 import (
 	"github.com/rcrowley/go-metrics"
-	"github.com/streamsets/sdc2go/container/execution"
-	"github.com/streamsets/sdc2go/container/util"
-	"github.com/streamsets/sdc2go/container/validation"
+	"github.com/streamsets/datacollector-edge/container/execution"
+	"github.com/streamsets/datacollector-edge/container/util"
+	"github.com/streamsets/datacollector-edge/container/validation"
 	"log"
 	"time"
 )

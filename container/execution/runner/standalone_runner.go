@@ -3,11 +3,11 @@ package runner
 import (
 	"errors"
 	"github.com/rcrowley/go-metrics"
-	"github.com/streamsets/sdc2go/container/common"
-	"github.com/streamsets/sdc2go/container/execution"
-	"github.com/streamsets/sdc2go/container/execution/store"
-	pipelineStore "github.com/streamsets/sdc2go/container/store"
-	"github.com/streamsets/sdc2go/container/util"
+	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/execution"
+	"github.com/streamsets/datacollector-edge/container/execution/store"
+	pipelineStore "github.com/streamsets/datacollector-edge/container/store"
+	"github.com/streamsets/datacollector-edge/container/util"
 	"time"
 )
 

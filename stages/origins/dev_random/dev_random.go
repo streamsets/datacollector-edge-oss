@@ -2,9 +2,9 @@ package dev_random
 
 import (
 	"github.com/jmcvetta/randutil"
-	"github.com/streamsets/sdc2go/api"
-	"github.com/streamsets/sdc2go/container/common"
-	"github.com/streamsets/sdc2go/stages/stagelibrary"
+	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"math/rand"
 	"strconv"
 	"strings"

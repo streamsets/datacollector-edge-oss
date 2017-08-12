@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/streamsets/sdc2go/container/common"
+	"github.com/streamsets/datacollector-edge/container/common"
 	"io"
 	"io/ioutil"
 	"os"

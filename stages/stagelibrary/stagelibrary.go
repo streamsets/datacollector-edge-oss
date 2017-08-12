@@ -2,7 +2,7 @@ package stagelibrary
 
 import (
 	"errors"
-	"github.com/streamsets/sdc2go/api"
+	"github.com/streamsets/datacollector-edge/api"
 	"sync"
 )
 

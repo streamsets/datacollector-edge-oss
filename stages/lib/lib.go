@@ -1,5 +1,5 @@
 package lib
 
 import (
-	_ "github.com/streamsets/sdc2go/stages/lib/mqtt"
+	_ "github.com/streamsets/datacollector-edge/stages/lib/mqtt"
 )

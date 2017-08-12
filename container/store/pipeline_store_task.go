@@ -1,6 +1,6 @@
 package store
 
-import "github.com/streamsets/sdc2go/container/common"
+import "github.com/streamsets/datacollector-edge/container/common"
 
 type PipelineStoreTask interface {
 	GetPipelines() ([]common.PipelineInfo, error)

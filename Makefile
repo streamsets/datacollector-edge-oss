@@ -24,10 +24,10 @@ DEPENDENCIES := github.com/julienschmidt/httprouter \
 EXECUTABLES :=dist/bin/$(BINARY_NAME)
 
 # Build Binaries setting BuildInfo vars
-LDFLAGS :=-ldflags "-X github.com/streamsets/sdc2go/container/common.Version=${VERSION} \
-    -X github.com/streamsets/sdc2go/container/common.BuiltBy=$$USER \
-    -X github.com/streamsets/sdc2go/container/common.BuiltDate=${BuiltDate} \
-    -X github.com/streamsets/sdc2go/container/common.BuiltRepoSha=${BuiltRepoSha}"
+LDFLAGS :=-ldflags "-X github.com/streamsets/datacollector-edge/container/common.Version=${VERSION} \
+    -X github.com/streamsets/datacollector-edge/container/common.BuiltBy=$$USER \
+    -X github.com/streamsets/datacollector-edge/container/common.BuiltDate=${BuiltDate} \
+    -X github.com/streamsets/datacollector-edge/container/common.BuiltRepoSha=${BuiltRepoSha}"
 
 # Package target
 PACKAGE :=$(DIR)/dist/$(APP_NAME)-$$GOOS-$$GOARCH-$(VERSION).tar.gz

@@ -1,8 +1,8 @@
 package manager
 
 import (
-	"github.com/streamsets/sdc2go/container/common"
-	"github.com/streamsets/sdc2go/container/execution/runner"
+	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/execution/runner"
 )
 
 type Manager interface {

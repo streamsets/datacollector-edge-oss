@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/streamsets/sdc2go/container/edge"
-	_ "github.com/streamsets/sdc2go/stages/destinations"
-	_ "github.com/streamsets/sdc2go/stages/origins"
-	_ "github.com/streamsets/sdc2go/stages/processors"
+	"github.com/streamsets/datacollector-edge/container/edge"
+	_ "github.com/streamsets/datacollector-edge/stages/destinations"
+	_ "github.com/streamsets/datacollector-edge/stages/origins"
+	_ "github.com/streamsets/datacollector-edge/stages/processors"
 	"runtime"
 )
 

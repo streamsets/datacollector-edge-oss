@@ -2,8 +2,8 @@ package sdcrecord
 
 import (
 	"errors"
-	"github.com/streamsets/sdc2go/api"
-	"github.com/streamsets/sdc2go/container/common"
+	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/container/common"
 	"math/big"
 )
 

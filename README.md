@@ -28,7 +28,7 @@
     $ cd dist
     $ bin/edge
 
-### To start pipeline on SDE start
+### To start pipeline on SDCe start
 
     $ bin/edge -start=<pipelineId>
 

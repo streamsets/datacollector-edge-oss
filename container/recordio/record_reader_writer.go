@@ -1,7 +1,7 @@
 package recordio
 
 import (
-	"github.com/streamsets/sdc2go/api"
+	"github.com/streamsets/datacollector-edge/api"
 	"io"
 )
 

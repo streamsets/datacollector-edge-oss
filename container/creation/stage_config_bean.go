@@ -1,7 +1,7 @@
 package creation
 
 import (
-	"github.com/streamsets/sdc2go/container/common"
+	"github.com/streamsets/datacollector-edge/container/common"
 )
 
 type StageConfigBean struct {

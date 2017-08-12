@@ -1,9 +1,9 @@
 package origins
 
 import (
-	_ "github.com/streamsets/sdc2go/stages/origins/dev_random"
-	_ "github.com/streamsets/sdc2go/stages/origins/filetail"
-	_ "github.com/streamsets/sdc2go/stages/origins/httpserver"
-	_ "github.com/streamsets/sdc2go/stages/origins/mqtt"
-	_ "github.com/streamsets/sdc2go/stages/origins/spooler"
+	_ "github.com/streamsets/datacollector-edge/stages/origins/dev_random"
+	_ "github.com/streamsets/datacollector-edge/stages/origins/filetail"
+	_ "github.com/streamsets/datacollector-edge/stages/origins/httpserver"
+	_ "github.com/streamsets/datacollector-edge/stages/origins/mqtt"
+	_ "github.com/streamsets/datacollector-edge/stages/origins/spooler"
 )

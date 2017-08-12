@@ -3,9 +3,9 @@ package websocket
 import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
-	"github.com/streamsets/sdc2go/api"
-	"github.com/streamsets/sdc2go/container/common"
-	"github.com/streamsets/sdc2go/stages/stagelibrary"
+	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"log"
 	"net/http"
 )
