@@ -20,3 +20,13 @@
 
     $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToMqtt/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"mqttClientId":"sdeMqttPublisher","mqttBrokerUrl":"http://localhost:9999","mqttTopic":"sample"}'
 
+
+
+## SDC Edge Pipeline
+
+![Image of SDC Edge Pipeline](edge.png)
+
+
+## SDC Pipeline
+
+![Image of SDC Pipeline](sdcmqtt.png)

@@ -11,3 +11,8 @@
     $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/stop
     $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/resetOffset
     $ curl -X GET http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/metrics
+
+## SDC Edge Pipeline
+
+![Image of SDC Edge Pipeline](edge.png)
+

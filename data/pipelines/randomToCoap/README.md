@@ -13,3 +13,11 @@
     $ curl -X GET http://localhost:18633/rest/v1/pipeline/randomToCoap/metrics
 
 
+## SDC Edge Pipeline
+
+![Image of SDC Edge Pipeline](edge.png)
+
+
+## SDC Pipeline
+
+![Image of SDC Pipeline](sdccoap.png)

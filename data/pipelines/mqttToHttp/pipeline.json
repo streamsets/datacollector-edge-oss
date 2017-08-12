@@ -1,10 +1,10 @@
 {
-  "schemaVersion" : 3,
-  "version" : 6,
+  "schemaVersion" : 4,
+  "version" : 7,
   "pipelineId" : "mqttToHttp",
   "title" : "mqttToHttp",
   "description" : "",
-  "uuid" : "3f1bf9dd-3199-4166-abbd-2e3cbbc08324",
+  "uuid" : "f920ce5f-f066-45fe-bcf9-0129db95aef7",
   "configuration" : [ {
     "name" : "executionMode",
     "value" : "STANDALONE"
@@ -37,16 +37,16 @@
     }, {
       "key" : "sdcAppId",
       "value" : "sde"
-    },{
+    }, {
       "key" : "mqttClientId",
       "value" : "mqttSubscriber"
-    },{
+    }, {
       "key" : "mqttBrokerUrl",
       "value" : "tcp://localhost:1883"
-    },{
+    }, {
       "key" : "mqttTopic",
       "value" : "sample"
-    }]
+    } ]
   }, {
     "name" : "badRecordsHandling",
     "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
@@ -76,7 +76,22 @@
     "value" : [ ]
   }, {
     "name" : "statsAggregatorStage",
-    "value" : ""
+    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget::1"
+  }, {
+    "name" : "workerCount",
+    "value" : 0
+  }, {
+    "name" : "startEventStage",
+    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+  }, {
+    "name" : "stopEventStage",
+    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+  }, {
+    "name" : "errorRecordPolicy",
+    "value" : "ORIGINAL_RECORD"
+  }, {
+    "name" : "sparkConfigs",
+    "value" : [ ]
   } ],
   "uiInfo" : {
     "previewConfig" : {
@@ -102,7 +117,7 @@
       "value" : "${mqttClientId}"
     }, {
       "name" : "commonConf.qos",
-      "value" : 1
+      "value" : "AT_MOST_ONCE"
     }, {
       "name" : "commonConf.persistenceMechanism",
       "value" : "MEMORY"
@@ -122,32 +137,14 @@
       "name" : "commonConf.password",
       "value" : null
     }, {
-      "name" : "commonConf.tlsEnabled",
+      "name" : "commonConf.tlsConfig.tlsEnabled",
       "value" : false
-    }, {
-      "name" : "commonConf.tlsConfig.hasKeyStore",
-      "value" : false
-    }, {
-      "name" : "commonConf.tlsConfig.keyStoreType",
-      "value" : "JKS"
-    }, {
-      "name" : "commonConf.tlsConfig.keyStoreFilePath",
-      "value" : null
-    }, {
-      "name" : "commonConf.tlsConfig.keyStorePassword",
-      "value" : null
-    }, {
-      "name" : "commonConf.tlsConfig.keyStoreAlgorithm",
-      "value" : "SunX509"
-    }, {
-      "name" : "commonConf.tlsConfig.hasTrustStore",
-      "value" : false
-    }, {
-      "name" : "commonConf.tlsConfig.trustStoreType",
-      "value" : "JKS"
     }, {
       "name" : "commonConf.tlsConfig.trustStoreFilePath",
       "value" : null
+    }, {
+      "name" : "commonConf.tlsConfig.trustStoreType",
+      "value" : "JKS"
     }, {
       "name" : "commonConf.tlsConfig.trustStorePassword",
       "value" : null
@@ -208,6 +205,12 @@
     }, {
       "name" : "subscriberConf.dataFormatConfig.csvMaxObjectLen",
       "value" : 1024
+    }, {
+      "name" : "subscriberConf.dataFormatConfig.csvAllowExtraColumns",
+      "value" : false
+    }, {
+      "name" : "subscriberConf.dataFormatConfig.csvExtraColumnPrefix",
+      "value" : "_extra_"
     }, {
       "name" : "subscriberConf.dataFormatConfig.csvCustomDelimiter",
       "value" : "|"
@@ -353,12 +356,12 @@
     "uiInfo" : {
       "description" : "",
       "label" : "MQTT Subscriber 1",
-      "xPos" : 60,
-      "yPos" : 50,
+      "xPos" : 53,
+      "yPos" : 51,
       "stageType" : "SOURCE"
     },
     "inputLanes" : [ ],
-    "outputLanes" : [ "MQTTSubscriber_01OutputLane14952127101490" ],
+    "outputLanes" : [ "MQTTSubscriber_01OutputLane15025536762300" ],
     "eventLanes" : [ ]
   }, {
     "instanceName" : "HTTPClient_01",
@@ -398,6 +401,9 @@
     }, {
       "name" : "conf.dataGeneratorFormatConfig.textRecordSeparator",
       "value" : "\\n"
+    }, {
+      "name" : "conf.dataGeneratorFormatConfig.textFieldMissingAction",
+      "value" : "ERROR"
     }, {
       "name" : "conf.dataGeneratorFormatConfig.textEmptyLineIfNull",
       "value" : false
@@ -456,11 +462,20 @@
       "name" : "conf.dataGeneratorFormatConfig.checksumAlgorithm",
       "value" : "MD5"
     }, {
+      "name" : "conf.dataGeneratorFormatConfig.xmlPrettyPrint",
+      "value" : true
+    }, {
+      "name" : "conf.dataGeneratorFormatConfig.xmlValidateSchema",
+      "value" : false
+    }, {
+      "name" : "conf.dataGeneratorFormatConfig.xmlSchema",
+      "value" : null
+    }, {
       "name" : "conf.dataFormat",
       "value" : "JSON"
     }, {
       "name" : "conf.resourceUrl",
-      "value" : "${httpUrl}"
+      "value" : "$[httpUrl]"
     }, {
       "name" : "conf.headers",
       "value" : [ {
@@ -555,9 +570,6 @@
       "name" : "conf.client.useProxy",
       "value" : false
     }, {
-      "name" : "conf.client.tlsEnabled",
-      "value" : false
-    }, {
       "name" : "conf.client.proxy.uri",
       "value" : null
     }, {
@@ -567,14 +579,14 @@
       "name" : "conf.client.proxy.password",
       "value" : null
     }, {
-      "name" : "conf.client.tlsConfig.hasKeyStore",
+      "name" : "conf.client.tlsConfig.tlsEnabled",
       "value" : false
-    }, {
-      "name" : "conf.client.tlsConfig.keyStoreType",
-      "value" : "JKS"
     }, {
       "name" : "conf.client.tlsConfig.keyStoreFilePath",
       "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.keyStoreType",
+      "value" : "JKS"
     }, {
       "name" : "conf.client.tlsConfig.keyStorePassword",
       "value" : null
@@ -582,14 +594,11 @@
       "name" : "conf.client.tlsConfig.keyStoreAlgorithm",
       "value" : "SunX509"
     }, {
-      "name" : "conf.client.tlsConfig.hasTrustStore",
-      "value" : false
+      "name" : "conf.client.tlsConfig.trustStoreFilePath",
+      "value" : null
     }, {
       "name" : "conf.client.tlsConfig.trustStoreType",
       "value" : "JKS"
-    }, {
-      "name" : "conf.client.tlsConfig.trustStoreFilePath",
-      "value" : null
     }, {
       "name" : "conf.client.tlsConfig.trustStorePassword",
       "value" : null
@@ -634,7 +643,7 @@
       "yPos" : 50,
       "stageType" : "TARGET"
     },
-    "inputLanes" : [ "MQTTSubscriber_01OutputLane14952127101490" ],
+    "inputLanes" : [ "MQTTSubscriber_01OutputLane15025536762300" ],
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   } ],
@@ -659,22 +668,74 @@
     "pipelineId" : "mqttToHttp",
     "title" : "mqttToHttp",
     "description" : "",
-    "created" : 1495212703174,
-    "lastModified" : 1495225335440,
+    "created" : 1502553284233,
+    "lastModified" : 1502553721734,
     "creator" : "admin",
     "lastModifier" : "admin",
     "lastRev" : "0",
-    "uuid" : "3f1bf9dd-3199-4166-abbd-2e3cbbc08324",
+    "uuid" : "f920ce5f-f066-45fe-bcf9-0129db95aef7",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "mqttToHttp"
+    "name" : "mqttToHttp",
+    "sdcVersion" : "2.7.0.0",
+    "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
   },
   "metadata" : {
     "labels" : [ ]
   },
-  "statsAggregatorStage" : null,
+  "statsAggregatorStage" : {
+    "instanceName" : "WritetoDPMdirectly_StatsAggregatorStage",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Stats Aggregator - Write to DPM directly",
+      "xPos" : 500,
+      "yPos" : 50,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ ],
+    "outputLanes" : [ ],
+    "eventLanes" : [ ]
+  },
+  "startEventStages" : [ {
+    "instanceName" : "Discard_StartEventStage",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Start Event - Discard",
+      "xPos" : 500,
+      "yPos" : 50,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ ],
+    "outputLanes" : [ ],
+    "eventLanes" : [ ]
+  } ],
+  "stopEventStages" : [ {
+    "instanceName" : "Discard_StopEventStage",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Stop Event - Discard",
+      "xPos" : 500,
+      "yPos" : 50,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ ],
+    "outputLanes" : [ ],
+    "eventLanes" : [ ]
+  } ],
   "issues" : {
     "pipelineIssues" : [ ],
     "stageIssues" : { },

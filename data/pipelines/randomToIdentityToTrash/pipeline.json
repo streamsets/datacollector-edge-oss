@@ -1,10 +1,10 @@
 {
-  "schemaVersion" : 3,
+  "schemaVersion" : 4,
   "version" : 7,
   "pipelineId" : "randomToIdentityToTrash",
   "title" : "randomToIdentityToTrash",
   "description" : "",
-  "uuid" : "e24863ea-da1a-4ca1-8686-b2e43a2a70dc",
+  "uuid" : "5bbcec33-a227-4555-9f42-b17f91986f33",
   "configuration" : [ {
     "name" : "executionMode",
     "value" : "STANDALONE"
@@ -65,6 +65,18 @@
   }, {
     "name" : "statsAggregatorStage",
     "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget::1"
+  }, {
+    "name" : "startEventStage",
+    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+  }, {
+    "name" : "stopEventStage",
+    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+  }, {
+    "name" : "errorRecordPolicy",
+    "value" : "ORIGINAL_RECORD"
+  }, {
+    "name" : "sparkConfigs",
+    "value" : [ ]
   } ],
   "uiInfo" : {
     "previewConfig" : {
@@ -168,17 +180,19 @@
     "pipelineId" : "randomToIdentityToTrash",
     "title" : "randomToIdentityToTrash",
     "description" : "",
-    "created" : 1498104667509,
-    "lastModified" : 1498105014851,
+    "created" : 1502554489114,
+    "lastModified" : 1502554489161,
     "creator" : "admin",
     "lastModifier" : "admin",
     "lastRev" : "0",
-    "uuid" : "e24863ea-da1a-4ca1-8686-b2e43a2a70dc",
+    "uuid" : "5bbcec33-a227-4555-9f42-b17f91986f33",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "randomToIdentityToTrash"
+    "name" : "randomToIdentityToTrash",
+    "sdcVersion" : "2.7.0.0",
+    "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
   },
   "metadata" : {
     "labels" : [ ]
@@ -200,11 +214,13 @@
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   },
+  "startEventStages" : [ ],
+  "stopEventStages" : [ ],
   "issues" : {
-    "stageIssues" : { },
     "pipelineIssues" : [ ],
+    "stageIssues" : { },
     "issueCount" : 0
   },
-  "valid" : true,
-  "previewable" : true
+  "previewable" : true,
+  "valid" : true
 }

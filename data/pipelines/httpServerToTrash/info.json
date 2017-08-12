@@ -1,16 +1,18 @@
 {
   "pipelineId" : "httpServerToTrash",
-  "title" : "HTTP Server",
+  "title" : "httpServerToTrash",
   "description" : "",
-  "created" : 1494779775365,
-  "lastModified" : 1494806547726,
+  "created" : 1502552944257,
+  "lastModified" : 1502553159131,
   "creator" : "admin",
   "lastModifier" : "admin",
   "lastRev" : "0",
-  "uuid" : "73d56c43-b113-4a28-8722-6d42ee5f0d62",
+  "uuid" : "bb10c291-c6f2-432a-9ec1-9a676d025f2b",
   "valid" : true,
   "metadata" : {
     "labels" : [ ]
   },
-  "name" : "httpServerToTrash"
+  "name" : "httpServerToTrash",
+  "sdcVersion" : "2.7.0.0",
+  "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
 }

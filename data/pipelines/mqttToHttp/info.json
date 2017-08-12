@@ -2,15 +2,17 @@
   "pipelineId" : "mqttToHttp",
   "title" : "mqttToHttp",
   "description" : "",
-  "created" : 1495212703174,
-  "lastModified" : 1495225335440,
+  "created" : 1502553284233,
+  "lastModified" : 1502553721734,
   "creator" : "admin",
   "lastModifier" : "admin",
   "lastRev" : "0",
-  "uuid" : "3f1bf9dd-3199-4166-abbd-2e3cbbc08324",
+  "uuid" : "f920ce5f-f066-45fe-bcf9-0129db95aef7",
   "valid" : true,
   "metadata" : {
     "labels" : [ ]
   },
-  "name" : "mqttToHttp"
+  "name" : "mqttToHttp",
+  "sdcVersion" : "2.7.0.0",
+  "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
 }

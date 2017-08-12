@@ -1,10 +1,10 @@
 {
-  "schemaVersion" : 3,
-  "version" : 6,
+  "schemaVersion" : 4,
+  "version" : 7,
   "pipelineId" : "randomToCoap",
-  "title" : "CoAP Client Target",
+  "title" : "randomToCoap",
   "description" : "",
-  "uuid" : "d216aa31-f569-4316-a9d5-ba1c0526583a",
+  "uuid" : "77676d7a-e380-4e72-9816-d0670e105986",
   "configuration" : [ {
     "name" : "executionMode",
     "value" : "STANDALONE"
@@ -62,6 +62,21 @@
   }, {
     "name" : "statsAggregatorStage",
     "value" : ""
+  }, {
+    "name" : "workerCount",
+    "value" : 0
+  }, {
+    "name" : "startEventStage",
+    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+  }, {
+    "name" : "stopEventStage",
+    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+  }, {
+    "name" : "errorRecordPolicy",
+    "value" : "ORIGINAL_RECORD"
+  }, {
+    "name" : "sparkConfigs",
+    "value" : [ ]
   } ],
   "uiInfo" : {
     "previewConfig" : {
@@ -221,6 +236,18 @@
     }, {
       "name" : "stageRecordPreconditions",
       "value" : [ ]
+    }, {
+      "name" : "conf.dataGeneratorFormatConfig.textFieldMissingAction",
+      "value" : "ERROR"
+    }, {
+      "name" : "conf.dataGeneratorFormatConfig.xmlPrettyPrint",
+      "value" : true
+    }, {
+      "name" : "conf.dataGeneratorFormatConfig.xmlValidateSchema",
+      "value" : false
+    }, {
+      "name" : "conf.dataGeneratorFormatConfig.xmlSchema",
+      "value" : null
     } ],
     "uiInfo" : {
       "description" : "",
@@ -252,24 +279,28 @@
   },
   "info" : {
     "pipelineId" : "randomToCoap",
-    "title" : "CoAP Client Target",
+    "title" : "randomToCoap",
     "description" : "",
-    "created" : 1492664450398,
-    "lastModified" : 1492664496271,
+    "created" : 1502553919358,
+    "lastModified" : 1502553919406,
     "creator" : "admin",
     "lastModifier" : "admin",
     "lastRev" : "0",
-    "uuid" : "d216aa31-f569-4316-a9d5-ba1c0526583a",
+    "uuid" : "77676d7a-e380-4e72-9816-d0670e105986",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "randomToCoap"
+    "name" : "randomToCoap",
+    "sdcVersion" : "2.7.0.0",
+    "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
   },
   "metadata" : {
     "labels" : [ ]
   },
   "statsAggregatorStage" : null,
+  "startEventStages" : [ ],
+  "stopEventStages" : [ ],
   "issues" : {
     "pipelineIssues" : [ ],
     "stageIssues" : { },

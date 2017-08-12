@@ -2,15 +2,17 @@
   "pipelineId" : "randomToMqtt",
   "title" : "randomToMqtt",
   "description" : "",
-  "created" : 1495212647755,
-  "lastModified" : 1495498334347,
+  "created" : 1502554254671,
+  "lastModified" : 1502554330094,
   "creator" : "admin",
   "lastModifier" : "admin",
   "lastRev" : "0",
-  "uuid" : "08c36d02-6a35-4320-9f3f-92e443028e2b",
+  "uuid" : "7c6222b0-098c-4ff8-b4da-d3fec5869601",
   "valid" : true,
   "metadata" : {
     "labels" : [ ]
   },
-  "name" : "randomToMqtt"
+  "name" : "randomToMqtt",
+  "sdcVersion" : "2.7.0.0",
+  "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
 }

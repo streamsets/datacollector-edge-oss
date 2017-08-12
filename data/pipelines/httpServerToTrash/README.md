@@ -20,3 +20,7 @@
 
     $ curl -X POST http://localhost:18633/rest/v1/pipeline/httpServerToTrash/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"httpPort":"8888","sdeAppId":"sde"}'
 
+## SDC Edge Pipeline
+
+![Image of SDC Edge Pipeline](edge.png)
+

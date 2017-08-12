@@ -1,16 +1,18 @@
 {
   "pipelineId" : "randomToCoap",
-  "title" : "CoAP Client Target",
+  "title" : "randomToCoap",
   "description" : "",
-  "created" : 1492664450398,
-  "lastModified" : 1492664496271,
+  "created" : 1502553919358,
+  "lastModified" : 1502553919406,
   "creator" : "admin",
   "lastModifier" : "admin",
   "lastRev" : "0",
-  "uuid" : "d216aa31-f569-4316-a9d5-ba1c0526583a",
+  "uuid" : "77676d7a-e380-4e72-9816-d0670e105986",
   "valid" : true,
   "metadata" : {
     "labels" : [ ]
   },
-  "name" : "randomToCoap"
+  "name" : "randomToCoap",
+  "sdcVersion" : "2.7.0.0",
+  "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
 }

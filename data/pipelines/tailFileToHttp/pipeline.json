@@ -1,10 +1,10 @@
 {
-  "schemaVersion" : 3,
-  "version" : 6,
+  "schemaVersion" : 4,
+  "version" : 7,
   "pipelineId" : "tailFileToHttp",
   "title" : "tailFileToHttp",
   "description" : "",
-  "uuid" : "7bf6db60-75b8-4e9d-bdf6-4809afd51e2b",
+  "uuid" : "8eca1159-b9a8-4d41-a8bb-a13635f152bf",
   "configuration" : [ {
     "name" : "executionMode",
     "value" : "STANDALONE"
@@ -70,7 +70,22 @@
     "value" : [ ]
   }, {
     "name" : "statsAggregatorStage",
-    "value" : ""
+    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget::1"
+  }, {
+    "name" : "workerCount",
+    "value" : 0
+  }, {
+    "name" : "startEventStage",
+    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+  }, {
+    "name" : "stopEventStage",
+    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+  }, {
+    "name" : "errorRecordPolicy",
+    "value" : "ORIGINAL_RECORD"
+  }, {
+    "name" : "sparkConfigs",
+    "value" : [ ]
   } ],
   "uiInfo" : {
     "previewConfig" : {
@@ -296,10 +311,16 @@
     }, {
       "name" : "stageOnRecordError",
       "value" : "TO_ERROR"
+    }, {
+      "name" : "conf.dataFormatConfig.csvAllowExtraColumns",
+      "value" : false
+    }, {
+      "name" : "conf.dataFormatConfig.csvExtraColumnPrefix",
+      "value" : "_extra_"
     } ],
     "uiInfo" : {
       "outputStreamLabels" : [ "Data", "Metadata" ],
-      "yPos" : 50,
+      "yPos" : 110,
       "stageType" : "SOURCE",
       "rawSource" : {
         "configuration" : [ {
@@ -312,6 +333,22 @@
     },
     "inputLanes" : [ ],
     "outputLanes" : [ "FileTail_01OutputLane14921104146950", "FileTail_01OutputLane14921104146951" ],
+    "eventLanes" : [ ]
+  }, {
+    "instanceName" : "Trash_01",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_NullDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Trash 1",
+      "xPos" : 280,
+      "yPos" : 170,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ "FileTail_01OutputLane14921104146951" ],
+    "outputLanes" : [ ],
     "eventLanes" : [ ]
   }, {
     "instanceName" : "HTTPClient_01",
@@ -351,6 +388,9 @@
     }, {
       "name" : "conf.dataGeneratorFormatConfig.textRecordSeparator",
       "value" : "\\n"
+    }, {
+      "name" : "conf.dataGeneratorFormatConfig.textFieldMissingAction",
+      "value" : "ERROR"
     }, {
       "name" : "conf.dataGeneratorFormatConfig.textEmptyLineIfNull",
       "value" : false
@@ -409,8 +449,17 @@
       "name" : "conf.dataGeneratorFormatConfig.checksumAlgorithm",
       "value" : "MD5"
     }, {
+      "name" : "conf.dataGeneratorFormatConfig.xmlPrettyPrint",
+      "value" : true
+    }, {
+      "name" : "conf.dataGeneratorFormatConfig.xmlValidateSchema",
+      "value" : false
+    }, {
+      "name" : "conf.dataGeneratorFormatConfig.xmlSchema",
+      "value" : null
+    }, {
       "name" : "conf.dataFormat",
-      "value" : "TEXT"
+      "value" : "JSON"
     }, {
       "name" : "conf.resourceUrl",
       "value" : "${httpUrl}"
@@ -517,6 +566,45 @@
       "name" : "conf.client.proxy.password",
       "value" : null
     }, {
+      "name" : "conf.client.tlsConfig.tlsEnabled",
+      "value" : false
+    }, {
+      "name" : "conf.client.tlsConfig.keyStoreFilePath",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.keyStoreType",
+      "value" : "JKS"
+    }, {
+      "name" : "conf.client.tlsConfig.keyStorePassword",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.keyStoreAlgorithm",
+      "value" : "SunX509"
+    }, {
+      "name" : "conf.client.tlsConfig.trustStoreFilePath",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.trustStoreType",
+      "value" : "JKS"
+    }, {
+      "name" : "conf.client.tlsConfig.trustStorePassword",
+      "value" : null
+    }, {
+      "name" : "conf.client.tlsConfig.trustStoreAlgorithm",
+      "value" : "SunX509"
+    }, {
+      "name" : "conf.client.tlsConfig.useDefaultProtocols",
+      "value" : true
+    }, {
+      "name" : "conf.client.tlsConfig.protocols",
+      "value" : [ ]
+    }, {
+      "name" : "conf.client.tlsConfig.useDefaultCiperSuites",
+      "value" : true
+    }, {
+      "name" : "conf.client.tlsConfig.cipherSuites",
+      "value" : [ ]
+    }, {
       "name" : "conf.singleRequestPerBatch",
       "value" : true
     }, {
@@ -534,76 +622,15 @@
     }, {
       "name" : "stageRecordPreconditions",
       "value" : [ ]
-    }, {
-      "name" : "conf.client.tlsConfig.trustStoreFilePath",
-      "value" : null
-    }, {
-      "name" : "conf.client.tlsConfig.trustStorePassword",
-      "value" : null
-    }, {
-      "name" : "conf.client.tlsConfig.keyStoreFilePath",
-      "value" : null
-    }, {
-      "name" : "conf.client.tlsConfig.keyStorePassword",
-      "value" : null
-    }, {
-      "name" : "conf.client.tlsConfig.hasTrustStore",
-      "value" : false
-    }, {
-      "name" : "conf.client.tlsConfig.hasKeyStore",
-      "value" : false
-    }, {
-      "name" : "conf.client.tlsEnabled",
-      "value" : false
-    }, {
-      "name" : "conf.client.tlsConfig.keyStoreType",
-      "value" : "JKS"
-    }, {
-      "name" : "conf.client.tlsConfig.keyStoreAlgorithm",
-      "value" : "SunX509"
-    }, {
-      "name" : "conf.client.tlsConfig.trustStoreType",
-      "value" : "JKS"
-    }, {
-      "name" : "conf.client.tlsConfig.trustStoreAlgorithm",
-      "value" : "SunX509"
-    }, {
-      "name" : "conf.client.tlsConfig.useDefaultProtocols",
-      "value" : true
-    }, {
-      "name" : "conf.client.tlsConfig.protocols",
-      "value" : null
-    }, {
-      "name" : "conf.client.tlsConfig.useDefaultCiperSuites",
-      "value" : true
-    }, {
-      "name" : "conf.client.tlsConfig.cipherSuites",
-      "value" : null
     } ],
     "uiInfo" : {
       "description" : "",
       "label" : "HTTP Client 1",
       "xPos" : 280,
-      "yPos" : 50,
+      "yPos" : 40,
       "stageType" : "TARGET"
     },
     "inputLanes" : [ "FileTail_01OutputLane14921104146950" ],
-    "outputLanes" : [ ],
-    "eventLanes" : [ ]
-  }, {
-    "instanceName" : "Trash_01",
-    "library" : "streamsets-datacollector-basic-lib",
-    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_NullDTarget",
-    "stageVersion" : "1",
-    "configuration" : [ ],
-    "uiInfo" : {
-      "description" : "",
-      "label" : "Trash 1",
-      "xPos" : 280,
-      "yPos" : 200,
-      "stageType" : "TARGET"
-    },
-    "inputLanes" : [ "FileTail_01OutputLane14921104146951" ],
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   } ],
@@ -628,22 +655,74 @@
     "pipelineId" : "tailFileToHttp",
     "title" : "tailFileToHttp",
     "description" : "",
-    "created" : 1494102435834,
-    "lastModified" : 1494102525632,
+    "created" : 1502554558673,
+    "lastModified" : 1502554611635,
     "creator" : "admin",
     "lastModifier" : "admin",
     "lastRev" : "0",
-    "uuid" : "7bf6db60-75b8-4e9d-bdf6-4809afd51e2b",
+    "uuid" : "8eca1159-b9a8-4d41-a8bb-a13635f152bf",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "tailFileToHttp"
+    "name" : "tailFileToHttp",
+    "sdcVersion" : "2.7.0.0",
+    "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
   },
   "metadata" : {
     "labels" : [ ]
   },
-  "statsAggregatorStage" : null,
+  "statsAggregatorStage" : {
+    "instanceName" : "WritetoDPMdirectly_StatsAggregatorStage",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Stats Aggregator - Write to DPM directly",
+      "xPos" : 500,
+      "yPos" : 50,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ ],
+    "outputLanes" : [ ],
+    "eventLanes" : [ ]
+  },
+  "startEventStages" : [ {
+    "instanceName" : "Discard_StartEventStage",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Start Event - Discard",
+      "xPos" : 500,
+      "yPos" : 50,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ ],
+    "outputLanes" : [ ],
+    "eventLanes" : [ ]
+  } ],
+  "stopEventStages" : [ {
+    "instanceName" : "Discard_StopEventStage",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Stop Event - Discard",
+      "xPos" : 500,
+      "yPos" : 50,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ ],
+    "outputLanes" : [ ],
+    "eventLanes" : [ ]
+  } ],
   "issues" : {
     "pipelineIssues" : [ ],
     "stageIssues" : { },
