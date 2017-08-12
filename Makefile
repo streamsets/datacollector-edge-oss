@@ -1,7 +1,7 @@
 .PHONY: all dist clean
 BINARY_NAME := edge
 APP_NAME := streamsets-datacollector-edge
-VERSION := 0.0.1
+VERSION := 2.8.0.0-SNAPSHOT
 DIR=.
 BuiltDate := `date +%FT%T%z`
 BuiltRepoSha := `git rev-parse HEAD`

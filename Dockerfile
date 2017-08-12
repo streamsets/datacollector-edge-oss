@@ -2,7 +2,7 @@ FROM alpine
 MAINTAINER Madhu <madhu@streamsets.com>
 
 # Copy the dist tar file to the container's workspace.
-ADD dist/streamsets-datacollector-edge-linux-amd64-0.0.1.tar.gz /
+ADD dist/streamsets-datacollector-edge-linux-amd64-2.8.0.0-SNAPSHOT.tar.gz /
 
 # Run the dataextractor command by default when the container starts.
 CMD ["/streamsets-datacollector-edge/bin/edge"]
