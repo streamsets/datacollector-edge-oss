@@ -7,7 +7,7 @@
   "uuid" : "5bbcec33-a227-4555-9f42-b17f91986f33",
   "configuration" : [ {
     "name" : "executionMode",
-    "value" : "STANDALONE"
+    "value" : "EDGE"
   }, {
     "name" : "deliveryGuarantee",
     "value" : "AT_LEAST_ONCE"
