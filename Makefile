@@ -52,6 +52,8 @@ $(EXECUTABLES):
 	$(GO) build $(LDFLAGS) -o $@ $<
 	@cp -n -R $(DIR)/etc/ dist/etc/ 2>/dev/null || :
 	@cp -n -R $(DIR)/data/ dist/data/ 2>/dev/null || :
+	@rm -rf dist/data/**/**/*.png
+	@rm -rf dist/data/**/**/*.md
 	@mkdir -p dist/log
 
 test:
@@ -67,6 +69,8 @@ $(PACKAGE): all
 	@cp -R dist/bin/. tmp/$(APP_NAME)/bin
 	@cp -R $(DIR)/etc/ tmp/$(APP_NAME)/etc/
 	@cp -R $(DIR)/data/ tmp/$(APP_NAME)/data/
+	@rm -rf tmp/$(APP_NAME)/data/**/**/*.png
+	@rm -rf tmp/$(APP_NAME)/data/**/**/*.md
 	@mkdir -p tmp/$(APP_NAME)/log
 	tar -czvf $@ -C tmp $(APP_NAME);
 	@rm -rf tmp
