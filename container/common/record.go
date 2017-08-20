@@ -17,6 +17,12 @@ func (r *RecordImpl) Get() api.Field {
 	return *r.value
 }
 
+func (r *RecordImpl) Set(field api.Field) api.Field {
+	oldData := r.value
+	r.value = &field
+	return *oldData
+}
+
 type HeaderImpl struct {
 	StageCreator         string                 `json:"stageCreator"`
 	SourceId             string                 `json:"sourceId"`
@@ -125,14 +131,20 @@ func (h *HeaderImpl) SetErrorDataCollectorId(errorDataCollectorId string) {
 }
 
 func createRecord(recordSourceId string, value interface{}) (api.Record, error) {
-	headerImpl := &HeaderImpl{Attributes: make(map[string]interface{})}
-	field, err := api.CreateField(value)
-	if err != nil {
-		return nil, err
+	var rootField *api.Field
+	var err error
+
+	if value != nil {
+		rootField, err = api.CreateField(value)
+		if err != nil {
+			return nil, err
+		}
 	}
+
+	headerImpl := &HeaderImpl{Attributes: make(map[string]interface{})}
 	r := &RecordImpl{
 		header: headerImpl,
-		value:  field,
+		value:  rootField,
 	}
 	headerImpl.SetSourceId(recordSourceId)
 	return r, nil

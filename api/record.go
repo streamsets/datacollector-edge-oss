@@ -8,6 +8,7 @@ package api
 type Record interface {
 	GetHeader() Header
 	Get() Field
+	Set(field Field) Field
 }
 
 //Header represents metadata about the record

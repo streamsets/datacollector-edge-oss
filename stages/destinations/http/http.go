@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"github.com/streamsets/datacollector-edge/container/recordio/textrecord"
 )
 
 const (
@@ -30,6 +31,7 @@ type HttpClientDestination struct {
 	httpCompression       string
 	tlsEnabled            bool
 	trustStoreFilePath    string
+	dataFormat            string
 	recordWriterFactory   recordio.RecordWriterFactory
 }
 
@@ -69,9 +71,22 @@ func (h *HttpClientDestination) Init(stageContext api.StageContext) error {
 		if config.Name == "conf.client.tlsConfig.trustStoreFilePath" && config.Value != nil {
 			h.trustStoreFilePath = stageContext.GetResolvedValue(config.Value).(string)
 		}
+
+		if config.Name == "conf.dataFormat" && config.Value != nil {
+			h.dataFormat = stageContext.GetResolvedValue(config.Value).(string)
+		}
+
 	}
-	// TODO: Create RecordWriter based on configuration
-	h.recordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{}
+
+	switch h.dataFormat {
+	case "TEXT":
+		h.recordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{}
+	case "JSON":
+		h.recordWriterFactory = &textrecord.TextWriterFactoryImpl{}
+	default:
+		return errors.New("Unsupported Data Format - " + h.dataFormat)
+	}
+
 	return nil
 }
 

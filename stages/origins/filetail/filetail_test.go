@@ -98,7 +98,8 @@ func TestValidFilePath(t *testing.T) {
 		t.Error("Excepted 4 records but got - ", len(records))
 	}
 
-	if records[0].Get().Value != "test data 1" {
+	mapFieldValue := records[0].Get().Value.(map[string]api.Field)
+	if mapFieldValue["text"].Value != "test data 1" {
 		t.Error("Excepted 'test data 1' but got - ", records[0].Get().Value)
 	}
 
@@ -114,7 +115,8 @@ func TestValidFilePath(t *testing.T) {
 		t.Error("Excepted 2 records but got - ", len(records))
 	}
 
-	if records[0].Get().Value != "test data 1" {
+	mapFieldValue = records[0].Get().Value.(map[string]api.Field)
+	if mapFieldValue["text"].Value != "test data 1" {
 		t.Error("Excepted 'test data 1' but got - ", records[0].Get().Value)
 	}
 
@@ -130,7 +132,8 @@ func TestValidFilePath(t *testing.T) {
 		t.Error("Excepted 2 records but got - ", len(records))
 	}
 
-	if records[0].Get().Value != "test data 3" {
+	mapFieldValue = records[0].Get().Value.(map[string]api.Field)
+	if mapFieldValue["text"].Value != "test data 3" {
 		t.Error("Excepted 'test data 3' but got - ", records[0].Get().Value)
 	}
 
@@ -138,7 +141,7 @@ func TestValidFilePath(t *testing.T) {
 }
 
 func _TestChannelDeadlockIssue(t *testing.T) {
-	filePath1 := "/Users/sds.log"
+	filePath1 := "/Users/test/dpm.log"
 
 	stageContext := getStageContext(filePath1, 2)
 	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)

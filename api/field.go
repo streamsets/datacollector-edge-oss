@@ -12,6 +12,9 @@ type Field struct {
 }
 
 func CreateField(value interface{}) (*Field, error) {
+	if value == nil {
+		return CreateStringField("")
+	}
 	var err error = nil
 	switch value.(type) {
 	case bool:
