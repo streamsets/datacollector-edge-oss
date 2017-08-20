@@ -32,10 +32,10 @@ func CreateStageContext() api.StageContext {
 
 func TestWriteRecord(t *testing.T) {
 	st := CreateStageContext()
-	record1 := st.CreateRecord("Sample Record Id1", "Sample Data1")
+	record1, _ := st.CreateRecord("Sample Record Id1", "Sample Data1")
 	record1.GetHeader().SetAttribute("Sample Attribute", "Sample Value1")
 
-	record2 := st.CreateRecord("Sample Record Id2", "Sample Data2")
+	record2, _ := st.CreateRecord("Sample Record Id2", "Sample Data2")
 	record2.GetHeader().SetAttribute("Sample Attribute", "Sample Value2")
 
 	bufferWriter := bytes.NewBuffer([]byte{})
@@ -82,11 +82,11 @@ func checkRecord(t *testing.T, r api.Record, sourceId string, value interface{},
 		isError = true
 	}
 
-	if r.GetValue() != value {
+	if r.Get().Value != value {
 		t.Errorf(
 			"Value does not match for Record Id:%s, Expected :%s, Actual : %s",
 			r.GetHeader().GetSourceId(),
-			value, r.GetValue(),
+			value, r.Get().Value,
 		)
 		isError = true
 	}
@@ -162,15 +162,15 @@ func TestReadAndWriteRecord(t *testing.T) {
 	st := CreateStageContext()
 	expectedRecords := []api.Record{}
 
-	record1 := st.CreateRecord("Sample Record Id1", "Sample Data1")
+	record1, _ := st.CreateRecord("Sample Record Id1", "Sample Data1")
 	record1.GetHeader().SetAttribute("Sample Attribute", "Sample Value1")
 	expectedRecords = append(expectedRecords, record1)
 
-	record2 := st.CreateRecord("Sample Record Id2", "Sample Data2")
+	record2, _ := st.CreateRecord("Sample Record Id2", "Sample Data2")
 	record2.GetHeader().SetAttribute("Sample Attribute", "Sample Value2")
 	expectedRecords = append(expectedRecords, record2)
 
-	record3 := st.CreateRecord("Sample Record Id3", "Sample Data3")
+	record3, _ := st.CreateRecord("Sample Record Id3", "Sample Data3")
 	record3.GetHeader().SetAttribute("Sample Attribute", "Sample Value3")
 	expectedRecords = append(expectedRecords, record3)
 
@@ -232,7 +232,7 @@ func TestReadAndWriteRecord(t *testing.T) {
 			t,
 			actualRecords[i],
 			expectedRecord.GetHeader().GetSourceId(),
-			expectedRecord.GetValue(),
+			expectedRecord.Get().Value,
 			expectedRecord.GetHeader().GetAttributes(),
 		)
 	}

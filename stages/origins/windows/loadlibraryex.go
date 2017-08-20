@@ -1,5 +1,5 @@
 // +build 386 windows,amd64 windows
-//Copied from https://github.com/streamsets/windataextractor/tree/master/dev/src/lib/win/eventlog
+// Copied from https://github.com/streamsets/windataextractor/tree/master/dev/src/lib/win/eventlog
 
 package windows
 

@@ -115,7 +115,7 @@ func (wel *WindowsEventLogSource) createRecordAndAddToBatch(event EventLogRecord
 		"MsgStrings":    event.MsgStrings,
 		"Message":       event.Message,
 	}
-	record := wel.GetStageContext().CreateRecord(recordId, recordVal)
+	record, _ := wel.GetStageContext().CreateRecord(recordId, recordVal)
 	batchMaker.AddRecord(record)
 }
 

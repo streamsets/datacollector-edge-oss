@@ -1,10 +1,12 @@
 package coap
 
 import (
-	"encoding/json"
+	"bytes"
 	"github.com/dustin/go-coap"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/recordio"
+	"github.com/streamsets/datacollector-edge/container/recordio/jsonrecord"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"log"
 	"net/url"
@@ -26,9 +28,10 @@ const (
 
 type CoapClientDestination struct {
 	*common.BaseStage
-	resourceUrl string
-	coapMethod  string
-	requestType string
+	resourceUrl         string
+	coapMethod          string
+	requestType         string
+	recordWriterFactory recordio.RecordWriterFactory
 }
 
 var mid uint16
@@ -58,7 +61,8 @@ func (c *CoapClientDestination) Init(stageContext api.StageContext) error {
 			c.requestType = config.Value.(string)
 		}
 	}
-
+	// TODO: Create RecordWriter based on configuration
+	c.recordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{}
 	mid = 0
 	return nil
 }
@@ -66,7 +70,7 @@ func (c *CoapClientDestination) Init(stageContext api.StageContext) error {
 func (c *CoapClientDestination) Write(batch api.Batch) error {
 	log.Println("[DEBUG] CoapClientDestination Write method")
 	for _, record := range batch.GetRecords() {
-		err := c.sendRecordToSDC(record.GetValue())
+		err := c.sendRecordToSDC(record)
 		if err != nil {
 			return err
 		}
@@ -74,11 +78,18 @@ func (c *CoapClientDestination) Write(batch api.Batch) error {
 	return nil
 }
 
-func (c *CoapClientDestination) sendRecordToSDC(recordValue interface{}) error {
-	jsonValue, err := json.Marshal(recordValue)
+func (c *CoapClientDestination) sendRecordToSDC(record api.Record) error {
+	payloadBuffer := bytes.NewBuffer([]byte{})
+	recordWriter, err := c.recordWriterFactory.CreateWriter(c.GetStageContext(), payloadBuffer)
 	if err != nil {
 		return err
 	}
+	err = recordWriter.WriteRecord(record)
+	if err != nil {
+		return err
+	}
+	recordWriter.Flush()
+	recordWriter.Close()
 
 	parsedURL, err := url.Parse(c.resourceUrl)
 	if err != nil {
@@ -89,7 +100,7 @@ func (c *CoapClientDestination) sendRecordToSDC(recordValue interface{}) error {
 		Type:      getCoapType(c.requestType),
 		Code:      getCoapMethod(c.coapMethod),
 		MessageID: mid,
-		Payload:   jsonValue,
+		Payload:   payloadBuffer.Bytes(),
 	}
 	req.SetPathString(parsedURL.Path)
 

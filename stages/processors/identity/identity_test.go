@@ -27,7 +27,7 @@ func TestIdentityProcessor(t *testing.T) {
 	}
 	stageInstance.Init(stageContext)
 	records := make([]api.Record, 1)
-	records[0] = stageContext.CreateRecord("1", "TestData")
+	records[0], _ = stageContext.CreateRecord("1", "TestData")
 	batch := runner.NewBatchImpl("random", records, "randomOffset")
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
@@ -41,8 +41,8 @@ func TestIdentityProcessor(t *testing.T) {
 		t.Error("Excepted 1 records but got - ", len(records))
 	}
 
-	if records[0].GetValue() != "TestData" {
-		t.Error("Excepted 'TestData' but got - ", records[0].GetValue())
+	if records[0].Get().Value != "TestData" {
+		t.Error("Excepted 'TestData' but got - ", records[0].Get().Value)
 	}
 
 	stageInstance.Destroy()

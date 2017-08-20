@@ -65,7 +65,8 @@ func (h *HttpServerOrigin) Produce(
 	log.Println("[DEBUG] HTTP Server - Produce method")
 	value := <-h.incomingData
 	log.Println("[DEBUG] Incoming Data: ", value)
-	batchMaker.AddRecord(h.GetStageContext().CreateRecord(time.Now().String(), value))
+	record, _ := h.GetStageContext().CreateRecord(time.Now().String(), value)
+	batchMaker.AddRecord(record)
 	return "", nil
 }
 

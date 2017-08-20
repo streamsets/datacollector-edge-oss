@@ -29,7 +29,7 @@ func NewSdcRecordFromRecord(r api.Record) (*SDCRecord, error) {
 	var err error = nil
 	sdcRecord := new(SDCRecord)
 
-	val := r.GetValue()
+	val := r.Get().Value
 	//Supporting primitives only (and other complex types are simple byte arrays
 	// which has to be parsed out in SDC),
 	// as currently we don't want to support any parsing inside Data Collector Edge
@@ -70,7 +70,7 @@ func NewSdcRecordFromRecord(r api.Record) (*SDCRecord, error) {
 }
 
 func NewRecordFromSDCRecord(stageContext api.StageContext, sdcRecord *SDCRecord) api.Record {
-	record := stageContext.CreateRecord(sdcRecord.Header.GetSourceId(), sdcRecord.Value.Value)
+	record, _ := stageContext.CreateRecord(sdcRecord.Header.GetSourceId(), sdcRecord.Value.Value)
 	originalHeaderImpl := sdcRecord.Header
 	newHeaderImpl := record.GetHeader().(*common.HeaderImpl)
 	//Set Headers to be same as the oldOne

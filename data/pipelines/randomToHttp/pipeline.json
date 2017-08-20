@@ -235,12 +235,12 @@
       "value" : "JSON"
     }, {
       "name" : "conf.resourceUrl",
-      "value" : "$[httpUrl]"
+      "value" : "${httpUrl}"
     }, {
       "name" : "conf.headers",
       "value" : [ {
         "key" : "X-SDC-APPLICATION-ID",
-        "value" : "$[sdcAppId]"
+        "value" : "${sdcAppId}"
       } ]
     }, {
       "name" : "conf.httpMethod",

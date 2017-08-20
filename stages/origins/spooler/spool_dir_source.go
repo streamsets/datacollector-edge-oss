@@ -171,7 +171,7 @@ func (s *SpoolDirSource) createRecordAndAddToBatch(line_bytes []byte, batchMaker
 			line_bytes = line_bytes[:len(line_bytes)-1] //Throwing out delimiter
 		}
 
-		record := s.GetStageContext().CreateRecord(
+		record, _ := s.GetStageContext().CreateRecord(
 			fInfo.getFullPath()+"::"+
 				strconv.FormatInt(fInfo.getOffsetToRead(), 10),
 			string(line_bytes),

@@ -1,6 +1,6 @@
 // +build 386 windows,amd64 windows
 
-//Copied from https://github.com/streamsets/windataextractor/tree/master/dev/src/lib/win/eventlog
+// Copied from https://github.com/streamsets/windataextractor/tree/master/dev/src/lib/win/eventlog
 package windows
 
 import (
@@ -59,7 +59,7 @@ func (elreader *EventLogReader) Open() error {
 	}
 }
 
-//returns -1 if unknown
+// returns -1 if unknown
 func (elreader *EventLogReader) GetCurrentOffset() uint32 {
 	return elreader.offset
 }

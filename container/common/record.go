@@ -6,15 +6,15 @@ import (
 
 type RecordImpl struct {
 	header *HeaderImpl
-	value  interface{}
+	value  *api.Field
 }
 
 func (r *RecordImpl) GetHeader() api.Header {
 	return r.header
 }
 
-func (r *RecordImpl) GetValue() interface{} {
-	return r.value
+func (r *RecordImpl) Get() api.Field {
+	return *r.value
 }
 
 type HeaderImpl struct {
@@ -124,9 +124,16 @@ func (h *HeaderImpl) SetErrorDataCollectorId(errorDataCollectorId string) {
 	h.ErrorDataCollectorId = errorDataCollectorId
 }
 
-func createRecord(recordSourceId string, value interface{}) api.Record {
+func createRecord(recordSourceId string, value interface{}) (api.Record, error) {
 	headerImpl := &HeaderImpl{Attributes: make(map[string]interface{})}
-	r := &RecordImpl{header: headerImpl, value: value}
+	field, err := api.CreateField(value)
+	if err != nil {
+		return nil, err
+	}
+	r := &RecordImpl{
+		header: headerImpl,
+		value:  field,
+	}
 	headerImpl.SetSourceId(recordSourceId)
-	return r
+	return r, nil
 }

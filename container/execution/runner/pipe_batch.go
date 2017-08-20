@@ -64,7 +64,9 @@ func (b *FullPipeBatch) CompleteStage(batchMaker *BatchMakerImpl) {
 	if batchMaker.stagePipe.IsSource() {
 		b.inputRecords += int64(len(batchMaker.GetStageOutput()))
 	}
-	b.fullPayload = batchMaker.GetStageOutput()
+	if !batchMaker.stagePipe.IsTarget() {
+		b.fullPayload = batchMaker.GetStageOutput()
+	}
 }
 
 func (b *FullPipeBatch) GetErrorSink() *common.ErrorSink {

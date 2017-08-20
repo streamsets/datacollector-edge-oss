@@ -85,6 +85,6 @@ func (md *MqttClientSource) MessageHandler(client MQTT.Client, msg MQTT.Message)
 	value := string(msg.Payload())
 	msgId := strconv.FormatUint(uint64(msg.MessageID()), 10)
 	log.Println("[DEBUG] Incoming Data: ", value)
-	record := md.GetStageContext().CreateRecord(msgId, value)
+	record, _ := md.GetStageContext().CreateRecord(msgId, value)
 	md.incomingRecords <- record
 }

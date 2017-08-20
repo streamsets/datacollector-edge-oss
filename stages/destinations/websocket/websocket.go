@@ -62,7 +62,7 @@ func (w *WebSocketClientDestination) Write(batch api.Batch) error {
 	}
 
 	for _, record := range batch.GetRecords() {
-		jsonValue, err := json.Marshal(record.GetValue())
+		jsonValue, err := json.Marshal(record.Get().Value)
 		if err != nil {
 			log.Println("[ERROR] Marshalling:", err)
 			w.GetStageContext().ToError(err, record)

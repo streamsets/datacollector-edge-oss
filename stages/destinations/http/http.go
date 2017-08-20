@@ -5,10 +5,11 @@ import (
 	"compress/gzip"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/json"
 	"errors"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/recordio"
+	"github.com/streamsets/datacollector-edge/container/recordio/jsonrecord"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io/ioutil"
 	"log"
@@ -29,6 +30,7 @@ type HttpClientDestination struct {
 	httpCompression       string
 	tlsEnabled            bool
 	trustStoreFilePath    string
+	recordWriterFactory   recordio.RecordWriterFactory
 }
 
 func init() {
@@ -64,42 +66,60 @@ func (h *HttpClientDestination) Init(stageContext api.StageContext) error {
 			h.tlsEnabled = stageContext.GetResolvedValue(config.Value).(bool)
 		}
 
-		if config.Name == "conf.client.tlsConfig.trustStoreFilePath" {
+		if config.Name == "conf.client.tlsConfig.trustStoreFilePath" && config.Value != nil {
 			h.trustStoreFilePath = stageContext.GetResolvedValue(config.Value).(string)
 		}
 	}
+	// TODO: Create RecordWriter based on configuration
+	h.recordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{}
 	return nil
 }
 
 func (h *HttpClientDestination) Write(batch api.Batch) error {
 	log.Println("[DEBUG] HttpClientDestination write method")
-	var err error
-	var batchByteArray []byte
-	for _, record := range batch.GetRecords() {
-		var recordByteArray []byte
-		value := record.GetValue()
-		switch value.(type) {
-		case string:
-			recordByteArray = []byte(value.(string))
-		default:
-			recordByteArray, err = json.Marshal(value)
-			if err != nil {
-				return err
-			}
-		}
+	if h.singleRequestPerBatch && len(batch.GetRecords()) > 0 {
+		return h.writeSingleRequestPerBatch(batch)
+	} else {
+		return h.writeSingleRequestPerRecord(batch)
+	}
+}
 
-		if h.singleRequestPerBatch {
-			batchByteArray = append(batchByteArray, recordByteArray...)
-			batchByteArray = append(batchByteArray, "\n"...)
-		} else {
-			err = h.sendToSDC(recordByteArray)
-			if err != nil {
-				return err
-			}
+func (h *HttpClientDestination) writeSingleRequestPerBatch(batch api.Batch) error {
+	var err error
+	batchBuffer := bytes.NewBuffer([]byte{})
+	recordWriter, err := h.recordWriterFactory.CreateWriter(h.GetStageContext(), batchBuffer)
+	if err != nil {
+		return err
+	}
+	for _, record := range batch.GetRecords() {
+		err = recordWriter.WriteRecord(record)
+		if err != nil {
+			return err
 		}
 	}
-	if h.singleRequestPerBatch && len(batch.GetRecords()) > 0 {
-		err = h.sendToSDC(batchByteArray)
+	recordWriter.Flush()
+	recordWriter.Close()
+	return h.sendToSDC(batchBuffer.Bytes())
+}
+
+func (h *HttpClientDestination) writeSingleRequestPerRecord(batch api.Batch) error {
+	var err error
+	for _, record := range batch.GetRecords() {
+		recordBuffer := bytes.NewBuffer([]byte{})
+		recordWriter, err := h.recordWriterFactory.CreateWriter(h.GetStageContext(), recordBuffer)
+		if err != nil {
+			return err
+		}
+		err = recordWriter.WriteRecord(record)
+		if err != nil {
+			return err
+		}
+		recordWriter.Flush()
+		recordWriter.Close()
+		err = h.sendToSDC(recordBuffer.Bytes())
+		if err != nil {
+			return err
+		}
 	}
 	return err
 }

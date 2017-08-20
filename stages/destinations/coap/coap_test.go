@@ -40,7 +40,7 @@ func TestConfirmableMessage(t *testing.T) {
 	}
 	stageInstance.Init(stageContext)
 	records := make([]api.Record, 1)
-	records[0] = stageContext.CreateRecord("1", "TestData")
+	records[0], _ = stageContext.CreateRecord("1", "TestData")
 	batch := runner.NewBatchImpl("random", records, "randomOffset")
 	err = stageInstance.(api.Destination).Write(batch)
 	if err == nil {
@@ -56,7 +56,7 @@ func TestNonConfirmableMessage(t *testing.T) {
 		t.Error(err)
 	}
 	records := make([]api.Record, 1)
-	records[0] = stageContext.CreateRecord("1", "test data")
+	records[0], _ = stageContext.CreateRecord("1", "test data")
 	batch := runner.NewBatchImpl("random", records, "randomOffset")
 
 	stageInstance.Init(stageContext)

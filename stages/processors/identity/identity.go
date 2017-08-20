@@ -28,7 +28,7 @@ func (i *IdentityProcessor) Init(stageContext api.StageContext) error {
 
 func (i *IdentityProcessor) Process(batch api.Batch, batchMaker api.BatchMaker) error {
 	for _, record := range batch.GetRecords() {
-		batchMaker.AddRecord(i.GetStageContext().CreateRecord("dev-identity", record.GetValue()))
+		batchMaker.AddRecord(record)
 	}
 	return nil
 }

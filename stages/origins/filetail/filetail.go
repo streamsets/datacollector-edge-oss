@@ -81,11 +81,9 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 		select {
 		case line := <-tailObj.Lines:
 			if line != nil {
-				batchMaker.AddRecord(
-					f.GetStageContext().CreateRecord(
-						tailObj.Filename+"::"+
-							strconv.FormatInt(currentOffset, 10),
-						line.Text))
+				record, _ := f.GetStageContext().CreateRecord(tailObj.Filename+"::"+
+					strconv.FormatInt(currentOffset, 10), line.Text)
+				batchMaker.AddRecord(record)
 				recordCount++
 				if recordCount >= maxBatchSize {
 					currentOffset, _ = tailObj.Tell()
