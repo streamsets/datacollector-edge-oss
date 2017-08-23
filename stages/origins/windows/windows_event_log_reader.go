@@ -14,7 +14,7 @@ import (
 
 const (
 	LIBRARY          = "streamsets-datacollector-windows-lib"
-	STAGE_NAME       = "com_streamsets_pipeline_stage_origin_windows_WindowsEventLogReaderDSource"
+	STAGE_NAME       = "com_streamsets_pipeline_stage_origin_windows_WindowsEventLogDSource"
 	WINDOWS          = "windows"
 	LOG_NAME_CONFIG  = "logName"
 	READ_MODE_CONFIG = "readMode"

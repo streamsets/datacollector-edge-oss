@@ -104,8 +104,8 @@
   "stages" : [ {
     "instanceName" : "WindowsEventLogSource_01",
     "library" : "streamsets-datacollector-windows-lib",
-    "stageName" : "com_streamsets_pipeline_stage_origin_windows_WindowsEventLogReaderDSource",
-    "stageVersion" : "10",
+    "stageName" : "com_streamsets_pipeline_stage_origin_windows_WindowsEventLogDSource",
+    "stageVersion" : "1",
     "configuration" : [ {
       "name" : "logName",
       "value" : "Application"
