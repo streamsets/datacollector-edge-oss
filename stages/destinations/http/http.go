@@ -80,9 +80,9 @@ func (h *HttpClientDestination) Init(stageContext api.StageContext) error {
 
 	switch h.dataFormat {
 	case "TEXT":
-		h.recordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{}
-	case "JSON":
 		h.recordWriterFactory = &textrecord.TextWriterFactoryImpl{}
+	case "JSON":
+		h.recordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{}
 	default:
 		return errors.New("Unsupported Data Format - " + h.dataFormat)
 	}
