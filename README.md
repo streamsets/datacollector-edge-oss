@@ -75,6 +75,7 @@ Getting inside the container
 
 ## Pipeline Templates
 
+* [Windows Event To Http](data/pipelines/windowsEventToHttp)
 * [Tail File To Http](data/pipelines/tailFileToHttp)
 * [Directory Spooler to Http](data/pipelines/directoryToHttp)
 * [MQTT To HTTP](data/pipelines/mqttToHttp)
