@@ -37,13 +37,11 @@
     }, {
       "key" : "sdcAppId",
       "value" : "sde"
-    },{
+    },
+    {
       "key" : "logName",
-      "value" : "Application"
-    }, {
-      "key" : "readMode",
-      "value" : "ALL"
-    } ]
+      "value" : "SYSTEM"
+    }]
   }, {
     "name" : "badRecordsHandling",
     "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
@@ -108,10 +106,10 @@
     "stageVersion" : "1",
     "configuration" : [ {
       "name" : "logName",
-      "value" : "Application"
+      "value" : "${logName}"
     },{
       "name" : "readMode",
-      "value" : "all"
+      "value" : "ALL"
     },{
       "name" : "stageOnRecordError",
       "value" : "TO_ERROR"

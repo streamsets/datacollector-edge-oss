@@ -6,7 +6,7 @@
 
 ### To pass runtime parameters
 
-    $ bin/edge -start=windowsEventToHttp -runtimeParameters='{"logName":"Application","readMode":"all","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    $ bin/edge -start=windowsEventToHttp -runtimeParameters='{"logName":"SYSTEM", "httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ## REST API
 
@@ -18,5 +18,5 @@
 
 ### To pass runtime parameters during start
 
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/windowsEventToHttp/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"logName":"Application","readMode":"all","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    $ curl -X POST http://localhost:18633/rest/v1/pipeline/windowsEventToHttp/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"logName":"SYSTEM","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 

@@ -22,8 +22,8 @@ const (
 type EventLogReaderMode string
 
 const (
-	READ_ALL = EventLogReaderMode("all")
-	READ_NEW = EventLogReaderMode("new")
+	READ_ALL = EventLogReaderMode("ALL")
+	READ_NEW = EventLogReaderMode("NEW")
 )
 
 type EventLogReader struct {
