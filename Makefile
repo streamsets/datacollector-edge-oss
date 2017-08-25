@@ -25,7 +25,7 @@ DEPENDENCIES := github.com/julienschmidt/httprouter \
     $(PLATFORM_SPECIFIC_DEPENDENCIES)
 
 
-EXECUTABLES :=dist/bin/$(BINARY_NAME)
+EXECUTABLES :=dist/bin/$(BINARY_NAME)$(BINARY_EXTENSION)
 
 # Build Binaries setting BuildInfo vars
 LDFLAGS :=-ldflags "-X github.com/streamsets/datacollector-edge/container/common.Version=${VERSION} \
@@ -97,7 +97,7 @@ dist-linux-arm:
 dist-windows-amd64:
 	export GOOS="windows"; \
 	export GOARCH="amd64"; \
-	$(MAKE) PLATFORM_SPECIFIC_DEPENDENCIES=github.com/AllenDang/w32 dist-build
+	$(MAKE) PLATFORM_SPECIFIC_DEPENDENCIES=github.com/AllenDang/w32 BINARY_EXTENSION=.exe dist-build
 
 dist-build: $(PACKAGE)
 

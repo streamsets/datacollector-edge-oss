@@ -4,6 +4,8 @@ import (
 	"errors"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"math/big"
+	"reflect"
+	"fmt"
 )
 
 type Field struct {
@@ -31,6 +33,12 @@ func CreateField(value interface{}) (*Field, error) {
 		return CreateIntegerField(value.(int))
 	case int64:
 		return CreateLongField(value.(int64))
+	case uint16:
+		return CreateUInteger16Field(value.(uint16))
+	case uint32:
+		return CreateUInteger32Field(value.(uint32))
+	case uint64:
+		return CreateLongFieldU64(value.(uint64))
 	case float32:
 		return CreateFloatField(value.(float32))
 	case float64:
@@ -41,12 +49,14 @@ func CreateField(value interface{}) (*Field, error) {
 		return CreateBigFloatField(value.(big.Float))
 	case string:
 		return CreateStringField(value.(string))
+	case []string:
+		return CreateStringListField(value.([]string))
 	case map[string]interface{}:
 		return CreateMapField(value.(map[string]interface{}))
 	case []interface{}:
 		return CreateListField(value.([]interface{}))
 	default:
-		err = errors.New("Unsupported Field Type")
+		err = errors.New(fmt.Sprintf("Unsupported Field Type %s", reflect.TypeOf(value)))
 	}
 	return nil, err
 }
@@ -75,6 +85,18 @@ func CreateInteger32Field(value int32) (*Field, error) {
 	return &Field{Type: fieldtype.INTEGER, Value: value}, nil
 }
 
+func CreateUInteger16Field(value uint16) (*Field, error) {
+	return &Field{Type: fieldtype.INTEGER, Value: value}, nil
+}
+
+func CreateUInteger32Field(value uint32) (*Field, error) {
+	return &Field{Type: fieldtype.INTEGER, Value: value}, nil
+}
+
+func CreateLongFieldU64(value uint64) (*Field, error) {
+	return &Field{Type: fieldtype.LONG, Value: value}, nil
+}
+
 func CreateLongField(value int64) (*Field, error) {
 	return &Field{Type: fieldtype.LONG, Value: value}, nil
 }
@@ -99,6 +121,19 @@ func CreateStringField(value string) (*Field, error) {
 	return &Field{Type: fieldtype.STRING, Value: value}, nil
 }
 
+func CreateStringListField(listStringValue []string) (*Field, error) {
+	listFieldValue := []Field{}
+	for _, value := range listStringValue {
+		valField, err := CreateField(value)
+		if err != nil {
+			return nil, err
+		}
+		listFieldValue = append(listFieldValue, *valField)
+	}
+	listField := Field{Type: fieldtype.LIST, Value: listFieldValue}
+	return &listField, nil
+}
+
 func CreateMapField(mapValue map[string]interface{}) (*Field, error) {
 	mapFieldValue := make(map[string]Field)
 	for key, value := range mapValue {
@@ -121,6 +156,6 @@ func CreateListField(listValue []interface{}) (*Field, error) {
 		}
 		listFieldValue = append(listFieldValue, *valField)
 	}
-	mapField := Field{Type: fieldtype.LIST, Value: listFieldValue}
-	return &mapField, nil
+	listField := Field{Type: fieldtype.LIST, Value: listFieldValue}
+	return &listField, nil
 }
