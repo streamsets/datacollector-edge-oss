@@ -47,10 +47,13 @@ func (wel *WindowsEventLogSource) Init(stageContext api.StageContext) error {
 		value := wel.GetStageContext().GetResolvedValue(config.Value)
 		switch config.Name {
 		case LOG_NAME_CONFIG:
-			wel.logName = value.(string)
+			logName := value.(string)
+			if !(logName == SYSTEM || logName == APPLICATION || logName == SECURITY) {
+				return errors.New("Unsupported Log Name :" + logName)
+			}
+			wel.logName = logName
 		case READ_MODE_CONFIG:
 			wel.readMode = EventLogReaderMode(value.(string))
-			//TODO throw illegal args
 		}
 	}
 	return nil
@@ -68,13 +71,14 @@ func (wel *WindowsEventLogSource) Produce(
 			off, err := strconv.ParseUint(lastSourceOffset, 10, 32)
 			if err != nil {
 				wel.GetStageContext().ReportError(err)
+				log.Printf("[ERROR] Error happened on Parsing Offset '%s' : %s\n", lastSourceOffset, err.Error())
 				return lastSourceOffset, err
 			}
-			log.Println("")
 			wel.eventLogReader = NewReader(wel.logName, wel.readMode, uint32(off), true)
 		}
 		if err := wel.eventLogReader.Open(); err != nil {
 			wel.GetStageContext().ReportError(err)
+			log.Printf("[ERROR] Error happened on Opening Event Reader : %s\n", err.Error())
 			return lastSourceOffset, err
 		}
 	}
@@ -82,17 +86,24 @@ func (wel *WindowsEventLogSource) Produce(
 	if events, err := wel.eventLogReader.Read(maxBatchSize); err == nil {
 		if len(events) > 0 {
 			for _, event := range events {
-				wel.createRecordAndAddToBatch(event, batchMaker)
+				er := wel.createRecordAndAddToBatch(event, batchMaker)
+				if er != nil {
+					log.Printf("[ERROR] Error when creating record : %s\n", er.Error())
+					wel.GetStageContext().ReportError(er)
+					return lastSourceOffset, er
+				}
 			}
 		}
 	} else {
 		wel.GetStageContext().ReportError(err)
+		log.Printf("[ERROR] Error happened on Event Log Read : %s\n", err.Error())
+		return lastSourceOffset, err
 	}
 
-	return string(wel.eventLogReader.GetCurrentOffset()), nil
+	return strconv.FormatUint(uint64(wel.eventLogReader.GetCurrentOffset()), 10), nil
 }
 
-func (wel *WindowsEventLogSource) createRecordAndAddToBatch(event EventLogRecord, batchMaker api.BatchMaker) {
+func (wel *WindowsEventLogSource) createRecordAndAddToBatch(event EventLogRecord, batchMaker api.BatchMaker) error {
 	recordId := event.ComputerName + "::" + wel.logName + "::" + string(event.EventID)
 	recordVal := map[string]interface{}{
 		"ComputerName":  event.ComputerName,
@@ -117,10 +128,10 @@ func (wel *WindowsEventLogSource) createRecordAndAddToBatch(event EventLogRecord
 	}
 	record, er := wel.GetStageContext().CreateRecord(recordId, recordVal)
 	if er != nil {
-		log.Println("[ERROR] Error when creating record : " + er.Error())
-		wel.GetStageContext().ReportError(er)
+		return er
 	}
 	batchMaker.AddRecord(record)
+	return nil
 }
 
 func (wel *WindowsEventLogSource) Destroy() error {

@@ -2,17 +2,17 @@
   "pipelineId" : "windowsEventToHttp",
   "title" : "WindowsEventToHttp",
   "description" : "",
-  "created" : 1494779775365,
-  "lastModified" : 1494806547726,
+  "created" : 1503891274510,
+  "lastModified" : 1503891533556,
   "creator" : "admin",
   "lastModifier" : "admin",
   "lastRev" : "0",
-  "uuid" : "73d56c43-b113-4a28-8722-6d42ee5f0d63",
+  "uuid" : "d6ea1a0d-7e6c-477e-90d3-e32446367f73",
   "valid" : true,
   "metadata" : {
     "labels" : [ ]
   },
   "name" : "windowsEventToHttp",
-  "sdcVersion" : "2.7.0.0",
-  "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
+  "sdcVersion" : "2.8.0.0-SNAPSHOT",
+  "sdcId" : "9245e911-8ba1-11e7-9022-9fbbbbee2c62"
 }

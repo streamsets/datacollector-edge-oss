@@ -14,6 +14,12 @@ import (
 	"syscall"
 )
 
+const (
+	APPLICATION = "Application"
+	SYSTEM      = "System"
+	SECURITY    = "Security"
+)
+
 var (
 	registryEntries = []string{"CategoryMessageFile", "EventMessageFile", "ParameterMessageFile"}
 
@@ -60,11 +66,11 @@ func loadResourceLibrary(libname string) (handle syscall.Handle, err error) {
 
 func findLibNames(logName, appName string) (libs map[string]string, err error) {
 	var key string
-	if logName == "Application" {
+	if logName == APPLICATION {
 		key = `SYSTEM\CurrentControlSet\Services\Eventlog\Application\` + appName
-	} else if logName == "System" {
+	} else if logName == SYSTEM {
 		key = `SYSTEM\CurrentControlSet\Services\Eventlog\System\` + appName
-	} else if logName == "Security" {
+	} else if logName == SECURITY {
 		key = `SYSTEM\CurrentControlSet\Services\Eventlog\Security\` + appName
 	}
 	if entries, err := ReadFromRegistryKey(key, registryEntries); err == nil {
@@ -79,7 +85,7 @@ func getResourceLibraries(logName, appName string) map[string]syscall.Handle {
 	librariesLock.RLock()
 	if handles, found := appLibraries[appName]; found {
 		librariesLock.RUnlock()
-		log.Println("[DEBUG] ResourceLibraries - Application=%s libraries found (arleady in cache), %v", appName, handles)
+		log.Printf("[DEBUG] ResourceLibraries - Application=%s libraries found (arleady in cache), %v", appName, handles)
 		return handles
 	} else {
 		librariesLock.RUnlock()
@@ -111,7 +117,7 @@ func getResourceLibraries(logName, appName string) map[string]syscall.Handle {
 			}
 		}
 		appLibraries[appName] = handles
-		log.Println("[DEBUG] ResourceLibraries - Application=%s libraries found (added to cache), %v", appName, handles)
+		log.Printf("[DEBUG] ResourceLibraries - Application=%s libraries found (added to cache), %v", appName, handles)
 		return handles
 	}
 }
