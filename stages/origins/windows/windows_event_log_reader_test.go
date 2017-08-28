@@ -68,9 +68,9 @@ func testWindowsEventLogRead(t *testing.T, logName string, maxBatchSize int) {
 }
 
 func TestWindowsApplicationLogRead(t *testing.T) {
-	testWindowsEventLogRead(t, "APPLICATION", 1)
+	testWindowsEventLogRead(t, APPLICATION, 1)
 }
 
 func TestWindowsSystemLogRead(t *testing.T) {
-	testWindowsEventLogRead(t, "SYSTEM", 1)
+	testWindowsEventLogRead(t, SYSTEM, 1)
 }
