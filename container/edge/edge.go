@@ -2,7 +2,6 @@ package edge
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/dpm"
@@ -12,8 +11,6 @@ import (
 	"github.com/streamsets/datacollector-edge/container/util"
 	"log"
 	"os"
-	"path"
-	"strings"
 )
 
 const (
@@ -26,38 +23,38 @@ const (
 )
 
 type DataCollectorEdgeMain struct {
-	config        *Config
-	buildInfo     *common.BuildInfo
-	runtimeInfo   *common.RuntimeInfo
-	webServerTask *http.WebServerTask
-	manager       *manager.PipelineManager
+	Config        *Config
+	BuildInfo     *common.BuildInfo
+	RuntimeInfo   *common.RuntimeInfo
+	WebServerTask *http.WebServerTask
+	Manager       *manager.PipelineManager
 }
 
-func DoMain() {
-	debugFlag := flag.Bool("debug", false, "Debug flag")
-	startFlag := flag.String("start", "", "Start Pipeline flag")
-	runtimeParametersFlag := flag.String("runtimeParameters", "", "Runtime Parameters flag")
-	flag.Parse()
+func DoMain(
+	baseDir string,
+	debugFlag bool,
+	startFlag string,
+	runtimeParametersFlag string,
+) (*DataCollectorEdgeMain, error) {
+	dataCollectorEdge, _ := newDataCollectorEdge(baseDir, debugFlag)
 
-	dataExtractor, _ := newDataCollectorEdge(*debugFlag)
-
-	if len(*startFlag) > 0 {
+	if len(startFlag) > 0 {
 		var runtimeParameters map[string]interface{}
-		if len(*runtimeParametersFlag) > 0 {
-			err := json.Unmarshal([]byte(*runtimeParametersFlag), &runtimeParameters)
+		if len(runtimeParametersFlag) > 0 {
+			err := json.Unmarshal([]byte(runtimeParametersFlag), &runtimeParameters)
 			if err != nil {
 				panic(err)
 			}
 		}
 
-		fmt.Println("Starting Pipeline: ", *startFlag)
-		state, err := dataExtractor.manager.GetRunner(*startFlag).GetStatus()
+		fmt.Println("Starting Pipeline: ", startFlag)
+		state, err := dataCollectorEdge.Manager.GetRunner(startFlag).GetStatus()
 		if state != nil && state.Status == common.RUNNING {
 			// If status is running, change it back to stopped
-			dataExtractor.manager.StopPipeline(*startFlag)
+			dataCollectorEdge.Manager.StopPipeline(startFlag)
 		}
 
-		state, err = dataExtractor.manager.StartPipeline(*startFlag, runtimeParameters)
+		state, err = dataCollectorEdge.Manager.StartPipeline(startFlag, runtimeParameters)
 		if err != nil {
 			panic(err)
 		}
@@ -65,19 +62,12 @@ func DoMain() {
 		fmt.Println(string(stateJson))
 	}
 
-	dataExtractor.webServerTask.Run()
+	return dataCollectorEdge, nil
 }
 
-func newDataCollectorEdge(debugFlag bool) (*DataCollectorEdgeMain, error) {
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	baseDir := strings.TrimSuffix(path.Dir(ex), "/bin")
+func newDataCollectorEdge(baseDir string, debugFlag bool) (*DataCollectorEdgeMain, error) {
 	initializeLog(debugFlag, baseDir)
-
 	log.Println("[INFO] Base Dir: ", baseDir)
-	fmt.Println("Base Dir: ", baseDir)
 
 	config := NewConfig()
 	config.FromTomlFile(baseDir + DefaultConfigFilePath)
@@ -93,11 +83,11 @@ func newDataCollectorEdge(debugFlag bool) (*DataCollectorEdgeMain, error) {
 	dpm.RegisterWithDPM(config.DPM, buildInfo, runtimeInfo)
 
 	return &DataCollectorEdgeMain{
-		config:        config,
-		buildInfo:     buildInfo,
-		runtimeInfo:   runtimeInfo,
-		webServerTask: webServerTask,
-		manager:       pipelineManager,
+		Config:        config,
+		BuildInfo:     buildInfo,
+		RuntimeInfo:   runtimeInfo,
+		WebServerTask: webServerTask,
+		Manager:       pipelineManager,
 	}, nil
 }
 

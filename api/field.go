@@ -2,10 +2,10 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"math/big"
 	"reflect"
-	"fmt"
 )
 
 type Field struct {

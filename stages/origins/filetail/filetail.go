@@ -5,10 +5,10 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
+	"io"
 	"log"
 	"strconv"
 	"time"
-	"io"
 )
 
 const (
@@ -81,7 +81,7 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 		select {
 		case line := <-tailObj.Lines:
 			if line != nil {
-				recordId := tailObj.Filename+"::"+ strconv.FormatInt(currentOffset, 10)
+				recordId := tailObj.Filename + "::" + strconv.FormatInt(currentOffset, 10)
 				recordValue := map[string]interface{}{"text": line.Text}
 				record, _ := f.GetStageContext().CreateRecord(recordId, recordValue)
 				batchMaker.AddRecord(record)

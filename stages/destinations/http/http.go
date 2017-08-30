@@ -10,11 +10,11 @@ import (
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"github.com/streamsets/datacollector-edge/container/recordio/jsonrecord"
+	"github.com/streamsets/datacollector-edge/container/recordio/textrecord"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"github.com/streamsets/datacollector-edge/container/recordio/textrecord"
 )
 
 const (
