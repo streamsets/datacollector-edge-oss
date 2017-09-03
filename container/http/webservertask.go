@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
@@ -16,20 +17,10 @@ type WebServerTask struct {
 	buildInfo         *common.BuildInfo
 	manager           *manager.PipelineManager
 	pipelineStoreTask store.PipelineStoreTask
+	httpServer        *http.Server
 }
 
 func (webServerTask *WebServerTask) Init() error {
-	return nil
-}
-
-func (webServerTask *WebServerTask) homeHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	encoder := json.NewEncoder(w)
-	encoder.SetIndent("", "\t")
-	encoder.Encode(webServerTask.buildInfo)
-
-}
-
-func (webServerTask *WebServerTask) Run() {
 	fmt.Println("Running on URI : http://localhost" + webServerTask.config.BindAddress)
 	log.Println("[INFO] Running on URI : http://localhost" + webServerTask.config.BindAddress)
 	router := httprouter.New()
@@ -51,8 +42,26 @@ func (webServerTask *WebServerTask) Run() {
 	router.GET("/rest/v1/pipeline/:pipelineId", webServerTask.getPipeline)
 	router.PUT("/rest/v1/pipeline/:pipelineTitle", webServerTask.createPipeline)
 	router.POST("/rest/v1/pipeline/:pipelineId", webServerTask.savePipeline)
+	webServerTask.httpServer = &http.Server{Addr: webServerTask.config.BindAddress, Handler: router}
+	return nil
+}
 
-	fmt.Println(http.ListenAndServe(webServerTask.config.BindAddress, router))
+func (webServerTask *WebServerTask) homeHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "\t")
+	encoder.Encode(webServerTask.buildInfo)
+
+}
+
+func (webServerTask *WebServerTask) Run() {
+	fmt.Println(webServerTask.httpServer.ListenAndServe())
+}
+
+func (webServerTask *WebServerTask) Shutdown() {
+	err := webServerTask.httpServer.Shutdown(context.Background())
+	if err != nil {
+		fmt.Printf("Error happened when shutting webserver : %s\n", err.Error())
+	}
 }
 
 func NewWebServerTask(

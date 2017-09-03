@@ -23,11 +23,12 @@ const (
 )
 
 type DataCollectorEdgeMain struct {
-	Config        *Config
-	BuildInfo     *common.BuildInfo
-	RuntimeInfo   *common.RuntimeInfo
-	WebServerTask *http.WebServerTask
-	Manager       *manager.PipelineManager
+	Config            *Config
+	BuildInfo         *common.BuildInfo
+	RuntimeInfo       *common.RuntimeInfo
+	WebServerTask     *http.WebServerTask
+	Manager           *manager.PipelineManager
+	PipelineStoreTask store.PipelineStoreTask
 }
 
 func DoMain(
@@ -83,11 +84,12 @@ func newDataCollectorEdge(baseDir string, debugFlag bool) (*DataCollectorEdgeMai
 	dpm.RegisterWithDPM(config.DPM, buildInfo, runtimeInfo)
 
 	return &DataCollectorEdgeMain{
-		Config:        config,
-		BuildInfo:     buildInfo,
-		RuntimeInfo:   runtimeInfo,
-		WebServerTask: webServerTask,
-		Manager:       pipelineManager,
+		Config:            config,
+		BuildInfo:         buildInfo,
+		RuntimeInfo:       runtimeInfo,
+		WebServerTask:     webServerTask,
+		Manager:           pipelineManager,
+		PipelineStoreTask: pipelineStoreTask,
 	}, nil
 }
 
