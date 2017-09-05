@@ -1,0 +1,44 @@
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/AllenDang/w32"
+
+[[constraint]]
+  name = "github.com/BurntSushi/toml"
+  version = "0.3.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/dustin/go-coap"
+
+[[constraint]]
+  name = "github.com/eclipse/paho.mqtt.golang"
+  version = "1.1.0"
+
+[[constraint]]
+  name = "github.com/gorilla/websocket"
+  version = "1.2.0"
+
+[[constraint]]
+  name = "github.com/hpcloud/tail"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/julienschmidt/httprouter"
+  version = "1.1.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/madhukard/govaluate"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/rcrowley/go-metrics"
+
+[[constraint]]
+  name = "github.com/satori/go.uuid"
+  version = "1.1.0"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/sys"

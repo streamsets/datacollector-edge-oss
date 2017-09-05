@@ -5,25 +5,13 @@ VERSION := 2.8.0.0-SNAPSHOT
 DIR=.
 BuiltDate := `date +%FT%T%z`
 BuiltRepoSha := `git rev-parse HEAD`
+GOPATH := $(HOME)/go
 
 # Go setup
 GO=go
 TEST=go test
 
-
-DEPENDENCIES := github.com/julienschmidt/httprouter \
-    github.com/BurntSushi/toml \
-    github.com/satori/go.uuid \
-    github.com/hpcloud/tail/... \
-    github.com/gorilla/websocket \
-    github.com/eclipse/paho.mqtt.golang \
-    github.com/dustin/go-coap \
-    github.com/jmcvetta/randutil \
-    github.com/rcrowley/go-metrics \
-    github.com/madhukard/govaluate \
-    golang.org/x/sys/windows/... \
-    $(PLATFORM_SPECIFIC_DEPENDENCIES)
-
+DEPENDENCIES := github.com/golang/dep/cmd/dep
 
 EXECUTABLES :=dist/bin/$(BINARY_NAME)$(BINARY_EXTENSION)
 
@@ -44,11 +32,14 @@ all: | $(EXECUTABLES)
 
 $(DEPENDENCIES_DIR):
 	@echo Downloading $@
-	$(GO) get $@
+	$(GO) get -u $@
 
 dist/bin/$(BINARY_NAME): main.go $(DEPENDENCIES_DIR)
 
 $(EXECUTABLES):
+	@echo Downloading Dependencies...
+	@$(GOPATH)/bin/dep ensure
+	@rm -dRf dist/bin/
 	$(GO) build $(LDFLAGS) -o $@ $<
 	@cp -n -R $(DIR)/etc/ dist/etc/ 2>/dev/null || :
 	@cp -n -R $(DIR)/data/ dist/data/ 2>/dev/null || :
@@ -62,6 +53,10 @@ test:
 clean:
 	@echo Cleaning Workspace...
 	rm -dRf dist
+
+clean-vendor:
+	@echo Cleaning Vendor...
+	rm -dRf vendor
 
 $(PACKAGE): all
 	@echo Packaging Binaries...
@@ -97,7 +92,7 @@ dist-linux-arm:
 dist-windows-amd64:
 	export GOOS="windows"; \
 	export GOARCH="amd64"; \
-	$(MAKE) PLATFORM_SPECIFIC_DEPENDENCIES=github.com/AllenDang/w32 BINARY_EXTENSION=.exe dist-build
+	$(MAKE) BINARY_EXTENSION=.exe dist-build
 
 dist-build: $(PACKAGE)
 
