@@ -3,7 +3,6 @@ package store
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"io"
 	"io/ioutil"
@@ -53,7 +52,6 @@ func GetState(pipelineId string) (*common.PipelineState, error) {
 
 		var pipelineState common.PipelineState
 		err := json.Unmarshal(file, &pipelineState)
-		fmt.Println(pipelineState.PipelineId)
 		return &pipelineState, err
 	}
 }

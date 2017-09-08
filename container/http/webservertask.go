@@ -60,7 +60,7 @@ func (webServerTask *WebServerTask) Run() {
 func (webServerTask *WebServerTask) Shutdown() {
 	err := webServerTask.httpServer.Shutdown(context.Background())
 	if err != nil {
-		fmt.Printf("Error happened when shutting webserver : %s\n", err.Error())
+		log.Printf("[ERROR] Error happened when shutting webserver : %s\n", err.Error())
 	}
 }
 
