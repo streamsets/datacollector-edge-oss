@@ -56,15 +56,15 @@ func TestSimpleExpression(test *testing.T) {
 	RunEvaluationTests(evaluationTests, nil, test)
 }
 
-func RunEvaluationTests(evaluationTests []EvaluationTest, definitionsList []ELDefinitions, test *testing.T) {
+func RunEvaluationTests(evaluationTests []EvaluationTest, definitionsList []Definitions, test *testing.T) {
 	fmt.Printf("Running %d evaluation test cases...\n", len(evaluationTests))
 	for _, evaluationTest := range evaluationTests {
-		elEValuator, _ := NewELEvaluator(
+		evaluator, _ := NewEvaluator(
 			evaluationTest.Name,
 			evaluationTest.Parameters,
 			definitionsList,
 		)
-		result, err := elEValuator.Evaluate(evaluationTest.Expression)
+		result, err := evaluator.Evaluate(evaluationTest.Expression)
 
 		if err != nil {
 			if evaluationTest.ErrorCase {

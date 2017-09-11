@@ -48,32 +48,37 @@ func (h *HttpClientDestination) Init(stageContext api.StageContext) error {
 	stageConfig := h.GetStageConfig()
 	log.Println("[DEBUG] HttpClientDestination Init method")
 	for _, config := range stageConfig.Configuration {
+		resolvedConfigValue, err := stageContext.GetResolvedValue(config.Value)
+		if err != nil {
+			return err
+		}
+
 		if config.Name == "conf.resourceUrl" {
-			h.resourceUrl = stageContext.GetResolvedValue(config.Value).(string)
+			h.resourceUrl = resolvedConfigValue.(string)
 		}
 
 		if config.Name == "conf.headers" {
-			h.headers = stageContext.GetResolvedValue(config.Value).([]interface{})
+			h.headers = resolvedConfigValue.([]interface{})
 		}
 
 		if config.Name == "conf.singleRequestPerBatch" {
-			h.singleRequestPerBatch = stageContext.GetResolvedValue(config.Value).(bool)
+			h.singleRequestPerBatch = resolvedConfigValue.(bool)
 		}
 
 		if config.Name == "conf.client.httpCompression" {
-			h.httpCompression = stageContext.GetResolvedValue(config.Value).(string)
+			h.httpCompression = resolvedConfigValue.(string)
 		}
 
 		if config.Name == "conf.client.tlsConfig.tlsEnabled" {
-			h.tlsEnabled = stageContext.GetResolvedValue(config.Value).(bool)
+			h.tlsEnabled = resolvedConfigValue.(bool)
 		}
 
 		if config.Name == "conf.client.tlsConfig.trustStoreFilePath" && config.Value != nil {
-			h.trustStoreFilePath = stageContext.GetResolvedValue(config.Value).(string)
+			h.trustStoreFilePath = resolvedConfigValue.(string)
 		}
 
 		if config.Name == "conf.dataFormat" && config.Value != nil {
-			h.dataFormat = stageContext.GetResolvedValue(config.Value).(string)
+			h.dataFormat = resolvedConfigValue.(string)
 		}
 
 	}

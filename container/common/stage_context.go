@@ -17,34 +17,39 @@ type StageContextImpl struct {
 	ErrorSink   *ErrorSink
 }
 
-func (s *StageContextImpl) GetResolvedValue(configValue interface{}) interface{} {
+func (s *StageContextImpl) GetResolvedValue(configValue interface{}) (interface{}, error) {
+	var err error
 	switch t := configValue.(type) {
 	case string:
-		if s.IsParameter(configValue.(string)) {
-			return s.GetParameterValue(configValue.(string))
-		} else {
-			return configValue
-		}
-		break
+		return s.resolveIfImplicitEL(configValue.(string))
 	case []interface{}:
 		for i, val := range t {
-			t[i] = s.GetResolvedValue(val)
+			t[i], err = s.GetResolvedValue(val)
+			if err != nil {
+				return nil, err
+			}
 		}
-		return configValue
+		return configValue, nil
 	case map[string]interface{}:
 		for k, v := range t {
-			t[k] = s.GetResolvedValue(v)
+			t[k], err = s.GetResolvedValue(v)
+			if err != nil {
+				return nil, err
+			}
 		}
-		return configValue
+		return configValue, nil
 	default:
-		return configValue
+		return configValue, nil
 	}
-	return configValue
+	return configValue, nil
 }
 
-func (s *StageContextImpl) IsParameter(configValue string) bool {
-	return strings.HasPrefix(configValue, el.PARAMETER_PREFIX) &&
-		strings.HasSuffix(configValue, el.PARAMETER_SUFFIX)
+func (s *StageContextImpl) resolveIfImplicitEL(configValue string)  (interface{}, error)  {
+	if el.IsElString(configValue) {
+		return el.Evaluate(configValue, "configName", s.Parameters)
+	} else {
+		return configValue, nil
+	}
 }
 
 func (s *StageContextImpl) GetParameterValue(paramName string) interface{} {

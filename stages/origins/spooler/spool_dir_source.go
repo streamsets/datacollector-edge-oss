@@ -60,7 +60,10 @@ func (s *SpoolDirSource) Init(stageContext api.StageContext) error {
 	s.spooler = &DirectorySpooler{}
 
 	for _, config := range stageConfig.Configuration {
-		value := s.GetStageContext().GetResolvedValue(config.Value)
+		value, err := stageContext.GetResolvedValue(config.Value)
+		if err != nil {
+			return err
+		}
 		switch config.Name {
 		case SPOOL_DIR_PATH:
 			s.spooler.dirPath = value.(string)

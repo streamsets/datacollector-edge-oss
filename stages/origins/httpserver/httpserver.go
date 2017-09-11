@@ -36,11 +36,15 @@ func (h *HttpServerOrigin) Init(stageContext api.StageContext) error {
 	}
 	stageConfig := h.GetStageConfig()
 	for _, config := range stageConfig.Configuration {
+		resolvedConfigValue, err := stageContext.GetResolvedValue(config.Value)
+		if err != nil {
+			return err
+		}
 		if config.Name == "httpConfigs.port" {
-			h.port = stageContext.GetResolvedValue(config.Value).(int64)
+			h.port = resolvedConfigValue.(int64)
 		}
 		if config.Name == "httpConfigs.appId" {
-			h.appId = stageContext.GetResolvedValue(config.Value).(string)
+			h.appId = resolvedConfigValue.(string)
 		}
 	}
 

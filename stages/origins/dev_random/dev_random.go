@@ -34,10 +34,14 @@ func (d *DevRandom) Init(stageContext api.StageContext) error {
 	}
 	stageConfig := d.GetStageConfig()
 	for _, config := range stageConfig.Configuration {
+		resolvedConfigValue, err := stageContext.GetResolvedValue(config.Value)
+		if err != nil {
+			return err
+		}
 		if config.Name == CONF_FIELDS {
-			d.fields = strings.Split(config.Value.(string), ",")
+			d.fields = strings.Split(resolvedConfigValue.(string), ",")
 		} else if config.Name == CONF_DELAY {
-			d.delay = config.Value.(float64)
+			d.delay = resolvedConfigValue.(float64)
 		}
 	}
 	return nil

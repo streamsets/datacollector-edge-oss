@@ -253,5 +253,5 @@ func TestStringEL(test *testing.T) {
 			ErrorCase:  true,
 		},
 	}
-	RunEvaluationTests(evaluationTests, []ELDefinitions{&StringEL{}}, test)
+	RunEvaluationTests(evaluationTests, []Definitions{&StringEL{}}, test)
 }

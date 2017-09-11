@@ -41,13 +41,20 @@ func (f *FileTailOrigin) Init(stageContext api.StageContext) error {
 			fileInfos := config.Value.([]interface{})
 			if len(fileInfos) > 0 {
 				fileInfo := fileInfos[0].(map[string]interface{})
-				f.fileFullPath = stageContext.GetResolvedValue(fileInfo[CONF_FILE_FULL_PATH]).(string)
+				resolvedConfigValue, err := stageContext.GetResolvedValue(fileInfo[CONF_FILE_FULL_PATH])
+				if err != nil {
+					return err
+				}
+				f.fileFullPath = resolvedConfigValue.(string)
 			}
-
 		}
 
 		if config.Name == CONF_MAX_WAIT_TIME_SECS {
-			f.maxWaitTimeSecs = stageContext.GetResolvedValue(config.Value).(float64)
+			resolvedConfigValue, err := stageContext.GetResolvedValue(config.Value)
+			if err != nil {
+				return err
+			}
+			f.maxWaitTimeSecs = resolvedConfigValue.(float64)
 		}
 	}
 

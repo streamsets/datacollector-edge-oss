@@ -8,13 +8,13 @@ import (
 	_ "github.com/streamsets/datacollector-edge/stages/destinations"
 	_ "github.com/streamsets/datacollector-edge/stages/origins"
 	_ "github.com/streamsets/datacollector-edge/stages/processors"
+	"log"
 	"os"
 	"os/signal"
 	"path"
 	"runtime"
 	"strings"
 	"syscall"
-	"log"
 )
 
 func main() {
@@ -37,7 +37,6 @@ func main() {
 	go shutdownHook(dataCollectorEdge)
 	dataCollectorEdge.WebServerTask.Run()
 }
-
 
 func shutdownHook(dataCollectorEdge *edge.DataCollectorEdgeMain) {
 	c := make(chan os.Signal, 1)

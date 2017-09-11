@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-func getStageContext(fields string, delay float64) api.StageContext {
+func getStageContext(fields string, delay float64, parameters  map[string]interface{}) api.StageContext {
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = LIBRARY
 	stageConfig.StageName = STAGE_NAME
@@ -26,13 +26,13 @@ func getStageContext(fields string, delay float64) api.StageContext {
 	}
 	return &common.StageContextImpl{
 		StageConfig: stageConfig,
-		Parameters:  nil,
+		Parameters:  parameters,
 	}
 }
 
 func TestDevRandomOrigin(t *testing.T) {
 	fields := "a,b,c"
-	stageContext := getStageContext(fields, 10)
+	stageContext := getStageContext(fields, 10, nil)
 	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
 	if err != nil {
 		t.Error(err)
@@ -68,6 +68,67 @@ func TestDevRandomOrigin(t *testing.T) {
 			}
 			fmt.Println("key - ", key)
 			if !strings.Contains(fields, key) {
+				t.Error("Invalid key")
+			}
+		}
+	}
+	stageInstance.Destroy()
+}
+
+func TestDevRandom_Init(t *testing.T) {
+	fields := "${fields}"
+	stageContext := getStageContext(fields, 10, nil)
+	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
+	if err != nil {
+		t.Error(err)
+	}
+	err = stageInstance.Init(stageContext)
+	if err == nil || !strings.Contains(err.Error(), "No parameter 'fields' found") {
+		t.Error("Excepted error - No parameter 'fields' found")
+	}
+}
+
+func TestDevRandom_Init_StringEL(t *testing.T) {
+	fields := "${str:trim(FIELDS_PARAM)}"
+	parameters := map[string]interface{}{
+		"FIELDS_PARAM": "x,y,z  ",
+	}
+	stageContext := getStageContext(fields, 10, parameters)
+	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
+	if err != nil {
+		t.Error(err)
+	}
+	err = stageInstance.Init(stageContext)
+	if err != nil {
+		t.Error(err)
+	}
+
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
+	_, err = stageInstance.(api.Origin).Produce("", 1, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+	}
+
+	records := batchMaker.GetStageOutput()
+	if len(records) != 1 {
+		t.Error("Excepted 5 records but got - ", len(records))
+	}
+
+	for _, record := range records {
+		rootField := record.Get()
+		if rootField.Type != fieldtype.MAP {
+			t.Error("Exception Map field type but got - ", rootField.Type, " Value: ", rootField.Value)
+			return
+		}
+
+		rootFieldValue := rootField.Value.(map[string]api.Field)
+		for key, field := range rootFieldValue {
+			if field.Type != fieldtype.INTEGER {
+				t.Error("Exception Map field type but got - ", field.Type, " Value: ", field.Value)
+				return
+			}
+			fmt.Println("key - ", key)
+			if !((key == "x") || (key == "y") || (key == "z")) {
 				t.Error("Invalid key")
 			}
 		}

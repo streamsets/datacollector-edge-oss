@@ -1,10 +1,10 @@
 {
   "schemaVersion" : 4,
   "version" : 7,
-  "pipelineId" : "randomToIdentityToTrash",
-  "title" : "randomToIdentityToTrash",
+  "pipelineId" : "pipeline48605842-273f-4f30-aebc-4613ff2c526e",
+  "title" : "pipeline",
   "description" : "",
-  "uuid" : "5bbcec33-a227-4555-9f42-b17f91986f33",
+  "uuid" : "be44abb1-1b91-4a7d-b030-c1d2cb9285ea",
   "configuration" : [ {
     "name" : "executionMode",
     "value" : "EDGE"
@@ -31,7 +31,13 @@
     "value" : [ ]
   }, {
     "name" : "constants",
-    "value" : [ ]
+    "value" : [ {
+      "key" : "fields",
+      "value" : "f1,f2,f3"
+    }, {
+      "key" : "batchDelay",
+      "value" : "1000"
+    } ]
   }, {
     "name" : "badRecordsHandling",
     "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
@@ -96,10 +102,10 @@
     "stageVersion" : "1",
     "configuration" : [ {
       "name" : "fields",
-      "value" : "a,b,c"
+      "value" : "${fields}"
     }, {
       "name" : "delay",
-      "value" : 1000
+      "value" : "${batchDelay}"
     }, {
       "name" : "maxRecordsToGenerate",
       "value" : 922337203685
@@ -177,22 +183,22 @@
     "eventLanes" : [ ]
   },
   "info" : {
-    "pipelineId" : "randomToIdentityToTrash",
-    "title" : "randomToIdentityToTrash",
+    "pipelineId" : "pipeline48605842-273f-4f30-aebc-4613ff2c526e",
+    "title" : "pipeline",
     "description" : "",
-    "created" : 1502554489114,
-    "lastModified" : 1502554489161,
+    "created" : 1505071288690,
+    "lastModified" : 1505072194518,
     "creator" : "admin",
     "lastModifier" : "admin",
     "lastRev" : "0",
-    "uuid" : "5bbcec33-a227-4555-9f42-b17f91986f33",
+    "uuid" : "be44abb1-1b91-4a7d-b030-c1d2cb9285ea",
     "valid" : true,
     "metadata" : {
       "labels" : [ ]
     },
-    "name" : "randomToIdentityToTrash",
-    "sdcVersion" : "2.7.0.0",
-    "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
+    "name" : "pipeline48605842-273f-4f30-aebc-4613ff2c526e",
+    "sdcVersion" : "2.8.0.0-SNAPSHOT",
+    "sdcId" : "55ad9523-94da-11e7-bcf0-d57b6ab9caf8"
   },
   "metadata" : {
     "labels" : [ ]
@@ -214,13 +220,45 @@
     "outputLanes" : [ ],
     "eventLanes" : [ ]
   },
-  "startEventStages" : [ ],
-  "stopEventStages" : [ ],
+  "startEventStages" : [ {
+    "instanceName" : "Discard_StartEventStage",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Start Event - Discard",
+      "xPos" : 720,
+      "yPos" : 50,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ ],
+    "outputLanes" : [ ],
+    "eventLanes" : [ ]
+  } ],
+  "stopEventStages" : [ {
+    "instanceName" : "Discard_StopEventStage",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Stop Event - Discard",
+      "xPos" : 720,
+      "yPos" : 50,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ ],
+    "outputLanes" : [ ],
+    "eventLanes" : [ ]
+  } ],
   "issues" : {
     "pipelineIssues" : [ ],
     "stageIssues" : { },
     "issueCount" : 0
   },
-  "previewable" : true,
-  "valid" : true
+  "valid" : true,
+  "previewable" : true
 }

@@ -33,7 +33,11 @@ func (md *MqttClientDestination) Init(stageContext api.StageContext) error {
 	}
 
 	for _, config := range md.GetStageConfig().Configuration {
-		configName, configValue := config.Name, stageContext.GetResolvedValue(config.Value)
+		configName := config.Name
+		configValue, err := stageContext.GetResolvedValue(config.Value)
+		if err != nil {
+			return err
+		}
 		if configName == "publisherConf.topic" {
 			md.topic = configValue.(string)
 		} else {

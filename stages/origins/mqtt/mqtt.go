@@ -46,13 +46,17 @@ func (ms *MqttClientSource) Init(stageContext api.StageContext) error {
 	ms.incomingRecords = make(chan api.Record)
 
 	for _, config := range ms.GetStageConfig().Configuration {
-		configName, configValue := config.Name, stageContext.GetResolvedValue(config.Value)
+		configName := config.Name
+		resolvedConfigValue, err := stageContext.GetResolvedValue(config.Value)
+		if err != nil {
+			return err
+		}
 		if configName == "subscriberConf.topicFilters" {
-			for _, topicFilter := range configValue.([]interface{}) {
+			for _, topicFilter := range resolvedConfigValue.([]interface{}) {
 				ms.topicFilters = append(ms.topicFilters, topicFilter.(string))
 			}
 		} else {
-			ms.InitConfig(configName, configValue)
+			ms.InitConfig(configName, resolvedConfigValue)
 		}
 	}
 
