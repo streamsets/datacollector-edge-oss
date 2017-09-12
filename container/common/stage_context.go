@@ -44,7 +44,7 @@ func (s *StageContextImpl) GetResolvedValue(configValue interface{}) (interface{
 	return configValue, nil
 }
 
-func (s *StageContextImpl) resolveIfImplicitEL(configValue string)  (interface{}, error)  {
+func (s *StageContextImpl) resolveIfImplicitEL(configValue string) (interface{}, error) {
 	if el.IsElString(configValue) {
 		return el.Evaluate(configValue, "configName", s.Parameters)
 	} else {

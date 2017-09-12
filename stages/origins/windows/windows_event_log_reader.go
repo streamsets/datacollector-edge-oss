@@ -44,7 +44,10 @@ func (wel *WindowsEventLogSource) Init(stageContext api.StageContext) error {
 	}
 
 	for _, config := range stageConfig.Configuration {
-		value := wel.GetStageContext().GetResolvedValue(config.Value)
+		value, err := wel.GetStageContext().GetResolvedValue(config.Value)
+		if err != nil {
+			return err
+		}
 		switch config.Name {
 		case LOG_NAME_CONFIG:
 			logName := value.(string)

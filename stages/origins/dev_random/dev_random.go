@@ -18,8 +18,9 @@ const (
 
 type DevRandom struct {
 	*common.BaseStage
-	fields []string
-	delay  float64
+	Fields     string  `ConfigDef:"name=fields,type=STRING,required=true"`
+	Delay      float64 `ConfigDef:"name=delay,type=NUMBER,required=true"`
+	fieldsList []string
 }
 
 func init() {
@@ -32,27 +33,16 @@ func (d *DevRandom) Init(stageContext api.StageContext) error {
 	if err := d.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-	stageConfig := d.GetStageConfig()
-	for _, config := range stageConfig.Configuration {
-		resolvedConfigValue, err := stageContext.GetResolvedValue(config.Value)
-		if err != nil {
-			return err
-		}
-		if config.Name == CONF_FIELDS {
-			d.fields = strings.Split(resolvedConfigValue.(string), ",")
-		} else if config.Name == CONF_DELAY {
-			d.delay = resolvedConfigValue.(float64)
-		}
-	}
+	d.fieldsList = strings.Split(d.Fields, ",")
 	return nil
 }
 
 func (d *DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {
 	r := rand.New(rand.NewSource(99))
-	time.Sleep(time.Duration(d.delay) * time.Millisecond)
+	time.Sleep(time.Duration(d.Delay) * time.Millisecond)
 	for i := 0; i < maxBatchSize; i++ {
 		var recordValue = make(map[string]interface{})
-		for _, field := range d.fields {
+		for _, field := range d.fieldsList {
 			recordValue[field] = r.Int()
 		}
 		record, err := d.GetStageContext().CreateRecord("dev-random", recordValue)

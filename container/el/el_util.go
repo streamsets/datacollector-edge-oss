@@ -7,7 +7,7 @@ func IsElString(configValue string) bool {
 		strings.HasSuffix(configValue, PARAMETER_SUFFIX)
 }
 
-func Evaluate(value string,  configName string, parameters map[string]interface{}) (interface{}, error) {
+func Evaluate(value string, configName string, parameters map[string]interface{}) (interface{}, error) {
 	evaluator, _ := NewEvaluator(
 		configName,
 		parameters,
@@ -17,4 +17,3 @@ func Evaluate(value string,  configName string, parameters map[string]interface{
 	)
 	return evaluator.Evaluate(value)
 }
-

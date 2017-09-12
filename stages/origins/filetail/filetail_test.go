@@ -3,8 +3,8 @@ package filetail
 import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
-	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io/ioutil"
 	"log"
 	"os"
@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-func getStageContext(filePath string, maxWaitTimeSecs float64) api.StageContext {
+func getStageContext(filePath string, maxWaitTimeSecs float64) *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = LIBRARY
 	stageConfig.StageName = STAGE_NAME
@@ -40,10 +40,11 @@ func getStageContext(filePath string, maxWaitTimeSecs float64) api.StageContext 
 
 func TestInvalidFilePath(t *testing.T) {
 	stageContext := getStageContext("/no/such/file", 2)
-	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
 	}
+	stageInstance := stageBean.Stage
 	err = stageInstance.Init(stageContext)
 	if err != nil {
 		t.Error(err)
@@ -73,10 +74,11 @@ func TestValidFilePath(t *testing.T) {
 	}
 
 	stageContext := getStageContext(filePath, 2)
-	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
 	}
+	stageInstance := stageBean.Stage
 	err = stageInstance.Init(stageContext)
 	if err != nil {
 		t.Error(err)
@@ -144,10 +146,11 @@ func _TestChannelDeadlockIssue(t *testing.T) {
 	filePath1 := "/Users/test/dpm.log"
 
 	stageContext := getStageContext(filePath1, 2)
-	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
 	}
+	stageInstance := stageBean.Stage
 	err = stageInstance.Init(stageContext)
 	if err != nil {
 		t.Error(err)

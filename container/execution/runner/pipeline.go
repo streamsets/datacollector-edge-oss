@@ -164,11 +164,8 @@ func NewPipeline(
 	runtimeParameters map[string]interface{},
 	metricRegistry metrics.Registry,
 ) (*Pipeline, error) {
-	pipelineBean, err := creation.NewPipelineBean(standaloneRunner.GetPipelineConfig())
-	if err != nil {
-		return nil, err
-	}
 
+	pipelineConfigForParam := creation.NewPipelineConfigBean(standaloneRunner.GetPipelineConfig())
 	stageRuntimeList := make([]StageRuntime, len(standaloneRunner.pipelineConfig.Stages))
 	pipes := make([]Pipe, len(standaloneRunner.pipelineConfig.Stages))
 	errorSink := common.NewErrorSink()
@@ -176,12 +173,17 @@ func NewPipeline(
 	var errorStageRuntime StageRuntime
 
 	var resolvedParameters = make(map[string]interface{})
-	for k, v := range pipelineBean.Config.Constants {
+	for k, v := range pipelineConfigForParam.Constants {
 		if runtimeParameters != nil && runtimeParameters[k] != nil {
 			resolvedParameters[k] = runtimeParameters[k]
 		} else {
 			resolvedParameters[k] = v
 		}
+	}
+
+	pipelineBean, err := creation.NewPipelineBean(standaloneRunner.GetPipelineConfig(), resolvedParameters)
+	if err != nil {
+		return nil, err
 	}
 
 	for i, stageBean := range pipelineBean.Stages {

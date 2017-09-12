@@ -5,13 +5,13 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
-	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"strings"
 	"testing"
 )
 
-func getStageContext(fields string, delay float64, parameters  map[string]interface{}) api.StageContext {
+func getStageContext(fields string, delay float64, parameters map[string]interface{}) *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = LIBRARY
 	stageConfig.StageName = STAGE_NAME
@@ -33,10 +33,13 @@ func getStageContext(fields string, delay float64, parameters  map[string]interf
 func TestDevRandomOrigin(t *testing.T) {
 	fields := "a,b,c"
 	stageContext := getStageContext(fields, 10, nil)
-	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
+
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
 	}
+	stageInstance := stageBean.Stage
+
 	err = stageInstance.Init(stageContext)
 	if err != nil {
 		t.Error(err)
@@ -78,11 +81,7 @@ func TestDevRandomOrigin(t *testing.T) {
 func TestDevRandom_Init(t *testing.T) {
 	fields := "${fields}"
 	stageContext := getStageContext(fields, 10, nil)
-	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
-	if err != nil {
-		t.Error(err)
-	}
-	err = stageInstance.Init(stageContext)
+	_, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err == nil || !strings.Contains(err.Error(), "No parameter 'fields' found") {
 		t.Error("Excepted error - No parameter 'fields' found")
 	}
@@ -94,10 +93,11 @@ func TestDevRandom_Init_StringEL(t *testing.T) {
 		"FIELDS_PARAM": "x,y,z  ",
 	}
 	stageContext := getStageContext(fields, 10, parameters)
-	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
 	}
+	stageInstance := stageBean.Stage
 	err = stageInstance.Init(stageContext)
 	if err != nil {
 		t.Error(err)

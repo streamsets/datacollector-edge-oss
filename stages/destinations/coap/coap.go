@@ -28,9 +28,9 @@ const (
 
 type CoapClientDestination struct {
 	*common.BaseStage
-	resourceUrl         string
-	coapMethod          string
-	requestType         string
+	ResourceUrl         string `ConfigDef:"name=conf.resourceUrl,type=STRING,required=true"`
+	CoapMethod          string `ConfigDef:"name=conf.coapMethod,type=STRING,required=true"`
+	RequestType         string `ConfigDef:"name=conf.requestType,type=STRING,required=true"`
 	recordWriterFactory recordio.RecordWriterFactory
 }
 
@@ -46,21 +46,7 @@ func (c *CoapClientDestination) Init(stageContext api.StageContext) error {
 	if err := c.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-	stageConfig := c.GetStageConfig()
 	log.Println("[DEBUG] CoapClientDestination Init method")
-	for _, config := range stageConfig.Configuration {
-		if config.Name == CONF_RESOURCE_URL {
-			c.resourceUrl = config.Value.(string)
-		}
-
-		if config.Name == CONF_COAP_METHOD {
-			c.coapMethod = config.Value.(string)
-		}
-
-		if config.Name == CONF_RESOURCE_TYPE {
-			c.requestType = config.Value.(string)
-		}
-	}
 	// TODO: Create RecordWriter based on configuration
 	c.recordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{}
 	mid = 0
@@ -91,14 +77,14 @@ func (c *CoapClientDestination) sendRecordToSDC(record api.Record) error {
 	recordWriter.Flush()
 	recordWriter.Close()
 
-	parsedURL, err := url.Parse(c.resourceUrl)
+	parsedURL, err := url.Parse(c.ResourceUrl)
 	if err != nil {
 		return err
 	}
 
 	req := coap.Message{
-		Type:      getCoapType(c.requestType),
-		Code:      getCoapMethod(c.coapMethod),
+		Type:      getCoapType(c.RequestType),
+		Code:      getCoapMethod(c.CoapMethod),
 		MessageID: mid,
 		Payload:   payloadBuffer.Bytes(),
 	}

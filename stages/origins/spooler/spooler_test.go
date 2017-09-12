@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
-	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -22,7 +22,7 @@ func createStageContext(
 	useLastModified bool,
 	initialFileToProcess string,
 	pollingTimeoutSeconds int64,
-) api.StageContext {
+) *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = LIBRARY
 	stageConfig.StageName = STAGE_NAME
@@ -108,11 +108,12 @@ func createFileAndWriteContents(t *testing.T, filePath string, data string) {
 	}
 }
 
-func createSpooler(t *testing.T, stageContext api.StageContext) api.Stage {
-	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
+func createSpooler(t *testing.T, stageContext *common.StageContextImpl) api.Stage {
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
+	stageInstance := stageBean.Stage
 	err = stageInstance.Init(stageContext)
 	if err != nil {
 		t.Fatal(err)
@@ -122,7 +123,7 @@ func createSpooler(t *testing.T, stageContext api.StageContext) api.Stage {
 
 func createSpoolerAndRun(
 	t *testing.T,
-	stageContext api.StageContext,
+	stageContext *common.StageContextImpl,
 	lastSourceOffset string,
 	batchSize int,
 ) (string, []api.Record) {

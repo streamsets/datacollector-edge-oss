@@ -3,12 +3,12 @@ package coap
 import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
-	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"testing"
 )
 
-func getStageContext(resourceUrl string, coapMethod string, messageType string) api.StageContext {
+func getStageContext(resourceUrl string, coapMethod string, messageType string) *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = LIBRARY
 	stageConfig.StageName = STAGE_NAME
@@ -34,10 +34,24 @@ func getStageContext(resourceUrl string, coapMethod string, messageType string) 
 
 func TestConfirmableMessage(t *testing.T) {
 	stageContext := getStageContext("coap://localhost:56831/sdc", POST, CONFIRMABLE)
-	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
 	}
+	stageInstance := stageBean.Stage
+
+	if stageInstance.(*CoapClientDestination).ResourceUrl != "coap://localhost:56831/sdc" {
+		t.Error("Failed to inject config value for ResourceUrl")
+	}
+
+	if stageInstance.(*CoapClientDestination).CoapMethod != POST {
+		t.Error("Failed to inject config value for CoapMethod")
+	}
+
+	if stageInstance.(*CoapClientDestination).RequestType != CONFIRMABLE {
+		t.Error("Failed to inject config value for RequestType")
+	}
+
 	stageInstance.Init(stageContext)
 	records := make([]api.Record, 1)
 	records[0], _ = stageContext.CreateRecord("1", "TestData")
@@ -51,10 +65,11 @@ func TestConfirmableMessage(t *testing.T) {
 
 func TestNonConfirmableMessage(t *testing.T) {
 	stageContext := getStageContext("coap://localhost:45/sdc", POST, NONCONFIRMABLE)
-	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
 	}
+	stageInstance := stageBean.Stage
 	records := make([]api.Record, 1)
 	records[0], _ = stageContext.CreateRecord("1", "test data")
 	batch := runner.NewBatchImpl("random", records, "randomOffset")

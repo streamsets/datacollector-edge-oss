@@ -18,8 +18,8 @@ const (
 
 type HttpServerOrigin struct {
 	*common.BaseStage
-	port         int64
-	appId        string
+	Port         float64 `ConfigDef:"name=httpConfigs.port,type=NUMBER,required=true"`
+	AppId        string  `ConfigDef:"name=httpConfigs.appId,type=STRING,required=true"`
 	httpServer   *http.Server
 	incomingData chan interface{}
 }
@@ -34,20 +34,6 @@ func (h *HttpServerOrigin) Init(stageContext api.StageContext) error {
 	if err := h.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-	stageConfig := h.GetStageConfig()
-	for _, config := range stageConfig.Configuration {
-		resolvedConfigValue, err := stageContext.GetResolvedValue(config.Value)
-		if err != nil {
-			return err
-		}
-		if config.Name == "httpConfigs.port" {
-			h.port = resolvedConfigValue.(int64)
-		}
-		if config.Name == "httpConfigs.appId" {
-			h.appId = resolvedConfigValue.(string)
-		}
-	}
-
 	h.httpServer = h.startHttpServer()
 	h.incomingData = make(chan interface{})
 	return nil
@@ -86,12 +72,12 @@ func (h *HttpServerOrigin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *HttpServerOrigin) startHttpServer() *http.Server {
 	srv := &http.Server{
-		Addr:    ":" + strconv.FormatInt(h.port, 10),
+		Addr:    ":" + strconv.FormatFloat(h.Port, 'E', -1, 64),
 		Handler: h,
 	}
 
 	go func() {
-		log.Println("[DEBUG] HTTP Server - Running on URI : http://localhost:", h.port)
+		log.Println("[DEBUG] HTTP Server - Running on URI : http://localhost:", h.Port)
 		if err := srv.ListenAndServe(); err != nil {
 			log.Printf("[ERROR] Httpserver: ListenAndServe() error: %s", err)
 			h.GetStageContext().ReportError(err)

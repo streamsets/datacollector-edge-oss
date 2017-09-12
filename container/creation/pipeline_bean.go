@@ -11,7 +11,10 @@ type PipelineBean struct {
 	StatsAggregatorStage StageBean
 }
 
-func NewPipelineBean(pipelineConfig common.PipelineConfiguration) (PipelineBean, error) {
+func NewPipelineBean(
+	pipelineConfig common.PipelineConfiguration,
+	runtimeParameters map[string]interface{},
+) (PipelineBean, error) {
 	var pipelineBean PipelineBean
 	var err error
 
@@ -19,7 +22,7 @@ func NewPipelineBean(pipelineConfig common.PipelineConfiguration) (PipelineBean,
 
 	stageBeans := make([]StageBean, len(pipelineConfig.Stages))
 	for i, stageConfig := range pipelineConfig.Stages {
-		stageBeans[i], err = NewStageBean(stageConfig)
+		stageBeans[i], err = NewStageBean(stageConfig, runtimeParameters)
 		if err != nil {
 			return pipelineBean, err
 		}
@@ -27,14 +30,14 @@ func NewPipelineBean(pipelineConfig common.PipelineConfiguration) (PipelineBean,
 	pipelineBean.Stages = stageBeans
 
 	if pipelineConfig.ErrorStage.InstanceName != "" {
-		pipelineBean.ErrorStage, err = NewStageBean(pipelineConfig.ErrorStage)
+		pipelineBean.ErrorStage, err = NewStageBean(pipelineConfig.ErrorStage, runtimeParameters)
 		if err != nil {
 			return pipelineBean, err
 		}
 	}
 
 	if pipelineConfig.StatsAggregatorStage.InstanceName != "" {
-		pipelineBean.StatsAggregatorStage, err = NewStageBean(pipelineConfig.StatsAggregatorStage)
+		pipelineBean.StatsAggregatorStage, err = NewStageBean(pipelineConfig.StatsAggregatorStage, runtimeParameters)
 		if err != nil {
 			return pipelineBean, err
 		}

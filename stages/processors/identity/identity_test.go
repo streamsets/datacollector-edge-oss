@@ -4,11 +4,11 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
-	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"testing"
+	"github.com/streamsets/datacollector-edge/container/creation"
 )
 
-func getStageContext() api.StageContext {
+func getStageContext() *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = LIBRARY
 	stageConfig.StageName = STAGE_NAME
@@ -21,10 +21,11 @@ func getStageContext() api.StageContext {
 
 func TestIdentityProcessor(t *testing.T) {
 	stageContext := getStageContext()
-	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
 	}
+	stageInstance := stageBean.Stage
 	stageInstance.Init(stageContext)
 	records := make([]api.Record, 1)
 	records[0], _ = stageContext.CreateRecord("1", "TestData")

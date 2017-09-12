@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func createStageContext(logName string) api.StageContext {
+func createStageContext(logName string) *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = LIBRARY
 	stageConfig.StageName = STAGE_NAME
@@ -31,10 +31,11 @@ func createStageContext(logName string) api.StageContext {
 }
 
 func testWindowsEventLogRead(t *testing.T, logName string, maxBatchSize int) {
-	stageInstance, err := stagelibrary.CreateStageInstance(LIBRARY, STAGE_NAME)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
+	stageInstance := stageBean.Stage
 
 	stageContext := createStageContext(logName)
 	err = stageInstance.Init(stageContext)
