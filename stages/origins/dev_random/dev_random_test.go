@@ -30,6 +30,24 @@ func getStageContext(fields string, delay float64, parameters map[string]interfa
 	}
 }
 
+func TestDevRandom_Init(t *testing.T) {
+	fields := "a,b,c"
+	stageContext := getStageContext(fields, 10, nil)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	if err != nil {
+		t.Error(err)
+	}
+	stageInstance := stageBean.Stage
+
+	if stageInstance.(*DevRandom).Fields != "a,b,c" {
+		t.Error("Failed to inject config value for Fields")
+	}
+
+	if stageInstance.(*DevRandom).Delay != 10 {
+		t.Error("Failed to inject config value for Delay")
+	}
+}
+
 func TestDevRandomOrigin(t *testing.T) {
 	fields := "a,b,c"
 	stageContext := getStageContext(fields, 10, nil)
@@ -78,7 +96,7 @@ func TestDevRandomOrigin(t *testing.T) {
 	stageInstance.Destroy()
 }
 
-func TestDevRandom_Init(t *testing.T) {
+func TestDevRandom_Init_Parameter(t *testing.T) {
 	fields := "${fields}"
 	stageContext := getStageContext(fields, 10, nil)
 	_, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)

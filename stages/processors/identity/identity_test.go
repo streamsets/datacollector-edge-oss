@@ -3,9 +3,9 @@ package identity
 import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
 	"testing"
-	"github.com/streamsets/datacollector-edge/container/creation"
 )
 
 func getStageContext() *common.StageContextImpl {

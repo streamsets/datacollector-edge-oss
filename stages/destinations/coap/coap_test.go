@@ -40,15 +40,15 @@ func TestConfirmableMessage(t *testing.T) {
 	}
 	stageInstance := stageBean.Stage
 
-	if stageInstance.(*CoapClientDestination).ResourceUrl != "coap://localhost:56831/sdc" {
+	if stageInstance.(*CoapClientDestination).Conf.ResourceUrl != "coap://localhost:56831/sdc" {
 		t.Error("Failed to inject config value for ResourceUrl")
 	}
 
-	if stageInstance.(*CoapClientDestination).CoapMethod != POST {
+	if stageInstance.(*CoapClientDestination).Conf.CoapMethod != POST {
 		t.Error("Failed to inject config value for CoapMethod")
 	}
 
-	if stageInstance.(*CoapClientDestination).RequestType != CONFIRMABLE {
+	if stageInstance.(*CoapClientDestination).Conf.RequestType != CONFIRMABLE {
 		t.Error("Failed to inject config value for RequestType")
 	}
 

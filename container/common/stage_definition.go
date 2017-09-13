@@ -1,6 +1,9 @@
 package common
 
-const CONFIG_DEF_TAG_NAME = "ConfigDef"
+const (
+	CONFIG_DEF_TAG_NAME      = "ConfigDef"
+	CONFIG_DEF_BEAN_TAG_NAME = "ConfigDefBean"
+)
 
 type StageDefinition struct {
 	Name                 string

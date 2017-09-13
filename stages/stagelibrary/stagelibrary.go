@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/util"
 	"reflect"
 	"strings"
 	"sync"
@@ -58,30 +59,48 @@ func extractStageDefinition(library string, stageName string, stageInstance inte
 		Library:              library,
 		ConfigDefinitionsMap: make(map[string]*common.ConfigDefinition),
 	}
+	t := reflect.TypeOf(stageInstance).Elem()
+	extractConfigDefinitions(t, "", stageDefinition)
+	return stageDefinition
+}
 
-	t := reflect.ValueOf(stageInstance).Elem()
+func extractConfigDefinitions(
+	t reflect.Type,
+	configPrefix string,
+	stageDefinition *common.StageDefinition,
+) {
 	for i := 0; i < t.NumField(); i++ {
-		field := t.Type().Field(i)
+		field := t.Field(i)
 		configDefTag := field.Tag.Get(common.CONFIG_DEF_TAG_NAME)
-
 		if len(configDefTag) > 0 {
-			configDef := &common.ConfigDefinition{}
-			configDefTagValues := strings.Split(configDefTag, ",")
-			var configName string
-			for _, tagValue := range configDefTagValues {
-				args := strings.Split(tagValue, "=")
-				switch args[0] {
-				case "name":
-					fmt.Sscanf(tagValue, "name=%s", &configName)
-				case "type":
-					fmt.Sscanf(tagValue, "type=%s", &configDef.Type)
-				case "required":
-					fmt.Sscanf(tagValue, "required=%t", &configDef.Required)
-				}
+			extractConfigDefinition(field, configDefTag, configPrefix, stageDefinition)
+		} else {
+			configDefBeanTag := field.Tag.Get(common.CONFIG_DEF_BEAN_TAG_NAME)
+			if len(configDefBeanTag) > 0 {
+				newConfigPrefix := configPrefix + util.LcFirst(field.Name) + "."
+				extractConfigDefinitions(field.Type, newConfigPrefix, stageDefinition)
 			}
-			configDef.Name = field.Name
-			stageDefinition.ConfigDefinitionsMap[configName] = configDef
 		}
 	}
-	return stageDefinition
+}
+
+func extractConfigDefinition(
+	field reflect.StructField,
+	configDefTag string,
+	configPrefix string,
+	stageDefinition *common.StageDefinition,
+) {
+	configDef := &common.ConfigDefinition{}
+	configDefTagValues := strings.Split(configDefTag, ",")
+	for _, tagValue := range configDefTagValues {
+		args := strings.Split(tagValue, "=")
+		switch args[0] {
+		case "type":
+			fmt.Sscanf(tagValue, "type=%s", &configDef.Type)
+		case "required":
+			fmt.Sscanf(tagValue, "required=%t", &configDef.Required)
+		}
+	}
+	configDef.Name = configPrefix + util.LcFirst(field.Name)
+	stageDefinition.ConfigDefinitionsMap[configDef.Name] = configDef
 }

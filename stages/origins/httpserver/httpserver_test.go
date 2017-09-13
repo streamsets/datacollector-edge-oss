@@ -40,11 +40,11 @@ func TestHttpServerOrigin_Init(t *testing.T) {
 		t.Error("Failed to create stage instance")
 	}
 
-	if stageInstance.(*HttpServerOrigin).Port != portNumber {
+	if stageInstance.(*HttpServerOrigin).HttpConfigs.Port != portNumber {
 		t.Error("Failed to inject config value for port number")
 	}
 
-	if stageInstance.(*HttpServerOrigin).AppId != appId {
+	if stageInstance.(*HttpServerOrigin).HttpConfigs.AppId != appId {
 		t.Error("Failed to inject config value for port number")
 	}
 }

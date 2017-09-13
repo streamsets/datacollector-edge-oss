@@ -41,9 +41,9 @@ func (elEvaluator *Evaluator) Evaluate(expression string) (interface{}, error) {
 
 	// TODO: Convert type based on config definition type
 	/*
-	if p, err := strconv.ParseFloat(result.(string), 64); err == nil {
-		return p, nil
-	}
+		if p, err := strconv.ParseFloat(result.(string), 64); err == nil {
+			return p, nil
+		}
 	*/
 
 	return result, err

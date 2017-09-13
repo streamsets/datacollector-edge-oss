@@ -6,6 +6,7 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/el"
+	"github.com/streamsets/datacollector-edge/container/util"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"reflect"
 )
@@ -47,7 +48,10 @@ func NewStageBean(
 	stageBean.Config = stageConfig
 	stageBean.Stage = stageInstance
 
-	err = injectStageConfigs(stageInstance, stageConfig, stageDefinition, runtimeParameters)
+	configMap := stageConfig.GetConfigurationMap()
+	reflectValue := reflect.ValueOf(stageInstance).Elem()
+	reflectType := reflect.TypeOf(stageInstance).Elem()
+	err = injectStageConfigs(reflectValue, reflectType, "", configMap, stageDefinition, runtimeParameters)
 	if err != nil {
 		return stageBean, err
 	}
@@ -57,38 +61,69 @@ func NewStageBean(
 }
 
 func injectStageConfigs(
-	stageInstance api.Stage,
-	stageConfig common.StageConfiguration,
+	reflectValue reflect.Value,
+	reflectType reflect.Type,
+	configPrefix string,
+	configMap map[string]common.Config,
 	stageDefinition *common.StageDefinition,
 	runtimeParameters map[string]interface{},
 ) error {
-	stageInstanceVal := reflect.ValueOf(stageInstance).Elem()
+	for i := 0; i < reflectValue.NumField(); i++ {
+		stageInstanceField := reflectValue.Field(i)
+		stageInstanceFieldType := reflectType.Field(i)
 
-	for _, config := range stageConfig.Configuration {
-		configDef := stageDefinition.ConfigDefinitionsMap[config.Name]
-		if configDef != nil {
-			resolvedValue, err := getResolvedValue(config.Value, runtimeParameters)
-			if err != nil {
-				return err
-			}
-			if resolvedValue != nil {
-				configField := stageInstanceVal.FieldByName(configDef.Name)
-				if configField.CanSet() {
-					switch configDef.Type {
-					case "BOOLEAN":
-						configField.SetBool(resolvedValue.(bool))
-					case "NUMBER":
-						configField.SetFloat(resolvedValue.(float64))
-					case "STRING":
-						configField.SetString(resolvedValue.(string))
-					default:
-						err = errors.New(fmt.Sprintf("Unsupported Field Type %s", reflect.TypeOf(configField)))
+		configDefTag := stageInstanceFieldType.Tag.Get(common.CONFIG_DEF_TAG_NAME)
+		if len(configDefTag) > 0 {
+			configName := configPrefix + util.LcFirst(stageInstanceFieldType.Name)
+			configDef := stageDefinition.ConfigDefinitionsMap[configName]
+			config := configMap[configName]
+			if configDef != nil {
+				resolvedValue, err := getResolvedValue(config.Value, runtimeParameters)
+				if err != nil {
+					return err
+				}
+				if resolvedValue != nil {
+					if stageInstanceField.CanSet() {
+						switch configDef.Type {
+						case "BOOLEAN":
+							stageInstanceField.SetBool(resolvedValue.(bool))
+						case "NUMBER":
+							stageInstanceField.SetFloat(resolvedValue.(float64))
+						case "STRING":
+							stageInstanceField.SetString(resolvedValue.(string))
+						case "MAP":
+							listOfMap := resolvedValue.([]interface{})
+							mapFieldValue := make(map[string]string)
+							for _, mapValue := range listOfMap {
+								key := mapValue.(map[string]interface{})["key"].(string)
+								value := mapValue.(map[string]interface{})["value"].(string)
+								mapFieldValue[key] = value
+							}
+							stageInstanceField.Set(reflect.ValueOf(mapFieldValue))
+						default:
+							err = errors.New(fmt.Sprintf("Unsupported Field Type %s", reflect.TypeOf(stageInstanceField)))
+						}
 					}
+				}
+			}
+		} else {
+			configDefBeanTag := stageInstanceFieldType.Tag.Get(common.CONFIG_DEF_BEAN_TAG_NAME)
+			if len(configDefBeanTag) > 0 {
+				newConfigPrefix := configPrefix + util.LcFirst(stageInstanceFieldType.Name) + "."
+				err := injectStageConfigs(
+					stageInstanceField,
+					stageInstanceFieldType.Type,
+					newConfigPrefix,
+					configMap,
+					stageDefinition,
+					runtimeParameters,
+				)
+				if err != nil {
+					return err
 				}
 			}
 		}
 	}
-
 	return nil
 }
 

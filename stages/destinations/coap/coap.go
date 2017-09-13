@@ -28,10 +28,14 @@ const (
 
 type CoapClientDestination struct {
 	*common.BaseStage
-	ResourceUrl         string `ConfigDef:"name=conf.resourceUrl,type=STRING,required=true"`
-	CoapMethod          string `ConfigDef:"name=conf.coapMethod,type=STRING,required=true"`
-	RequestType         string `ConfigDef:"name=conf.requestType,type=STRING,required=true"`
+	Conf                ClientTargetConfig `ConfigDefBean:"conf"`
 	recordWriterFactory recordio.RecordWriterFactory
+}
+
+type ClientTargetConfig struct {
+	ResourceUrl string `ConfigDef:"type=STRING,required=true"`
+	CoapMethod  string `ConfigDef:"type=STRING,required=true"`
+	RequestType string `ConfigDef:"type=STRING,required=true"`
 }
 
 var mid uint16
@@ -77,14 +81,14 @@ func (c *CoapClientDestination) sendRecordToSDC(record api.Record) error {
 	recordWriter.Flush()
 	recordWriter.Close()
 
-	parsedURL, err := url.Parse(c.ResourceUrl)
+	parsedURL, err := url.Parse(c.Conf.ResourceUrl)
 	if err != nil {
 		return err
 	}
 
 	req := coap.Message{
-		Type:      getCoapType(c.RequestType),
-		Code:      getCoapMethod(c.CoapMethod),
+		Type:      getCoapType(c.Conf.RequestType),
+		Code:      getCoapMethod(c.Conf.CoapMethod),
 		MessageID: mid,
 		Payload:   payloadBuffer.Bytes(),
 	}

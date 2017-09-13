@@ -53,6 +53,14 @@ type StageConfiguration struct {
 	EventLanes    []string               `json:"eventLanes"`
 }
 
+func (s StageConfiguration) GetConfigurationMap() map[string]Config {
+	configurationMap := make(map[string]Config)
+	for _, config := range s.Configuration {
+		configurationMap[config.Name] = config
+	}
+	return configurationMap
+}
+
 type PipelineEnvelope struct {
 	PipelineConfig     PipelineConfiguration  `json:"pipelineConfig"`
 	PipelineRules      map[string]interface{} `json:"pipelineRules"`

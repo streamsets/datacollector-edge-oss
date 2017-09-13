@@ -18,10 +18,14 @@ const (
 
 type HttpServerOrigin struct {
 	*common.BaseStage
-	Port         float64 `ConfigDef:"name=httpConfigs.port,type=NUMBER,required=true"`
-	AppId        string  `ConfigDef:"name=httpConfigs.appId,type=STRING,required=true"`
+	HttpConfigs  RawHttpConfigs `ConfigDefBean:"name=httpConfigs"`
 	httpServer   *http.Server
 	incomingData chan interface{}
+}
+
+type RawHttpConfigs struct {
+	Port  float64 `ConfigDef:"type=NUMBER,required=true"`
+	AppId string  `ConfigDef:"type=STRING,required=true"`
 }
 
 func init() {
@@ -72,12 +76,12 @@ func (h *HttpServerOrigin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *HttpServerOrigin) startHttpServer() *http.Server {
 	srv := &http.Server{
-		Addr:    ":" + strconv.FormatFloat(h.Port, 'E', -1, 64),
+		Addr:    ":" + strconv.FormatFloat(h.HttpConfigs.Port, 'E', -1, 64),
 		Handler: h,
 	}
 
 	go func() {
-		log.Println("[DEBUG] HTTP Server - Running on URI : http://localhost:", h.Port)
+		log.Println("[DEBUG] HTTP Server - Running on URI : http://localhost:", h.HttpConfigs.Port)
 		if err := srv.ListenAndServe(); err != nil {
 			log.Printf("[ERROR] Httpserver: ListenAndServe() error: %s", err)
 			h.GetStageContext().ReportError(err)

@@ -18,21 +18,32 @@ import (
 )
 
 const (
-	DEBUG      = false
 	LIBRARY    = "streamsets-datacollector-basic-lib"
 	STAGE_NAME = "com_streamsets_pipeline_stage_destination_http_HttpClientDTarget"
 )
 
 type HttpClientDestination struct {
 	*common.BaseStage
-	resourceUrl           string
-	headers               []interface{}
-	singleRequestPerBatch bool
-	httpCompression       string
-	tlsEnabled            bool
-	trustStoreFilePath    string
-	dataFormat            string
-	recordWriterFactory   recordio.RecordWriterFactory
+	Conf                HttpClientTargetConfig `ConfigDefBean:"conf"`
+	recordWriterFactory recordio.RecordWriterFactory
+}
+
+type HttpClientTargetConfig struct {
+	DataFormat            string            `ConfigDef:"type=STRING,required=true"`
+	ResourceUrl           string            `ConfigDef:"type=STRING,required=true"`
+	Headers               map[string]string `ConfigDef:"type=MAP,required=true"`
+	SingleRequestPerBatch bool              `ConfigDef:"type=BOOLEAN,required=true"`
+	Client                ClientConfigBean  `ConfigDefBean:"client"`
+}
+
+type ClientConfigBean struct {
+	HttpCompression string        `ConfigDef:"type=STRING,required=true"`
+	TlsConfig       TlsConfigBean `ConfigDefBean:"tlsConfig"`
+}
+
+type TlsConfigBean struct {
+	TlsEnabled         bool   `ConfigDef:"type=BOOLEAN,required=true"`
+	TrustStoreFilePath string `ConfigDef:"type=STRING,required=true"`
 }
 
 func init() {
@@ -45,51 +56,16 @@ func (h *HttpClientDestination) Init(stageContext api.StageContext) error {
 	if err := h.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-	stageConfig := h.GetStageConfig()
+
 	log.Println("[DEBUG] HttpClientDestination Init method")
-	for _, config := range stageConfig.Configuration {
-		resolvedConfigValue, err := stageContext.GetResolvedValue(config.Value)
-		if err != nil {
-			return err
-		}
 
-		if config.Name == "conf.resourceUrl" {
-			h.resourceUrl = resolvedConfigValue.(string)
-		}
-
-		if config.Name == "conf.headers" {
-			h.headers = resolvedConfigValue.([]interface{})
-		}
-
-		if config.Name == "conf.singleRequestPerBatch" {
-			h.singleRequestPerBatch = resolvedConfigValue.(bool)
-		}
-
-		if config.Name == "conf.client.httpCompression" {
-			h.httpCompression = resolvedConfigValue.(string)
-		}
-
-		if config.Name == "conf.client.tlsConfig.tlsEnabled" {
-			h.tlsEnabled = resolvedConfigValue.(bool)
-		}
-
-		if config.Name == "conf.client.tlsConfig.trustStoreFilePath" && config.Value != nil {
-			h.trustStoreFilePath = resolvedConfigValue.(string)
-		}
-
-		if config.Name == "conf.dataFormat" && config.Value != nil {
-			h.dataFormat = resolvedConfigValue.(string)
-		}
-
-	}
-
-	switch h.dataFormat {
+	switch h.Conf.DataFormat {
 	case "TEXT":
 		h.recordWriterFactory = &textrecord.TextWriterFactoryImpl{}
 	case "JSON":
 		h.recordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{}
 	default:
-		return errors.New("Unsupported Data Format - " + h.dataFormat)
+		return errors.New("Unsupported Data Format - " + h.Conf.DataFormat)
 	}
 
 	return nil
@@ -97,7 +73,7 @@ func (h *HttpClientDestination) Init(stageContext api.StageContext) error {
 
 func (h *HttpClientDestination) Write(batch api.Batch) error {
 	log.Println("[DEBUG] HttpClientDestination write method")
-	if h.singleRequestPerBatch && len(batch.GetRecords()) > 0 {
+	if h.Conf.SingleRequestPerBatch && len(batch.GetRecords()) > 0 {
 		return h.writeSingleRequestPerBatch(batch)
 	} else {
 		return h.writeSingleRequestPerRecord(batch)
@@ -147,7 +123,7 @@ func (h *HttpClientDestination) writeSingleRequestPerRecord(batch api.Batch) err
 func (h *HttpClientDestination) sendToSDC(jsonValue []byte) error {
 	var buf bytes.Buffer
 
-	if h.httpCompression == "GZIP" {
+	if h.Conf.Client.HttpCompression == "GZIP" {
 		gz := gzip.NewWriter(&buf)
 		if _, err := gz.Write(jsonValue); err != nil {
 			return err
@@ -157,23 +133,22 @@ func (h *HttpClientDestination) sendToSDC(jsonValue []byte) error {
 		buf = *bytes.NewBuffer(jsonValue)
 	}
 
-	req, err := http.NewRequest("POST", h.resourceUrl, &buf)
-	if h.headers != nil {
-		for _, header := range h.headers {
-			req.Header.Set(header.(map[string]interface{})["key"].(string),
-				header.(map[string]interface{})["value"].(string))
+	req, err := http.NewRequest("POST", h.Conf.ResourceUrl, &buf)
+	if h.Conf.Headers != nil {
+		for key, value := range h.Conf.Headers {
+			req.Header.Set(key, value)
 		}
 	}
 
 	req.Header.Set("Content-Type", "application/json;charset=UTF-8")
-	if h.httpCompression == "GZIP" {
+	if h.Conf.Client.HttpCompression == "GZIP" {
 		req.Header.Set("Content-Encoding", "gzip")
 	}
 
 	var client *http.Client
 
-	if h.tlsEnabled {
-		caCert, err := ioutil.ReadFile(h.trustStoreFilePath)
+	if h.Conf.Client.TlsConfig.TlsEnabled {
+		caCert, err := ioutil.ReadFile(h.Conf.Client.TlsConfig.TrustStoreFilePath)
 		if err != nil {
 			return err
 		}
