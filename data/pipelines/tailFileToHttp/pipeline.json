@@ -459,7 +459,7 @@
       "value" : null
     }, {
       "name" : "conf.dataFormat",
-      "value" : "JSON"
+      "value" : "TEXT"
     }, {
       "name" : "conf.resourceUrl",
       "value" : "${httpUrl}"

@@ -4,26 +4,18 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
+type MqttClientConfigBean struct {
+	BrokerUrl string  `ConfigDef:"type=STRING,required=true"`
+	ClientId  string  `ConfigDef:"type=STRING,required=true"`
+	Qos       float64 `ConfigDef:"type=NUMBER,required=true"`
+}
+
 type MqttConnector struct {
-	BrokerUrl string
-	ClientId  string
-	Qos       float64
-	Client    MQTT.Client
+	Client MQTT.Client
 }
 
-func (m *MqttConnector) InitConfig(configName string, configValue interface{}) {
-	switch configName {
-	case "commonConf.brokerUrl":
-		m.BrokerUrl = configValue.(string)
-	case "commonConf.clientId":
-		m.ClientId = configValue.(string)
-	case "commonConf.qos":
-		m.Qos = configValue.(float64)
-	}
-}
-
-func (m *MqttConnector) InitializeClient() error {
-	opts := MQTT.NewClientOptions().AddBroker(m.BrokerUrl).SetClientID(m.ClientId)
+func (m *MqttConnector) InitializeClient(commonConf MqttClientConfigBean) error {
+	opts := MQTT.NewClientOptions().AddBroker(commonConf.BrokerUrl).SetClientID(commonConf.ClientId)
 	m.Client = MQTT.NewClient(opts)
 	if token := m.Client.Connect(); token.Wait() && token.Error() != nil {
 		return token.Error()

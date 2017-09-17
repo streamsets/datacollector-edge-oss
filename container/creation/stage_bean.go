@@ -9,6 +9,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/util"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"reflect"
+	"github.com/streamsets/datacollector-edge/api/configtype"
 )
 
 const (
@@ -85,13 +86,15 @@ func injectStageConfigs(
 				if resolvedValue != nil {
 					if stageInstanceField.CanSet() {
 						switch configDef.Type {
-						case "BOOLEAN":
+						case configtype.BOOLEAN:
 							stageInstanceField.SetBool(resolvedValue.(bool))
-						case "NUMBER":
+						case configtype.NUMBER:
 							stageInstanceField.SetFloat(resolvedValue.(float64))
-						case "STRING":
+						case configtype.STRING:
 							stageInstanceField.SetString(resolvedValue.(string))
-						case "MAP":
+						case configtype.LIST:
+							stageInstanceField.Set(reflect.ValueOf(resolvedValue))
+						case configtype.MAP:
 							listOfMap := resolvedValue.([]interface{})
 							mapFieldValue := make(map[string]string)
 							for _, mapValue := range listOfMap {

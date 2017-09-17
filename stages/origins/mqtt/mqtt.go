@@ -18,8 +18,14 @@ const (
 type MqttClientSource struct {
 	*common.BaseStage
 	*mqttlib.MqttConnector
-	topicFilters    []string
+	CommonConf      mqttlib.MqttClientConfigBean `ConfigDefBean:"commonConf"`
+	SubscriberConf  MqttClientSourceConfigBean   `ConfigDefBean:"subscriberConf"`
 	incomingRecords chan api.Record
+}
+
+type MqttClientSourceConfigBean struct {
+	TopicFilters []string `ConfigDef:"type=LIST,required=true"`
+	DataFormat   string   `ConfigDef:"type=STRING,required=true"`
 }
 
 func init() {
@@ -29,9 +35,9 @@ func init() {
 }
 
 func (ms *MqttClientSource) getTopicFilterAndQosMap() map[string]byte {
-	topicFilters := make(map[string]byte, len(ms.topicFilters))
-	for _, topicFilter := range ms.topicFilters {
-		topicFilters[topicFilter] = byte(ms.Qos)
+	topicFilters := make(map[string]byte, len(ms.SubscriberConf.TopicFilters))
+	for _, topicFilter := range ms.SubscriberConf.TopicFilters {
+		topicFilters[topicFilter] = byte(ms.CommonConf.Qos)
 	}
 	return topicFilters
 }
@@ -42,34 +48,25 @@ func (ms *MqttClientSource) Init(stageContext api.StageContext) error {
 		return err
 	}
 
-	ms.topicFilters = []string{}
 	ms.incomingRecords = make(chan api.Record)
 
-	for _, config := range ms.GetStageConfig().Configuration {
-		configName := config.Name
-		resolvedConfigValue, err := stageContext.GetResolvedValue(config.Value)
-		if err != nil {
-			return err
-		}
-		if configName == "subscriberConf.topicFilters" {
-			for _, topicFilter := range resolvedConfigValue.([]interface{}) {
-				ms.topicFilters = append(ms.topicFilters, topicFilter.(string))
-			}
-		} else {
-			ms.InitConfig(configName, resolvedConfigValue)
-		}
-	}
-
-	err := ms.InitializeClient()
+	err := ms.InitializeClient(ms.CommonConf)
 	if err == nil {
-		if token := ms.Client.SubscribeMultiple(ms.getTopicFilterAndQosMap(), ms.MessageHandler); token.Wait() && token.Error() != nil {
+		if token := ms.Client.SubscribeMultiple(
+			ms.getTopicFilterAndQosMap(),
+			ms.MessageHandler,
+		); token.Wait() && token.Error() != nil {
 			err = token.Error()
 		}
 	}
 	return err
 }
 
-func (ms *MqttClientSource) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {
+func (ms *MqttClientSource) Produce(
+	lastSourceOffset string,
+	maxBatchSize int,
+	batchMaker api.BatchMaker,
+) (string, error) {
 	log.Println("[DEBUG] MqttClientSource - Produce method")
 	record := <-ms.incomingRecords
 	batchMaker.AddRecord(record)
@@ -78,7 +75,7 @@ func (ms *MqttClientSource) Produce(lastSourceOffset string, maxBatchSize int, b
 
 func (ms *MqttClientSource) Destroy() error {
 	log.Println("[DEBUG] MqttClientSource - Destroy method")
-	ms.Client.Unsubscribe(ms.topicFilters...).Wait()
+	ms.Client.Unsubscribe(ms.SubscriberConf.TopicFilters...).Wait()
 	ms.Client.Disconnect(250)
 	//Close channel after unsubscribe and disconnect
 	close(ms.incomingRecords)

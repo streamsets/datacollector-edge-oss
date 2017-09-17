@@ -17,7 +17,13 @@ const (
 type MqttClientDestination struct {
 	*common.BaseStage
 	*mqttlib.MqttConnector
-	topic string
+	CommonConf    mqttlib.MqttClientConfigBean `ConfigDefBean:"commonConf"`
+	PublisherConf MqttClientTargetConfigBean   `ConfigDefBean:"publisherConf"`
+}
+
+type MqttClientTargetConfigBean struct {
+	Topic      string `ConfigDef:"type=STRING,required=true"`
+	DataFormat string `ConfigDef:"type=STRING,required=true"`
 }
 
 func init() {
@@ -31,21 +37,7 @@ func (md *MqttClientDestination) Init(stageContext api.StageContext) error {
 	if err := md.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-
-	for _, config := range md.GetStageConfig().Configuration {
-		configName := config.Name
-		configValue, err := stageContext.GetResolvedValue(config.Value)
-		if err != nil {
-			return err
-		}
-		if configName == "publisherConf.topic" {
-			md.topic = configValue.(string)
-		} else {
-			md.InitConfig(configName, configValue)
-		}
-	}
-
-	return md.InitializeClient()
+	return md.InitializeClient(md.CommonConf)
 }
 
 func (md *MqttClientDestination) Write(batch api.Batch) error {
@@ -63,7 +55,7 @@ func (md *MqttClientDestination) Write(batch api.Batch) error {
 func (md *MqttClientDestination) sendRecordToSDC(recordValue interface{}) error {
 	var err error = nil
 	if jsonValue, e := json.Marshal(recordValue); e == nil {
-		if token := md.Client.Publish(md.topic, byte(md.Qos), false, jsonValue); token.Wait() && token.Error() != nil {
+		if token := md.Client.Publish(md.PublisherConf.Topic, byte(md.CommonConf.Qos), false, jsonValue); token.Wait() && token.Error() != nil {
 			err = token.Error()
 		}
 	}

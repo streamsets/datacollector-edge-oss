@@ -23,7 +23,7 @@ func getStageContext(
 			Name:  "conf.headers",
 			Value: headers,
 		},
-	};
+	}
 	return &common.StageContextImpl{
 		StageConfig: stageConfig,
 		Parameters:  parameters,
@@ -33,13 +33,13 @@ func getStageContext(
 func TestHttpClientDestination_Init(t *testing.T) {
 	resourceUrl := "http://test:9000"
 	headers := make([]interface{}, 2)
-	headers[0] = map[string]interface{} {
-		"key" : "X-SDC-APPLICATION-ID",
-		"value" : "SDCe",
+	headers[0] = map[string]interface{}{
+		"key":   "X-SDC-APPLICATION-ID",
+		"value": "SDCe",
 	}
-	headers[1] = map[string]interface{} {
-		"key" : "DUMMY-HEADER",
-		"value" : "DUMMY",
+	headers[1] = map[string]interface{}{
+		"key":   "DUMMY-HEADER",
+		"value": "DUMMY",
 	}
 
 	stageContext := getStageContext(resourceUrl, headers, nil)
