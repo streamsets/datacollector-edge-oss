@@ -45,7 +45,7 @@ func getStageContext(
 	}
 }
 
-func TestHttpClientDestination_Init(t *testing.T) {
+func TestMqttClientSource_Init(t *testing.T) {
 	brokerUrl := "http://test:9000"
 	clientId := "clientId"
 	qos := float64(1)

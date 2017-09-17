@@ -1,10 +1,12 @@
 package websocket
 
 import (
-	"encoding/json"
+	"bytes"
+	"errors"
 	"github.com/gorilla/websocket"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"log"
 	"net/http"
@@ -17,8 +19,14 @@ const (
 
 type WebSocketClientDestination struct {
 	*common.BaseStage
-	resourceUrl string
-	headers     []interface{}
+	Conf WebSocketTargetConfig `ConfigDefBean:"conf"`
+}
+
+type WebSocketTargetConfig struct {
+	ResourceUrl               string                                  `ConfigDef:"type=STRING,required=true"`
+	Headers                   map[string]string                       `ConfigDef:"type=MAP,required=true"`
+	DataFormat                string                                  `ConfigDef:"type=STRING,required=true"`
+	DataGeneratorFormatConfig datagenerator.DataGeneratorFormatConfig `ConfigDefBean:"dataGeneratorFormatConfig"`
 }
 
 func init() {
@@ -31,45 +39,43 @@ func (w *WebSocketClientDestination) Init(stageContext api.StageContext) error {
 	if err := w.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-	stageConfig := w.GetStageConfig()
 	log.Println("[DEBUG] WebSocketClientDestination Init method")
-	for _, config := range stageConfig.Configuration {
-		if config.Name == "conf.resourceUrl" {
-			w.resourceUrl = config.Value.(string)
-		}
-
-		if config.Name == "conf.headers" {
-			w.headers = config.Value.([]interface{})
-		}
-	}
-	return nil
+	return w.Conf.DataGeneratorFormatConfig.Init(w.Conf.DataFormat)
 }
 
 func (w *WebSocketClientDestination) Write(batch api.Batch) error {
-	log.Println("[DEBUG] WebSocketClientDestination write method = " + w.resourceUrl)
+	log.Println("[DEBUG] WebSocketClientDestination write method = " + w.Conf.ResourceUrl)
+	recordWriterFactory := w.Conf.DataGeneratorFormatConfig.RecordWriterFactory
+	if recordWriterFactory == nil {
+		return errors.New("recordWriterFactory is null")
+	}
 
 	var requestHeader = http.Header{}
-	if w.headers != nil {
-		for _, headerInterface := range w.headers {
-			requestHeader.Set(headerInterface.(map[string]interface{})["key"].(string),
-				headerInterface.(map[string]interface{})["value"].(string))
+	if w.Conf.Headers != nil {
+		for key, value := range w.Conf.Headers {
+			requestHeader.Set(key, value)
 		}
 	}
 
-	c, _, err := websocket.DefaultDialer.Dial(w.resourceUrl, requestHeader)
+	c, _, err := websocket.DefaultDialer.Dial(w.Conf.ResourceUrl, requestHeader)
 	if err != nil {
 		return err
 	}
 
 	for _, record := range batch.GetRecords() {
-		jsonValue, err := json.Marshal(record.Get().Value)
+		recordBuffer := bytes.NewBuffer([]byte{})
+		recordWriter, err := recordWriterFactory.CreateWriter(w.GetStageContext(), recordBuffer)
 		if err != nil {
-			log.Println("[ERROR] Marshalling:", err)
-			w.GetStageContext().ToError(err, record)
-			continue
+			return err
 		}
+		err = recordWriter.WriteRecord(record)
+		if err != nil {
+			return err
+		}
+		recordWriter.Flush()
+		recordWriter.Close()
 
-		err = c.WriteMessage(websocket.TextMessage, jsonValue)
+		err = c.WriteMessage(websocket.TextMessage, recordBuffer.Bytes())
 		if err != nil {
 			log.Println("[ERROR] write:", err)
 			w.GetStageContext().ToError(err, record)

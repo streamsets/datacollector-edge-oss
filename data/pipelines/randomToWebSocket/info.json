@@ -1,0 +1,18 @@
+{
+  "pipelineId" : "randomToWebSocket",
+  "title" : "randomToWebSocket",
+  "description" : "",
+  "created" : 1505625288752,
+  "lastModified" : 1505626721130,
+  "creator" : "admin",
+  "lastModifier" : "admin",
+  "lastRev" : "0",
+  "uuid" : "a11e8bb0-7532-4673-97e7-42ee1a1a11f0",
+  "valid" : true,
+  "metadata" : {
+    "labels" : [ ]
+  },
+  "name" : "randomToWebSocket",
+  "sdcVersion" : "2.8.0.0-SNAPSHOT",
+  "sdcId" : "044bd738-9997-11e7-a2a9-3bff483f2038"
+}

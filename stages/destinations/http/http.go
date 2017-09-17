@@ -8,9 +8,7 @@ import (
 	"errors"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
-	"github.com/streamsets/datacollector-edge/container/recordio"
-	"github.com/streamsets/datacollector-edge/container/recordio/jsonrecord"
-	"github.com/streamsets/datacollector-edge/container/recordio/textrecord"
+	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io/ioutil"
 	"log"
@@ -24,16 +22,16 @@ const (
 
 type HttpClientDestination struct {
 	*common.BaseStage
-	Conf                HttpClientTargetConfig `ConfigDefBean:"conf"`
-	recordWriterFactory recordio.RecordWriterFactory
+	Conf HttpClientTargetConfig `ConfigDefBean:"conf"`
 }
 
 type HttpClientTargetConfig struct {
-	DataFormat            string            `ConfigDef:"type=STRING,required=true"`
-	ResourceUrl           string            `ConfigDef:"type=STRING,required=true"`
-	Headers               map[string]string `ConfigDef:"type=MAP,required=true"`
-	SingleRequestPerBatch bool              `ConfigDef:"type=BOOLEAN,required=true"`
-	Client                ClientConfigBean  `ConfigDefBean:"client"`
+	ResourceUrl               string                                  `ConfigDef:"type=STRING,required=true"`
+	Headers                   map[string]string                       `ConfigDef:"type=MAP,required=true"`
+	SingleRequestPerBatch     bool                                    `ConfigDef:"type=BOOLEAN,required=true"`
+	Client                    ClientConfigBean                        `ConfigDefBean:"client"`
+	DataFormat                string                                  `ConfigDef:"type=STRING,required=true"`
+	DataGeneratorFormatConfig datagenerator.DataGeneratorFormatConfig `ConfigDefBean:"dataGeneratorFormatConfig"`
 }
 
 type ClientConfigBean struct {
@@ -53,22 +51,12 @@ func init() {
 }
 
 func (h *HttpClientDestination) Init(stageContext api.StageContext) error {
-	if err := h.BaseStage.Init(stageContext); err != nil {
+	var err error
+	if err = h.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-
 	log.Println("[DEBUG] HttpClientDestination Init method")
-
-	switch h.Conf.DataFormat {
-	case "TEXT":
-		h.recordWriterFactory = &textrecord.TextWriterFactoryImpl{}
-	case "JSON":
-		h.recordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{}
-	default:
-		return errors.New("Unsupported Data Format - " + h.Conf.DataFormat)
-	}
-
-	return nil
+	return h.Conf.DataGeneratorFormatConfig.Init(h.Conf.DataFormat)
 }
 
 func (h *HttpClientDestination) Write(batch api.Batch) error {
@@ -82,8 +70,9 @@ func (h *HttpClientDestination) Write(batch api.Batch) error {
 
 func (h *HttpClientDestination) writeSingleRequestPerBatch(batch api.Batch) error {
 	var err error
+	recordWriterFactory := h.Conf.DataGeneratorFormatConfig.RecordWriterFactory
 	batchBuffer := bytes.NewBuffer([]byte{})
-	recordWriter, err := h.recordWriterFactory.CreateWriter(h.GetStageContext(), batchBuffer)
+	recordWriter, err := recordWriterFactory.CreateWriter(h.GetStageContext(), batchBuffer)
 	if err != nil {
 		return err
 	}
@@ -100,9 +89,10 @@ func (h *HttpClientDestination) writeSingleRequestPerBatch(batch api.Batch) erro
 
 func (h *HttpClientDestination) writeSingleRequestPerRecord(batch api.Batch) error {
 	var err error
+	recordWriterFactory := h.Conf.DataGeneratorFormatConfig.RecordWriterFactory
 	for _, record := range batch.GetRecords() {
 		recordBuffer := bytes.NewBuffer([]byte{})
-		recordWriter, err := h.recordWriterFactory.CreateWriter(h.GetStageContext(), recordBuffer)
+		recordWriter, err := recordWriterFactory.CreateWriter(h.GetStageContext(), recordBuffer)
 		if err != nil {
 			return err
 		}

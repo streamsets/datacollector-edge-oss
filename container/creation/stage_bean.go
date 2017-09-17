@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/configtype"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/el"
 	"github.com/streamsets/datacollector-edge/container/util"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"reflect"
-	"github.com/streamsets/datacollector-edge/api/configtype"
 )
 
 const (
@@ -93,7 +93,16 @@ func injectStageConfigs(
 						case configtype.STRING:
 							stageInstanceField.SetString(resolvedValue.(string))
 						case configtype.LIST:
-							stageInstanceField.Set(reflect.ValueOf(resolvedValue))
+							switch resolvedValue.(type) {
+							case []interface{}:
+								if len(resolvedValue.([]interface{})) > 0 {
+									stageInstanceField.Set(reflect.ValueOf(resolvedValue))
+								}
+							case []string:
+								if len(resolvedValue.([]string)) > 0 {
+									stageInstanceField.Set(reflect.ValueOf(resolvedValue))
+								}
+							}
 						case configtype.MAP:
 							listOfMap := resolvedValue.([]interface{})
 							mapFieldValue := make(map[string]string)
