@@ -6,4 +6,5 @@ const (
 	STRING  = "STRING"
 	MAP     = "MAP"
 	LIST    = "LIST"
+	MODEL   = "MODEL"
 )

@@ -12,11 +12,11 @@ import (
 	"testing"
 )
 
-func getStageContext(filePath string, maxWaitTimeSecs float64) *common.StageContextImpl {
+func getStageContext(filePath string, maxWaitTimeSecs float64, batchSize float64) *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = LIBRARY
 	stageConfig.StageName = STAGE_NAME
-	stageConfig.Configuration = make([]common.Config, 2)
+	stageConfig.Configuration = make([]common.Config, 3)
 
 	fileInfoSlice := make([]interface{}, 1, 1)
 	fileInfoSlice[0] = map[string]interface{}{
@@ -28,6 +28,10 @@ func getStageContext(filePath string, maxWaitTimeSecs float64) *common.StageCont
 		Value: fileInfoSlice,
 	}
 	stageConfig.Configuration[1] = common.Config{
+		Name:  CONF_BATCH_SIZE,
+		Value: batchSize,
+	}
+	stageConfig.Configuration[2] = common.Config{
 		Name:  CONF_MAX_WAIT_TIME_SECS,
 		Value: maxWaitTimeSecs,
 	}
@@ -39,10 +43,11 @@ func getStageContext(filePath string, maxWaitTimeSecs float64) *common.StageCont
 }
 
 func TestInvalidFilePath(t *testing.T) {
-	stageContext := getStageContext("/no/such/file", 2)
+	stageContext := getStageContext("/no/such/file", 2, 1000)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 	stageInstance := stageBean.Stage
 	err = stageInstance.Init(stageContext)
@@ -73,7 +78,7 @@ func TestValidFilePath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stageContext := getStageContext(filePath, 2)
+	stageContext := getStageContext(filePath, 2, 4)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
@@ -105,7 +110,9 @@ func TestValidFilePath(t *testing.T) {
 		t.Error("Excepted 'test data 1' but got - ", records[0].Get().Value)
 	}
 
+
 	// With maxBatchSize 2 - batch 1
+	stageInstance.(*FileTailOrigin).Conf.BatchSize = 2
 	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{})
 	lastSourceOffset, err = stageInstance.(api.Origin).Produce("", 2, batchMaker)
 	if err != nil {
@@ -145,7 +152,7 @@ func TestValidFilePath(t *testing.T) {
 func _TestChannelDeadlockIssue(t *testing.T) {
 	filePath1 := "/Users/test/dpm.log"
 
-	stageContext := getStageContext(filePath1, 2)
+	stageContext := getStageContext(filePath1, 2, 1000)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)

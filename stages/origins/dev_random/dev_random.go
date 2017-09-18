@@ -18,8 +18,8 @@ const (
 
 type DevRandom struct {
 	*common.BaseStage
-	Fields     string  `ConfigDef:"name=fields,type=STRING,required=true"`
-	Delay      float64 `ConfigDef:"name=delay,type=NUMBER,required=true"`
+	Fields     string  `ConfigDef:"type=STRING,required=true"`
+	Delay      float64 `ConfigDef:"type=NUMBER,required=true"`
 	fieldsList []string
 }
 

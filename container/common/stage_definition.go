@@ -3,6 +3,7 @@ package common
 const (
 	CONFIG_DEF_TAG_NAME      = "ConfigDef"
 	CONFIG_DEF_BEAN_TAG_NAME = "ConfigDefBean"
+	LIST_BEAN_MODEL_TAG_NAME = "ListBeanModel"
 )
 
 type StageDefinition struct {
@@ -13,7 +14,13 @@ type StageDefinition struct {
 }
 
 type ConfigDefinition struct {
-	Name     string
-	Type     string
-	Required bool
+	Name      string
+	Type      string
+	Required  bool
+	FieldName string
+	Model     ModelDefinition
+}
+
+type ModelDefinition struct {
+	ConfigDefinitionsMap map[string]*ConfigDefinition
 }

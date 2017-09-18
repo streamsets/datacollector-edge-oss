@@ -60,25 +60,25 @@ func extractStageDefinition(library string, stageName string, stageInstance inte
 		ConfigDefinitionsMap: make(map[string]*common.ConfigDefinition),
 	}
 	t := reflect.TypeOf(stageInstance).Elem()
-	extractConfigDefinitions(t, "", stageDefinition)
+	extractConfigDefinitions(t, "", stageDefinition.ConfigDefinitionsMap)
 	return stageDefinition
 }
 
 func extractConfigDefinitions(
 	t reflect.Type,
 	configPrefix string,
-	stageDefinition *common.StageDefinition,
+	configDefinitionsMap map[string]*common.ConfigDefinition,
 ) {
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		configDefTag := field.Tag.Get(common.CONFIG_DEF_TAG_NAME)
 		if len(configDefTag) > 0 {
-			extractConfigDefinition(field, configDefTag, configPrefix, stageDefinition)
+			extractConfigDefinition(field, configDefTag, configPrefix, configDefinitionsMap)
 		} else {
 			configDefBeanTag := field.Tag.Get(common.CONFIG_DEF_BEAN_TAG_NAME)
 			if len(configDefBeanTag) > 0 {
 				newConfigPrefix := configPrefix + util.LcFirst(field.Name) + "."
-				extractConfigDefinitions(field.Type, newConfigPrefix, stageDefinition)
+				extractConfigDefinitions(field.Type, newConfigPrefix, configDefinitionsMap)
 			}
 		}
 	}
@@ -88,7 +88,7 @@ func extractConfigDefinition(
 	field reflect.StructField,
 	configDefTag string,
 	configPrefix string,
-	stageDefinition *common.StageDefinition,
+	configDefinitionsMap map[string]*common.ConfigDefinition,
 ) {
 	configDef := &common.ConfigDefinition{}
 	configDefTagValues := strings.Split(configDefTag, ",")
@@ -102,5 +102,16 @@ func extractConfigDefinition(
 		}
 	}
 	configDef.Name = configPrefix + util.LcFirst(field.Name)
-	stageDefinition.ConfigDefinitionsMap[configDef.Name] = configDef
+	configDef.FieldName = field.Name
+
+	listBeanModelTag := field.Tag.Get(common.LIST_BEAN_MODEL_TAG_NAME)
+	if len(listBeanModelTag) > 0 {
+		configDefinitionsMap := make(map[string]*common.ConfigDefinition)
+		extractConfigDefinitions(field.Type.Elem(), "", configDefinitionsMap)
+		configDef.Model = common.ModelDefinition{
+			ConfigDefinitionsMap: configDefinitionsMap,
+		}
+	}
+
+	configDefinitionsMap[configDef.Name] = configDef
 }

@@ -16,13 +16,22 @@ const (
 	STAGE_NAME              = "com_streamsets_pipeline_stage_origin_logtail_FileTailDSource"
 	CONF_FILE_INFOS         = "conf.fileInfos"
 	CONF_MAX_WAIT_TIME_SECS = "conf.maxWaitTimeSecs"
-	CONF_FILE_FULL_PATH     = "fileFullPath"
+	CONF_BATCH_SIZE         = "conf.batchSize"
 )
 
 type FileTailOrigin struct {
 	*common.BaseStage
-	fileFullPath    string
-	maxWaitTimeSecs float64
+	Conf FileTailConfigBean `ConfigDefBean:"name=conf"`
+}
+
+type FileTailConfigBean struct {
+	BatchSize       float64    `ConfigDef:"type=NUMBER,required=true"`
+	MaxWaitTimeSecs float64    `ConfigDef:"type=NUMBER,required=true"`
+	FileInfos       []FileInfo `ConfigDef:"type=MODEL" ListBeanModel:"name=fileInfos"`
+}
+
+type FileInfo struct {
+	FileFullPath string `ConfigDef:"type=STRING,required=true"`
 }
 
 func init() {
@@ -35,30 +44,7 @@ func (f *FileTailOrigin) Init(stageContext api.StageContext) error {
 	if err := f.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-	stageConfig := f.GetStageConfig()
-	for _, config := range stageConfig.Configuration {
-		if config.Name == CONF_FILE_INFOS {
-			fileInfos := config.Value.([]interface{})
-			if len(fileInfos) > 0 {
-				fileInfo := fileInfos[0].(map[string]interface{})
-				resolvedConfigValue, err := stageContext.GetResolvedValue(fileInfo[CONF_FILE_FULL_PATH])
-				if err != nil {
-					return err
-				}
-				f.fileFullPath = resolvedConfigValue.(string)
-			}
-		}
-
-		if config.Name == CONF_MAX_WAIT_TIME_SECS {
-			resolvedConfigValue, err := stageContext.GetResolvedValue(config.Value)
-			if err != nil {
-				return err
-			}
-			f.maxWaitTimeSecs = resolvedConfigValue.(float64)
-		}
-	}
-
-	log.Println("[DEBUG] Reading file - " + f.fileFullPath)
+	log.Println("[DEBUG] Reading file - " + f.Conf.FileInfos[0].FileFullPath)
 	return nil
 }
 
@@ -76,13 +62,13 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 		tailConfig.Location = &tail.SeekInfo{Offset: intOffset, Whence: io.SeekStart}
 	}
 
-	tailObj, err := tail.TailFile(f.fileFullPath, tailConfig)
+	tailObj, err := tail.TailFile(f.Conf.FileInfos[0].FileFullPath, tailConfig)
 	if err != nil {
 		return lastSourceOffset, err
 	}
 
 	var currentOffset int64
-	recordCount := 0
+	recordCount := float64(0)
 	end := false
 	for !end {
 		select {
@@ -93,13 +79,13 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 				record, _ := f.GetStageContext().CreateRecord(recordId, recordValue)
 				batchMaker.AddRecord(record)
 				recordCount++
-				if recordCount >= maxBatchSize {
+				if recordCount >= f.Conf.BatchSize {
 					currentOffset, _ = tailObj.Tell()
 					log.Println("[DEBUG] Calling stop for max record size")
 					end = true
 				}
 			}
-		case <-time.After(time.Duration(f.maxWaitTimeSecs) * time.Second):
+		case <-time.After(time.Duration(f.Conf.MaxWaitTimeSecs) * time.Second):
 			log.Println("[DEBUG] Calling stop for max Wait TimeSecs")
 			currentOffset, _ = tailObj.Tell()
 			end = true

@@ -103,8 +103,42 @@ func injectStageConfigs(
 								mapFieldValue[key] = value
 							}
 							stageInstanceField.Set(reflect.ValueOf(mapFieldValue))
+						case configtype.MODEL:
+							listBeanModelTag := stageInstanceFieldType.Tag.Get(common.LIST_BEAN_MODEL_TAG_NAME)
+							if len(listBeanModelTag) > 0 {
+								listBeanModelType := stageInstanceFieldType.Type.Elem()
+
+								switch reflect.TypeOf(resolvedValue).Kind() {
+								case reflect.Slice:
+									listBeanValueList := resolvedValue.([]interface{})
+									for _, listBeanValue := range listBeanValueList {
+										fmt.Println(listBeanValue)
+
+										listBeanModelField := reflect.New(listBeanModelType)
+
+										err := injectListBeanStageConfigs(
+											listBeanModelField.Elem(),
+											listBeanModelType,
+											"",
+											listBeanValue.(map[string]interface{}),
+											configDef.Model.ConfigDefinitionsMap,
+											runtimeParameters,
+										)
+										if err != nil {
+											return err
+										}
+										stageInstanceField.Set(reflect.Append(
+											stageInstanceField,
+											listBeanModelField.Elem(),
+										))
+									}
+								}
+							}
 						default:
-							err = errors.New(fmt.Sprintf("Unsupported Field Type %s", reflect.TypeOf(stageInstanceField)))
+							return errors.New(fmt.Sprintf(
+								"Unsupported Field Type %s",
+								reflect.TypeOf(stageInstanceField),
+							))
 						}
 					}
 				}
@@ -123,6 +157,71 @@ func injectStageConfigs(
 				)
 				if err != nil {
 					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func injectListBeanStageConfigs(
+	reflectValue reflect.Value,
+	reflectType reflect.Type,
+	configPrefix string,
+	configMap map[string]interface{},
+	configDefinitionsMap map[string]*common.ConfigDefinition,
+	runtimeParameters map[string]interface{},
+) error {
+	for i := 0; i < reflectValue.NumField(); i++ {
+		stageInstanceField := reflectValue.Field(i)
+		stageInstanceFieldType := reflectType.Field(i)
+
+		configDefTag := stageInstanceFieldType.Tag.Get(common.CONFIG_DEF_TAG_NAME)
+		if len(configDefTag) > 0 {
+			configName := configPrefix + util.LcFirst(stageInstanceFieldType.Name)
+			configDef := configDefinitionsMap[configName]
+			configValue := configMap[configName]
+			if configDef != nil {
+				resolvedValue, err := getResolvedValue(configValue, runtimeParameters)
+				if err != nil {
+					return err
+				}
+				if resolvedValue != nil {
+					if stageInstanceField.CanSet() {
+						switch configDef.Type {
+						case configtype.BOOLEAN:
+							stageInstanceField.SetBool(resolvedValue.(bool))
+						case configtype.NUMBER:
+							stageInstanceField.SetFloat(resolvedValue.(float64))
+						case configtype.STRING:
+							stageInstanceField.SetString(resolvedValue.(string))
+						case configtype.LIST:
+							switch resolvedValue.(type) {
+							case []interface{}:
+								if len(resolvedValue.([]interface{})) > 0 {
+									stageInstanceField.Set(reflect.ValueOf(resolvedValue))
+								}
+							case []string:
+								if len(resolvedValue.([]string)) > 0 {
+									stageInstanceField.Set(reflect.ValueOf(resolvedValue))
+								}
+							}
+						case configtype.MAP:
+							listOfMap := resolvedValue.([]interface{})
+							mapFieldValue := make(map[string]string)
+							for _, mapValue := range listOfMap {
+								key := mapValue.(map[string]interface{})["key"].(string)
+								value := mapValue.(map[string]interface{})["value"].(string)
+								mapFieldValue[key] = value
+							}
+							stageInstanceField.Set(reflect.ValueOf(mapFieldValue))
+						default:
+							return errors.New(fmt.Sprintf(
+								"Unsupported Field Type %s",
+								reflect.TypeOf(stageInstanceField),
+							))
+						}
+					}
 				}
 			}
 		}
