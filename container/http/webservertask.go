@@ -10,6 +10,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/store"
 	"log"
 	"net/http"
+	"net/http/pprof"
 )
 
 type WebServerTask struct {
@@ -42,6 +43,17 @@ func (webServerTask *WebServerTask) Init() error {
 	router.GET("/rest/v1/pipeline/:pipelineId", webServerTask.getPipeline)
 	router.PUT("/rest/v1/pipeline/:pipelineTitle", webServerTask.createPipeline)
 	router.POST("/rest/v1/pipeline/:pipelineId", webServerTask.savePipeline)
+
+	// Register pprof handlers
+	router.HandlerFunc("GET", "/debug/pprof/", pprof.Index)
+	router.Handler("GET", "/debug/pprof/heap", pprof.Handler("heap"))
+	router.Handler("GET", "/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	router.Handler("GET", "/debug/pprof/block", pprof.Handler("block"))
+	router.HandlerFunc("GET", "/debug/pprof/cmdline", pprof.Cmdline)
+	router.HandlerFunc("GET", "/debug/pprof/profile", pprof.Profile)
+	router.HandlerFunc("GET", "/debug/pprof/symbol", pprof.Symbol)
+	router.HandlerFunc("GET", "/debug/pprof/trace", pprof.Trace)
+
 	webServerTask.httpServer = &http.Server{Addr: webServerTask.config.BindAddress, Handler: router}
 	return nil
 }
@@ -50,7 +62,6 @@ func (webServerTask *WebServerTask) homeHandler(w http.ResponseWriter, r *http.R
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "\t")
 	encoder.Encode(webServerTask.buildInfo)
-
 }
 
 func (webServerTask *WebServerTask) Run() {

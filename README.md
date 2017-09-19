@@ -87,3 +87,10 @@ Getting inside the container
 
 
 
+
+## CPU & Heap Profile
+    curl http://localhost:18633/debug/pprof/profile > cpu.pb.gz
+    curl http://localhost:18633/debug/pprof/heap > heap.pb.gz
+    curl http://localhost:18633/debug/pprof/goroutine > goroutine.pb.gz
+    curl http://localhost:18633/debug/pprof/block > block.pb.gz
+
