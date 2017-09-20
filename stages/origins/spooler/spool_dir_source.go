@@ -40,10 +40,20 @@ const (
 
 type SpoolDirSource struct {
 	*common.BaseStage
-	spooler              *DirectorySpooler
-	bufReader            *bufio.Reader
-	initialFileToProcess string
-	file                 *os.File
+	Conf      SpoolDirConfigBean `ConfigDefBean:"conf"`
+	spooler   *DirectorySpooler
+	bufReader *bufio.Reader
+	file      *os.File
+}
+
+type SpoolDirConfigBean struct {
+	SpoolDir              string  `ConfigDef:"type=STRING,required=true"`
+	UseLastModified       string  `ConfigDef:"type=STRING,required=true"`
+	PoolingTimeoutSecs    float64 `ConfigDef:"type=NUMBER,required=true"`
+	InitialFileToProcess  string  `ConfigDef:"type=STRING,required=true"`
+	ProcessSubdirectories bool    `ConfigDef:"type=BOOLEAN,required=true"`
+	FilePattern           string  `ConfigDef:"type=STRING,required=true"`
+	PathMatcherMode       string  `ConfigDef:"type=STRING,required=true"`
 }
 
 func init() {
@@ -56,50 +66,31 @@ func (s *SpoolDirSource) Init(stageContext api.StageContext) error {
 	if err := s.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-	stageConfig := s.GetStageConfig()
-	s.spooler = &DirectorySpooler{}
-
-	for _, config := range stageConfig.Configuration {
-		value, err := stageContext.GetResolvedValue(config.Value)
-		if err != nil {
-			return err
-		}
-		switch config.Name {
-		case SPOOL_DIR_PATH:
-			s.spooler.dirPath = value.(string)
-		case USE_LAST_MODIFIED:
-			s.spooler.readOrder = value.(string)
-		case PATH_MATHER_MODE:
-			s.spooler.pathMatcherMode = value.(string)
-			if s.spooler.pathMatcherMode != GLOB && s.spooler.pathMatcherMode != REGEX {
-				return errors.New("Unsupported Path Matcher mode :" + s.spooler.pathMatcherMode)
-			}
-		case FILE_PATTERN:
-			s.spooler.filePattern = value.(string)
-		case PROCESS_SUB_DIRECTORIES:
-			s.spooler.processSubDirs = value.(bool)
-		case POLLING_TIMEOUT_SECONDS:
-			s.spooler.spoolWaitDuration = time.Duration(int64(value.(float64)) * 1000 * 1000)
-		case INITIAL_FILE_TO_PROCESS:
-			if value == nil {
-				s.initialFileToProcess = ""
-			} else {
-				s.initialFileToProcess = value.(string)
-			}
-		}
+	s.spooler = &DirectorySpooler{
+		dirPath:           s.Conf.SpoolDir,
+		readOrder:         s.Conf.UseLastModified,
+		pathMatcherMode:   s.Conf.PathMatcherMode,
+		filePattern:       s.Conf.FilePattern,
+		processSubDirs:    s.Conf.ProcessSubdirectories,
+		spoolWaitDuration: time.Duration(int64(s.Conf.PoolingTimeoutSecs) * 1000 * 1000),
 	}
+
+	if s.spooler.pathMatcherMode != GLOB && s.spooler.pathMatcherMode != REGEX {
+		return errors.New("Unsupported Path Matcher mode :" + s.spooler.pathMatcherMode)
+	}
+
 	s.spooler.Init()
 	var err error = nil
-	if s.initialFileToProcess != "" {
-		file_matches, err := filepath.Glob(s.initialFileToProcess)
+	if s.Conf.InitialFileToProcess != "" {
+		file_matches, err := filepath.Glob(s.Conf.InitialFileToProcess)
 		if err == nil {
 			if len(file_matches) > 1 {
 				return errors.New(
 					"Initial File to Process '" +
-						s.initialFileToProcess + "' matches multiple files",
+						s.Conf.InitialFileToProcess + "' matches multiple files",
 				)
 			}
-			s.initialFileToProcess = file_matches[0]
+			s.Conf.InitialFileToProcess = file_matches[0]
 		}
 	}
 	return err
@@ -140,14 +131,14 @@ func (s *SpoolDirSource) initCurrentFileIfNeeded(lastSourceOffset string) (bool,
 	}
 
 	//Offset is not present and initial file to process is configured.
-	if currentFilePath == "" && s.initialFileToProcess != "" {
+	if currentFilePath == "" && s.Conf.InitialFileToProcess != "" {
 		fileInfo, err := os.Stat(currentFilePath)
 		if err != nil {
 			return false, err
 		}
 		s.spooler.setCurrentFileInfo(
 			NewAtomicFileInformation(
-				s.initialFileToProcess,
+				s.Conf.InitialFileToProcess,
 				fileInfo.ModTime(),
 				currentStartOffset,
 			),
