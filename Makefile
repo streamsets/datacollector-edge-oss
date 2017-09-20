@@ -5,7 +5,7 @@ VERSION := 2.8.0.0-SNAPSHOT
 DIR=.
 BuiltDate := `date +%FT%T%z`
 BuiltRepoSha := `git rev-parse HEAD`
-GOPATH := $(HOME)/go
+GOPATH := $(GOPATH)
 
 # Go setup
 GO=go
