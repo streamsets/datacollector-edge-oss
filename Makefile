@@ -48,7 +48,7 @@ $(EXECUTABLES):
 	@mkdir -p dist/log
 
 test:
-	$(TEST) ./... -cover
+	$(TEST) `go list ./... | grep -v /vendor/` -cover
 
 clean:
 	@echo Cleaning Workspace...
