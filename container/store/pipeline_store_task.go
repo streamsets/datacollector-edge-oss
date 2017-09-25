@@ -8,4 +8,5 @@ type PipelineStoreTask interface {
 	Create(pipelineId string, pipelineTitle string, description string) (common.PipelineConfiguration, error)
 	Save(pipelineId string, pipelineConfiguration common.PipelineConfiguration) (common.PipelineConfiguration, error)
 	LoadPipelineConfig(pipelineId string) (common.PipelineConfiguration, error)
+	Delete(pipelineId string) error
 }

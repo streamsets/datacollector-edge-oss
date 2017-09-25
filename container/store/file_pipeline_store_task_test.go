@@ -149,3 +149,33 @@ func TestFilePipelineStoreTask_LoadPipelineConfig(t *testing.T) {
 	fmt.Println(err)
 
 }
+
+func TestFilePipelineStoreTask_Delete(t *testing.T) {
+	pipelineStoreTask := getPipelineStoreTask(t, "TestFilePipelineStoreTask_Delete")
+
+	pipelineConfig, err := pipelineStoreTask.Create("testDeletePipeline", "testPipeline", "Sample desc")
+	if err != nil {
+		t.Error("Error from Create: ", err)
+		return
+	}
+
+	if pipelineConfig.PipelineId != "testDeletePipeline" {
+		t.Error("Pipeline creation failed ")
+		return
+	}
+
+	err = pipelineStoreTask.Delete("testDeletePipeline")
+	if err != nil {
+		t.Error("Error from delete: ", err)
+	}
+	_, err = pipelineStoreTask.GetInfo("testDeletePipeline")
+	if err == nil {
+		t.Error("Excepted error from GetInfo after pipeline is deleted")
+	}
+
+	// try deleting non existing pipeline
+	err = pipelineStoreTask.Delete("notAValidPipelineId")
+	if err == nil {
+		t.Error("Excepted error from delete API")
+	}
+}

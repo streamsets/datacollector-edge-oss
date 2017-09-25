@@ -55,5 +55,8 @@ func shutdownHook(dataCollectorEdge *edge.DataCollectorEdgeMain) {
 		}
 	}
 	dataCollectorEdge.WebServerTask.Shutdown()
+	if dataCollectorEdge.RuntimeInfo.DPMEnabled {
+		dataCollectorEdge.DPMMessageEventHandler.Shutdown()
+	}
 	log.Println("[INFO] Data Collector Edge shutting down")
 }

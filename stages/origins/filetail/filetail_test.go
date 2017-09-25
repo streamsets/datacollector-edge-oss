@@ -110,7 +110,6 @@ func TestValidFilePath(t *testing.T) {
 		t.Error("Excepted 'test data 1' but got - ", records[0].Get().Value)
 	}
 
-
 	// With maxBatchSize 2 - batch 1
 	stageInstance.(*FileTailOrigin).Conf.BatchSize = 2
 	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{})

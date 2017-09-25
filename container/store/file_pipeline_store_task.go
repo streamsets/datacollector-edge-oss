@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	PIPELINE_FILE      = "pipeline.json"
-	PIPELINE_INFO_FILE = "info.json"
-	PIPELINES_FOLDER   = "/data/pipelines/"
+	PIPELINE_FILE             = "pipeline.json"
+	PIPELINE_INFO_FILE        = "info.json"
+	PIPELINES_FOLDER          = "/data/pipelines/"
+	PIPELINES_RUN_INFO_FOLDER = "/data/runInfo/"
 )
 
 type FilePipelineStoreTask struct {
@@ -198,10 +199,22 @@ func (store *FilePipelineStoreTask) LoadPipelineConfig(pipelineId string) (commo
 	}
 
 	if pipelineConfiguration.PipelineId == "" {
-		err = errors.New("Invalid pipeline configuration")
+		err = errors.New("InValid pipeline configuration")
 	}
 
 	return pipelineConfiguration, err
+}
+
+func (store *FilePipelineStoreTask) Delete(pipelineId string) error {
+	if !store.hasPipeline(pipelineId) {
+		return errors.New("Pipeline '" + pipelineId + " does not exist")
+	}
+	err := os.RemoveAll(store.getPipelineDir(pipelineId))
+	if err != nil {
+		return err
+	}
+	err = os.RemoveAll(store.getPipelineRunInfoDir(pipelineId))
+	return err
 }
 
 func (store *FilePipelineStoreTask) hasPipeline(pipelineId string) bool {
@@ -225,6 +238,10 @@ func (store *FilePipelineStoreTask) getPipelineInfoFile(pipelineId string) strin
 
 func (store *FilePipelineStoreTask) getPipelineDir(pipelineId string) string {
 	return store.runtimeInfo.BaseDir + PIPELINES_FOLDER + pipelineId + "/"
+}
+
+func (store *FilePipelineStoreTask) getPipelineRunInfoDir(pipelineId string) string {
+	return store.runtimeInfo.BaseDir + PIPELINES_RUN_INFO_FOLDER + pipelineId + "/"
 }
 
 func NewFilePipelineStoreTask(runtimeInfo common.RuntimeInfo) PipelineStoreTask {

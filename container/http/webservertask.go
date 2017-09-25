@@ -16,7 +16,7 @@ import (
 type WebServerTask struct {
 	config            Config
 	buildInfo         *common.BuildInfo
-	manager           *manager.PipelineManager
+	manager           manager.Manager
 	pipelineStoreTask store.PipelineStoreTask
 	httpServer        *http.Server
 }
@@ -78,7 +78,7 @@ func (webServerTask *WebServerTask) Shutdown() {
 func NewWebServerTask(
 	config Config,
 	buildInfo *common.BuildInfo,
-	manager *manager.PipelineManager,
+	manager manager.Manager,
 	pipelineStoreTask store.PipelineStoreTask,
 ) (*WebServerTask, error) {
 	webServerTask := WebServerTask{

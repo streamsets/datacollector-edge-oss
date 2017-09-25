@@ -9,6 +9,13 @@ import (
 	"runtime"
 )
 
+const (
+	REGISTRATION_URL_PATH = "/security/public-rest/v1/components/registration"
+	HEADER_X_REST_CALL    = "X-Requested-By"
+	HEADER_CONTENT_TYPE   = "Content-Type"
+	APPLICATION_JSON      = "application/json"
+)
+
 type Attributes struct {
 	BaseHttpUrl     string `json:"baseHttpUrl"`
 	Sdc2GoGoVersion string `json:"sdc2goGoVersion"`
@@ -25,7 +32,11 @@ type RegistrationData struct {
 	Attributes  Attributes `json:"attributes"`
 }
 
-func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo *common.RuntimeInfo) {
+func RegisterWithDPM(
+	dpmConfig Config,
+	buildInfo *common.BuildInfo,
+	runtimeInfo *common.RuntimeInfo,
+) {
 	if dpmConfig.Enabled && dpmConfig.AppAuthToken != "" {
 		attributes := Attributes{
 			BaseHttpUrl:     runtimeInfo.HttpUrl,
@@ -48,11 +59,11 @@ func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo 
 			log.Println(err)
 		}
 
-		var registrationUrl = dpmConfig.BaseUrl + "/security/public-rest/v1/components/registration"
+		var registrationUrl = dpmConfig.BaseUrl + REGISTRATION_URL_PATH
 
 		req, err := http.NewRequest("POST", registrationUrl, bytes.NewBuffer(jsonValue))
-		req.Header.Set("X-Requested-By", "SDC2GO")
-		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set(HEADER_X_REST_CALL, "SDC Edge")
+		req.Header.Set(HEADER_CONTENT_TYPE, APPLICATION_JSON)
 
 		client := &http.Client{}
 		resp, err := client.Do(req)
@@ -66,10 +77,6 @@ func RegisterWithDPM(dpmConfig Config, buildInfo *common.BuildInfo, runtimeInfo 
 			panic("DPM Registration failed")
 		}
 		runtimeInfo.DPMEnabled = true
-
-		// TODO: Fix Events
-		// SendEvent(dpmConfig, buildInfo, runtimeInfo)
-
 	} else {
 		runtimeInfo.DPMEnabled = false
 	}

@@ -23,12 +23,13 @@ const (
 )
 
 type DataCollectorEdgeMain struct {
-	Config            *Config
-	BuildInfo         *common.BuildInfo
-	RuntimeInfo       *common.RuntimeInfo
-	WebServerTask     *http.WebServerTask
-	Manager           *manager.PipelineManager
-	PipelineStoreTask store.PipelineStoreTask
+	Config                 *Config
+	BuildInfo              *common.BuildInfo
+	RuntimeInfo            *common.RuntimeInfo
+	WebServerTask          *http.WebServerTask
+	PipelineStoreTask      store.PipelineStoreTask
+	Manager                manager.Manager
+	DPMMessageEventHandler *dpm.MessageEventHandler
 }
 
 func DoMain(
@@ -83,13 +84,25 @@ func newDataCollectorEdge(baseDir string, debugFlag bool) (*DataCollectorEdgeMai
 	webServerTask, _ := http.NewWebServerTask(config.Http, buildInfo, pipelineManager, pipelineStoreTask)
 	dpm.RegisterWithDPM(config.DPM, buildInfo, runtimeInfo)
 
+	var messagingEventHandler *dpm.MessageEventHandler
+	if runtimeInfo.DPMEnabled {
+		messagingEventHandler = dpm.NewMessageEventHandler(
+			config.DPM,
+			buildInfo, runtimeInfo,
+			pipelineStoreTask,
+			pipelineManager,
+		)
+		messagingEventHandler.Init()
+	}
+
 	return &DataCollectorEdgeMain{
-		Config:            config,
-		BuildInfo:         buildInfo,
-		RuntimeInfo:       runtimeInfo,
-		WebServerTask:     webServerTask,
-		Manager:           pipelineManager,
-		PipelineStoreTask: pipelineStoreTask,
+		Config:                 config,
+		BuildInfo:              buildInfo,
+		RuntimeInfo:            runtimeInfo,
+		WebServerTask:          webServerTask,
+		Manager:                pipelineManager,
+		PipelineStoreTask:      pipelineStoreTask,
+		DPMMessageEventHandler: messagingEventHandler,
 	}, nil
 }
 

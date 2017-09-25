@@ -44,7 +44,7 @@ func NewManager(
 	config execution.Config,
 	runtimeInfo common.RuntimeInfo,
 	pipelineStoreTask store.PipelineStoreTask,
-) (*PipelineManager, error) {
+) (Manager, error) {
 	pipelineManager := PipelineManager{
 		config:            config,
 		runnerMap:         make(map[string]*runner.StandaloneRunner),
