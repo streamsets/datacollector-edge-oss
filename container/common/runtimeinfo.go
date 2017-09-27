@@ -12,10 +12,11 @@ const (
 )
 
 type RuntimeInfo struct {
-	ID         string
-	BaseDir    string
-	HttpUrl    string
-	DPMEnabled bool
+	ID           string
+	BaseDir      string
+	HttpUrl      string
+	DPMEnabled   bool
+	AppAuthToken string
 }
 
 func (r *RuntimeInfo) init() error {

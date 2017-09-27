@@ -16,9 +16,7 @@ import (
 )
 
 const (
-	MESSAGING_URL_PATH        = "/messaging/rest/v1/events"
-	HEADER_X_APP_AUTH_TOKEN   = "X-SS-App-Auth-Token"
-	HEADER_X_APP_COMPONENT_ID = "X-SS-App-Component-Id"
+	MESSAGING_URL_PATH = "/messaging/rest/v1/events"
 )
 
 type MessageEventHandler struct {
@@ -87,10 +85,10 @@ func (m *MessageEventHandler) SendEvent() error {
 		var eventsUrl = m.dpmConfig.BaseUrl + MESSAGING_URL_PATH
 
 		req, err := http.NewRequest("POST", eventsUrl, bytes.NewBuffer(jsonValue))
-		req.Header.Set(HEADER_X_APP_AUTH_TOKEN, m.dpmConfig.AppAuthToken)
-		req.Header.Set(HEADER_X_APP_COMPONENT_ID, m.runtimeInfo.ID)
-		req.Header.Set(HEADER_X_REST_CALL, "SDC Edge")
-		req.Header.Set(HEADER_CONTENT_TYPE, APPLICATION_JSON)
+		req.Header.Set(common.HEADER_X_APP_AUTH_TOKEN, m.dpmConfig.AppAuthToken)
+		req.Header.Set(common.HEADER_X_APP_COMPONENT_ID, m.runtimeInfo.ID)
+		req.Header.Set(common.HEADER_X_REST_CALL, "SDC Edge")
+		req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
 
 		client := &http.Client{}
 		resp, err := client.Do(req)
@@ -157,7 +155,12 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 			break
 		}
 
-		newPipeline, err := m.pipelineStoreTask.Create(pipelineSaveEvent.Name, pipelineSaveEvent.Name, "")
+		newPipeline, err := m.pipelineStoreTask.Create(
+			pipelineSaveEvent.Name,
+			pipelineConfiguration.Title,
+			pipelineConfiguration.Description,
+			true,
+		)
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR

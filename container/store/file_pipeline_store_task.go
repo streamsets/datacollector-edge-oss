@@ -6,6 +6,7 @@ import (
 	"github.com/satori/go.uuid"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
+	pipelineStateStore "github.com/streamsets/datacollector-edge/container/execution/store"
 	"io/ioutil"
 	"os"
 	"time"
@@ -68,7 +69,7 @@ func (store *FilePipelineStoreTask) GetInfo(pipelineId string) (common.PipelineI
 	}
 
 	if pipelineInfo.PipelineId == "" {
-		err = errors.New("Invalid pipeline configuration")
+		err = errors.New("InValid pipeline configuration")
 	}
 
 	return pipelineInfo, err
@@ -78,6 +79,7 @@ func (store *FilePipelineStoreTask) Create(
 	pipelineId string,
 	pipelineTitle string,
 	description string,
+	isRemote bool,
 ) (common.PipelineConfiguration, error) {
 
 	if store.hasPipeline(pipelineId) {
@@ -137,7 +139,11 @@ func (store *FilePipelineStoreTask) Create(
 		return pipelineConfiguration, err
 	}
 	err = ioutil.WriteFile(store.getPipelineFile(pipelineId), pipelineConfigurationJson, 0644)
+	if err != nil {
+		return pipelineConfiguration, err
+	}
 
+	err = pipelineStateStore.Edited(pipelineId, isRemote)
 	return pipelineConfiguration, err
 }
 
@@ -155,7 +161,7 @@ func (store *FilePipelineStoreTask) Save(
 	}
 
 	if savedInfo.UUID != pipelineConfiguration.UUID {
-		return pipelineConfiguration, errors.New("The pipeline '" + pipelineId + "' has been changed. Reload the page to view or edit the latest version of the pipeline.")
+		return pipelineConfiguration, errors.New("The pipeline '" + pipelineId + "' has been changed.")
 	}
 
 	currentTime := time.Now().Unix()
@@ -245,5 +251,6 @@ func (store *FilePipelineStoreTask) getPipelineRunInfoDir(pipelineId string) str
 }
 
 func NewFilePipelineStoreTask(runtimeInfo common.RuntimeInfo) PipelineStoreTask {
+	pipelineStateStore.BaseDir = runtimeInfo.BaseDir
 	return &FilePipelineStoreTask{runtimeInfo: runtimeInfo}
 }

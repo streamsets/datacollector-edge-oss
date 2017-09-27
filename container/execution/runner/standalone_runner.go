@@ -28,14 +28,15 @@ var (
 )
 
 type StandaloneRunner struct {
-	runtimeInfo       common.RuntimeInfo
-	pipelineId        string
-	config            execution.Config
-	validTransitions  map[string][]string
-	pipelineState     *common.PipelineState
-	pipelineConfig    common.PipelineConfiguration
-	prodPipeline      *ProductionPipeline
-	pipelineStoreTask pipelineStore.PipelineStoreTask
+	runtimeInfo          *common.RuntimeInfo
+	pipelineId           string
+	config               execution.Config
+	validTransitions     map[string][]string
+	pipelineState        *common.PipelineState
+	pipelineConfig       common.PipelineConfiguration
+	prodPipeline         *ProductionPipeline
+	metricsEventRunnable *MetricsEventRunnable
+	pipelineStoreTask    pipelineStore.PipelineStoreTask
 }
 
 func (standaloneRunner *StandaloneRunner) init() {
@@ -107,6 +108,17 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(
 
 	go standaloneRunner.prodPipeline.Run()
 
+	if standaloneRunner.runtimeInfo.DPMEnabled && standaloneRunner.isRemotePipeline() {
+		standaloneRunner.metricsEventRunnable = NewMetricsEventRunnable(
+			standaloneRunner.pipelineId,
+			standaloneRunner.pipelineConfig,
+			standaloneRunner.prodPipeline.Pipeline.pipelineBean,
+			standaloneRunner.prodPipeline.MetricRegistry,
+			standaloneRunner.runtimeInfo,
+		)
+		go standaloneRunner.metricsEventRunnable.Run()
+	}
+
 	standaloneRunner.pipelineState.Status = common.RUNNING
 	standaloneRunner.pipelineState.TimeStamp = time.Now().UTC()
 	err = store.SaveState(standaloneRunner.pipelineId, standaloneRunner.pipelineState)
@@ -126,6 +138,10 @@ func (standaloneRunner *StandaloneRunner) StopPipeline() (*common.PipelineState,
 
 	if standaloneRunner.prodPipeline != nil {
 		standaloneRunner.prodPipeline.Stop()
+	}
+
+	if standaloneRunner.metricsEventRunnable != nil {
+		standaloneRunner.metricsEventRunnable.Stop()
 	}
 
 	standaloneRunner.pipelineState.Status = common.STOPPED
@@ -167,10 +183,15 @@ func (standaloneRunner *StandaloneRunner) checkState(toState string) error {
 	return nil
 }
 
+func (standaloneRunner *StandaloneRunner) isRemotePipeline() bool {
+	attributes := standaloneRunner.pipelineState.Attributes
+	return attributes != nil && attributes[store.IS_REMOTE_PIPELINE] == true
+}
+
 func NewStandaloneRunner(
 	pipelineId string,
 	config execution.Config,
-	runtimeInfo common.RuntimeInfo,
+	runtimeInfo *common.RuntimeInfo,
 	pipelineStoreTask pipelineStore.PipelineStoreTask,
 ) (*StandaloneRunner, error) {
 	standaloneRunner := StandaloneRunner{

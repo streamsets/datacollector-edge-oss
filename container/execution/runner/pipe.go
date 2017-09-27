@@ -27,24 +27,26 @@ type Pipe interface {
 }
 
 type StagePipe struct {
-	config                 execution.Config
-	Stage                  StageRuntime
-	InputLanes             []string
-	OutputLanes            []string
-	EventLanes             []string
-	inputRecordsCounter    metrics.Counter
-	outputRecordsCounter   metrics.Counter
-	errorRecordsCounter    metrics.Counter
-	stageErrorsCounter     metrics.Counter
-	inputRecordsMeter      metrics.Meter
-	outputRecordsMeter     metrics.Meter
-	errorRecordsMeter      metrics.Meter
-	stageErrorsMeter       metrics.Meter
-	inputRecordsHistogram  metrics.Histogram
-	outputRecordsHistogram metrics.Histogram
-	errorRecordsHistogram  metrics.Histogram
-	stageErrorsHistogram   metrics.Histogram
-	processingTimer        metrics.Timer
+	config                      execution.Config
+	Stage                       StageRuntime
+	InputLanes                  []string
+	OutputLanes                 []string
+	EventLanes                  []string
+	inputRecordsCounter         metrics.Counter
+	outputRecordsCounter        metrics.Counter
+	errorRecordsCounter         metrics.Counter
+	stageErrorsCounter          metrics.Counter
+	inputRecordsMeter           metrics.Meter
+	outputRecordsMeter          metrics.Meter
+	errorRecordsMeter           metrics.Meter
+	stageErrorsMeter            metrics.Meter
+	inputRecordsHistogram       metrics.Histogram
+	outputRecordsHistogram      metrics.Histogram
+	errorRecordsHistogram       metrics.Histogram
+	stageErrorsHistogram        metrics.Histogram
+	processingTimer             metrics.Timer
+	outputRecordsPerLaneCounter map[string]metrics.Counter
+	outputRecordsPerLaneMeter   map[string]metrics.Meter
 }
 
 func (s *StagePipe) Init() []validation.Issue {
@@ -69,6 +71,17 @@ func (s *StagePipe) Init() []validation.Issue {
 		s.stageErrorsHistogram = util.CreateHistogram5Min(metricRegistry, metricsKey+STAGE_ERRORS)
 
 		s.processingTimer = util.CreateTimer(metricRegistry, metricsKey+BATCH_PROCESSING)
+
+		if len(s.Stage.config.OutputLanes) > 0 {
+			s.outputRecordsPerLaneCounter = make(map[string]metrics.Counter)
+			s.outputRecordsPerLaneMeter = make(map[string]metrics.Meter)
+			for _, lane := range s.Stage.config.OutputLanes {
+				s.outputRecordsPerLaneCounter[lane] =
+					util.CreateCounter(metricRegistry, metricsKey+":"+lane+OUTPUT_RECORDS)
+				s.outputRecordsPerLaneMeter[lane] =
+					util.CreateMeter(metricRegistry, metricsKey+":"+lane+OUTPUT_RECORDS)
+			}
+		}
 	}
 
 	return issues
@@ -115,6 +128,14 @@ func (s *StagePipe) Process(pipeBatch *FullPipeBatch) error {
 	s.stageErrorsCounter.Inc(stageErrorMessagesCount)
 	s.stageErrorsMeter.Mark(stageErrorMessagesCount)
 	s.stageErrorsHistogram.Update(stageErrorMessagesCount)
+
+	if len(s.Stage.config.OutputLanes) > 0 {
+		for _, lane := range s.Stage.config.OutputLanes {
+			// TODO: Support for multiple lanes - SDCE-89
+			s.outputRecordsPerLaneCounter[lane].Inc(outputRecordsCount)
+			s.outputRecordsPerLaneMeter[lane].Mark(outputRecordsCount)
+		}
+	}
 
 	return nil
 }

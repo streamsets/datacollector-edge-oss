@@ -97,8 +97,9 @@ func FormatMetricsRegistry(r metrics.Registry) MetricsJson {
 			values["count"] = m.Count()
 			values["m1_rate"] = m.Rate1()
 			values["m5_rate"] = m.Rate5()
-			values["m15rate"] = m.Rate15()
+			values["m15_rate"] = m.Rate15()
 			values["mean_rate"] = m.RateMean()
+			values["units"] = "events/second"
 			meters[name] = values
 		case metrics.Timer:
 			t := metric.Snapshot()
@@ -115,8 +116,10 @@ func FormatMetricsRegistry(r metrics.Registry) MetricsJson {
 			values["p999"] = ps[4]
 			values["m1_rate"] = t.Rate1()
 			values["m5_rate"] = t.Rate5()
-			values["m15rate"] = t.Rate15()
+			values["m15_rate"] = t.Rate15()
 			values["mean_rate"] = t.RateMean()
+			values["duration_units"] = "seconds"
+			values["rate_units"] = "calls/second"
 			timers[name] = values
 		}
 	})

@@ -38,7 +38,7 @@ func (webServerTask *WebServerTask) getPipeline(w http.ResponseWriter, r *http.R
 func (webServerTask *WebServerTask) createPipeline(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	pipelineTitle := ps.ByName("pipelineTitle")
 	description := r.URL.Query().Get("description")
-	pipelineConfig, err := webServerTask.pipelineStoreTask.Create(pipelineTitle, pipelineTitle, description)
+	pipelineConfig, err := webServerTask.pipelineStoreTask.Create(pipelineTitle, pipelineTitle, description, false)
 	if err == nil {
 		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "\t")

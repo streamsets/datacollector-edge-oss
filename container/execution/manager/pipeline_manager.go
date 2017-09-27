@@ -10,7 +10,7 @@ import (
 type PipelineManager struct {
 	config            execution.Config
 	runnerMap         map[string]*runner.StandaloneRunner
-	runtimeInfo       common.RuntimeInfo
+	runtimeInfo       *common.RuntimeInfo
 	pipelineStoreTask store.PipelineStoreTask
 }
 
@@ -42,7 +42,7 @@ func (p *PipelineManager) ResetOffset(pipelineId string) error {
 
 func NewManager(
 	config execution.Config,
-	runtimeInfo common.RuntimeInfo,
+	runtimeInfo *common.RuntimeInfo,
 	pipelineStoreTask store.PipelineStoreTask,
 ) (Manager, error) {
 	pipelineManager := PipelineManager{

@@ -80,7 +80,7 @@ func newDataCollectorEdge(baseDir string, debugFlag bool) (*DataCollectorEdgeMai
 	buildInfo, _ := common.NewBuildInfo()
 	runtimeInfo, _ := common.NewRuntimeInfo(httpUrl, baseDir)
 	pipelineStoreTask := store.NewFilePipelineStoreTask(*runtimeInfo)
-	pipelineManager, _ := manager.NewManager(config.Execution, *runtimeInfo, pipelineStoreTask)
+	pipelineManager, _ := manager.NewManager(config.Execution, runtimeInfo, pipelineStoreTask)
 	webServerTask, _ := http.NewWebServerTask(config.Http, buildInfo, pipelineManager, pipelineStoreTask)
 	dpm.RegisterWithDPM(config.DPM, buildInfo, runtimeInfo)
 

@@ -43,7 +43,7 @@ func TestFilePipelineStoreTask_GetPipelines(t *testing.T) {
 func TestFilePipelineStoreTask_Create(t *testing.T) {
 	pipelineStoreTask := getPipelineStoreTask(t, "TestFilePipelineStoreTask_Create")
 
-	pipelineConfig, err := pipelineStoreTask.Create("testPipeline", "testPipeline", "Sample desc")
+	pipelineConfig, err := pipelineStoreTask.Create("testPipeline", "testPipeline", "Sample desc", false)
 	if err != nil {
 		t.Error("Error from Create: ", err)
 		return
@@ -68,7 +68,7 @@ func TestFilePipelineStoreTask_Create(t *testing.T) {
 	}
 
 	// try creating duplicate pipeline
-	pipelineConfig, err = pipelineStoreTask.Create("testPipeline", "testPipeline", "Sample desc")
+	pipelineConfig, err = pipelineStoreTask.Create("testPipeline", "testPipeline", "Sample desc", false)
 	if err == nil {
 		t.Error("Excepted error for duplicate pipelineId")
 	}
@@ -77,7 +77,7 @@ func TestFilePipelineStoreTask_Create(t *testing.T) {
 func TestFilePipelineStoreTask_Save(t *testing.T) {
 	pipelineStoreTask := getPipelineStoreTask(t, "TestFilePipelineStoreTask_Save")
 
-	pipelineConfig, err := pipelineStoreTask.Create("testPipeline", "testPipeline", "Sample desc")
+	pipelineConfig, err := pipelineStoreTask.Create("testPipeline", "testPipeline", "Sample desc", false)
 	if err != nil {
 		t.Error("Error from Create: ", err)
 		return
@@ -113,7 +113,7 @@ func TestFilePipelineStoreTask_Save(t *testing.T) {
 func TestFilePipelineStoreTask_LoadPipelineConfig(t *testing.T) {
 	pipelineStoreTask := getPipelineStoreTask(t, "TestFilePipelineStoreTask_LoadPipelineConfig")
 
-	pipelineConfig, err := pipelineStoreTask.Create("testPipeline", "testPipeline", "Sample desc")
+	pipelineConfig, err := pipelineStoreTask.Create("testPipeline", "testPipeline", "Sample desc", false)
 	if err != nil {
 		t.Error("Error from Create: ", err)
 		return
@@ -153,7 +153,7 @@ func TestFilePipelineStoreTask_LoadPipelineConfig(t *testing.T) {
 func TestFilePipelineStoreTask_Delete(t *testing.T) {
 	pipelineStoreTask := getPipelineStoreTask(t, "TestFilePipelineStoreTask_Delete")
 
-	pipelineConfig, err := pipelineStoreTask.Create("testDeletePipeline", "testPipeline", "Sample desc")
+	pipelineConfig, err := pipelineStoreTask.Create("testDeletePipeline", "testPipeline", "Sample desc", false)
 	if err != nil {
 		t.Error("Error from Create: ", err)
 		return

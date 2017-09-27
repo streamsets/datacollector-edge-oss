@@ -19,8 +19,10 @@ const (
 )
 
 type PipelineState struct {
-	PipelineId string
-	Status     string
-	Message    string
-	TimeStamp  time.Time
+	PipelineId string                 `json:"pipelineId"`
+	Status     string                 `json:"status"`
+	Message    string                 `json:"message"`
+	TimeStamp  time.Time              `json:"timeStamp"`
+	Attributes map[string]interface{} `json:"attributes"`
+	Metrics    string                 `json:"metrics"`
 }

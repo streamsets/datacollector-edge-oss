@@ -11,9 +11,6 @@ import (
 
 const (
 	REGISTRATION_URL_PATH = "/security/public-rest/v1/components/registration"
-	HEADER_X_REST_CALL    = "X-Requested-By"
-	HEADER_CONTENT_TYPE   = "Content-Type"
-	APPLICATION_JSON      = "application/json"
 )
 
 type Attributes struct {
@@ -62,8 +59,8 @@ func RegisterWithDPM(
 		var registrationUrl = dpmConfig.BaseUrl + REGISTRATION_URL_PATH
 
 		req, err := http.NewRequest("POST", registrationUrl, bytes.NewBuffer(jsonValue))
-		req.Header.Set(HEADER_X_REST_CALL, "SDC Edge")
-		req.Header.Set(HEADER_CONTENT_TYPE, APPLICATION_JSON)
+		req.Header.Set(common.HEADER_X_REST_CALL, "SDC Edge")
+		req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
 
 		client := &http.Client{}
 		resp, err := client.Do(req)
@@ -77,6 +74,7 @@ func RegisterWithDPM(
 			panic("DPM Registration failed")
 		}
 		runtimeInfo.DPMEnabled = true
+		runtimeInfo.AppAuthToken = dpmConfig.AppAuthToken
 	} else {
 		runtimeInfo.DPMEnabled = false
 	}

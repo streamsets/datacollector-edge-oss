@@ -13,6 +13,7 @@ import (
 const (
 	PIPELINE_STATE_FILE         = "pipelineState.json"
 	PIPELINE_STATE_HISTORY_FILE = "pipelineStateHistory.json"
+	IS_REMOTE_PIPELINE          = "IS_REMOTE_PIPELINE"
 )
 
 func checkFileExists(filePath string) (bool, error) {
@@ -38,6 +39,8 @@ func GetState(pipelineId string) (*common.PipelineState, error) {
 			Message:    "",
 			TimeStamp:  time.Now().UTC(),
 		}
+		pipelineState.Attributes = make(map[string]interface{})
+		pipelineState.Attributes[IS_REMOTE_PIPELINE] = false
 		err = os.MkdirAll(getRunInfoDir(pipelineId), os.ModePerm)
 		if err == nil {
 			err = SaveState(pipelineId, pipelineState)
@@ -54,6 +57,20 @@ func GetState(pipelineId string) (*common.PipelineState, error) {
 		err := json.Unmarshal(file, &pipelineState)
 		return &pipelineState, err
 	}
+}
+
+func Edited(pipelineId string, isRemote bool) error {
+	pipelineState, err := GetState(pipelineId)
+	if err != nil {
+		return err
+	}
+
+	if isRemote {
+		pipelineState.Attributes = make(map[string]interface{})
+		pipelineState.Attributes[IS_REMOTE_PIPELINE] = isRemote
+	}
+
+	return SaveState(pipelineId, pipelineState)
 }
 
 func SaveState(pipelineId string, pipelineState *common.PipelineState) error {
