@@ -1,0 +1,123 @@
+plugins {
+    id 'com.github.blindpirate.gogradle' version '0.7.0'
+}
+
+repositories {
+    mavenLocal()
+}
+
+
+golang {
+    packagePath = "${gitPath}"
+}
+
+def getLdFlags() {
+    final buildDate=new Date().format("yyyy-MM-dd'T'HHmmss'Z'")
+    final buildRepoSha = new ByteArrayOutputStream().withStream { gitShaCmdStream ->
+           def result =  exec {
+               commandLine 'git', 'rev-parse', 'HEAD'
+               standardOutput = gitShaCmdStream
+           }
+       return gitShaCmdStream.toString().trim()
+    }
+
+    final X_CONTAINER_COMMON_PATH = " -X ${gitPath}/container/common"
+
+    "\"" + X_CONTAINER_COMMON_PATH + ".Version=${version}" +
+        X_CONTAINER_COMMON_PATH + ".BuiltBy=" + System.properties['user.name'] +
+        X_CONTAINER_COMMON_PATH + ".BuiltDate=" + buildDate +
+        X_CONTAINER_COMMON_PATH + ".BuiltRepoSha=" + buildRepoSha + "\""
+}
+
+def copyAssetSpec = copySpec {
+     from fileTree('.') {
+        include('etc/', 'data/')
+        exclude('data/**/*.png', 'data/**/*.md')
+     }
+}
+
+final targetPlatforms = ['linux-arm', 'linux-amd64', 'windows-amd64', 'darwin-amd64']
+final ldFlags = getLdFlags()
+
+clean {
+    delete file('dist')
+}
+
+//By default builds for machine's target platforms
+build {
+    go "build -ldflags " + ldFlags + " -o dist/bin/${binaryName}\${GOEXE} ${gitPath}"
+
+    copy {
+        doFirst{
+           mkdir 'dist/log'
+        }
+        with copyAssetSpec
+        into 'dist'
+    }
+}
+
+vet {
+    continueWhenFail = true
+}
+
+//Custom tasks
+task buildAll {
+    dependsOn build
+
+    def baseDir = temporaryDir.getAbsolutePath() + '/gobuild'
+
+    //Delete temporary build directory after all builds are done
+    doLast{
+        delete baseDir
+    }
+
+    targetPlatforms.each{targetPlatform ->
+        def (goOs, goArch) = targetPlatform.split('-')
+        def basePlatformDir = baseDir + '/' + goOs + '/' + goArch
+        def buildTaskName = 'build-'+ targetPlatform
+        def tarTaskName = 'tar-'+ targetPlatform
+
+        //Create Build Task for each platform
+        task(buildTaskName, type: com.github.blindpirate.gogradle.Go) {
+            dependsOn build
+            description = 'Builds Edge Binaries for ' + targetPlatform
+
+            environment.GOOS=goOs
+            environment.GOARCH=goArch
+
+            if (goOs.startsWith('windows')) {
+                environment.GOEXE='.exe'
+            }
+
+            go "build -ldflags " + ldFlags + " -o " + basePlatformDir + "/bin/${binaryName}\${GOEXE} ${gitPath}"
+        }
+
+        //Create Tar Task for each platform
+        task(tarTaskName, type :Tar) {
+            description = 'Packages Edge Binaries for ' + targetPlatform
+
+            //Tar depends on build task for each platform
+            dependsOn buildTaskName
+
+            copy {
+                doFirst{
+                    mkdir basePlatformDir + '/log'
+                }
+                with copyAssetSpec
+                into basePlatformDir
+            }
+
+            baseName = "${appName}-" + goOs + '-' + goArch
+            from file(basePlatformDir)
+            destinationDir = file('dist')
+            extension = 'tgz'
+            compression = Compression.GZIP
+        }
+
+        //Main buildAll task depends on all of the platform tar tasks
+        dependsOn tarTaskName
+    }
+}
+
+//TODO: Add support for Docker build (SDCE-94)
+//TODO: Remove Makefiles and dep files (SDCE-93)

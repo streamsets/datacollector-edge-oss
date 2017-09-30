@@ -4,6 +4,7 @@
 
 * Go 1.8
 * make
+* Gradle 4.2
 
 
 ## Clone Repository
@@ -13,18 +14,26 @@
 * Reference - https://golang.org/doc/code.html#Organization
 
 ## Building
-    $ make clean dist
+    $ make clean dist (or)
+    $ gradle clean build
 
 ## Building for all platforms
 
-    $ make clean dist-all
+    $ make clean dist-all (or)
+    $ gradle clean buildAll
 
 ## To run tests
 
-    $ make test
+    $ make test (or)
+    $ gradle test
+
+## to run coverage
+    $ gradle coverage
+
+## to run check (test, fmt and vet)
+    $ gradle check
 
 ## Running
-
     $ cd dist
     $ bin/edge
 
