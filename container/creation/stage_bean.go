@@ -142,6 +142,23 @@ func injectStageConfigs(
 										))
 									}
 								}
+							} else {
+								predicateModelTag := stageInstanceFieldType.Tag.Get(common.PREDICATE_MODEL_TAG_NAME)
+								if len(predicateModelTag) > 0 {
+									predicateValueListOfMap := make([]map[string]string, 0)
+									switch reflect.TypeOf(resolvedValue).Kind() {
+									case reflect.Slice:
+										predicateValueList := resolvedValue.([]map[string]interface{})
+										for _, predicateValue := range predicateValueList {
+											valueMap := map[string]string{
+												"outputLane": predicateValue["outputLane"].(string),
+												"predicate":  predicateValue["predicate"].(string),
+											}
+											predicateValueListOfMap = append(predicateValueListOfMap, valueMap)
+										}
+									}
+									stageInstanceField.Set(reflect.ValueOf(predicateValueListOfMap))
+								}
 							}
 						default:
 							return errors.New(fmt.Sprintf(
