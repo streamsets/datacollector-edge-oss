@@ -37,7 +37,8 @@ func (t *TrashDestination) Init(stageContext api.StageContext) error {
 
 func (t *TrashDestination) Write(batch api.Batch) error {
 	for _, record := range batch.GetRecords() {
-		jsonValue, err := json.Marshal(record.Get().Value)
+		recordValue, _ := record.Get()
+		jsonValue, err := json.Marshal(recordValue.Value)
 		if err != nil {
 			log.Println("[Error] Json Serialization Error", err)
 			t.GetStageContext().ToError(err, record)

@@ -39,7 +39,7 @@ func TestReadMapRecord(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	rootField := record.Get()
+	rootField, _ := record.Get()
 	if rootField.Type != fieldtype.MAP {
 		t.Errorf("Excpeted record type : Map, but received: %s", rootField.Type)
 	}
@@ -104,12 +104,14 @@ func TestWriteAndReadStringRecord(t *testing.T) {
 				t.Fatal("Only Two Records were defined in the reader, but reader is reading more than that")
 			}
 			if recordCounter == 0 {
-				if r.Get().Value != "Sample Data1" {
-					t.Errorf("Excepted: Sample Data1, but got: %s", r.Get().Value)
+				rootField, _ := r.Get()
+				if rootField.Value != "Sample Data1" {
+					t.Errorf("Excepted: Sample Data1, but got: %s", rootField.Value)
 				}
 			} else {
-				if r.Get().Value != "Sample Data2" {
-					t.Errorf("Excepted: Sample Data2, but got: %s", r.Get().Value)
+				rootField, _ := r.Get()
+				if rootField.Value != "Sample Data2" {
+					t.Errorf("Excepted: Sample Data2, but got: %s", rootField.Value)
 				}
 			}
 		}

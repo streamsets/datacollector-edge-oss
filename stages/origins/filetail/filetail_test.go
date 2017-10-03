@@ -105,9 +105,10 @@ func TestValidFilePath(t *testing.T) {
 		t.Error("Excepted 4 records but got - ", len(records))
 	}
 
-	mapFieldValue := records[0].Get().Value.(map[string]api.Field)
+	rootField, _ := records[0].Get()
+	mapFieldValue := rootField.Value.(map[string]api.Field)
 	if mapFieldValue["text"].Value != "test data 1" {
-		t.Error("Excepted 'test data 1' but got - ", records[0].Get().Value)
+		t.Error("Excepted 'test data 1' but got - ", rootField.Value)
 	}
 
 	// With maxBatchSize 2 - batch 1
@@ -123,9 +124,10 @@ func TestValidFilePath(t *testing.T) {
 		t.Error("Excepted 2 records but got - ", len(records))
 	}
 
-	mapFieldValue = records[0].Get().Value.(map[string]api.Field)
+	rootField, _ = records[0].Get()
+	mapFieldValue = rootField.Value.(map[string]api.Field)
 	if mapFieldValue["text"].Value != "test data 1" {
-		t.Error("Excepted 'test data 1' but got - ", records[0].Get().Value)
+		t.Error("Excepted 'test data 1' but got - ", rootField.Value)
 	}
 
 	// With maxBatchSize 2 - batch 2
@@ -140,9 +142,10 @@ func TestValidFilePath(t *testing.T) {
 		t.Error("Excepted 2 records but got - ", len(records))
 	}
 
-	mapFieldValue = records[0].Get().Value.(map[string]api.Field)
+	rootField, _ = records[0].Get()
+	mapFieldValue = rootField.Value.(map[string]api.Field)
 	if mapFieldValue["text"].Value != "test data 3" {
-		t.Error("Excepted 'test data 3' but got - ", records[0].Get().Value)
+		t.Error("Excepted 'test data 3' but got - ", rootField.Value)
 	}
 
 	stageInstance.Destroy()

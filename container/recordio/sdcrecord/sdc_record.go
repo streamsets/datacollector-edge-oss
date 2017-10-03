@@ -29,7 +29,8 @@ func NewSdcRecordFromRecord(r api.Record) (*SDCRecord, error) {
 	var err error = nil
 	sdcRecord := new(SDCRecord)
 
-	val := r.Get().Value
+	rootField, _ := r.Get()
+	val := rootField.Value
 	//Supporting primitives only (and other complex types are simple byte arrays
 	// which has to be parsed out in SDC),
 	// as currently we don't want to support any parsing inside Data Collector Edge

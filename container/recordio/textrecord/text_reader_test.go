@@ -37,7 +37,7 @@ func TestReadTextRecord(t *testing.T) {
 			break
 		}
 
-		rootField := record.Get()
+		rootField, _ := record.Get()
 		if rootField.Type != fieldtype.MAP {
 			t.Errorf("Excpeted record type : Map, but received: %s", rootField.Type)
 		}

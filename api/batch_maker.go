@@ -9,5 +9,5 @@ package api
 // AddRecord adds a record to the BatchMaker.
 type BatchMaker interface {
 	GetLanes() []string
-	AddRecord(record Record)
+	AddRecord(record Record, outputLanes ...string)
 }

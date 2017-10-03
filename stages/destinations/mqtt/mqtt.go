@@ -43,7 +43,8 @@ func (md *MqttClientDestination) Init(stageContext api.StageContext) error {
 func (md *MqttClientDestination) Write(batch api.Batch) error {
 	log.Println("[DEBUG] MqttClientDestination write method")
 	for _, record := range batch.GetRecords() {
-		err := md.sendRecordToSDC(record.Get().Value)
+		recordValue, _ := record.Get()
+		err := md.sendRecordToSDC(recordValue.Value)
 		if err != nil {
 			log.Println("[Error] Error Writing Record", err)
 			md.GetStageContext().ToError(err, record)

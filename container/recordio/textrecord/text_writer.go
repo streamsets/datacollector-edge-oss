@@ -29,7 +29,8 @@ type TextWriterImpl struct {
 }
 
 func (textWriter *TextWriterImpl) WriteRecord(r api.Record) error {
-	textFieldValue, err := textWriter.getTextFieldPathValue(r.Get())
+	recordValue, _ := r.Get()
+	textFieldValue, err := textWriter.getTextFieldPathValue(recordValue)
 	if err != nil {
 		return err
 	}

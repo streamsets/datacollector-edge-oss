@@ -149,7 +149,8 @@ func checkRecord(
 	isError := false
 	expectedValue := value.(string)
 
-	actualValue := record.Get().Value.(string)
+	rootField, _ := record.Get()
+	actualValue := rootField.Value.(string)
 	actualHeaders := record.GetHeader().GetAttributes()
 
 	if actualValue != expectedValue {

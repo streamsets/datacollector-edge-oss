@@ -28,7 +28,8 @@ type JsonWriterImpl struct {
 }
 
 func (jsonWriter *JsonWriterImpl) WriteRecord(r api.Record) error {
-	jsonObject, err := writeFieldToJsonObject(r.Get())
+	recordValue, _ := r.Get()
+	jsonObject, err := writeFieldToJsonObject(recordValue)
 	if err != nil {
 		return err
 	}

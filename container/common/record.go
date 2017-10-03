@@ -2,6 +2,7 @@ package common
 
 import (
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/fieldtype"
 )
 
 type RecordImpl struct {
@@ -13,8 +14,65 @@ func (r *RecordImpl) GetHeader() api.Header {
 	return r.header
 }
 
-func (r *RecordImpl) Get() api.Field {
-	return *r.value
+func (r *RecordImpl) Get(fieldPath ...string) (api.Field, error) {
+	if len(fieldPath) == 0 {
+		return *r.value, nil
+	} else {
+		var field api.Field
+		pathElements, err := r.parse(fieldPath[0])
+		if err != nil {
+			return field, err
+		}
+		fields := r.getFromPathElements(pathElements)
+		if len(pathElements) == len(fields) {
+			return fields[len(fields)-1], nil
+		} else {
+			return field, nil
+		}
+	}
+}
+
+func (r *RecordImpl) parse(fieldPath string) ([]PathElement, error) {
+	return ParseFieldPath(fieldPath, true)
+}
+
+func (r *RecordImpl) getFromPathElements(pathElements []PathElement) []api.Field {
+	fields := make([]api.Field, 0)
+	if r.value != nil {
+		current := *r.value
+		for _, pathElement := range pathElements {
+			var next api.Field
+			switch pathElement.Type {
+			case ROOT:
+				fields = append(fields, current)
+				next = current
+			case MAP:
+				if current.Type == fieldtype.MAP || current.Type == fieldtype.LIST_MAP {
+					mapValue := current.Value.(map[string]api.Field)
+					if mapValue != nil {
+						field := mapValue[pathElement.Name]
+						if len(field.Type) > 0 {
+							fields = append(fields, field)
+							next = field
+						}
+					}
+				}
+			case LIST:
+				if current.Type == fieldtype.MAP || current.Type == fieldtype.LIST_MAP {
+					listValue := current.Value.([]api.Field)
+					if listValue != nil && len(listValue) > pathElement.Idx {
+						field := listValue[pathElement.Idx]
+						if len(field.Type) > 0 {
+							fields = append(fields, field)
+							next = field
+						}
+					}
+				}
+			}
+			current = next
+		}
+	}
+	return fields
 }
 
 func (r *RecordImpl) Set(field api.Field) api.Field {

@@ -82,11 +82,12 @@ func checkRecord(t *testing.T, r api.Record, sourceId string, value interface{},
 		isError = true
 	}
 
-	if r.Get().Value != value {
+	rootField, _ := r.Get()
+	if rootField.Value != value {
 		t.Errorf(
 			"Value does not match for Record Id:%s, Expected :%s, Actual : %s",
 			r.GetHeader().GetSourceId(),
-			value, r.Get().Value,
+			value, rootField.Value,
 		)
 		isError = true
 	}
@@ -228,11 +229,12 @@ func TestReadAndWriteRecord(t *testing.T) {
 
 	for i := 0; i < len(expectedRecords); i++ {
 		expectedRecord := expectedRecords[i]
+		rootField, _ := expectedRecord.Get()
 		checkRecord(
 			t,
 			actualRecords[i],
 			expectedRecord.GetHeader().GetSourceId(),
-			expectedRecord.Get().Value,
+			rootField.Value,
 			expectedRecord.GetHeader().GetAttributes(),
 		)
 	}

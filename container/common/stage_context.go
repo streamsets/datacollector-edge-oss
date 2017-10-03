@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"github.com/rcrowley/go-metrics"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/el"
@@ -89,6 +90,23 @@ func (s *StageContextImpl) ReportError(err error) {
 		s.StageConfig.InstanceName,
 		err,
 	)
+}
+
+func (s *StageContextImpl) GetOutputLanes() []string {
+	return s.StageConfig.OutputLanes
+}
+
+func (s *StageContextImpl) Evaluate(
+	value string,
+	configName string,
+	ctx context.Context,
+) (interface{}, error) {
+	evaluator, _ := el.NewEvaluator(
+		configName,
+		s.Parameters,
+		[]el.Definitions{&el.StringEL{}, &el.RecordEL{Context: ctx}},
+	)
+	return evaluator.Evaluate(value)
 }
 
 func constructErrorRecord(instanceName string, err error, record api.Record) api.Record {

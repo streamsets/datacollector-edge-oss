@@ -75,7 +75,7 @@ func TestDevRandomOrigin(t *testing.T) {
 	}
 
 	for _, record := range records {
-		rootField := record.Get()
+		rootField, _ := record.Get()
 		if rootField.Type != fieldtype.MAP {
 			t.Error("Exception Map field type but got - ", rootField.Type, " Value: ", rootField.Value)
 			return
@@ -133,7 +133,7 @@ func TestDevRandom_Init_StringEL(t *testing.T) {
 	}
 
 	for _, record := range records {
-		rootField := record.Get()
+		rootField, _ := record.Get()
 		if rootField.Type != fieldtype.MAP {
 			t.Error("Exception Map field type but got - ", rootField.Type, " Value: ", rootField.Value)
 			return

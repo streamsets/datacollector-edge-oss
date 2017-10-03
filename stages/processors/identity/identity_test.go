@@ -42,8 +42,9 @@ func TestIdentityProcessor(t *testing.T) {
 		t.Error("Excepted 1 records but got - ", len(records))
 	}
 
-	if records[0].Get().Value != "TestData" {
-		t.Error("Excepted 'TestData' but got - ", records[0].Get().Value)
+	rootField, _ := records[0].Get()
+	if rootField.Value != "TestData" {
+		t.Error("Excepted 'TestData' but got - ", rootField.Value)
 	}
 
 	stageInstance.Destroy()

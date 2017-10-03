@@ -65,6 +65,11 @@ func NewEvaluator(
 		}
 	}
 
+	if parameters == nil {
+		parameters = make(map[string]interface{})
+	}
+	parameters["NULL"] = nil
+
 	evaluator = &Evaluator{
 		configName: configName,
 		parameters: parameters,
