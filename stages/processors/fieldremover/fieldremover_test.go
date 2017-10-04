@@ -101,13 +101,19 @@ func TestFieldRemoverProcessorRemove(t *testing.T) {
 		t.Error("Error in Identity Processor")
 	}
 
-	if len(batchMaker.GetStageOutput()[0].Get().Value.(map[string]api.Field)) != 1 {
+	var field api.Field
+	field, _ = batchMaker.GetStageOutput()[0].Get()
+	if len(field.Value.(map[string]api.Field)) != 1 {
 		t.Error("Fields not removed properly")
 	}
-	if len(batchMaker.GetStageOutput()[1].Get().Value.(map[string]api.Field)) != 2 {
+
+	field, _ = batchMaker.GetStageOutput()[1].Get()
+	if len(field.Value.(map[string]api.Field)) != 2 {
 		t.Error("Fields not removed properly")
 	}
-	if len(batchMaker.GetStageOutput()[2].Get().Value.(map[string]api.Field)) != 3 {
+
+	field, _ = batchMaker.GetStageOutput()[2].Get()
+	if len(field.Value.(map[string]api.Field)) != 3 {
 		t.Error("Fields not removed properly")
 	}
 
@@ -140,7 +146,8 @@ func TestFieldRemoverProcessorKeep(t *testing.T) {
 		t.Error("Error in Identity Processor")
 	}
 
-	if len(batchMaker.GetStageOutput()[0].Get().Value.(map[string]api.Field)) != 2 {
+	field, _ := batchMaker.GetStageOutput()[0].Get()
+	if len(field.Value.(map[string]api.Field)) != 2 {
 		t.Error("Fields not removed properly")
 	}
 
@@ -173,7 +180,8 @@ func TestFieldRemoverProcessorRemoveNull(t *testing.T) {
 		t.Error("Error in Identity Processor")
 	}
 
-	if len(batchMaker.GetStageOutput()[0].Get().Value.(map[string]api.Field)) != 4 {
+	field, _ := batchMaker.GetStageOutput()[0].Get()
+	if len(field.Value.(map[string]api.Field)) != 4 {
 		t.Error("Fields not removed properly")
 	}
 
