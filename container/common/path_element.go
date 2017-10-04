@@ -10,8 +10,8 @@ const (
 	MAP  = "MAP"
 	LIST = "LIST"
 
-	INVALID_FIELD_PATH        = "Invalid fieldPath '%s' at char '%s'"
-	INVALID_FIELD_PATH_REASON = "Invalid fieldPath '%s' at char '%s' (%s)"
+	INVALID_FIELD_PATH        = "Invalid fieldPath '%s' at char '%d'"
+	INVALID_FIELD_PATH_REASON = "Invalid fieldPath '%s' at char position '%d' (%s)"
 	REASON_EMPTY_FIELD_NAME   = "field name can't be empty"
 	REASON_INVALID_START      = "field path needs to start with '[' or '/'"
 	REASON_NOT_A_NUMBER       = "only numbers and '*' allowed between '[' and ']'"

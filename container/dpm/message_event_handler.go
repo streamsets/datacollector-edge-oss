@@ -131,7 +131,7 @@ func (m *MessageEventHandler) SendEvent() error {
 }
 
 func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEvent {
-	log.Printf("[DEBUG] Handling DPM Events: %s", serverEvent.EventTypeId)
+	log.Printf("[DEBUG] Handling DPM Events: %d", serverEvent.EventTypeId)
 
 	var ackEventMessage string
 	ackEventStatus := ACK_EVENT_SUCCESS

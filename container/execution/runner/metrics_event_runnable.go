@@ -62,10 +62,10 @@ func (m *MetricsEventRunnable) Run() {
 				}
 			case <-m.quitSendingMetricsToDPM:
 				ticker.Stop()
+				log.Printf("[DEBUG] Sending metrics to DPM is stopped")
 				return
 			}
 		}
-		log.Printf("[DEBUG] Sending metrics to DPM is stopped")
 	}
 }
 

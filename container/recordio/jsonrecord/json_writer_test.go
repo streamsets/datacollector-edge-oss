@@ -45,19 +45,19 @@ func TestWriteMapRecord(t *testing.T) {
 	}
 
 	if recordObject["rsc"] != commits["rsc"] {
-		t.Errorf("Excepted: %s, but got: %s", commits["rsc"], recordObject["rsc"])
+		t.Errorf("Excepted: %d, but got: %d", commits["rsc"], recordObject["rsc"])
 	}
 
 	if recordObject["r"] != commits["r"] {
-		t.Errorf("Excepted: %s, but got: %s", commits["r"], recordObject["r"])
+		t.Errorf("Excepted: %d, but got: %d", commits["r"], recordObject["r"])
 	}
 
 	if recordObject["gri"] != commits["gri"] {
-		t.Errorf("Excepted: %s, but got: %s", commits["gri"], recordObject["gri"])
+		t.Errorf("Excepted: %d, but got: %d", commits["gri"], recordObject["gri"])
 	}
 
 	if recordObject["adg"] != commits["adg"] {
-		t.Errorf("Excepted: %s, but got: %s", commits["adg"], recordObject["adg"])
+		t.Errorf("Excepted: %d, but got: %d", commits["adg"], recordObject["adg"])
 	}
 }
 

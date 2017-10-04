@@ -83,7 +83,7 @@ func (webServerTask *WebServerTask) updateOffsetHandler(w http.ResponseWriter, r
 	if err != nil {
 		if err == io.EOF {
 			// empty body
-			fmt.Fprint(w, "Failed to updateOffsets: %s", "Offset Data is missing in the request body")
+			fmt.Fprint(w, "Failed to updateOffsets: Offset Data is missing in the request body")
 		} else {
 			// other error
 			fmt.Fprintf(w, "Failed to updateOffsets: %s", err)

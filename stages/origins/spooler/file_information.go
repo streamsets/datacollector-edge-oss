@@ -15,7 +15,7 @@ type FileInformation struct {
 }
 
 type AtomicFileInformation struct {
-	fInfoStore atomic.Value
+	fInfoStore *atomic.Value
 }
 
 type FileInfos []*AtomicFileInformation
@@ -35,7 +35,7 @@ func NewAtomicFileInformation(path string, modTime time.Time, offsetToRead int64
 		modTime:      modTime,
 		offsetToRead: offsetToRead,
 	}
-	fInfoStore := atomic.Value{}
+	fInfoStore := &atomic.Value{}
 	fInfoStore.Store(fileInfo)
 	return &AtomicFileInformation{fInfoStore: fInfoStore}
 }

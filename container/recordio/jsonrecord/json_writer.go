@@ -83,5 +83,4 @@ func writeFieldToJsonObject(field api.Field) (interface{}, error) {
 	default:
 		return field.Value, nil
 	}
-	return nil, err
 }

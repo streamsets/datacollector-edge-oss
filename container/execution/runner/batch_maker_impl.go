@@ -32,7 +32,7 @@ func (b *BatchMakerImpl) GetStageOutput(outputLane ...string) []api.Record {
 }
 
 func NewBatchMakerImpl(stagePipe StagePipe) *BatchMakerImpl {
-	batchMaker := &BatchMakerImpl{stagePipe:   stagePipe}
+	batchMaker := &BatchMakerImpl{stagePipe: stagePipe}
 	batchMaker.stageOutput = make(map[string][]api.Record)
 	for _, outputLane := range stagePipe.OutputLanes {
 		batchMaker.stageOutput[outputLane] = make([]api.Record, 0)

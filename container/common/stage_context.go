@@ -42,7 +42,6 @@ func (s *StageContextImpl) GetResolvedValue(configValue interface{}) (interface{
 	default:
 		return configValue, nil
 	}
-	return configValue, nil
 }
 
 func (s *StageContextImpl) resolveIfImplicitEL(configValue string) (interface{}, error) {

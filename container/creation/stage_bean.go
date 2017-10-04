@@ -279,7 +279,6 @@ func getResolvedValue(configValue interface{}, runtimeParameters map[string]inte
 	default:
 		return configValue, nil
 	}
-	return configValue, nil
 }
 
 func resolveIfImplicitEL(configValue string, runtimeParameters map[string]interface{}) (interface{}, error) {
