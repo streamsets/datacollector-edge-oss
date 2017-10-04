@@ -103,7 +103,7 @@ func (s *StageContextImpl) Evaluate(
 	evaluator, _ := el.NewEvaluator(
 		configName,
 		s.Parameters,
-		[]el.Definitions{&el.StringEL{}, &el.RecordEL{Context: ctx}},
+		[]el.Definitions{&el.StringEL{}, &el.MathEL{}, &el.RecordEL{Context: ctx}},
 	)
 	return evaluator.Evaluate(value)
 }
