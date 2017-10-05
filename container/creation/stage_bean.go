@@ -79,7 +79,7 @@ func injectStageConfigs(
 			configDef := stageDefinition.ConfigDefinitionsMap[configName]
 			config := configMap[configName]
 			if configDef != nil {
-				resolvedValue, err := getResolvedValue(config.Value, runtimeParameters)
+				resolvedValue, err := getResolvedValue(configDef, config.Value, runtimeParameters)
 				if err != nil {
 					return err
 				}
@@ -148,11 +148,12 @@ func injectStageConfigs(
 									predicateValueListOfMap := make([]map[string]string, 0)
 									switch reflect.TypeOf(resolvedValue).Kind() {
 									case reflect.Slice:
-										predicateValueList := resolvedValue.([]map[string]interface{})
+										predicateValueList := resolvedValue.([]interface{})
 										for _, predicateValue := range predicateValueList {
+											predicateValueMap := predicateValue.(map[string]interface{})
 											valueMap := map[string]string{
-												"outputLane": predicateValue["outputLane"].(string),
-												"predicate":  predicateValue["predicate"].(string),
+												"outputLane": predicateValueMap["outputLane"].(string),
+												"predicate":  predicateValueMap["predicate"].(string),
 											}
 											predicateValueListOfMap = append(predicateValueListOfMap, valueMap)
 										}
@@ -208,7 +209,7 @@ func injectListBeanStageConfigs(
 			configDef := configDefinitionsMap[configName]
 			configValue := configMap[configName]
 			if configDef != nil {
-				resolvedValue, err := getResolvedValue(configValue, runtimeParameters)
+				resolvedValue, err := getResolvedValue(configDef, configValue, runtimeParameters)
 				if err != nil {
 					return err
 				}
@@ -255,14 +256,21 @@ func injectListBeanStageConfigs(
 	return nil
 }
 
-func getResolvedValue(configValue interface{}, runtimeParameters map[string]interface{}) (interface{}, error) {
+func getResolvedValue(
+	configDef *common.ConfigDefinition,
+	configValue interface{},
+	runtimeParameters map[string]interface{},
+) (interface{}, error) {
 	var err error
+	if configDef.Evaluation == common.EVALUATION_EXPLICIT {
+		return configValue, nil
+	}
 	switch t := configValue.(type) {
 	case string:
 		return resolveIfImplicitEL(configValue.(string), runtimeParameters)
 	case []interface{}:
 		for i, val := range t {
-			t[i], err = getResolvedValue(val, runtimeParameters)
+			t[i], err = getResolvedValue(configDef, val, runtimeParameters)
 			if err != nil {
 				return nil, err
 			}
@@ -270,7 +278,7 @@ func getResolvedValue(configValue interface{}, runtimeParameters map[string]inte
 		return configValue, nil
 	case map[string]interface{}:
 		for k, v := range t {
-			t[k], err = getResolvedValue(v, runtimeParameters)
+			t[k], err = getResolvedValue(configDef, v, runtimeParameters)
 			if err != nil {
 				return nil, err
 			}

@@ -5,6 +5,8 @@ const (
 	CONFIG_DEF_BEAN_TAG_NAME = "ConfigDefBean"
 	LIST_BEAN_MODEL_TAG_NAME = "ListBeanModel"
 	PREDICATE_MODEL_TAG_NAME = "PredicateModel"
+	EVALUATION_EXPLICIT      = "EXPLICIT"
+	EVALUATION_IMPLICIT      = "IMPLICIT"
 )
 
 type StageDefinition struct {
@@ -15,11 +17,12 @@ type StageDefinition struct {
 }
 
 type ConfigDefinition struct {
-	Name      string
-	Type      string
-	Required  bool
-	FieldName string
-	Model     ModelDefinition
+	Name       string
+	Type       string
+	Required   bool
+	FieldName  string
+	Evaluation string
+	Model      ModelDefinition
 }
 
 type ModelDefinition struct {

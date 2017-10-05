@@ -111,7 +111,7 @@ func (s *StagePipe) Process(pipeBatch *FullPipeBatch) error {
 	s.inputRecordsMeter.Mark(inputRecordsCount)
 	s.inputRecordsHistogram.Update(inputRecordsCount)
 
-	outputRecordsCount := int64(len(batchMaker.stageOutput))
+	outputRecordsCount := batchMaker.GetSize()
 	s.outputRecordsCounter.Inc(outputRecordsCount)
 	s.outputRecordsMeter.Mark(outputRecordsCount)
 	s.outputRecordsHistogram.Update(outputRecordsCount)
@@ -131,9 +131,9 @@ func (s *StagePipe) Process(pipeBatch *FullPipeBatch) error {
 
 	if len(s.Stage.config.OutputLanes) > 0 {
 		for _, lane := range s.Stage.config.OutputLanes {
-			// TODO: Support for multiple lanes - SDCE-89
-			s.outputRecordsPerLaneCounter[lane].Inc(outputRecordsCount)
-			s.outputRecordsPerLaneMeter[lane].Mark(outputRecordsCount)
+			laneCount := int64(len(batchMaker.GetStageOutput(lane)))
+			s.outputRecordsPerLaneCounter[lane].Inc(laneCount)
+			s.outputRecordsPerLaneMeter[lane].Mark(laneCount)
 		}
 	}
 

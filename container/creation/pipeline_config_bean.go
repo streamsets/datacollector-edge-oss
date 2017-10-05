@@ -25,31 +25,26 @@ func NewPipelineConfigBean(pipelineConfig common.PipelineConfiguration) Pipeline
 	pipelineConfigBean := PipelineConfigBean{}
 
 	for _, config := range pipelineConfig.Configuration {
+		if config.Value == nil {
+			continue
+		}
 		switch config.Name {
 		case "executionMode":
 			pipelineConfigBean.ExecutionMode = config.Value.(string)
-			break
 		case "deliveryGuarantee":
 			pipelineConfigBean.DeliveryGuarantee = config.Value.(string)
-			break
 		case "shouldRetry":
 			pipelineConfigBean.ShouldRetry = config.Value.(bool)
-			break
 		case "retryAttempts":
 			pipelineConfigBean.RetryAttempts = config.Value.(float64)
-			break
 		case "memoryLimit":
 			pipelineConfigBean.MemoryLimit = config.Value.(string)
-			break
 		case "memoryLimitExceeded":
 			pipelineConfigBean.MemoryLimitExceeded = config.Value.(string)
-			break
 		case "notifyOnStates":
 			pipelineConfigBean.NotifyOnStates = config.Value.([]interface{})
-			break
 		case "emailIDs":
 			pipelineConfigBean.EmailIDs = config.Value.([]interface{})
-			break
 		case "constants":
 			constants := config.Value.([]interface{})
 			pipelineConfigBean.Constants = make(map[string]interface{})
@@ -58,19 +53,14 @@ func NewPipelineConfigBean(pipelineConfig common.PipelineConfiguration) Pipeline
 				key := constantMap["key"]
 				pipelineConfigBean.Constants[key.(string)] = constantMap["value"]
 			}
-			break
 		case "badRecordsHandling":
 			pipelineConfigBean.BadRecordsHandling = config.Value.(string)
-			break
 		case "statsAggregatorStage":
 			pipelineConfigBean.StatsAggregatorStage = config.Value.(string)
-			break
 		case "rateLimit":
 			pipelineConfigBean.RateLimit = config.Value.(float64)
-			break
 		case "maxRunners":
 			pipelineConfigBean.MaxRunners = config.Value.(float64)
-			break
 		}
 	}
 

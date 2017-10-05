@@ -12,19 +12,22 @@ func getStageContext() *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = LIBRARY
 	stageConfig.StageName = STAGE_NAME
+
+	lane1 := map[string]interface{}{
+		"outputLane": "lane1",
+		"predicate":  "${record:value('/a') != NULL}",
+	}
+	lane2 := map[string]interface{}{
+		"outputLane": "lane2",
+		"predicate":  "default",
+	}
+	predicateValueList := make([]interface{}, 0)
+	predicateValueList = append(predicateValueList, lane1)
+	predicateValueList = append(predicateValueList, lane2)
 	stageConfig.Configuration = []common.Config{
 		{
-			Name: "lanePredicates",
-			Value: []map[string]interface{}{
-				{
-					"outputLane": "lane1",
-					"predicate":  "${record:value('/a') == NULL}",
-				},
-				{
-					"outputLane": "lane2",
-					"predicate":  "default",
-				},
-			},
+			Name:  "lanePredicates",
+			Value: predicateValueList,
 		},
 	}
 	stageConfig.OutputLanes = []string{
@@ -58,7 +61,7 @@ func TestHttpServerOrigin_Init(t *testing.T) {
 		t.Error("Failed to inject config value for lane predicate")
 	}
 
-	if stageInstance.LanePredicates[0]["predicate"] != "${record:value('/a') == NULL}" {
+	if stageInstance.LanePredicates[0]["predicate"] != "${record:value('/a') != NULL}" {
 		t.Error("Failed to inject config value for lane predicate")
 	}
 
@@ -90,15 +93,21 @@ func TestSelectorProcessor(t *testing.T) {
 		t.Error("Error in Identity Processor")
 	}
 
-	outputRecords := batchMaker.GetStageOutput("lane2")
-	if len(outputRecords) != 1 {
-		t.Error("Excepted 1 records but got - ", len(outputRecords))
+	lane1OutputRecords := batchMaker.GetStageOutput("lane1")
+	if len(lane1OutputRecords) != 1 {
+		t.Error("Excepted 1 records but got - ", len(lane1OutputRecords))
 		return
 	}
 
-	recordValue, err := outputRecords[0].Get("/a")
+	recordValue, err := lane1OutputRecords[0].Get("/a")
 	if recordValue.Value != "sample" {
 		t.Error("Excepted 'sample' but got - ", recordValue.Value)
+	}
+
+	lane2OutputRecords := batchMaker.GetStageOutput("lane2")
+	if len(lane2OutputRecords) != 0 {
+		t.Error("Excepted 0 records but got - ", len(lane2OutputRecords))
+		return
 	}
 
 	stageInstance.Destroy()

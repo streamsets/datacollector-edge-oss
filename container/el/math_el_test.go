@@ -18,7 +18,7 @@ func TestMathEL(t *testing.T) {
 			Name:       "Test function math:abs - 3",
 			Expression: "${math:abs(\"abc\")}",
 			Expected:   "",
-			ErrorCase: true,
+			ErrorCase:  true,
 		},
 		{
 			Name:       "Test function math:ceil - 1",
@@ -34,7 +34,7 @@ func TestMathEL(t *testing.T) {
 			Name:       "Test function math:ceil - 3",
 			Expression: "${math:ceil(\"abc\")}",
 			Expected:   "",
-			ErrorCase: true,
+			ErrorCase:  true,
 		},
 		{
 			Name:       "Test function math:floor - 1",
@@ -50,7 +50,7 @@ func TestMathEL(t *testing.T) {
 			Name:       "Test function math:floor - 3",
 			Expression: "${math:floor(\"abc\")}",
 			Expected:   "",
-			ErrorCase: true,
+			ErrorCase:  true,
 		},
 		{
 			Name:       "Test function math:max - 1",
@@ -71,13 +71,13 @@ func TestMathEL(t *testing.T) {
 			Name:       "Test function math:max - 4",
 			Expression: "${math:max(\"abc\", 2)}",
 			Expected:   "",
-			ErrorCase: true,
+			ErrorCase:  true,
 		},
 		{
 			Name:       "Test function math:max - 5",
 			Expression: "${math:max(2, \"abc\")}",
 			Expected:   "",
-			ErrorCase: true,
+			ErrorCase:  true,
 		},
 		{
 			Name:       "Test function math:min - 1",
@@ -98,13 +98,13 @@ func TestMathEL(t *testing.T) {
 			Name:       "Test function math:min - 4",
 			Expression: "${math:min(\"abc\", 2)}",
 			Expected:   "",
-			ErrorCase: true,
+			ErrorCase:  true,
 		},
 		{
 			Name:       "Test function math:min - 5",
 			Expression: "${math:min(2, \"abc\")}",
 			Expected:   "",
-			ErrorCase: true,
+			ErrorCase:  true,
 		},
 	}
 	RunEvaluationTests(evaluationTests, []Definitions{&MathEL{}}, t)

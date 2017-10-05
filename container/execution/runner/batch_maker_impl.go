@@ -8,6 +8,7 @@ type BatchMakerImpl struct {
 	stagePipe        StagePipe
 	stageOutput      map[string][]api.Record
 	singleOutputLane string
+	size             int64
 }
 
 func (b *BatchMakerImpl) GetLanes() []string {
@@ -22,6 +23,7 @@ func (b *BatchMakerImpl) AddRecord(record api.Record, outputLanes ...string) {
 	} else {
 		b.stageOutput[b.singleOutputLane] = append(b.stageOutput[b.singleOutputLane], record)
 	}
+	b.size++
 }
 
 func (b *BatchMakerImpl) GetStageOutput(outputLane ...string) []api.Record {
@@ -29,6 +31,10 @@ func (b *BatchMakerImpl) GetStageOutput(outputLane ...string) []api.Record {
 		return b.stageOutput[outputLane[0]]
 	}
 	return b.stageOutput[b.singleOutputLane]
+}
+
+func (b *BatchMakerImpl) GetSize() int64 {
+	return b.size
 }
 
 func NewBatchMakerImpl(stagePipe StagePipe) *BatchMakerImpl {

@@ -3,21 +3,20 @@ package el
 import (
 	"errors"
 	"fmt"
-	"math"
 	"github.com/madhukard/govaluate"
+	"math"
 	"reflect"
 )
 
 const (
-	WRONG_ARGS_MESSAGE = "Wrong number of arguments '%d' to function '%s', Expected : '%d'"
+	WRONG_ARGS_MESSAGE          = "Wrong number of arguments '%d' to function '%s', Expected : '%d'"
 	CAST_TO_FLOAT_ERROR_MESSAGE = "Cannot convert argument idx: '%d' with value '%v' and type '%v' to float64 for operation '%s'"
-	MATH_PREFIX = "math"
-	ABS = "abs"
-	CEIL = "ceil"
-	FLOOR = "floor"
-	MAX = "max"
-	MIN = "min"
-
+	MATH_PREFIX                 = "math"
+	ABS                         = "abs"
+	CEIL                        = "ceil"
+	FLOOR                       = "floor"
+	MAX                         = "max"
+	MIN                         = "min"
 )
 
 type MathEL struct {
@@ -27,7 +26,7 @@ func (m *MathEL) checkArgsAndConvertToFloat64(funcName string, numberOfArgs int,
 	result := []float64{}
 	if len(args) != numberOfArgs {
 		return result, errors.New(
-			fmt.Sprintf(WRONG_ARGS_MESSAGE, len(args), MATH_PREFIX +NAMESPACE_FN_SEPARATOR+ funcName, 1),
+			fmt.Sprintf(WRONG_ARGS_MESSAGE, len(args), MATH_PREFIX+NAMESPACE_FN_SEPARATOR+funcName, 1),
 		)
 	}
 	for idx, arg := range args {

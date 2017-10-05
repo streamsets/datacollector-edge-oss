@@ -25,7 +25,7 @@ const (
 
 type SelectorProcessor struct {
 	*common.BaseStage
-	LanePredicates []map[string]string `ConfigDef:"type=MODEL" PredicateModel:"name=lanePredicates"`
+	LanePredicates []map[string]string `ConfigDef:"type=MODEL,evaluation=EXPLICIT" PredicateModel:"name=lanePredicates"`
 	defaultLane    string
 }
 
