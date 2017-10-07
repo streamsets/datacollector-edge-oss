@@ -1,11 +1,17 @@
 plugins {
     id 'com.github.blindpirate.gogradle' version '0.7.0'
+    id 'com.bmuschko.docker-remote-api'  version '3.2.0'
 }
+
+import com.bmuschko.gradle.docker.tasks.image.Dockerfile
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+
+apply plugin : 'maven-publish'
 
 repositories {
+    mavenCentral()
     mavenLocal()
 }
-
 
 golang {
     packagePath = "${gitPath}"
@@ -29,6 +35,14 @@ def getLdFlags() {
         X_CONTAINER_COMMON_PATH + ".BuiltRepoSha=" + buildRepoSha + "\""
 }
 
+def doActionAllPlatforms(action) {
+   final targetPlatforms = "${platforms}".split(',')
+   targetPlatforms.each{targetPlatform ->
+       def (goOs, goArch) = targetPlatform.split('-')
+       action(new Tuple2(goOs, goArch))
+   }
+}
+
 def copyAssetSpec = copySpec {
      from fileTree('.') {
         include('etc/', 'data/')
@@ -36,7 +50,6 @@ def copyAssetSpec = copySpec {
      }
 }
 
-final targetPlatforms = ['linux-arm', 'linux-amd64', 'windows-amd64', 'darwin-amd64']
 final ldFlags = getLdFlags()
 
 clean {
@@ -63,6 +76,7 @@ vet {
 //Custom tasks
 task buildAll {
     dependsOn build
+    description = 'Builds Edge Binaries for all platforms'
 
     def baseDir = temporaryDir.getAbsolutePath() + '/gobuild'
 
@@ -71,8 +85,9 @@ task buildAll {
         delete baseDir
     }
 
-    targetPlatforms.each{targetPlatform ->
-        def (goOs, goArch) = targetPlatform.split('-')
+    def buildAndTar = {
+        def (goOs, goArch) = it
+        def targetPlatform = goOs + '-' + goArch
         def basePlatformDir = baseDir + '/' + goOs + '/' + goArch
         def buildTaskName = 'build-'+ targetPlatform
         def tarTaskName = 'tar-'+ targetPlatform
@@ -92,6 +107,8 @@ task buildAll {
             go "build -ldflags " + ldFlags + " -o " + basePlatformDir + "/bin/${binaryName}\${GOEXE} ${gitPath}"
         }
 
+        def archiveName = "${appName}-" + goOs + '-' + goArch + '-' + "${version}"
+
         //Create Tar Task for each platform
         task(tarTaskName, type :Tar) {
             description = 'Packages Edge Binaries for ' + targetPlatform
@@ -107,7 +124,7 @@ task buildAll {
                 into basePlatformDir
             }
 
-            baseName = "${appName}-" + goOs + '-' + goArch
+            baseName = archiveName
             from file(basePlatformDir)
             destinationDir = file('dist')
             extension = 'tgz'
@@ -117,7 +134,66 @@ task buildAll {
         //Main buildAll task depends on all of the platform tar tasks
         dependsOn tarTaskName
     }
+    doActionAllPlatforms(buildAndTar)
 }
 
-//TODO: Add support for Docker build (SDCE-94)
+publishing {
+    publications {
+        maven(MavenPublication) {
+            def publishArtifact = {
+              def (goOs, goArch) = it
+              def tarName = "${appName}-" + goOs + '-' + goArch + "-${version}" + '.tgz'
+              artifact('dist/' + tarName) {
+                groupId "com.streamsets.sdcedge"
+                artifactId "${appName}"
+                extension 'tgz'
+                classifier goOs + '-' + goArch
+              }
+            }
+            doActionAllPlatforms(publishArtifact)
+        }
+    }
+    //Configure Publishing repository
+    //Need the following env variables MAVEN_REPO, MAVEN_USER, MAVEN_PASSWORD
+    def repoUrl = System.env['MAVEN_REPO']
+    if (repoUrl != null) {
+      repositories {
+          maven {
+            url repoUrl
+            credentials {
+                username = System.env['MAVEN_USER']
+                password = System.env['MAVEN_PASSWORD']
+            }
+          }
+      }
+    }
+}
+
+task createDockerfile(type: Dockerfile) {
+    description = 'Creates Docker File for Edge'
+    dependsOn('build-linux-amd64')
+    destFile = project.file('dist/Dockerfile')
+    from 'alpine'
+    maintainer 'Madhu "madhu@streamsets.com"'
+    addFile "${appName}-linux-amd64-${version}.tgz", '/'
+    defaultCommand '/streamsets-datacollector-edge/bin/edge'
+   exposePort 18633
+}
+
+task buildDockerImage(type: DockerBuildImage) {
+    description = 'Builds Docker Image for Edge'
+    dependsOn createDockerfile
+    inputDir = createDockerfile.destFile.parentFile
+    tag = "${dockerImageName}:${version}"
+}
+
+publishToMavenLocal.dependsOn(buildAll)
+publish.dependsOn(publishToMavenLocal)
+
+task release {
+  description = 'Release task'
+  dependsOn buildAll
+  dependsOn buildDockerImage
+  dependsOn publish
+}
 //TODO: Remove Makefiles and dep files (SDCE-93)

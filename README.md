@@ -22,6 +22,14 @@
     $ make clean dist-all (or)
     $ gradle clean buildAll
 
+## Publishing Binaries to Maven Repo for all platforms
+
+    $ gradle publish
+
+## Building DockerImage
+
+    $ gradle buildDockerImage
+
 ## To run tests
 
     $ make test (or)
@@ -61,17 +69,7 @@
 
     $ curl -X POST http://localhost:18633/rest/v1/pipeline/tailFileToHttp/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
-## Docker Build and run the image
-
-
-Invoke Docker from the edge directory to build an image using the Dockerfile:
-
-
-    $ docker build -t streamsets/datacollector-edge .
-
-
-This will fetch the alpine base image from Docker Hub, copy the already built package (linux/amd64), and tag the resulting image as streamsets/datacollector-edge.
-
+## Docker run the image
 
 To run a container from the resulting image:
 
@@ -80,6 +78,10 @@ To run a container from the resulting image:
 Getting inside the container
 
     $ docker exec -it datacollector-edge /bin/sh
+
+## Release
+
+    $ gradle release
 
 
 ## Pipeline Templates
