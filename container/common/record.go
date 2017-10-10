@@ -58,7 +58,7 @@ func (r *RecordImpl) getFromPathElements(pathElements []PathElement) []api.Field
 					}
 				}
 			case LIST:
-				if current.Type == fieldtype.MAP || current.Type == fieldtype.LIST_MAP {
+				if current.Type == fieldtype.LIST {
 					listValue := current.Value.([]api.Field)
 					if listValue != nil && len(listValue) > pathElement.Idx {
 						field := listValue[pathElement.Idx]

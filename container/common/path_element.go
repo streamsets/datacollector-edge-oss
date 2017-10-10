@@ -3,6 +3,7 @@ package common
 import (
 	"errors"
 	"fmt"
+	"strconv"
 )
 
 const (
@@ -60,7 +61,6 @@ func ParseFieldPath(fieldPath string, isSingleQuoteEscaped bool) ([]PathElement,
 		collector := ""
 		pos := 0
 		for pos = 0; pos < len(fieldPath); pos++ {
-			fmt.Println(fieldPath[pos])
 			if requiresStart {
 				requiresStart = false
 				requiresName = false
@@ -154,7 +154,29 @@ func ParseFieldPath(fieldPath string, isSingleQuoteEscaped bool) ([]PathElement,
 					case '*': //wildcard character
 						collector += string(fieldPath[pos])
 					case ']':
-						// TODO: add code
+						indexString := collector
+						idx := 0
+						var err error
+
+						if indexString != "*" {
+							idx, err = strconv.Atoi(indexString)
+							if err != nil {
+								return nil, errors.New(
+									fmt.Sprintf(INVALID_FIELD_PATH_NUMBER, fieldPath, pos, err.Error()),
+								)
+							}
+						}
+
+						if idx >= 0 {
+							pathElementList = append(pathElementList, CreateListElement(idx))
+							requiresStart = true
+							collector = ""
+						} else {
+							return nil, errors.New(
+								fmt.Sprintf(INVALID_FIELD_PATH, fieldPath, pos),
+							)
+						}
+
 					default:
 						return nil, errors.New(
 							fmt.Sprintf(INVALID_FIELD_PATH_REASON, fieldPath, pos, REASON_NOT_A_NUMBER),
@@ -174,6 +196,5 @@ func ParseFieldPath(fieldPath string, isSingleQuoteEscaped bool) ([]PathElement,
 			pathElementList = append(pathElementList, CreateMapElement(collector))
 		}
 	}
-
 	return pathElementList, nil
 }
