@@ -44,7 +44,7 @@ func TestReadMapRecord(t *testing.T) {
 		t.Errorf("Excpeted record type : Map, but received: %s", rootField.Type)
 	}
 
-	mapField := rootField.Value.(map[string]api.Field)
+	mapField := rootField.Value.(map[string]*api.Field)
 	for fieldName, fieldValue := range mapField {
 		if commits[fieldName] != fieldValue.Value {
 			t.Errorf("Excpeted field value : %s, but received: %s", commits[fieldName], fieldValue.Value)

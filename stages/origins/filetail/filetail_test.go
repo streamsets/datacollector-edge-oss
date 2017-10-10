@@ -106,7 +106,7 @@ func TestValidFilePath(t *testing.T) {
 	}
 
 	rootField, _ := records[0].Get()
-	mapFieldValue := rootField.Value.(map[string]api.Field)
+	mapFieldValue := rootField.Value.(map[string]*api.Field)
 	if mapFieldValue["text"].Value != "test data 1" {
 		t.Error("Excepted 'test data 1' but got - ", rootField.Value)
 	}
@@ -125,7 +125,7 @@ func TestValidFilePath(t *testing.T) {
 	}
 
 	rootField, _ = records[0].Get()
-	mapFieldValue = rootField.Value.(map[string]api.Field)
+	mapFieldValue = rootField.Value.(map[string]*api.Field)
 	if mapFieldValue["text"].Value != "test data 1" {
 		t.Error("Excepted 'test data 1' but got - ", rootField.Value)
 	}
@@ -143,7 +143,7 @@ func TestValidFilePath(t *testing.T) {
 	}
 
 	rootField, _ = records[0].Get()
-	mapFieldValue = rootField.Value.(map[string]api.Field)
+	mapFieldValue = rootField.Value.(map[string]*api.Field)
 	if mapFieldValue["text"].Value != "test data 3" {
 		t.Error("Excepted 'test data 3' but got - ", rootField.Value)
 	}

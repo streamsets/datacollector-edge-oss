@@ -59,7 +59,7 @@ func testWindowsEventLogRead(t *testing.T, logName string, maxBatchSize int) {
 		t.Fatalf("Did not read any records")
 	} else {
 		for _, event := range records {
-			rootField := event.Get().Value.(map[string]api.Field)
+			rootField := event.Get().Value.(map[string](*api.Field))
 			actualLogName := rootField["LogName"].Value
 			if actualLogName != logName {
 				t.Fatalf("Wrong Log Name. Expected : %s, Actual : %s", logName, actualLogName)

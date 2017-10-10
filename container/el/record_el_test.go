@@ -15,30 +15,34 @@ func (r *MockRecord) GetHeader() api.Header {
 	return nil
 }
 
-func (r *MockRecord) Get(fieldPath ...string) (api.Field, error) {
+func (r *MockRecord) Get(fieldPath ...string) (*api.Field, error) {
 	if len(fieldPath) > 0 {
 		switch fieldPath[0] {
 		case "/a":
-			return api.Field{
+			return &api.Field{
 				Type:  fieldtype.MAP,
 				Value: map[string]string{"b": "value"},
 			}, nil
 		case "/a/b":
-			return api.Field{
+			return &api.Field{
 				Type:  fieldtype.MAP,
 				Value: "Test Value",
 			}, nil
 		case "/inValid":
-			return api.Field{}, errors.New("invalid fieldPath '/inValid'")
+			return &api.Field{}, errors.New("invalid fieldPath '/inValid'")
 		default:
-			return api.Field{}, nil
+			return &api.Field{}, nil
 		}
 	}
-	return api.Field{}, nil
+	return &api.Field{}, nil
 }
 
-func (r *MockRecord) Set(field api.Field) api.Field {
-	return api.Field{}
+func (r *MockRecord) Set(field *api.Field) *api.Field {
+	return &api.Field{}
+}
+
+func (r *MockRecord) Clone() api.Record {
+	return r
 }
 
 func TestRecordEL(test *testing.T) {

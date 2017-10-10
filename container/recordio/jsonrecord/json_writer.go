@@ -53,7 +53,7 @@ func newRecordWriter(context api.StageContext, writer io.Writer) *JsonWriterImpl
 	}
 }
 
-func writeFieldToJsonObject(field api.Field) (interface{}, error) {
+func writeFieldToJsonObject(field *api.Field) (interface{}, error) {
 	if field.Value == nil {
 		return nil, nil
 	}
@@ -61,7 +61,7 @@ func writeFieldToJsonObject(field api.Field) (interface{}, error) {
 	switch field.Type {
 	case fieldtype.LIST:
 		jsonObject := []interface{}{}
-		fieldValue := field.Value.([]api.Field)
+		fieldValue := field.Value.([]*api.Field)
 		for _, v := range fieldValue {
 			fieldJsonObject, err := writeFieldToJsonObject(v)
 			if err != nil {
@@ -72,7 +72,7 @@ func writeFieldToJsonObject(field api.Field) (interface{}, error) {
 		return jsonObject, err
 	case fieldtype.MAP:
 		jsonObject := make(map[string]interface{})
-		fieldValue := field.Value.(map[string]api.Field)
+		fieldValue := field.Value.(map[string]*api.Field)
 		for k, v := range fieldValue {
 			jsonObject[k], err = writeFieldToJsonObject(v)
 			if err != nil {

@@ -10,6 +10,10 @@ import (
 	"io"
 )
 
+const (
+	DEFAULT_TEXT_FIELD = "text"
+)
+
 type TextWriterFactoryImpl struct {
 	// TODO: Add needed configs
 }
@@ -38,7 +42,7 @@ func (textWriter *TextWriterImpl) WriteRecord(r api.Record) error {
 	return nil
 }
 
-func (textWriter *TextWriterImpl) getTextFieldPathValue(field api.Field) (string, error) {
+func (textWriter *TextWriterImpl) getTextFieldPathValue(field *api.Field) (string, error) {
 	var textFieldValue string
 	if field.Value == nil {
 		return textFieldValue, nil
@@ -46,8 +50,8 @@ func (textWriter *TextWriterImpl) getTextFieldPathValue(field api.Field) (string
 	var err error = nil
 	switch field.Type {
 	case fieldtype.MAP:
-		fieldValue := field.Value.(map[string]api.Field)
-		textField := fieldValue["text"]
+		fieldValue := field.Value.(map[string]*api.Field)
+		textField := fieldValue[DEFAULT_TEXT_FIELD]
 		if textField.Type != fieldtype.STRING {
 			err = errors.New("Invalid Field Type for Text Field path - " + textField.Type)
 			return textFieldValue, err

@@ -13,6 +13,35 @@ type Field struct {
 	Value interface{}
 }
 
+func (f *Field) Clone() *Field {
+	switch f.Type {
+	case fieldtype.MAP:
+		mapField := f.Value.(map[string](*Field))
+		returnMap := map[string](*Field){}
+		for k, v := range mapField {
+			returnMap[k] = v.Clone()
+		}
+		return &Field{Type: f.Type, Value: returnMap}
+	case fieldtype.LIST_MAP:
+		mapField := f.Value.(map[string](*Field))
+		returnMap := map[string](*Field){}
+		for k, v := range mapField {
+			returnMap[k] = v.Clone()
+		}
+		return &Field{Type: f.Type, Value: returnMap}
+	case fieldtype.LIST:
+		listField := f.Value.([](*Field))
+		returnList := make([](*Field), len(listField))
+		for idx, v := range listField {
+			returnList[idx] = v.Clone()
+		}
+		return &Field{Type: f.Type, Value: returnList}
+	default:
+		field, _ := CreateField(f.Value)
+		return field
+	}
+}
+
 func CreateField(value interface{}) (*Field, error) {
 	if value == nil {
 		return CreateStringField("")
@@ -122,39 +151,39 @@ func CreateStringField(value string) (*Field, error) {
 }
 
 func CreateStringListField(listStringValue []string) (*Field, error) {
-	listFieldValue := []Field{}
+	listFieldValue := []*Field{}
 	for _, value := range listStringValue {
 		valField, err := CreateField(value)
 		if err != nil {
 			return nil, err
 		}
-		listFieldValue = append(listFieldValue, *valField)
+		listFieldValue = append(listFieldValue, valField)
 	}
 	listField := Field{Type: fieldtype.LIST, Value: listFieldValue}
 	return &listField, nil
 }
 
 func CreateMapField(mapValue map[string]interface{}) (*Field, error) {
-	mapFieldValue := make(map[string]Field)
+	mapFieldValue := make(map[string](*Field))
 	for key, value := range mapValue {
 		valField, err := CreateField(value)
 		if err != nil {
 			return nil, err
 		}
-		mapFieldValue[key] = *valField
+		mapFieldValue[key] = valField
 	}
 	mapField := Field{Type: fieldtype.MAP, Value: mapFieldValue}
 	return &mapField, nil
 }
 
 func CreateListField(listValue []interface{}) (*Field, error) {
-	listFieldValue := []Field{}
+	listFieldValue := []*Field{}
 	for _, value := range listValue {
 		valField, err := CreateField(value)
 		if err != nil {
 			return nil, err
 		}
-		listFieldValue = append(listFieldValue, *valField)
+		listFieldValue = append(listFieldValue, valField)
 	}
 	listField := Field{Type: fieldtype.LIST, Value: listFieldValue}
 	return &listField, nil

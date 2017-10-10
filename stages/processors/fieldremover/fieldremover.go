@@ -61,20 +61,20 @@ func (f *FieldRemoverProcessor) Process(batch api.Batch, batchMaker api.BatchMak
 		}
 		rootFieldType := rootField.Type
 		if rootFieldType == fieldtype.LIST_MAP || rootFieldType == fieldtype.MAP {
-			recordFields := rootField.Value.(map[string]api.Field)
+			recordFields := rootField.Value.(map[string]*api.Field)
 			if f.FilterOperation == KEEP {
 				field, err := api.CreateMapField(map[string]interface{}{})
 				if err != nil {
 					return err
 				}
-				record.Set(*field)
+				record.Set(field)
 				rootField, _ = record.Get()
 			}
 			for _, v := range f.fieldList {
 				switch f.FilterOperation {
 				case KEEP:
 					if _, ok := recordFields[v]; ok {
-						rootField.Value.(map[string]api.Field)[v] = recordFields[v]
+						rootField.Value.(map[string]*api.Field)[v] = recordFields[v]
 					}
 				case REMOVE:
 					delete(recordFields, v)

@@ -42,7 +42,7 @@ func TestReadTextRecord(t *testing.T) {
 			t.Errorf("Excpeted record type : Map, but received: %s", rootField.Type)
 		}
 
-		mapField := rootField.Value.(map[string]api.Field)
+		mapField := rootField.Value.(map[string]*api.Field)
 		testData := "test data " + strconv.Itoa(recordCount+1)
 		if mapField["text"].Value.(string) != testData {
 			t.Errorf("Excpeted field value %s, but received: %s", testData, mapField["text"].Value)

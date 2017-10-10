@@ -14,11 +14,11 @@ func (r *RecordImpl) GetHeader() api.Header {
 	return r.header
 }
 
-func (r *RecordImpl) Get(fieldPath ...string) (api.Field, error) {
+func (r *RecordImpl) Get(fieldPath ...string) (*api.Field, error) {
 	if len(fieldPath) == 0 {
-		return *r.value, nil
+		return r.value, nil
 	} else {
-		var field api.Field
+		var field *api.Field
 		pathElements, err := r.parse(fieldPath[0])
 		if err != nil {
 			return field, err
@@ -32,23 +32,28 @@ func (r *RecordImpl) Get(fieldPath ...string) (api.Field, error) {
 	}
 }
 
+func (r *RecordImpl) Clone() api.Record {
+	recordVal, _ := r.Get()
+	return &RecordImpl{header: ((r.GetHeader()).(*HeaderImpl)).clone(), value: recordVal.Clone()}
+}
+
 func (r *RecordImpl) parse(fieldPath string) ([]PathElement, error) {
 	return ParseFieldPath(fieldPath, true)
 }
 
-func (r *RecordImpl) getFromPathElements(pathElements []PathElement) []api.Field {
-	fields := make([]api.Field, 0)
+func (r *RecordImpl) getFromPathElements(pathElements []PathElement) []*api.Field {
+	fields := make([]*api.Field, 0)
 	if r.value != nil {
-		current := *r.value
+		current := r.value
 		for _, pathElement := range pathElements {
-			var next api.Field
+			var next *api.Field
 			switch pathElement.Type {
 			case ROOT:
 				fields = append(fields, current)
 				next = current
 			case MAP:
 				if current.Type == fieldtype.MAP || current.Type == fieldtype.LIST_MAP {
-					mapValue := current.Value.(map[string]api.Field)
+					mapValue := current.Value.(map[string](*api.Field))
 					if mapValue != nil {
 						field := mapValue[pathElement.Name]
 						if len(field.Type) > 0 {
@@ -59,7 +64,7 @@ func (r *RecordImpl) getFromPathElements(pathElements []PathElement) []api.Field
 				}
 			case LIST:
 				if current.Type == fieldtype.LIST {
-					listValue := current.Value.([]api.Field)
+					listValue := current.Value.([]*api.Field)
 					if listValue != nil && len(listValue) > pathElement.Idx {
 						field := listValue[pathElement.Idx]
 						if len(field.Type) > 0 {
@@ -75,10 +80,10 @@ func (r *RecordImpl) getFromPathElements(pathElements []PathElement) []api.Field
 	return fields
 }
 
-func (r *RecordImpl) Set(field api.Field) api.Field {
+func (r *RecordImpl) Set(field *api.Field) *api.Field {
 	oldData := r.value
-	r.value = &field
-	return *oldData
+	r.value = field
+	return oldData
 }
 
 type HeaderImpl struct {
@@ -186,6 +191,14 @@ func (h *HeaderImpl) SetErrorPipelineName(errorPipelineName string) {
 
 func (h *HeaderImpl) SetErrorDataCollectorId(errorDataCollectorId string) {
 	h.ErrorDataCollectorId = errorDataCollectorId
+}
+
+func (h *HeaderImpl) clone() *HeaderImpl {
+	clonedHeaderImpl := &HeaderImpl{Attributes: make(map[string]interface{})}
+	for k, v := range h.GetAttributes() {
+		clonedHeaderImpl.SetAttribute(k, v)
+	}
+	return clonedHeaderImpl
 }
 
 func createRecord(recordSourceId string, value interface{}) (api.Record, error) {

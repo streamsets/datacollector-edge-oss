@@ -7,8 +7,9 @@ package api
 // Get method returns the root data field of the record.
 type Record interface {
 	GetHeader() Header
-	Get(fieldPath ...string) (Field, error)
-	Set(field Field) Field
+	Get(fieldPath ...string) (*Field, error)
+	Set(field *Field) *Field
+	Clone() Record
 }
 
 //Header represents metadata about the record

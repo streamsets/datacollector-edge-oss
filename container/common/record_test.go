@@ -1,6 +1,7 @@
 package common
 
 import (
+	"github.com/streamsets/datacollector-edge/api"
 	"testing"
 )
 
@@ -76,7 +77,6 @@ func TestRecordImpl_GetFromPath(t *testing.T) {
 		t.Errorf("Expected : 'b1', Found : %v", listOfMaps0b.Value)
 	}
 
-
 	listOfMaps1a, err := record.Get("/listOfMapsField[1]/a")
 
 	if err != nil {
@@ -96,4 +96,72 @@ func TestRecordImpl_GetFromPath(t *testing.T) {
 	if listOfMaps1b.Value != "b2" {
 		t.Errorf("Expected : 'b2', Found : %v", listOfMaps1b.Value)
 	}
+}
+
+func checkFieldCloned(t *testing.T, fieldPath string, realRecord api.Record, clonedRecord api.Record) {
+	realFieldPtr, rerr := realRecord.Get(fieldPath)
+	clonedFieldPtr, crerr := clonedRecord.Get(fieldPath)
+
+	if rerr != nil {
+		t.Errorf("Error Getting Field '{}' from Real Record. Reason : '%s' ", rerr.Error())
+	}
+
+	if crerr != nil {
+		t.Errorf("Error Getting Field '{}' from Cloned Record. Reason : '%s' ", crerr.Error())
+	}
+
+	if realFieldPtr == clonedFieldPtr {
+		t.Errorf("Field '%s' has the same address '%p'", fieldPath, realFieldPtr)
+	}
+
+	realFieldValue := realFieldPtr.Value
+	clonedFieldValue := clonedFieldPtr.Value
+
+	if (&realFieldValue) == (&clonedFieldValue) {
+		t.Errorf("Field Value '%s' has the same address '%p' ", fieldPath, (&realFieldValue))
+	}
+}
+
+func TestRecordImpl_Clone(t *testing.T) {
+	rootField := make(map[string]interface{})
+	stringField := "stringField"
+	intField := int64(1)
+	floatField := float64(1.01)
+	mapField := map[string]interface{}{"a": 1, "b": 2}
+	stringListField := []string{"a", "b"}
+	listField := []interface{}{1, 2}
+
+	rootField["stringField"] = stringField
+	rootField["intField"] = intField
+	rootField["floatField"] = floatField
+	rootField["mapField"] = mapField
+	rootField["stringListField"] = stringListField
+	rootField["listField"] = listField
+
+	record, err := createRecord("recordSourceId", rootField)
+	if err != nil {
+		t.Error(record)
+	}
+	record.GetHeader().SetAttribute("a", "1")
+	record.GetHeader().SetAttribute("b", "2")
+
+	clonedRecordPtr := record.Clone().(*RecordImpl)
+	realRecordPtr := record.(*RecordImpl)
+
+	if clonedRecordPtr == realRecordPtr {
+		t.Error("Record is not cloned")
+	}
+
+	checkFieldCloned(t, "/stringField", realRecordPtr, clonedRecordPtr)
+	checkFieldCloned(t, "/intField", realRecordPtr, clonedRecordPtr)
+	checkFieldCloned(t, "/floatField", realRecordPtr, clonedRecordPtr)
+	checkFieldCloned(t, "/mapField", realRecordPtr, clonedRecordPtr)
+	checkFieldCloned(t, "/mapField/a", realRecordPtr, clonedRecordPtr)
+	checkFieldCloned(t, "/mapField/b", realRecordPtr, clonedRecordPtr)
+	checkFieldCloned(t, "/stringListField", realRecordPtr, clonedRecordPtr)
+	checkFieldCloned(t, "/stringListField[0]", realRecordPtr, clonedRecordPtr)
+	checkFieldCloned(t, "/stringListField[1]", realRecordPtr, clonedRecordPtr)
+	checkFieldCloned(t, "/listField", realRecordPtr, clonedRecordPtr)
+	checkFieldCloned(t, "/listField[0]", realRecordPtr, clonedRecordPtr)
+	checkFieldCloned(t, "/listField[1]", realRecordPtr, clonedRecordPtr)
 }
