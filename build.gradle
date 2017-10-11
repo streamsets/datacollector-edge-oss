@@ -177,14 +177,22 @@ task createDockerfile(type: Dockerfile) {
     maintainer 'Madhu "madhu@streamsets.com"'
     addFile "${appName}-linux-amd64-${version}.tgz", '/'
     defaultCommand '/streamsets-datacollector-edge/bin/edge'
-   exposePort 18633
+    exposePort 18633
 }
 
-task buildDockerImage(type: DockerBuildImage) {
+docker {
+    def dockerCertPath = System.env.DOCKER_CERT_PATH
+    if (dockerCertPath != null) {
+          url = System.env.DOCKER_HOST
+          certPath = new File(dockerCertPath)
+    }
+}
+
+task buildDockerImage(type: Exec) {
     description = 'Builds Docker Image for Edge'
     dependsOn createDockerfile
-    inputDir = createDockerfile.destFile.parentFile
-    tag = "${dockerImageName}:${version}"
+    workingDir = "dist"
+    commandLine 'docker', 'build', '-t', "${dockerImageName}:${version}" ,'.'
 }
 
 publishToMavenLocal.dependsOn(buildAll)

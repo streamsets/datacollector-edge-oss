@@ -15,8 +15,6 @@ dist/
 .classpath
 .project
 .settings
-gradlew*
-gradle/
 
 #vim
 *.swp
