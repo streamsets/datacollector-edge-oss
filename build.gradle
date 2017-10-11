@@ -144,7 +144,7 @@ publishing {
               def (goOs, goArch) = it
               def tarName = "${appName}-" + goOs + '-' + goArch + "-${version}" + '.tgz'
               artifact('dist/' + tarName) {
-                groupId "com.streamsets.sdcedge"
+                groupId "com.streamsets"
                 artifactId "${appName}"
                 extension 'tgz'
                 classifier goOs + '-' + goArch
