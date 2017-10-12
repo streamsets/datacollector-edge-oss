@@ -17,7 +17,7 @@ const (
 	REASON_INVALID_START      = "field path needs to start with '[' or '/'"
 	REASON_NOT_A_NUMBER       = "only numbers and '*' allowed between '[' and ']'"
 	REASON_QUOTES             = "quotes are not properly closed"
-	INVALID_FIELD_PATH_NUMBER = "Invalid fieldPath '%s' at char '%s' ('%s' needs to be a number or '*')"
+	INVALID_FIELD_PATH_NUMBER = "Invalid fieldPath '%s' at char '%d' ('%s' needs to be a number or '*')"
 )
 
 type PathElement struct {

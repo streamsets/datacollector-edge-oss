@@ -75,7 +75,7 @@ vet {
 
 //Custom tasks
 task buildAll {
-    dependsOn build
+    dependsOn build, check
     description = 'Builds Edge Binaries for all platforms'
 
     def baseDir = temporaryDir.getAbsolutePath() + '/gobuild'
