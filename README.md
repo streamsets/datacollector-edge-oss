@@ -6,7 +6,6 @@
 * make
 * Gradle 4.2
 
-
 ## Clone Repository
 
 * Create directory $GOPATH/src/github.com/streamsets
@@ -14,75 +13,78 @@
 * Reference - https://golang.org/doc/code.html#Organization
 
 ## Building
-    $ make clean dist (or)
-    $ gradle clean build
+
+    make clean dist (or)
+    ./gradlew clean build
 
 ## Building for all platforms
 
-    $ make clean dist-all (or)
-    $ gradle clean buildAll
+    make clean dist-all (or)
+    ./gradlew clean buildAll
 
 ## Publishing Binaries to Maven Repo for all platforms
 
-    $ gradle publish
+    ./gradlew publish
 
 ## Building DockerImage
 
-    $ gradle buildDockerImage
+    ./gradlew buildDockerImage
 
-## To run tests
+## Run tests
 
-    $ make test (or)
-    $ gradle test
+    make test (or)
+    ./gradlew test
 
-## to run coverage
-    $ gradle coverage
+## Run coverage
 
-## to run check (test, fmt and vet)
-    $ gradle check
+    ./gradlew coverage
+
+## Run checks (test, fmt and vet)
+
+    ./gradlew check
 
 ## Running
-    $ cd dist
-    $ bin/edge
+
+    cd dist
+    bin/edge
 
 ### To start pipeline on SDCe start
 
-    $ bin/edge -start=<pipelineId>
+    bin/edge -start=<pipelineId>
 
 ### To pass runtime parameters
 
-    $ bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ### To enable DEBUG Log Level
 
-    $ bin/edge -debug -start=tailFileToHttp
+    bin/edge -debug -start=tailFileToHttp
 
 ## REST API
 
-    $ curl -X GET http://localhost:18633/rest/v1/pipeline/:pipelineId/status
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/start
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/stop
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/resetOffset
-    $ curl -X GET http://localhost:18633/rest/v1/pipeline/:pipelineId/metrics
+    curl -X GET http://localhost:18633/rest/v1/pipeline/:pipelineId/status
+    curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/start
+    curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/stop
+    curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/resetOffset
+    curl -X GET http://localhost:18633/rest/v1/pipeline/:pipelineId/metrics
 
 ### To pass runtime parameters during start
 
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/tailFileToHttp/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    curl -X POST http://localhost:18633/rest/v1/pipeline/tailFileToHttp/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ## Docker run the image
 
 To run a container from the resulting image:
 
-    $ docker run --publish 18633:18633 --name edge --rm streamsets/datacollector-edge
+    docker run --publish 18633:18633 --name edge --rm streamsets/datacollector-edge
 
 Getting inside the container
 
-    $ docker exec -it datacollector-edge /bin/sh
+    docker exec -it datacollector-edge /bin/sh
 
 ## Release
 
-    $ gradle release
-
+    ./gradlew release
 
 ## Pipeline Templates
 
@@ -96,12 +98,9 @@ Getting inside the container
 * [HTTP Server To Trash](data/pipelines/httpServerToTrash)
 * [Random Data To Identity Processor To Trash](data/pipelines/randomToIdentityToTrash)
 
-
-
-
 ## CPU & Heap Profile
+
     curl http://localhost:18633/debug/pprof/profile > cpu.pb.gz
     curl http://localhost:18633/debug/pprof/heap > heap.pb.gz
     curl http://localhost:18633/debug/pprof/goroutine > goroutine.pb.gz
     curl http://localhost:18633/debug/pprof/block > block.pb.gz
-
