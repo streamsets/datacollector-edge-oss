@@ -106,21 +106,28 @@ func (s *StagePipe) Process(pipeBatch *FullPipeBatch) error {
 	// Update metric registry
 	s.processingTimer.UpdateSince(start)
 
-	inputRecordsCount := int64(len(batchImpl.records))
-	s.inputRecordsCounter.Inc(inputRecordsCount)
-	s.inputRecordsMeter.Mark(inputRecordsCount)
-	s.inputRecordsHistogram.Update(inputRecordsCount)
-
-	outputRecordsCount := batchMaker.GetSize()
-	s.outputRecordsCounter.Inc(outputRecordsCount)
-	s.outputRecordsMeter.Mark(outputRecordsCount)
-	s.outputRecordsHistogram.Update(outputRecordsCount)
-
 	instanceName := s.Stage.config.InstanceName
 	errorSink := pipeBatch.GetErrorSink()
 
 	stageErrorRecordsCount := int64(len(errorSink.GetStageErrorRecords(instanceName)))
 	stageErrorMessagesCount := int64(len(errorSink.GetStageErrorMessages(instanceName)))
+
+	inputRecordsCount := int64(len(batchImpl.records))
+	outputRecordsCount := batchMaker.GetSize()
+
+	if s.IsTarget() {
+		// Assumption is that the target will not drop any record.
+		// Records are sent to destination or to the error sink.
+		outputRecordsCount = inputRecordsCount - stageErrorRecordsCount
+	}
+
+	s.inputRecordsCounter.Inc(inputRecordsCount)
+	s.inputRecordsMeter.Mark(inputRecordsCount)
+	s.inputRecordsHistogram.Update(inputRecordsCount)
+
+	s.outputRecordsCounter.Inc(outputRecordsCount)
+	s.outputRecordsMeter.Mark(outputRecordsCount)
+	s.outputRecordsHistogram.Update(outputRecordsCount)
 
 	s.errorRecordsCounter.Inc(stageErrorRecordsCount)
 	s.errorRecordsMeter.Mark(stageErrorRecordsCount)
