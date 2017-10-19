@@ -17,6 +17,21 @@ golang {
     packagePath = "${gitPath}"
 }
 
+dependencies {
+    golang {
+        build 'github.com/AllenDang/w32'
+        build 'github.com/BurntSushi/toml'
+        build 'github.com/dustin/go-coap'
+        build 'github.com/eclipse/paho.mqtt.golang'
+        build 'github.com/gorilla/websocket'
+        build 'github.com/hpcloud/tail'
+        build 'github.com/julienschmidt/httprouter'
+        build 'github.com/madhukard/govaluate'
+        build 'github.com/rcrowley/go-metrics'
+        build 'github.com/satori/go.uuid'
+    }
+}
+
 def getLdFlags() {
     final buildDate=new Date().format("yyyy-MM-dd'T'HHmmss'Z'")
     final buildRepoSha = new ByteArrayOutputStream().withStream { gitShaCmdStream ->
