@@ -41,12 +41,19 @@ type Config struct {
 	Value interface{} `json:"value"`
 }
 
+type ServiceConfiguration struct {
+	Service        string   `json:"service"`
+	ServiceVersion string   `json:"serviceVersion"`
+	Configuration  []Config `json:"configuration"`
+}
+
 type StageConfiguration struct {
 	InstanceName  string                 `json:"instanceName"`
 	Library       string                 `json:"library"`
 	StageName     string                 `json:"stageName"`
 	StageVersion  string                 `json:"stageVersion"`
 	Configuration []Config               `json:"configuration"`
+	Services      []ServiceConfiguration `json:"services"`
 	UiInfo        map[string]interface{} `json:"uiInfo"`
 	InputLanes    []string               `json:"inputLanes"`
 	OutputLanes   []string               `json:"outputLanes"`
