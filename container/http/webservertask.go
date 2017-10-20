@@ -7,7 +7,9 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/execution/manager"
+	"github.com/streamsets/datacollector-edge/container/process"
 	"github.com/streamsets/datacollector-edge/container/store"
+	"github.com/streamsets/datacollector-edge/container/util"
 	"log"
 	"net/http"
 	"net/http/pprof"
@@ -19,11 +21,13 @@ type WebServerTask struct {
 	manager           manager.Manager
 	pipelineStoreTask store.PipelineStoreTask
 	httpServer        *http.Server
+	processManager    *process.Manager
 }
 
 func (webServerTask *WebServerTask) Init() error {
 	fmt.Println("Running on URI : http://localhost" + webServerTask.config.BindAddress)
 	log.Println("[INFO] Running on URI : http://localhost" + webServerTask.config.BindAddress)
+
 	router := httprouter.New()
 	router.GET("/", webServerTask.homeHandler)
 
@@ -54,6 +58,8 @@ func (webServerTask *WebServerTask) Init() error {
 	router.HandlerFunc("GET", "/debug/pprof/symbol", pprof.Symbol)
 	router.HandlerFunc("GET", "/debug/pprof/trace", pprof.Trace)
 
+	router.GET("/rest/v1/processMetrics", webServerTask.processMetricsHandler)
+
 	webServerTask.httpServer = &http.Server{Addr: webServerTask.config.BindAddress, Handler: router}
 	return nil
 }
@@ -75,17 +81,25 @@ func (webServerTask *WebServerTask) Shutdown() {
 	}
 }
 
+func (webServerTask *WebServerTask) processMetricsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "\t")
+	encoder.Encode(util.FormatMetricsRegistry(webServerTask.processManager.GetProcessMetrics()))
+}
+
 func NewWebServerTask(
 	config Config,
 	buildInfo *common.BuildInfo,
 	manager manager.Manager,
 	pipelineStoreTask store.PipelineStoreTask,
+	processManager	  *process.Manager,
 ) (*WebServerTask, error) {
 	webServerTask := WebServerTask{
-		config:            config,
-		buildInfo:         buildInfo,
-		manager:           manager,
-		pipelineStoreTask: pipelineStoreTask,
+		config:                 config,
+		buildInfo:              buildInfo,
+		manager:                manager,
+		pipelineStoreTask:      pipelineStoreTask,
+		processManager:         processManager,
 	}
 	err := webServerTask.Init()
 	if err != nil {

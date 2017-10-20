@@ -11,6 +11,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/util"
 	"log"
 	"os"
+	"github.com/streamsets/datacollector-edge/container/process"
 )
 
 const (
@@ -29,6 +30,7 @@ type DataCollectorEdgeMain struct {
 	WebServerTask          *http.WebServerTask
 	PipelineStoreTask      store.PipelineStoreTask
 	Manager                manager.Manager
+	processManager         process.Manager
 	DPMMessageEventHandler *dpm.MessageEventHandler
 }
 
@@ -81,7 +83,14 @@ func newDataCollectorEdge(baseDir string, debugFlag bool) (*DataCollectorEdgeMai
 	runtimeInfo, _ := common.NewRuntimeInfo(httpUrl, baseDir)
 	pipelineStoreTask := store.NewFilePipelineStoreTask(*runtimeInfo)
 	pipelineManager, _ := manager.NewManager(config.Execution, runtimeInfo, pipelineStoreTask)
-	webServerTask, _ := http.NewWebServerTask(config.Http, buildInfo, pipelineManager, pipelineStoreTask)
+
+	processManager,err := process.NewManager(config.Process)
+
+	if err != nil {
+		return nil, err
+	}
+
+	webServerTask, _ := http.NewWebServerTask(config.Http, buildInfo, pipelineManager, pipelineStoreTask, processManager)
 	dpm.RegisterWithDPM(config.DPM, buildInfo, runtimeInfo)
 
 	var messagingEventHandler *dpm.MessageEventHandler

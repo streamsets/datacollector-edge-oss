@@ -5,6 +5,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/dpm"
 	"github.com/streamsets/datacollector-edge/container/execution"
 	"github.com/streamsets/datacollector-edge/container/http"
+	"github.com/streamsets/datacollector-edge/container/process"
 	"log"
 )
 
@@ -13,6 +14,7 @@ type Config struct {
 	Execution execution.Config
 	Http      http.Config
 	DPM       dpm.Config
+	Process   process.Config
 }
 
 // NewConfig returns a new Config with default settings.
@@ -21,6 +23,7 @@ func NewConfig() *Config {
 	c.Execution = execution.NewConfig()
 	c.Http = http.NewConfig()
 	c.DPM = dpm.NewConfig()
+	c.Process = process.NewConfig()
 	return c
 }
 
