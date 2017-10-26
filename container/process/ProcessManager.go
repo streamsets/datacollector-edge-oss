@@ -2,14 +2,13 @@ package process
 
 import (
 	"github.com/rcrowley/go-metrics"
-	"strconv"
 	"time"
 )
 
 type Manager struct {
-	config Config
+	config                     Config
 	procMetricsCaptureInterval int64
-	processMetricsRegistry metrics.Registry
+	processMetricsRegistry     metrics.Registry
 }
 
 func (pManager *Manager) GetProcessMetrics() metrics.Registry {
@@ -21,24 +20,19 @@ func (pManager *Manager) GetProcessMetrics() metrics.Registry {
 }
 
 func NewManager(config Config) (*Manager, error) {
-	procMetricsCaptureInterval,err :=
-		strconv.ParseInt(config.ProcessMetricsCaptureInterval, 10, 64)
-	if err == nil {
-		mgr := &Manager{
-			config: config,
-			processMetricsRegistry: metrics.NewRegistry(),
-		}
-		metrics.RegisterRuntimeMemStats(mgr.processMetricsRegistry)
-		metrics.RegisterDebugGCStats(mgr.processMetricsRegistry)
-		if procMetricsCaptureInterval > 0 {
-			metrics.CaptureRuntimeMemStats(
-				mgr.processMetricsRegistry,
-				time.Duration(procMetricsCaptureInterval) * time.Millisecond)
-			metrics.CaptureDebugGCStats(
-				mgr.processMetricsRegistry,
-				time.Duration(procMetricsCaptureInterval) * time.Millisecond)
-		}
-		return mgr, nil
+	mgr := &Manager{
+		config:                 config,
+		processMetricsRegistry: metrics.NewRegistry(),
 	}
-	return nil, err
+	metrics.RegisterRuntimeMemStats(mgr.processMetricsRegistry)
+	metrics.RegisterDebugGCStats(mgr.processMetricsRegistry)
+	if config.ProcessMetricsCaptureInterval > 0 {
+		metrics.CaptureRuntimeMemStats(
+			mgr.processMetricsRegistry,
+			time.Duration(config.ProcessMetricsCaptureInterval)*time.Millisecond)
+		metrics.CaptureDebugGCStats(
+			mgr.processMetricsRegistry,
+			time.Duration(config.ProcessMetricsCaptureInterval)*time.Millisecond)
+	}
+	return mgr, nil
 }

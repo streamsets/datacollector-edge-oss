@@ -92,14 +92,14 @@ func NewWebServerTask(
 	buildInfo *common.BuildInfo,
 	manager manager.Manager,
 	pipelineStoreTask store.PipelineStoreTask,
-	processManager	  *process.Manager,
+	processManager *process.Manager,
 ) (*WebServerTask, error) {
 	webServerTask := WebServerTask{
-		config:                 config,
-		buildInfo:              buildInfo,
-		manager:                manager,
-		pipelineStoreTask:      pipelineStoreTask,
-		processManager:         processManager,
+		config:            config,
+		buildInfo:         buildInfo,
+		manager:           manager,
+		pipelineStoreTask: pipelineStoreTask,
+		processManager:    processManager,
 	}
 	err := webServerTask.Init()
 	if err != nil {

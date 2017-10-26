@@ -7,11 +7,11 @@ import (
 	"github.com/streamsets/datacollector-edge/container/dpm"
 	"github.com/streamsets/datacollector-edge/container/execution/manager"
 	"github.com/streamsets/datacollector-edge/container/http"
+	"github.com/streamsets/datacollector-edge/container/process"
 	"github.com/streamsets/datacollector-edge/container/store"
 	"github.com/streamsets/datacollector-edge/container/util"
 	"log"
 	"os"
-	"github.com/streamsets/datacollector-edge/container/process"
 )
 
 const (
@@ -40,7 +40,10 @@ func DoMain(
 	startFlag string,
 	runtimeParametersFlag string,
 ) (*DataCollectorEdgeMain, error) {
-	dataCollectorEdge, _ := newDataCollectorEdge(baseDir, debugFlag)
+	dataCollectorEdge, err := newDataCollectorEdge(baseDir, debugFlag)
+	if err != nil {
+		panic(err)
+	}
 
 	if len(startFlag) > 0 {
 		var runtimeParameters map[string]interface{}
@@ -74,7 +77,10 @@ func newDataCollectorEdge(baseDir string, debugFlag bool) (*DataCollectorEdgeMai
 	log.Println("[INFO] Base Dir: ", baseDir)
 
 	config := NewConfig()
-	config.FromTomlFile(baseDir + DefaultConfigFilePath)
+	err := config.FromTomlFile(baseDir + DefaultConfigFilePath)
+	if err != nil {
+		return nil, err
+	}
 
 	hostName, _ := os.Hostname()
 	var httpUrl = "http://" + hostName + config.Http.BindAddress
@@ -84,7 +90,7 @@ func newDataCollectorEdge(baseDir string, debugFlag bool) (*DataCollectorEdgeMai
 	pipelineStoreTask := store.NewFilePipelineStoreTask(*runtimeInfo)
 	pipelineManager, _ := manager.NewManager(config.Execution, runtimeInfo, pipelineStoreTask)
 
-	processManager,err := process.NewManager(config.Process)
+	processManager, err := process.NewManager(config.Process)
 
 	if err != nil {
 		return nil, err

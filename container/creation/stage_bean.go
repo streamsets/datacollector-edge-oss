@@ -44,8 +44,13 @@ func NewStageBean(
 	stageConfig common.StageConfiguration,
 	runtimeParameters map[string]interface{},
 ) (StageBean, error) {
-	stageInstance, stageDefinition, err := stagelibrary.CreateStageInstance(stageConfig.Library, stageConfig.StageName)
 	stageBean := StageBean{}
+
+	stageInstance, stageDefinition, err := stagelibrary.CreateStageInstance(stageConfig.Library, stageConfig.StageName)
+	if err != nil {
+		return stageBean, err
+	}
+
 	stageBean.Config = stageConfig
 	stageBean.Stage = stageInstance
 
