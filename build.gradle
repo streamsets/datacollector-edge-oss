@@ -19,16 +19,16 @@ golang {
 
 dependencies {
     golang {
-        build 'github.com/AllenDang/w32'
-        build 'github.com/BurntSushi/toml'
-        build 'github.com/dustin/go-coap'
-        build 'github.com/eclipse/paho.mqtt.golang'
-        build 'github.com/gorilla/websocket'
-        build 'github.com/hpcloud/tail'
-        build 'github.com/julienschmidt/httprouter'
-        build 'github.com/madhukard/govaluate'
-        build 'github.com/rcrowley/go-metrics'
-        build 'github.com/satori/go.uuid'
+        build name: 'github.com/AllenDang/w32', commit:'9a4ee0f7d224efbff75947fa7060daadccc4741c'
+        build name: 'github.com/BurntSushi/toml', commit:'b26d9c308763d68093482582cea63d69be07a0f0'
+        build name: 'github.com/dustin/go-coap', commit:'ddcc80675fa42611359d91a6dfa5aa57fb90e72b'
+        build name: 'github.com/eclipse/paho.mqtt.golang', commit:'aff15770515e3c57fc6109da73d42b0d46f7f483'
+        build name: 'github.com/gorilla/websocket', commit:'ea4d1f681babbce9545c9c5f3d5194a789c89f5b'
+        build name: 'github.com/hpcloud/tail', commit:'a30252cb686a21eb2d0b98132633053ec2f7f1e5'
+        build name: 'github.com/julienschmidt/httprouter', commit:'8c199fb6259ffc1af525cc3ad52ee60ba8359669'
+        build name: 'github.com/madhukard/govaluate', commit:'13a14e48048d2c8d8cfe616f35dfe6f0b83330fe'
+        build name: 'github.com/rcrowley/go-metrics', commit:'1f30fe9094a513ce4c700b9a54458bbb0c96996c'
+        build name: 'github.com/satori/go.uuid', commit:'879c5887cd475cd7864858769793b2ceb0d44feb'
     }
 }
 
@@ -186,7 +186,7 @@ publishing {
 
 task createDockerfile(type: Dockerfile) {
     description = 'Creates Docker File for Edge'
-    dependsOn('build-linux-amd64')
+    dependsOn('tar-linux-amd64')
     destFile = project.file('dist/Dockerfile')
     from 'alpine'
     maintainer 'Madhu "madhu@streamsets.com"'
@@ -219,4 +219,3 @@ task release {
   dependsOn buildDockerImage
   dependsOn publish
 }
-//TODO: Remove Makefiles and dep files (SDCE-93)

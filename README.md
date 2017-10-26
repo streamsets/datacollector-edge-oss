@@ -14,12 +14,10 @@
 
 ## Building
 
-    make clean dist (or)
     ./gradlew clean build
 
 ## Building for all platforms
 
-    make clean dist-all (or)
     ./gradlew clean buildAll
 
 ## Publishing Binaries to Maven Repo for all platforms
@@ -32,7 +30,6 @@
 
 ## Run tests
 
-    make test (or)
     ./gradlew test
 
 ## Run coverage
