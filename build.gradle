@@ -60,7 +60,7 @@ def doActionAllPlatforms(action) {
 
 def copyAssetSpec = copySpec {
      from fileTree('.') {
-        include('etc/', 'data/')
+        include('etc/', 'data/', 'QUICKSTART.md')
         exclude('data/**/*.png', 'data/**/*.md')
      }
 }
@@ -104,6 +104,7 @@ task buildAll {
         def (goOs, goArch) = it
         def targetPlatform = goOs + '-' + goArch
         def basePlatformDir = baseDir + '/' + goOs + '/' + goArch
+        def baseTarDir = basePlatformDir + '/' + appName
         def buildTaskName = 'build-'+ targetPlatform
         def tarTaskName = 'tar-'+ targetPlatform
 
@@ -119,7 +120,7 @@ task buildAll {
                 environment.GOEXE='.exe'
             }
 
-            go "build -ldflags " + ldFlags + " -o " + basePlatformDir + "/bin/${binaryName}\${GOEXE} ${gitPath}"
+            go "build -ldflags " + ldFlags + " -o " + baseTarDir + "/bin/${binaryName}\${GOEXE} ${gitPath}"
         }
 
         def archiveName = "${appName}-" + goOs + '-' + goArch + '-' + "${version}"
@@ -133,12 +134,11 @@ task buildAll {
 
             copy {
                 doFirst{
-                    mkdir basePlatformDir + '/log'
+                    mkdir baseTarDir + '/log'
                 }
                 with copyAssetSpec
-                into basePlatformDir
+                into baseTarDir
             }
-
             baseName = archiveName
             from file(basePlatformDir)
             destinationDir = file('dist')
