@@ -22,11 +22,11 @@
 
 
 
-## SDC Edge Pipeline
+## SDCe Sending Pipeline
 
-![Image of SDC Edge Pipeline](edge.png)
+![Image of SDCe Sending Pipeline](edge.png)
 
 
-## SDC Pipeline
+## SDC Receiving Pipeline
 
-![Image of SDC Pipeline](sdcwebsocket.png)
+![Image of SDC Receiving Pipeline](sdcwebsocket.png)

@@ -87,7 +87,7 @@ func (m *MessageEventHandler) SendEvent() error {
 		req, err := http.NewRequest("POST", eventsUrl, bytes.NewBuffer(jsonValue))
 		req.Header.Set(common.HEADER_X_APP_AUTH_TOKEN, m.dpmConfig.AppAuthToken)
 		req.Header.Set(common.HEADER_X_APP_COMPONENT_ID, m.runtimeInfo.ID)
-		req.Header.Set(common.HEADER_X_REST_CALL, "SDC Edge")
+		req.Header.Set(common.HEADER_X_REST_CALL, "SDCe")
 		req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
 
 		client := &http.Client{}

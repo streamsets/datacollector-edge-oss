@@ -20,11 +20,11 @@
 
     $ curl -X POST http://localhost:18633/rest/v1/pipeline/mqttToHttp/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"mqttClientId":"mqttSubscriber","mqttBrokerUrl":"tcp://localhost:1883","mqttTopic":"sample","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
-## SDC Edge Pipeline
+## SDCe Sending Pipeline
 
-![Image of SDC Edge Pipeline](edge.png)
+![Image of SDCe Sending Pipeline](edge.png)
 
 
-## SDC Pipeline
+## SDC Receiving Pipeline
 
-![Image of SDC Pipeline](sdchttp.png)
+![Image of SDC Receiving Pipeline](sdchttp.png)

@@ -23,11 +23,11 @@
 ###Note
   In Windows command line, make sure to escape double quotes properly in runtime parameters/curl commands
 
-## SDC Edge Pipeline
+## SDCe Sending Pipeline
 
-![Image of SDC Edge Pipeline](edge.png)
+![Image of SDCe Sending Pipeline](edge.png)
 
 
-## SDC Pipeline
+## SDC Receiving Pipeline
 
-![Image of SDC Pipeline](sdchttp.png)
+![Image of SDC Receiving Pipeline](sdchttp.png)

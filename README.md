@@ -83,7 +83,7 @@ Getting inside the container
 
     ./gradlew release
 
-## Pipeline Templates
+## Sample Templates
 
 * [Windows Event To Http](data/pipelines/windowsEventToHttp)
 * [Tail File To Http](data/pipelines/tailFileToHttp)
