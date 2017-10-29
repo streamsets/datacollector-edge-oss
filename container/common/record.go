@@ -1,6 +1,8 @@
 package common
 
 import (
+	"errors"
+	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 )
@@ -55,8 +57,10 @@ func (r *RecordImpl) getFromPathElements(pathElements []PathElement) []*api.Fiel
 				if current.Type == fieldtype.MAP || current.Type == fieldtype.LIST_MAP {
 					mapValue := current.Value.(map[string](*api.Field))
 					if mapValue != nil {
-						field := mapValue[pathElement.Name]
-						if len(field.Type) > 0 {
+						field, ok := mapValue[pathElement.Name]
+						if !ok {
+							return fields
+						} else if len(field.Type) > 0 {
 							fields = append(fields, field)
 							next = field
 						}
@@ -84,6 +88,89 @@ func (r *RecordImpl) Set(field *api.Field) *api.Field {
 	oldData := r.value
 	r.value = field
 	return oldData
+}
+
+func (r *RecordImpl) SetField(fieldPath string, field *api.Field) (*api.Field, error) {
+	pathElements, err := r.parse(fieldPath)
+	var fieldToReplace *api.Field = nil
+	if err == nil {
+		fields := r.getFromPathElements(pathElements)
+		fieldPos := len(fields)
+		if len(pathElements) == fieldPos {
+			fieldPos--
+			fieldToReplace, err = r.doSet(fieldPos, field, pathElements, fields)
+		} else if len(pathElements)-1 == fieldPos {
+			fieldToReplace, err = r.doSet(fieldPos, field, pathElements, fields)
+		} else {
+			err = errors.New("Field-path " + fieldPath + " not reachable")
+		}
+	}
+	return fieldToReplace, err
+}
+
+func (r *RecordImpl) doSet(fieldPos int, newField *api.Field, pathElements []PathElement, fields []*api.Field) (*api.Field, error) {
+	var fieldToReplace *api.Field = nil
+	var err error = nil
+	if fieldPos == 0 {
+		fieldToReplace = r.value
+		r.value = newField
+	} else {
+		elem := pathElements[fieldPos]
+		switch elem.Type {
+		case MAP:
+			parent := fields[fieldPos-1].Value.(map[string]*api.Field)
+			fieldToReplace, _ = parent[elem.Name]
+			parent[elem.Name] = newField
+		case LIST:
+			parent := fields[fieldPos-1].Value.([]*api.Field)
+			if elem.Idx > len(parent) {
+				err = errors.New(fmt.Sprintf("Field Path index '%d' greater than current list element size '%d'",
+					elem.Idx, len(parent)))
+			} else if elem.Idx == len(parent) {
+				//Reassign it to the underlying field slice
+				fields[fieldPos-1].Value = append(parent, newField)
+			} else {
+				fieldToReplace = parent[elem.Idx]
+				parent[elem.Idx] = newField
+			}
+		}
+	}
+	return fieldToReplace, err
+}
+
+func (r *RecordImpl) Delete(fieldPath string) (*api.Field, error) {
+	pathElements, err := r.parse(fieldPath)
+	if err != nil {
+		return nil, err
+	}
+	fields := r.getFromPathElements(pathElements)
+
+	var deletedField *api.Field = nil
+	fieldPos := len(fields)
+	if len(fields) == len(pathElements) {
+		fieldPos--
+		if fieldPos == 0 {
+			deletedField = r.value
+			r.value = nil
+			return deletedField, nil
+		} else {
+			pathElement := pathElements[fieldPos]
+			switch pathElement.Type {
+			case MAP:
+				parentField := fields[fieldPos-1].Value.(map[string](*api.Field))
+				deletedField = fields[fieldPos]
+				delete(parentField, pathElement.Name)
+			case LIST:
+				parentField := fields[fieldPos-1].Value.([]*api.Field)
+				deleteIdx := pathElement.Idx
+				deletedField = fields[fieldPos]
+				fields[fieldPos-1].Value = append(parentField[:deleteIdx], parentField[deleteIdx+1:]...)
+			default:
+				return deletedField, errors.New("Unexpected field type " + pathElement.Name)
+			}
+		}
+	}
+	return deletedField, nil
 }
 
 type HeaderImpl struct {

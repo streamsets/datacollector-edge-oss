@@ -165,3 +165,126 @@ func TestRecordImpl_Clone(t *testing.T) {
 	checkFieldCloned(t, "/listField[0]", realRecordPtr, clonedRecordPtr)
 	checkFieldCloned(t, "/listField[1]", realRecordPtr, clonedRecordPtr)
 }
+
+func TestRecordImpl_Delete(t *testing.T) {
+	rootField := make(map[string]interface{})
+	stringField := "stringField"
+	mapField := map[string]interface{}{"primitive": 1, "map": map[string]interface{}{"a": 1, "b": 2}}
+	listField := []interface{}{1, 2}
+
+	rootField["primitiveField"] = stringField
+	rootField["mapField"] = mapField
+	rootField["listField"] = listField
+
+	record, err := createRecord("recordSourceId", rootField)
+	if err != nil {
+		t.Error(record)
+	}
+
+	//map
+	mapDeletedField, err := record.Delete("/mapField/map/a")
+
+	if err != nil || mapDeletedField.Value.(int) != 1 {
+		t.Error("/mapField/map/a is not deleted, value does not match")
+	}
+
+	//list
+	list1Field, err := record.Delete("/listField[0]")
+
+	if err != nil || list1Field.Value.(int) != 1 {
+		t.Error("/listField[0] is not deleted, value does not match")
+	}
+
+	list1Field, err = record.Get("/listField[0]")
+
+	if err != nil || list1Field.Value.(int) != 2 {
+		t.Error("/listField[0] is not correct after deletion, value does not match")
+	}
+
+	//rootMap
+	root, err := record.Delete("/")
+
+	if err != nil || root == nil {
+		t.Error("Error when removing root map field")
+	}
+
+	if f, _ := record.Get("/"); f != nil {
+		t.Error("Root map not deleted")
+	}
+}
+
+func TestRecordImpl_Set(t *testing.T) {
+	rootField := make(map[string]interface{})
+	mapField := map[string]interface{}{"primitive": 1, "map": map[string]interface{}{"a": 1, "b": 2}}
+	listField := []string{"a", "b"}
+
+	rootField["mapField"] = mapField
+	rootField["listField"] = listField
+
+	record, err := createRecord("recordSourceId", rootField)
+	if err != nil {
+		t.Error(record)
+	}
+
+	//To be set field
+	f, err := api.CreateField("newField")
+	if err != nil {
+		t.Error(record)
+	}
+
+	//non existing parent map field
+	_, err = record.SetField("/a/b", f)
+
+	if err == nil {
+		t.Error("Should error for non existing field /a/b")
+	}
+
+	//non existing map field
+	exF, err := record.SetField("/a", f)
+	if err != nil || exF != nil {
+		t.Error("Error setting field /a")
+	}
+
+	getF, err := record.Get("/a")
+
+	if err != nil || getF.Value.(string) != "newField" {
+		t.Error("Error getting set field /a")
+	}
+
+	//List index greater than list size
+	_, err = record.SetField("/listField[3]", f)
+	if err == nil {
+		t.Error("Should error for non existing field /listfield[2]")
+	}
+
+	//Append to a list
+	exF, err = record.SetField("/listField[2]", f)
+	if err != nil || exF != nil {
+		t.Error("Error setting field /listField[2]")
+	}
+	getF, err = record.Get("/listField[2]")
+	if err != nil || getF.Value.(string) != "newField" {
+		t.Error("Error getting set field /a")
+	}
+
+	//Insert in the middle of a list getting the existing field
+	exF, err = record.SetField("/listField[1]", f)
+	if err != nil || exF.Value.(string) != "b" {
+		t.Error("Error setting field /listField[2] or the api did not return the correect existing value")
+	}
+
+	getF, err = record.Get("/listField[1]")
+	if err != nil || getF.Value.(string) != "newField" {
+		t.Error("Error getting set field /a")
+	}
+
+	//Setting an inner map field
+	exF, err = record.SetField("/mapField/c", f)
+	if err != nil || exF != nil {
+		t.Error("Error setting field /mapField/c")
+	}
+	getF, err = record.Get("/mapField/c")
+	if err != nil || getF.Value.(string) != "newField" {
+		t.Error("Error getting set field /mapField/c")
+	}
+}

@@ -45,6 +45,14 @@ func (r *MockRecord) Clone() api.Record {
 	return r
 }
 
+func (r *MockRecord) SetField(fieldPath string, field *api.Field) (*api.Field, error) {
+	return nil, errors.New("unsupported operation")
+}
+
+func (r *MockRecord) Delete(fieldPath string) (*api.Field, error) {
+	return nil, errors.New("unsupported operation")
+}
+
 func TestRecordEL(test *testing.T) {
 	evaluationTests := []EvaluationTest{
 		{
