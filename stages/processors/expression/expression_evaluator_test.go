@@ -1,0 +1,165 @@
+package expression
+
+import (
+	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/creation"
+	"github.com/streamsets/datacollector-edge/container/execution/runner"
+	"strings"
+	"testing"
+)
+
+const (
+	EXPRESSION_PROCESSOR_CONFIGS = "expressionProcessorConfigs"
+	HEADER_ATTRIBUTE_CONFIGS     = "headerAttributeConfigs"
+	FIELD_TO_SET                 = "fieldToSet"
+	ATTRIBUTE_TO_SET             = "attributeToSet"
+)
+
+func getStageContext() (*common.StageContextImpl, *common.ErrorSink) {
+	stageConfig := common.StageConfiguration{}
+	stageConfig.Library = LIBRARY
+	stageConfig.StageName = STAGE_NAME
+	stageConfig.InstanceName = "expr1"
+	stageConfig.Configuration = make([]common.Config, 2)
+
+	fieldValueConfigs := []interface{}{}
+	fieldValueConfigs = append(fieldValueConfigs, map[string]interface{}{
+		FIELD_TO_SET: "/d",
+		EXPRESSION:   "${math:ceil(record:value('/a'))}",
+	})
+
+	fieldValueConfigs = append(fieldValueConfigs, map[string]interface{}{
+		FIELD_TO_SET: "/e",
+		EXPRESSION:   "${math:floor(record:value('/b'))}",
+	})
+
+	headerAttributeConfigs := []interface{}{}
+	headerAttributeConfigs = append(headerAttributeConfigs, map[string]interface{}{
+		ATTRIBUTE_TO_SET: "eval",
+		EXPRESSION:       "${str:toUpper(record:value('/c'))}",
+	})
+
+	stageConfig.Configuration[0] = common.Config{
+		Name:  EXPRESSION_PROCESSOR_CONFIGS,
+		Value: fieldValueConfigs,
+	}
+
+	stageConfig.Configuration[1] = common.Config{
+		Name:  HEADER_ATTRIBUTE_CONFIGS,
+		Value: headerAttributeConfigs,
+	}
+
+	errorSink := common.NewErrorSink()
+
+	return &common.StageContextImpl{
+		StageConfig: stageConfig,
+		Parameters:  nil,
+		ErrorSink:   errorSink,
+	}, errorSink
+}
+
+func TestExpressionProcessor_Success(t *testing.T) {
+	stageContext, errSink := getStageContext()
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stageInstance := stageBean.Stage.(*ExpressionProcessor)
+	if stageInstance == nil {
+		t.Fatal("Failed to create stage instance")
+	}
+	err = stageInstance.Init(stageContext)
+	if err != nil {
+		t.Fatal("Error initializing stage context for the stage")
+	}
+	defer stageInstance.Destroy()
+
+	records := make([]api.Record, 1)
+	records[0], _ = stageContext.CreateRecord("abc", map[string]interface{}{"a": float64(2.55), "b": float64(3.55), "c": "random"})
+	batch := runner.NewBatchImpl("random", records, "randomOffset")
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
+
+	err = stageInstance.Process(batch, batchMaker)
+
+	if err != nil {
+		t.Fatal("Error when processing batch " + err.Error())
+	}
+
+	records = batchMaker.GetStageOutput()
+
+	record := records[0]
+
+	dValue, err := record.Get("/d")
+
+	if err != nil {
+		t.Error("Error when getting value of /d " + err.Error())
+	}
+
+	if dValue.Value.(float64) != float64(3) {
+		t.Errorf("Error in expression processor when evaluating /d, Expected : 6. Actual:%d", dValue.Value)
+	}
+
+	eValue, err := record.Get("/e")
+
+	if err != nil {
+		t.Error("Error when getting value of /e " + err.Error())
+	}
+
+	if eValue.Value.(float64) != float64(3) {
+		t.Errorf("Error in expression processor when evaluating /e, Expected : 5. Actual:%d", eValue.Value)
+	}
+
+	headers := record.GetHeader().GetAttributes()
+
+	header, ok := headers["eval"]
+	if !ok || strings.Compare(header, "RANDOM") != 0 {
+		t.Errorf("Error in expression processor when evaluating header eval, Expected : random. Actual:%s", header)
+	}
+
+	if errSink.GetTotalErrorRecords() != 0 {
+		t.Fatal("There should be no error records in error sink")
+	}
+}
+
+func TestExpressionProcessor_Error(t *testing.T) {
+	stageContext, errSink := getStageContext()
+
+	stageContext.StageConfig.Configuration[1] = common.Config{
+		Name: HEADER_ATTRIBUTE_CONFIGS,
+		Value: []interface{}{map[string]interface{}{
+			ATTRIBUTE_TO_SET: "eval",
+			EXPRESSION:       "${unsupport:unsupported()}",
+		}},
+	}
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageInstance := stageBean.Stage.(*ExpressionProcessor)
+	if stageInstance == nil {
+		t.Fatal("Failed to create stage instance")
+	}
+	err = stageInstance.Init(stageContext)
+	if err != nil {
+		t.Fatal("Error initializing stage context for the stage")
+	}
+	defer stageInstance.Destroy()
+
+	records := make([]api.Record, 1)
+	records[0], _ = stageContext.CreateRecord("abc", map[string]interface{}{"a": float64(2.55), "b": float64(3.55), "c": "random"})
+	batch := runner.NewBatchImpl("random", records, "randomOffset")
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
+	err = stageInstance.Process(batch, batchMaker)
+
+	if err != nil {
+		t.Fatal("Error when processing batch " + err.Error())
+	}
+
+	if len(batchMaker.GetStageOutput()) != 0 {
+		t.Fatal("The record should not be in batch maker and should have router to error")
+	}
+
+	if errSink.GetTotalErrorRecords() != 1 {
+		t.Fatal("There should be one error record in error sink")
+	}
+
+}

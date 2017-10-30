@@ -78,10 +78,8 @@ func (s *StageContextImpl) CreateRecord(recordSourceId string, value interface{}
 }
 
 func (s *StageContextImpl) ToError(err error, record api.Record) {
-	s.ErrorSink.ToError(
-		s.StageConfig.InstanceName,
-		constructErrorRecord(s.StageConfig.InstanceName, err, record),
-	)
+	errorRecord := constructErrorRecord(s.StageConfig.InstanceName, err, record)
+	s.ErrorSink.ToError(s.StageConfig.InstanceName, errorRecord)
 }
 
 func (s *StageContextImpl) ReportError(err error) {

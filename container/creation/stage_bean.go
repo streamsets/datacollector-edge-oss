@@ -126,8 +126,6 @@ func injectStageConfigs(
 								case reflect.Slice:
 									listBeanValueList := resolvedValue.([]interface{})
 									for _, listBeanValue := range listBeanValueList {
-										fmt.Println(listBeanValue)
-
 										listBeanModelField := reflect.New(listBeanModelType)
 
 										err := injectListBeanStageConfigs(

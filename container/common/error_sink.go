@@ -22,6 +22,8 @@ func NewErrorSink() *ErrorSink {
 func (e *ErrorSink) ClearErrorRecordsAndMesssages() {
 	e.stageErrorMessages = make(map[string][]error)
 	e.stageErrorRecords = make(map[string][]api.Record)
+	e.totalErrorMessages = 0
+	e.totalErrorRecords = 0
 }
 
 func (e *ErrorSink) GetStageErrorMessages(stageIns string) []error {
@@ -51,6 +53,7 @@ func (e *ErrorSink) ReportError(stageIns string, err error) {
 
 	errorMessages = append(errorMessages, err)
 	e.stageErrorMessages[stageIns] = errorMessages
+	e.totalErrorMessages += 1
 }
 
 func (e *ErrorSink) ToError(stageIns string, record api.Record) {
@@ -63,4 +66,5 @@ func (e *ErrorSink) ToError(stageIns string, record api.Record) {
 	}
 	errorRecords = append(errorRecords, record)
 	e.stageErrorRecords[stageIns] = errorRecords
+	e.totalErrorRecords += 1
 }
