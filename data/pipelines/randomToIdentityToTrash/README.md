@@ -2,15 +2,22 @@
 
 ### To start pipeline on SDE start
 
-    $ bin/edge -start=randomToIdentityToTrash
+    <SDCE_DIST>/bin/edge -start=randomToIdentityToTrash
 
-## REST API
+## SDCe commands via REST API
 
-    $ curl -X GET http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/status
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/start
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/stop
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/resetOffset
-    $ curl -X GET http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/metrics
+### Start Pipeline
+    curl -X POST http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/start
+
+### Check Pipeline Status
+    curl -X GET http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/status
+
+### Check Pipeline Metrics
+    curl -X GET http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/metrics
+
+### Stop Pipeline
+    curl -X POST http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/stop
+
 
 ## SDCe Sending Pipeline
 

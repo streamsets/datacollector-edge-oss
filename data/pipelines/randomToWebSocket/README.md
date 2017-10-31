@@ -2,24 +2,28 @@
 
 ### To start pipeline on SDE start
 
-    $ bin/edge -start=randomToMqtt
+    <SDCE_DIST>/bin/edge -start=randomToMqtt
 
 ### To pass runtime parameters
 
-    $ bin/edge -start=randomToWebSocket -runtimeParameters='{"webSocketUrl":"ws://localhost:8080","sdcAppId":"edge"}'
+    <SDCE_DIST>/bin/edge -start=randomToWebSocket -runtimeParameters='{"webSocketUrl":"ws://localhost:8080","sdcAppId":"edge"}'
 
-## REST API
+## SDCe commands via REST API
 
-    $ curl -X GET http://localhost:18633/rest/v1/pipeline/randomToWebSocket/status
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToWebSocket/start
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToWebSocket/stop
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToWebSocket/resetOffset
-    $ curl -X GET http://localhost:18633/rest/v1/pipeline/randomToWebSocket/metrics
+### Start Pipeline
+    curl -X POST http://localhost:18633/rest/v1/pipeline/randomToWebSocket/start
 
 ### To pass runtime parameters during start
+    curl -X POST http://localhost:18633/rest/v1/pipeline/randomToWebSocket/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"webSocketUrl":"ws://localhost:8080","sdcAppId":"edge"}'
 
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToWebSocket/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"webSocketUrl":"ws://localhost:8080","sdcAppId":"edge"}'
+### Check Pipeline Status
+    curl -X GET http://localhost:18633/rest/v1/pipeline/randomToWebSocket/status
 
+### Check Pipeline Metrics
+    curl -X GET http://localhost:18633/rest/v1/pipeline/randomToWebSocket/metrics
+
+### Stop Pipeline
+    curl -X POST http://localhost:18633/rest/v1/pipeline/randomToWebSocket/stop
 
 
 ## SDCe Sending Pipeline

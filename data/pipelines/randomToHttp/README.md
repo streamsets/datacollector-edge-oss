@@ -2,23 +2,28 @@
 
 ### To start pipeline on SDE start
 
-    $ bin/edge -start=randomToHttp
+    <SDCE_DIST>/bin/edge -start=randomToHttp
 
 ### To pass runtime parameters
 
-    $ bin/edge -start=randomToHttp -runtimeParameters='{"httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    <SDCE_DIST>/bin/edge -start=randomToHttp -runtimeParameters='{"httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
-## REST API
+## SDCe commands via REST API
 
-    $ curl -X GET http://localhost:18633/rest/v1/pipeline/randomToHttp/status
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToHttp/start
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToHttp/stop
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToHttp/resetOffset
-    $ curl -X GET http://localhost:18633/rest/v1/pipeline/randomToHttp/metrics
+### Start Pipeline
+    curl -X POST http://localhost:18633/rest/v1/pipeline/randomToHttp/start
 
 ### To pass runtime parameters during start
+    curl -X POST http://localhost:18633/rest/v1/pipeline/randomToHttp/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToHttp/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+### Check Pipeline Status
+    curl -X GET http://localhost:18633/rest/v1/pipeline/randomToHttp/status
+
+### Check Pipeline Metrics
+    curl -X GET http://localhost:18633/rest/v1/pipeline/randomToHttp/metrics
+
+### Stop Pipeline
+    curl -X POST http://localhost:18633/rest/v1/pipeline/randomToHttp/stop
 
 
 ## SDCe Sending Pipeline

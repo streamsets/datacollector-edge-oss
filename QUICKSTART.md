@@ -2,29 +2,48 @@
 
 ## Running
 
-    cd streamsets-datacollector-edge
-    bin/edge
+    <SDCE_DIST>/bin/edge
 
 ### To start pipeline on SDCe start
 
-    bin/edge -start=<pipelineId>
+    <SDCE_DIST>/bin/edge -start=<pipelineId>
 
 ### To pass runtime parameters
 
-    bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    <SDCE_DIST>/bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ### To enable DEBUG Log Level
 
-    bin/edge -debug -start=tailFileToHttp
+    <SDCE_DIST>/bin/edge -debug -start=tailFileToHttp
 
-## REST API
+## SDCe Logs
 
-    curl -X GET http://localhost:18633/rest/v1/pipeline/:pipelineId/status
+    <SDCE_DIST>/log/edge.log
+
+
+## SDCe commands via REST API
+
+### List all pipelines
+    curl -X POST http://localhost:18633/rest/v1/pipelines
+
+### Start Pipeline
     curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/start
-    curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/stop
-    curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/resetOffset
-    curl -X GET http://localhost:18633/rest/v1/pipeline/:pipelineId/metrics
 
 ### To pass runtime parameters during start
-
     curl -X POST http://localhost:18633/rest/v1/pipeline/tailFileToHttp/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+
+### Check Pipeline Status
+    curl -X GET http://localhost:18633/rest/v1/pipeline/:pipelineId/status
+
+### Check Pipeline Metrics
+    curl -X GET http://localhost:18633/rest/v1/pipeline/:pipelineId/metrics
+
+### Stop Pipeline
+    curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/stop
+
+### Reset Origin Offset
+    curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/resetOffset
+
+
+
+

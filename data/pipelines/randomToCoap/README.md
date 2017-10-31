@@ -2,15 +2,21 @@
 
 ### To start pipeline on SDE start
 
-    $ bin/edge -start=randomToCoap
+    <SDCE_DIST>/bin/edge -start=randomToCoap
 
-## REST API
+## SDCe commands via REST API
 
-    $ curl -X GET http://localhost:18633/rest/v1/pipeline/randomToCoap/status
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToCoap/start
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToCoap/stop
-    $ curl -X POST http://localhost:18633/rest/v1/pipeline/randomToCoap/resetOffset
-    $ curl -X GET http://localhost:18633/rest/v1/pipeline/randomToCoap/metrics
+### Start Pipeline
+    curl -X POST http://localhost:18633/rest/v1/pipeline/randomToCoap/start
+
+### Check Pipeline Status
+    curl -X GET http://localhost:18633/rest/v1/pipeline/randomToCoap/status
+
+### Check Pipeline Metrics
+    curl -X GET http://localhost:18633/rest/v1/pipeline/randomToCoap/metrics
+
+### Stop Pipeline
+    curl -X POST http://localhost:18633/rest/v1/pipeline/randomToCoap/stop
 
 
 ## SDCe Sending Pipeline
