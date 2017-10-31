@@ -2,11 +2,11 @@
 
 ### To start pipeline on SDE start
 
-    <SDCE_DIST>/bin/edge -start=randomToFieldFilterToHttp
+    <SDCe_home>/bin/edge -start=randomToFieldFilterToHttp
 
 ### To pass runtime parameters
 
-    <SDCE_DIST>/bin/edge -start=randomToFieldFilterToHttp -runtimeParameters='{"randomFields":"a,b,c","filterOperation":"REMOVE","filterFields":["/a","/c"],"httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    <SDCe_home>/bin/edge -start=randomToFieldFilterToHttp -runtimeParameters='{"randomFields":"a,b,c","filterOperation":"REMOVE","filterFields":["/a","/c"],"httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 
 ## SDCe commands via REST API

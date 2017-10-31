@@ -2,11 +2,11 @@
 
 ### To start pipeline on SDE start
 
-    <SDCE_DIST>/bin/edge -start=httpServerToTrash
+    <SDCe_home>/bin/edge -start=httpServerToTrash
 
 ### To pass runtime parameters
 
-    <SDCE_DIST>/bin/edge -start=httpServerToTrash -runtimeParameters='{"httpPort":"8888","sdeAppId":"sde"}'
+    <SDCe_home>/bin/edge -start=httpServerToTrash -runtimeParameters='{"httpPort":"8888","sdeAppId":"sde"}'
 
 
 ## SDCe commands via REST API

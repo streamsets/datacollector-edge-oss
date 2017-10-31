@@ -2,11 +2,11 @@
 
 ### To start pipeline on SDE start
 
-    <SDCE_DIST>/bin/edge -start=tailFileToHttp
+    <SDCe_home>/bin/edge -start=tailFileToHttp
 
 ### To pass runtime parameters
 
-    <SDCE_DIST>/bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/Users/tempUser/log/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    <SDCe_home>/bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/Users/tempUser/log/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ## SDCe commands via REST API
 

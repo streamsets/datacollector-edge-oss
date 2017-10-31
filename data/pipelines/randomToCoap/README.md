@@ -2,7 +2,7 @@
 
 ### To start pipeline on SDE start
 
-    <SDCE_DIST>/bin/edge -start=randomToCoap
+    <SDCe_home>/bin/edge -start=randomToCoap
 
 ## SDCe commands via REST API
 

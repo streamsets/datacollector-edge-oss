@@ -2,11 +2,11 @@
 
 ### To start pipeline on SDE start
 
-    <SDCE_DIST>/bin/edge -start=mqttToHttp
+    <SDCe_home>/bin/edge -start=mqttToHttp
 
 ### To pass runtime parameters
 
-    <SDCE_DIST>/bin/edge -start=mqttToHttp -runtimeParameters='{"mqttClientId":"mqttSubscriber","mqttBrokerUrl":"tcp://localhost:1883","mqttTopic":"sample","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    <SDCe_home>/bin/edge -start=mqttToHttp -runtimeParameters='{"mqttClientId":"mqttSubscriber","mqttBrokerUrl":"tcp://localhost:1883","mqttTopic":"sample","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ## SDCe commands via REST API
 

@@ -2,11 +2,11 @@
 
 ### To start pipeline on SDE start
 
-    <SDCE_DIST>/bin/edge -start=directoryToHttp
+    <SDCe_home>/bin/edge -start=directoryToHttp
 
 ### To pass runtime parameters
 
-    <SDCE_DIST>/bin/edge -start=directoryToHttp -runtimeParameters='{"directoryPath":"/tmp/out/dir","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    <SDCe_home>/bin/edge -start=directoryToHttp -runtimeParameters='{"directoryPath":"/tmp/out/dir","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ## SDCe commands via REST API
 

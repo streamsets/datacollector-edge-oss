@@ -2,23 +2,23 @@
 
 ## Running
 
-    <SDCE_DIST>/bin/edge
+    <SDCe_home>/bin/edge
 
 ### To start pipeline on SDCe start
 
-    <SDCE_DIST>/bin/edge -start=<pipelineId>
+    <SDCe_home>/bin/edge -start=<pipelineId>
 
 ### To pass runtime parameters
 
-    <SDCE_DIST>/bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    <SDCe_home>/bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ### To enable DEBUG Log Level
 
-    <SDCE_DIST>/bin/edge -debug -start=tailFileToHttp
+    <SDCe_home>/bin/edge -debug -start=tailFileToHttp
 
 ## SDCe Logs
 
-    <SDCE_DIST>/log/edge.log
+    <SDCe_home>/log/edge.log
 
 
 ## SDCe commands via REST API

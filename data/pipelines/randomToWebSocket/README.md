@@ -2,11 +2,11 @@
 
 ### To start pipeline on SDE start
 
-    <SDCE_DIST>/bin/edge -start=randomToMqtt
+    <SDCe_home>/bin/edge -start=randomToMqtt
 
 ### To pass runtime parameters
 
-    <SDCE_DIST>/bin/edge -start=randomToWebSocket -runtimeParameters='{"webSocketUrl":"ws://localhost:8080","sdcAppId":"edge"}'
+    <SDCe_home>/bin/edge -start=randomToWebSocket -runtimeParameters='{"webSocketUrl":"ws://localhost:8080","sdcAppId":"edge"}'
 
 ## SDCe commands via REST API
 

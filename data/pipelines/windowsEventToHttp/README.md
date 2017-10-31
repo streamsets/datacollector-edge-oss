@@ -2,11 +2,11 @@
 
 ### To start pipeline on SDE start
 
-    <SDCE_DIST>/bin/edge -start=windowsEventToHttp
+    <SDCe_home>/bin/edge -start=windowsEventToHttp
 
 ### To pass runtime parameters
 
-    <SDCE_DIST>/bin/edge -start=windowsEventToHttp -runtimeParameters='{"logName":"System", "httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    <SDCe_home>/bin/edge -start=windowsEventToHttp -runtimeParameters='{"logName":"System", "httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 
 ## SDCe commands via REST API
