@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
+	"strings"
 )
 
 type RecordImpl struct {
@@ -32,6 +33,40 @@ func (r *RecordImpl) Get(fieldPath ...string) (*api.Field, error) {
 			return field, nil
 		}
 	}
+}
+
+func (r *RecordImpl) GetFieldPaths() map[string]bool {
+	return r.gatherPaths("/", r.value) //TODO:SDCE-128 - Implement escaping in GetFieldPaths
+}
+
+func (r *RecordImpl) gatherPaths(prefix string, currentField *api.Field) map[string]bool {
+	gatheredPaths := map[string]bool{}
+	if strings.HasSuffix(prefix, "/") {
+		prefix = strings.TrimRight(prefix, "/")
+	}
+	gatheredPaths[prefix] = true
+	switch currentField.Type {
+	case fieldtype.LIST:
+		listField := currentField.Value.([]*api.Field)
+		gatheredPaths[prefix] = true
+		for idx, idxField := range listField {
+			childGatheredPaths := r.gatherPaths(fmt.Sprintf(prefix+"[%d]", idx), idxField)
+			for k, v := range childGatheredPaths {
+				gatheredPaths[k] = v
+			}
+		}
+	case fieldtype.MAP:
+		fallthrough
+	case fieldtype.LIST_MAP:
+		mapField := currentField.Value.(map[string]*api.Field)
+		for fieldKey, fieldValue := range mapField {
+			childGatheredPaths := r.gatherPaths(fmt.Sprintf(prefix+"/%s", fieldKey), fieldValue)
+			for k, v := range childGatheredPaths {
+				gatheredPaths[k] = v
+			}
+		}
+	}
+	return gatheredPaths
 }
 
 func (r *RecordImpl) Clone() api.Record {

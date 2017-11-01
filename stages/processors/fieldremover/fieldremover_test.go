@@ -74,7 +74,7 @@ func TestFieldRemoverProcessor_InitUnexpected(t *testing.T) {
 }
 
 func TestFieldRemoverProcessorRemove(t *testing.T) {
-	fields := []interface{}{"/a", "/b", "/c"}
+	fields := []interface{}{"/a", "/b", "/c", "/e/f"}
 	filterOperation := REMOVE
 	stageContext := getStageContext(fields, filterOperation, nil)
 
@@ -90,7 +90,10 @@ func TestFieldRemoverProcessorRemove(t *testing.T) {
 	}
 
 	records := make([]api.Record, 3)
-	records[0], _ = stageContext.CreateRecord("0", map[string]interface{}{"a": 123, "b": 456, "d": 78})
+	records[0], _ = stageContext.CreateRecord(
+		"0",
+		map[string]interface{}{"a": 123, "b": 456, "d": 78, "e": map[string]interface{}{"f": 1, "g": 2}},
+	)
 	records[1], _ = stageContext.CreateRecord("1", map[string]interface{}{"b": 456, "d": 78, "g": "9"})
 	records[2], _ = stageContext.CreateRecord("2", map[string]interface{}{"x": nil, "y": 3e2, "z": 'a'})
 	batch := runner.NewBatchImpl("fieldRemover", records, "randomOffset")
@@ -101,19 +104,22 @@ func TestFieldRemoverProcessorRemove(t *testing.T) {
 		t.Error("Error in Identity Processor")
 	}
 
-	var field *api.Field
-	field, _ = batchMaker.GetStageOutput()[0].Get()
-	if len(field.Value.(map[string]*api.Field)) != 1 {
+	record := batchMaker.GetStageOutput()[0]
+	if len(record.GetFieldPaths()) != 4 {
 		t.Error("Fields not removed properly")
 	}
 
-	field, _ = batchMaker.GetStageOutput()[1].Get()
-	if len(field.Value.(map[string]*api.Field)) != 2 {
+	if f, err := record.Get("/e/g"); err != nil || f.Value != 2 {
+		t.Error("Error reading nested field")
+	}
+
+	record = batchMaker.GetStageOutput()[1]
+	if len(record.GetFieldPaths()) != 3 {
 		t.Error("Fields not removed properly")
 	}
 
-	field, _ = batchMaker.GetStageOutput()[2].Get()
-	if len(field.Value.(map[string]*api.Field)) != 3 {
+	record = batchMaker.GetStageOutput()[2]
+	if len(record.GetFieldPaths()) != 4 {
 		t.Error("Fields not removed properly")
 	}
 
@@ -155,7 +161,7 @@ func TestFieldRemoverProcessorKeep(t *testing.T) {
 }
 
 func TestFieldRemoverProcessorRemoveNull(t *testing.T) {
-	fields := []interface{}{"/a", "/b", "/c"}
+	fields := []interface{}{"/a", "/b", "/c", "/e/h", "/e/i"}
 	filterOperation := REMOVE_NULL
 	stageContext := getStageContext(fields, filterOperation, nil)
 
@@ -171,7 +177,11 @@ func TestFieldRemoverProcessorRemoveNull(t *testing.T) {
 	}
 
 	records := make([]api.Record, 1)
-	records[0], _ = stageContext.CreateRecord("1", map[string]interface{}{"a": 123, "b": 456, "d": 78, "c": nil, "g": nil})
+	records[0], _ = stageContext.CreateRecord(
+		"1",
+		map[string]interface{}{"a": 123, "b": 456, "d": 78, "c": nil, "g": nil,
+			"e": map[string]interface{}{"h": nil, "i": 5}},
+	)
 	batch := runner.NewBatchImpl("fieldRemover", records, "randomOffset")
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
@@ -180,9 +190,13 @@ func TestFieldRemoverProcessorRemoveNull(t *testing.T) {
 		t.Error("Error in Identity Processor")
 	}
 
-	field, _ := batchMaker.GetStageOutput()[0].Get()
-	if len(field.Value.(map[string]*api.Field)) != 4 {
+	record := batchMaker.GetStageOutput()[0]
+	if len(record.GetFieldPaths()) != 7 {
 		t.Error("Fields not removed properly")
+	}
+
+	if f, err := record.Get("/e/i"); err != nil || f.Value != 5 {
+		t.Error("Error reading nested field")
 	}
 
 	stageInstance.Destroy()

@@ -2,11 +2,10 @@ package fieldremover
 
 import (
 	"errors"
+	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
-	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
-	"strings"
 )
 
 const (
@@ -39,12 +38,12 @@ func (f *FieldRemoverProcessor) Init(stageContext api.StageContext) error {
 	}
 
 	f.fieldList = make([]string, len(f.Fields))
-	for i, _ := range f.Fields {
-		s, ok := f.Fields[i].(string)
+	for i, field := range f.Fields {
+		fieldPath, ok := field.(string)
 		if !ok {
 			return errors.New("Unexpected field list value")
 		}
-		f.fieldList[i] = strings.TrimPrefix(s, "/")
+		f.fieldList[i] = fieldPath
 	}
 
 	if f.FilterOperation != KEEP && f.FilterOperation != REMOVE && f.FilterOperation != REMOVE_NULL {
@@ -55,37 +54,70 @@ func (f *FieldRemoverProcessor) Init(stageContext api.StageContext) error {
 
 func (f *FieldRemoverProcessor) Process(batch api.Batch, batchMaker api.BatchMaker) error {
 	for _, record := range batch.GetRecords() {
-		rootField, err := record.Get()
-		if err != nil {
-			return err
+		recordFieldPaths := record.GetFieldPaths()
+		fieldsPathsToRemove := []string{}
+		var err error
+		switch f.FilterOperation {
+		case REMOVE:
+			fallthrough
+		case REMOVE_NULL:
+			for _, fieldToRemove := range f.fieldList {
+				_, ok := recordFieldPaths[fieldToRemove]
+				if ok {
+					var recordField *api.Field
+					recordField, err = record.Get(fieldToRemove)
+					if err == nil {
+						if f.FilterOperation == REMOVE || (f.FilterOperation == REMOVE_NULL && recordField.Value == "") {
+							fieldsPathsToRemove = append(fieldsPathsToRemove, fieldToRemove)
+						}
+					}
+				}
+			}
+		case KEEP:
+			for _, fieldToKeep := range f.fieldList {
+				delete(recordFieldPaths, fieldToKeep)
+				for _, parentFieldPath := range f.getParentFields(fieldToKeep) {
+					delete(recordFieldPaths, parentFieldPath)
+				}
+			}
+			for fieldPathToRemove := range recordFieldPaths {
+				fieldsPathsToRemove = append(fieldsPathsToRemove, fieldPathToRemove)
+			}
 		}
-		rootFieldType := rootField.Type
-		if rootFieldType == fieldtype.LIST_MAP || rootFieldType == fieldtype.MAP {
-			recordFields := rootField.Value.(map[string]*api.Field)
-			if f.FilterOperation == KEEP {
-				field, err := api.CreateMapField(map[string]interface{}{})
+
+		if err == nil {
+			for _, fieldPathToRemove := range fieldsPathsToRemove {
+				_, err = record.Delete(fieldPathToRemove)
 				if err != nil {
-					return err
-				}
-				record.Set(field)
-				rootField, _ = record.Get()
-			}
-			for _, v := range f.fieldList {
-				switch f.FilterOperation {
-				case KEEP:
-					if _, ok := recordFields[v]; ok {
-						rootField.Value.(map[string]*api.Field)[v] = recordFields[v]
-					}
-				case REMOVE:
-					delete(recordFields, v)
-				case REMOVE_NULL:
-					if _, ok := recordFields[v]; ok && recordFields[v].Value == "" {
-						delete(recordFields, v)
-					}
+					err = errors.New(
+						fmt.Sprintf("Error removing field : %s. Reason : %s", fieldPathToRemove, err.Error()))
+					break
 				}
 			}
 		}
-		batchMaker.AddRecord(record)
+		if err == nil {
+			batchMaker.AddRecord(record)
+		} else {
+			f.GetStageContext().ToError(err, record)
+		}
 	}
 	return nil
+}
+
+func (f *FieldRemoverProcessor) getParentFields(fieldPath string) []string {
+	parentFields := []string{}
+	for index := 0; index < len(fieldPath); {
+		c := fieldPath[index]
+		switch c {
+		case '/':
+			fallthrough
+		case '[':
+			parentFields = append(parentFields, fieldPath[:index])
+			break
+		default:
+			break
+		}
+		index++
+	}
+	return parentFields
 }

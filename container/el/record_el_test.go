@@ -41,6 +41,10 @@ func (r *MockRecord) Set(field *api.Field) *api.Field {
 	return &api.Field{}
 }
 
+func (r *MockRecord) GetFieldPaths() map[string]bool {
+	return map[string]bool{}
+}
+
 func (r *MockRecord) Clone() api.Record {
 	return r
 }

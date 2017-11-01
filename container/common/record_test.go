@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
 	"testing"
 )
@@ -286,5 +287,42 @@ func TestRecordImpl_Set(t *testing.T) {
 	getF, err = record.Get("/mapField/c")
 	if err != nil || getF.Value.(string) != "newField" {
 		t.Error("Error getting set field /mapField/c")
+	}
+}
+
+func TestRecordImpl_GetFieldPaths(t *testing.T) {
+	rootField := make(map[string]interface{})
+	stringField := "stringField"
+	mapField := map[string]interface{}{"primitive": 1, "map": map[string]interface{}{"a": 1, "b": 2}}
+	listField := []interface{}{1, 2}
+
+	rootField["primitiveField"] = stringField
+	rootField["mapField"] = mapField
+	rootField["listField"] = listField
+
+	record, err := createRecord("recordSourceId", rootField)
+	if err != nil {
+		t.Fatal(record)
+	}
+
+	expectedFieldPaths := []string{
+		"/primitiveField",
+		"/mapField",
+		"/mapField/primitive",
+		"/mapField/map",
+		"/mapField/map/a",
+		"/mapField/map/b",
+		"/listField",
+		"/listField[0]",
+		"/listField[1]",
+	}
+
+	actualFieldPaths := record.GetFieldPaths()
+
+	for _, fieldPath := range expectedFieldPaths {
+		_, exists := actualFieldPaths[fieldPath]
+		if !exists {
+			t.Error(fmt.Sprintf("Field Path '%s' is expected but not returned", fieldPath))
+		}
 	}
 }

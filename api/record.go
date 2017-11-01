@@ -10,6 +10,7 @@ type Record interface {
 	Get(fieldPath ...string) (*Field, error)
 	Set(field *Field) *Field
 	SetField(fieldPath string, field *Field) (*Field, error)
+	GetFieldPaths() map[string]bool
 	Delete(fieldPath string) (*Field, error)
 	Clone() Record
 }

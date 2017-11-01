@@ -101,7 +101,15 @@ func injectStageConfigs(
 							switch resolvedValue.(type) {
 							case []interface{}:
 								if len(resolvedValue.([]interface{})) > 0 {
-									stageInstanceField.Set(reflect.ValueOf(resolvedValue))
+									if stageInstanceField.Type() == reflect.TypeOf([]string{}) {
+										newValue := make([]string, len(resolvedValue.([]interface{})))
+										for i, val := range resolvedValue.([]interface{}) {
+											newValue[i] = val.(string)
+										}
+										stageInstanceField.Set(reflect.ValueOf(newValue))
+									} else {
+										stageInstanceField.Set(reflect.ValueOf(resolvedValue))
+									}
 								}
 							case []string:
 								if len(resolvedValue.([]string)) > 0 {
