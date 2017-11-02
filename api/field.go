@@ -192,7 +192,7 @@ func CreateMapField(mapValue map[string]interface{}) (*Field, error) {
 }
 
 func CreateListField(listValue []interface{}) (*Field, error) {
-	listFieldValue := []*Field{}
+	listFieldValue := make([]*Field, 0)
 	for _, value := range listValue {
 		valField, err := CreateField(value)
 		if err != nil {
@@ -202,4 +202,12 @@ func CreateListField(listValue []interface{}) (*Field, error) {
 	}
 	listField := Field{Type: fieldtype.LIST, Value: listFieldValue}
 	return &listField, nil
+}
+
+func CreateListFieldWithListOfFields(listFields []*Field) *Field {
+	return &Field{Type: fieldtype.LIST, Value: listFields}
+}
+
+func CreateMapFieldWithMapOfFields(mapFields map[string]*Field) *Field {
+	return &Field{Type: fieldtype.MAP, Value: mapFields}
 }

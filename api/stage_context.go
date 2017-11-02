@@ -29,4 +29,5 @@ type StageContext interface {
 	ReportError(err error)
 	GetOutputLanes() []string
 	Evaluate(value string, configName string, ctx context.Context) (interface{}, error)
+	IsErrorStage() bool
 }

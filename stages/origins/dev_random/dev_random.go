@@ -58,7 +58,7 @@ func (d *DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMake
 	for i := 0; i < maxBatchSize; i++ {
 		var recordValue = make(map[string]interface{})
 		for _, field := range d.fieldsList {
-			recordValue[field] = r.Int()
+			recordValue[field] = r.Int63()
 		}
 		record, err := d.GetStageContext().CreateRecord("dev-random", recordValue)
 		if err != nil {

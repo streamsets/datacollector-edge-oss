@@ -75,7 +75,7 @@ func writeFieldToJsonObject(field *api.Field) (interface{}, error) {
 	var err error = nil
 	switch field.Type {
 	case fieldtype.LIST:
-		jsonObject := []interface{}{}
+		jsonObject := make([]interface{}, 0)
 		fieldValue := field.Value.([]*api.Field)
 		for _, v := range fieldValue {
 			fieldJsonObject, err := writeFieldToJsonObject(v)

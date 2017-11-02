@@ -18,7 +18,9 @@ package sdcrecord
 import (
 	"bytes"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -33,10 +35,37 @@ const (
 		"\"stagesPath\":\"\",\"trackingId\":\"\",\"previousTrackingId\":\"\"," +
 		"\"errorDataCollectorId\":\"\",\"errorPipelineName\":\"\",\"errorStage\":\"\"," +
 		"\"errorMessage\":\"\",\"errorTimestamp\":0,\"values\":{\"Sample Attribute\":\"Sample Value2\"}}," +
-		"\"value\":{\"type\":\"STRING\",\"value\":\"Sample Data2\",\"sqpath\":\"/\",\"dqpath\":\"/\"}}\n"
+		"\"value\":{\"dqpath\":\"/\",\"sqpath\":\"/\",\"type\":\"MAP\",\"value\":{\"sampleListField\":" +
+		"{\"dqpath\":\"/sampleListField\",\"sqpath\":\"/sampleListField\",\"type\":\"LIST\",\"value\":" +
+		"[{\"dqpath\":\"/sampleListField[0]\",\"sqpath\":\"/sampleListField[0]\",\"type\":\"STRING\",\"value\":\"a\"}," +
+		"{\"dqpath\":\"/sampleListField[1]\",\"sqpath\":\"/sampleListField[1]\",\"type\":\"STRING\",\"value\":\"b\"}]}," +
+		"\"sampleMapField\":{\"dqpath\":\"/sampleMapField\",\"sqpath\":\"/sampleMapField\",\"type\":\"MAP\"," +
+		"\"value\":{\"a\":{\"dqpath\":\"/sampleMapField/a\",\"sqpath\":\"/sampleMapField/a\",\"type\":\"INTEGER\"," +
+		"\"value\":\"1\"},\"b\":{\"dqpath\":\"/sampleMapField/b\",\"sqpath\":\"/sampleMapField/b\",\"type\":\"INTEGER\"," +
+		"\"value\":\"2\"}}},\"sampleStringField\":{\"dqpath\":\"/sampleStringField\",\"sqpath\":\"/sampleStringField\"," +
+		"\"type\":\"STRING\",\"value\":\"abc\"}}}}\n"
 )
 
-var JSON = string([]byte{JSON1_MAGIC_NUMBER}) + JSON1 + JSON2
+var JSON = string([]byte{SdcJsonMagicNumber}) + JSON1 + JSON2
+var complexRecordField = map[string]interface{}{
+	"sampleMapField":    map[string]interface{}{"a": 1, "b": 2},
+	"sampleListField":   []string{"a", "b"},
+	"sampleStringField": "abc",
+}
+var allTypesRecordField = map[string]interface{}{
+	"sampleBool":       true,
+	"sampleByte":       byte(0xa1),
+	"sampleByteArray":  []byte{0xa0, 0xb1, 0xc2, 0xd3},
+	"sampleShort":      int8(1),
+	"sampleInteger":    int(2),
+	"sampleLong":       int64(3),
+	"sampleFloat":      float32(1.0),
+	"sampleDouble":     float64(2.0),
+	"sampleString":     "sample",
+	"sampleMap":        map[string]interface{}{"a": 1, "b": 2},
+	"sampleStringList": []string{"a", "b"},
+	"sampleList":       []interface{}{1, 2},
+}
 
 func CreateStageContext() api.StageContext {
 	return &common.StageContextImpl{
@@ -50,42 +79,90 @@ func TestWriteRecord(t *testing.T) {
 	record1, _ := st.CreateRecord("Sample Record Id1", "Sample Data1")
 	record1.GetHeader().SetAttribute("Sample Attribute", "Sample Value1")
 
-	record2, _ := st.CreateRecord("Sample Record Id2", "Sample Data2")
+	record2, _ := st.CreateRecord("Sample Record Id2", complexRecordField)
 	record2.GetHeader().SetAttribute("Sample Attribute", "Sample Value2")
 
 	bufferWriter := bytes.NewBuffer([]byte{})
 
 	recordWriterFactory := &SDCRecordWriterFactoryImpl{}
 
-	record_writer, err := recordWriterFactory.CreateWriter(st, bufferWriter)
+	recordWriter, err := recordWriterFactory.CreateWriter(st, bufferWriter)
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = record_writer.WriteRecord(record1)
+	err = recordWriter.WriteRecord(record1)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = record_writer.WriteRecord(record2)
+	err = recordWriter.WriteRecord(record2)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	record_writer.Flush()
-	record_writer.Close()
-
-	if bytes.Compare([]byte(JSON), bufferWriter.Bytes()) != 0 {
-		t.Fatalf(
-			"Serialization Wrong. Expected : %s Actual: %s",
-			JSON,
-			bufferWriter.String(),
-		)
+	if err = recordWriter.Flush(); err != nil {
+		t.Error(err)
+	}
+	if err = recordWriter.Close(); err != nil {
+		t.Error(err)
 	}
 }
 
-func checkRecord(t *testing.T, r api.Record, sourceId string, value interface{}, headersToCheck map[string]string) {
+func checkField(t *testing.T, actual *api.Field, expected *api.Field) {
+	if reflect.TypeOf(actual) != reflect.TypeOf(expected) {
+		t.Fatalf("Type %s does not match %s", reflect.TypeOf(actual), reflect.TypeOf(expected))
+	} else {
+		switch actual.Type {
+		case fieldtype.MAP:
+			mapField1 := actual.Value.(map[string]*api.Field)
+			mapField2 := expected.Value.(map[string]*api.Field)
+			if len(mapField1) != len(mapField2) {
+				t.Fatal("Map Length does not match")
+			}
+			for k, v1 := range mapField1 {
+				v2, ok := mapField2[k]
+				if !ok {
+					t.Fatalf("Key %s does not exist in map", k)
+				}
+				checkField(t, v1, v2)
+			}
+		case fieldtype.LIST:
+			listField1 := actual.Value.([]*api.Field)
+			listField2 := expected.Value.([]*api.Field)
+			if len(listField1) != len(listField2) {
+				t.Fatal("List Length does not match")
+			}
+			for i, v1 := range listField1 {
+				v2 := listField2[i]
+				checkField(t, v1, v2)
+			}
+		case fieldtype.STRING:
+			stringVal1 := actual.Value.(string)
+			stringVal2 := expected.Value.(string)
+			if strings.Compare(stringVal1, stringVal2) != 0 {
+				t.Fatalf("String %s does not match %s", stringVal1, stringVal2)
+			}
+		case fieldtype.BYTE_ARRAY:
+			byteArray1 := actual.Value.([]byte)
+			byteArray2 := expected.Value.([]byte)
+			if bytes.Compare(byteArray1, byteArray2) != 0 {
+				t.Fatalf(
+					"Byte arrays does not match. Expected : %s Actual: %s",
+					string(byteArray1),
+					string(byteArray2),
+				)
+			}
+		default:
+			if actual.Value != expected.Value {
+				t.Fatalf("Value %v does not match %v for type %s", actual.Value, expected.Value, actual.Type)
+			}
+		}
+	}
+}
+
+func checkRecord(t *testing.T, r api.Record, sourceId string, expectedRootField *api.Field, headersToCheck map[string]string) {
 	isError := false
 
 	if r.GetHeader().GetSourceId() != sourceId {
@@ -97,16 +174,10 @@ func checkRecord(t *testing.T, r api.Record, sourceId string, value interface{},
 		isError = true
 	}
 
-	rootField, _ := r.Get()
-	if rootField.Value != value {
-		t.Errorf(
-			"Value does not match for Record Id:%s, Expected :%s, Actual : %s",
-			r.GetHeader().GetSourceId(),
-			value, rootField.Value,
-		)
-		isError = true
+	actualRootField, err := r.Get()
+	if err != nil {
+		t.Fatal(err)
 	}
-
 	actualHeaders := r.GetHeader().GetAttributes()
 
 	for k, v := range headersToCheck {
@@ -118,9 +189,10 @@ func checkRecord(t *testing.T, r api.Record, sourceId string, value interface{},
 				v,
 				actualHeaders[k],
 			)
-			isError = true
 		}
 	}
+
+	checkField(t, actualRootField, expectedRootField)
 	if isError {
 		t.Fatalf("Error happened when checking record : %s", r.GetHeader().GetSourceId())
 	}
@@ -153,19 +225,27 @@ func TestReadRecord(t *testing.T) {
 				t.Fatal("Only Two Records were defined in the reader, but reader is reading more than that")
 			}
 			if recordCounter == 0 {
+				f, err := api.CreateField("Sample Data1")
+				if err != nil {
+					t.Fatal(err)
+				}
 				checkRecord(
 					t,
 					r,
 					"Sample Record Id1",
-					"Sample Data1",
+					f,
 					map[string]string{"Sample Attribute": "Sample Value1"},
 				)
 			} else {
+				f, err := api.CreateField(complexRecordField)
+				if err != nil {
+					t.Fatal(err)
+				}
 				checkRecord(
 					t,
 					r,
 					"Sample Record Id2",
-					"Sample Data2",
+					f,
 					map[string]string{"Sample Attribute": "Sample Value2"},
 				)
 			}
@@ -176,17 +256,26 @@ func TestReadRecord(t *testing.T) {
 
 func TestReadAndWriteRecord(t *testing.T) {
 	st := CreateStageContext()
-	expectedRecords := []api.Record{}
+	expectedRecords := make([]api.Record, 0)
 
-	record1, _ := st.CreateRecord("Sample Record Id1", "Sample Data1")
+	record1, err := st.CreateRecord("Sample Record Id1", "Sample Data1")
+	if err != nil {
+		t.Fatal(err)
+	}
 	record1.GetHeader().SetAttribute("Sample Attribute", "Sample Value1")
 	expectedRecords = append(expectedRecords, record1)
 
-	record2, _ := st.CreateRecord("Sample Record Id2", "Sample Data2")
+	record2, err := st.CreateRecord("Sample Record Id2", complexRecordField)
+	if err != nil {
+		t.Fatal(err)
+	}
 	record2.GetHeader().SetAttribute("Sample Attribute", "Sample Value2")
 	expectedRecords = append(expectedRecords, record2)
 
-	record3, _ := st.CreateRecord("Sample Record Id3", "Sample Data3")
+	record3, err := st.CreateRecord("Sample Record Id3", allTypesRecordField)
+	if err != nil {
+		t.Fatal(err)
+	}
 	record3.GetHeader().SetAttribute("Sample Attribute", "Sample Value3")
 	expectedRecords = append(expectedRecords, record3)
 
@@ -194,21 +283,21 @@ func TestReadAndWriteRecord(t *testing.T) {
 
 	recordWriterFactory := &SDCRecordWriterFactoryImpl{}
 
-	record_writer, err := recordWriterFactory.CreateWriter(st, bufferWriter)
+	recordWriter, err := recordWriterFactory.CreateWriter(st, bufferWriter)
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	for _, r := range expectedRecords {
-		err = record_writer.WriteRecord(r)
+		err = recordWriter.WriteRecord(r)
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	record_writer.Flush()
-	record_writer.Close()
+	recordWriter.Flush()
+	recordWriter.Close()
 
 	recordReaderFactory := &SDCRecordReaderFactoryImpl{}
 
@@ -218,7 +307,7 @@ func TestReadAndWriteRecord(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	actualRecords := []api.Record{}
+	actualRecords := make([]api.Record, 0)
 
 	end := false
 	for !end {
@@ -244,13 +333,16 @@ func TestReadAndWriteRecord(t *testing.T) {
 
 	for i := 0; i < len(expectedRecords); i++ {
 		expectedRecord := expectedRecords[i]
-		rootField, _ := expectedRecord.Get()
-		checkRecord(
-			t,
-			actualRecords[i],
-			expectedRecord.GetHeader().GetSourceId(),
-			rootField.Value,
-			expectedRecord.GetHeader().GetAttributes(),
-		)
+		if rootField, err := expectedRecord.Get(); err == nil {
+			checkRecord(
+				t,
+				actualRecords[i],
+				expectedRecord.GetHeader().GetSourceId(),
+				rootField,
+				expectedRecord.GetHeader().GetAttributes(),
+			)
+		} else {
+			t.Fatal(err)
+		}
 	}
 }

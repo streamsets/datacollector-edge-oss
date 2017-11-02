@@ -19,6 +19,7 @@ import (
 	"errors"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"github.com/streamsets/datacollector-edge/container/recordio/jsonrecord"
+	"github.com/streamsets/datacollector-edge/container/recordio/sdcrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/textrecord"
 )
 
@@ -84,6 +85,8 @@ func (d *DataGeneratorFormatConfig) Init(dataFormat string) error {
 		d.RecordWriterFactory = &textrecord.TextWriterFactoryImpl{}
 	case "JSON":
 		d.RecordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{}
+	case "SDC_JSON":
+		d.RecordWriterFactory = &sdcrecord.SDCRecordWriterFactoryImpl{}
 	default:
 		return errors.New("Unsupported Data Format - " + dataFormat)
 	}

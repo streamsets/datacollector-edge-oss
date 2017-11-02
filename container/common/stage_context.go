@@ -31,6 +31,7 @@ type StageContextImpl struct {
 	Parameters  map[string]interface{}
 	Metrics     metrics.Registry
 	ErrorSink   *ErrorSink
+	ErrorStage  bool
 }
 
 func (s *StageContextImpl) GetResolvedValue(configValue interface{}) (interface{}, error) {
@@ -119,6 +120,10 @@ func (s *StageContextImpl) Evaluate(
 		[]el.Definitions{&el.StringEL{}, &el.MathEL{}, &el.RecordEL{Context: ctx}},
 	)
 	return evaluator.Evaluate(value)
+}
+
+func (s *StageContextImpl) IsErrorStage() bool {
+	return s.ErrorStage
 }
 
 func constructErrorRecord(instanceName string, err error, record api.Record) api.Record {

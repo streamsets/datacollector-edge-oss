@@ -34,11 +34,10 @@ func NewErrorSink() *ErrorSink {
 	return errorSink
 }
 
+//After each batch call this function to clear current batch error messages/records
 func (e *ErrorSink) ClearErrorRecordsAndMesssages() {
 	e.stageErrorMessages = make(map[string][]error)
 	e.stageErrorRecords = make(map[string][]api.Record)
-	e.totalErrorMessages = 0
-	e.totalErrorRecords = 0
 }
 
 func (e *ErrorSink) GetStageErrorMessages(stageIns string) []error {

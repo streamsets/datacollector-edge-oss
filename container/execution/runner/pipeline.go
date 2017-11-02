@@ -99,7 +99,7 @@ func (p *Pipeline) Run() {
 }
 
 func (p *Pipeline) runBatch() error {
-	var committed bool = false
+	committed := false
 	start := time.Now()
 
 	p.errorSink.ClearErrorRecordsAndMesssages()
@@ -122,7 +122,7 @@ func (p *Pipeline) runBatch() error {
 		}
 	}
 
-	errorRecords := []api.Record{}
+	errorRecords := make([]api.Record, 0)
 	for _, stageBean := range p.pipelineBean.Stages {
 		errorRecordsForThisStage := p.errorSink.GetStageErrorRecords(stageBean.Config.InstanceName)
 		if errorRecordsForThisStage != nil && len(errorRecordsForThisStage) > 0 {
@@ -207,6 +207,7 @@ func NewPipeline(
 			Parameters:  resolvedParameters,
 			Metrics:     metricRegistry,
 			ErrorSink:   errorSink,
+			ErrorStage:  false,
 		}
 		stageRuntimeList[i] = NewStageRuntime(pipelineBean, stageBean, stageContext)
 		pipes[i] = NewStagePipe(stageRuntimeList[i], config)
@@ -218,6 +219,7 @@ func NewPipeline(
 		Parameters:  resolvedParameters,
 		Metrics:     metricRegistry,
 		ErrorSink:   errorSink,
+		ErrorStage:  true,
 	}
 	errorStageRuntime = NewStageRuntime(pipelineBean, pipelineBean.ErrorStage, errorStageContext)
 

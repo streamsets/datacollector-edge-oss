@@ -26,7 +26,7 @@ import (
 
 const (
 	//Just support Json For now
-	JSON1_MAGIC_NUMBER = byte(0xa0) | byte(0x01)
+	SdcJsonMagicNumber = byte(0xa0) | byte(0x01)
 )
 
 type SDCRecordReaderFactoryImpl struct {
@@ -51,7 +51,7 @@ func (srrf *SDCRecordReaderFactoryImpl) CreateReader(
 					nb,
 				),
 			)
-		} else if b[0] != JSON1_MAGIC_NUMBER {
+		} else if b[0] != SdcJsonMagicNumber {
 			err = errors.New("Error Creating Reader: Magic number does not point to JSON")
 		}
 		recordReader = newRecordReader(context, reader)
@@ -70,7 +70,7 @@ func (srwf *SDCRecordWriterFactoryImpl) CreateWriter(
 	var recordWriter recordio.RecordWriter
 
 	//Magic Number for SDC record
-	_, err := writer.Write([]byte{JSON1_MAGIC_NUMBER})
+	_, err := writer.Write([]byte{SdcJsonMagicNumber})
 
 	if err == nil {
 		recordWriter = newRecordWriter(context, writer)
@@ -94,7 +94,7 @@ func (srr *SDCRecordReaderImpl) ReadRecord() (api.Record, error) {
 		}
 		return nil, err
 	}
-	return NewRecordFromSDCRecord(srr.context, sdcRecord), nil
+	return NewRecordFromSDCRecord(srr.context, sdcRecord)
 }
 
 func (srr *SDCRecordReaderImpl) Close() error {

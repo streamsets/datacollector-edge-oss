@@ -16,80 +16,175 @@
 package sdcrecord
 
 import (
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"github.com/streamsets/datacollector-edge/container/common"
-	"math/big"
+	"strconv"
+	"strings"
 )
 
-type SdcRecordField struct {
-	Type  string      `json:"type"`
-	Value interface{} `json:"value"`
-	//For compat with SDC (Always will be set to /)
-	Sqpath string `json:"sqpath"`
-	Dqpath string `json:"dqpath"`
+const (
+	Type   = "type"
+	Value  = "value"
+	SqPath = "sqpath"
+	DqPath = "dqpath"
+)
+
+//TODO https://issues.streamsets.com/browse/SDCE-138 Sdc Record add missing data type support
+
+func marshalField(prefix string, f *api.Field) map[string]interface{} {
+	var sdcFieldJsonValue interface{}
+	switch f.Type {
+	case fieldtype.LIST:
+		listValue := f.Value.([]*api.Field)
+		sdcRecordListValue := make([]interface{}, len(listValue))
+		for i, childField := range listValue {
+			sdcRecordListValue[i] = marshalField(fmt.Sprintf(prefix+"[%d]", i), childField)
+		}
+		sdcFieldJsonValue = sdcRecordListValue
+	case fieldtype.MAP:
+		mapValue := f.Value.(map[string]*api.Field)
+		sdcRecordMapValue := make(map[string]interface{})
+		childPrefix := prefix
+		if strings.HasSuffix(prefix, "/") {
+			childPrefix = strings.TrimRight(prefix, "/")
+		}
+		for key, childField := range mapValue {
+			sdcRecordMapValue[key] = marshalField(fmt.Sprintf(childPrefix+"/%s", key), childField)
+		}
+		sdcFieldJsonValue = sdcRecordMapValue
+	case fieldtype.BYTE_ARRAY:
+		fallthrough //Will be encoded in base64 during json serialize
+	case fieldtype.BYTE:
+		fallthrough
+	case fieldtype.BOOLEAN:
+		sdcFieldJsonValue = f.Value
+	default:
+		//Serialize as string
+		sdcFieldJsonValue = fmt.Sprintf("%v", f.Value)
+	}
+	return map[string]interface{}{
+		Type:   f.Type,
+		Value:  sdcFieldJsonValue,
+		SqPath: prefix,
+		DqPath: prefix,
+	}
 }
 
-func newSDCRecordField(typ string, value interface{}) *SdcRecordField {
-	return &SdcRecordField{Type: typ, Value: value, Sqpath: "/", Dqpath: "/"}
+func unmarshalField(sdcRecordFieldJson map[string]interface{}) (*api.Field, error) {
+	var err error
+	var f *api.Field
+	typ := sdcRecordFieldJson[Type].(string)
+	value := sdcRecordFieldJson[Value]
+	var stringVal string
+	switch typ {
+	case fieldtype.LIST:
+		listValue := value.([]interface{})
+		listField := make([]*api.Field, len(listValue))
+		for i, listFieldElem := range listValue {
+			listField[i], err = unmarshalField(listFieldElem.(map[string]interface{}))
+			if err != nil {
+				return nil, err
+			}
+		}
+		if err == nil {
+			f = api.CreateListFieldWithListOfFields(listField)
+		}
+	case fieldtype.MAP:
+		mapValue := value.(map[string]interface{})
+		mapField := make(map[string]*api.Field, len(mapValue))
+		for k, elem := range mapValue {
+			mapField[k], err = unmarshalField(elem.(map[string]interface{}))
+			if err != nil {
+				return nil, err
+			}
+		}
+		if err == nil {
+			f = api.CreateMapFieldWithMapOfFields(mapField)
+		}
+	case fieldtype.BYTE_ARRAY:
+		if stringBytes, ok := value.(string); ok {
+			var buf []byte
+			buf, err = base64.StdEncoding.DecodeString(stringBytes)
+			if err == nil {
+				f, err = api.CreateByteArrayField(buf)
+			}
+		} else {
+			err = errors.New("Cannot read byte array type as String")
+		}
+	case fieldtype.BYTE:
+		f, err = api.CreateByteField(byte(value.(float64)))
+	case fieldtype.STRING:
+		f, err = api.CreateStringField(value.(string))
+	case fieldtype.BOOLEAN:
+		f, err = api.CreateBoolField(value.(bool))
+	case fieldtype.SHORT:
+		stringVal = value.(string)
+		var longVal int64
+		if longVal, err = strconv.ParseInt(stringVal, 10, 8); err == nil {
+			f, err = api.CreateShortField(int8(longVal))
+		}
+	case fieldtype.INTEGER:
+		stringVal = value.(string)
+		var longVal int64
+		if longVal, err = strconv.ParseInt(stringVal, 10, 32); err == nil {
+			f, err = api.CreateIntegerField(int(longVal))
+		}
+	case fieldtype.LONG:
+		stringVal = value.(string)
+		var longVal int64
+		if longVal, err = strconv.ParseInt(stringVal, 10, 64); err == nil {
+			f, err = api.CreateLongField(longVal)
+		}
+	case fieldtype.FLOAT:
+		stringVal = value.(string)
+		var doubleVal float64
+		if doubleVal, err = strconv.ParseFloat(stringVal, 32); err == nil {
+			f, err = api.CreateFloatField(float32(doubleVal))
+		}
+	case fieldtype.DOUBLE:
+		stringVal = value.(string)
+		var doubleVal float64
+		if doubleVal, err = strconv.ParseFloat(stringVal, 64); err == nil {
+			f, err = api.CreateDoubleField(doubleVal)
+		}
+	}
+	return f, err
 }
 
 type SDCRecord struct {
-	Header *common.HeaderImpl `json:"header"`
-	Value  *SdcRecordField    `json:"value"`
+	Header *common.HeaderImpl     `json:"header"`
+	Value  map[string]interface{} `json:"value"`
 }
 
 func NewSdcRecordFromRecord(r api.Record) (*SDCRecord, error) {
-	var typ string
 	var err error = nil
-	sdcRecord := new(SDCRecord)
-
-	rootField, _ := r.Get()
-	val := rootField.Value
-	//Supporting primitives only (and other complex types are simple byte arrays
-	// which has to be parsed out in SDC),
-	// as currently we don't want to support any parsing inside Data Collector Edge
-	//It is the responsibility of stages to basically create records with either primitives or
-	//pass in complex types as byte arrays
-	switch val.(type) {
-	case string:
-		typ = "STRING"
-	case []byte:
-		typ = "BYTE_ARRAY"
-	case byte:
-		typ = "BYTE"
-	case int8:
-		typ = "SHORT"
-	case int32:
-	case int:
-		typ = "INTEGER"
-	case int64:
-		typ = "LONG"
-	case float32:
-		typ = "FLOAT"
-	case float64:
-		typ = "DOUBLE"
-	case big.Int:
-	case big.Float:
-		typ = "DECIMAL"
-	default:
-		err = errors.New("Unsupported Field Type, cannot serialize")
-	}
-
-	if err == nil {
+	var rootField *api.Field
+	var sdcRecord *SDCRecord
+	if rootField, err = r.Get(); err == nil {
 		sdcRecord = &SDCRecord{
 			Header: r.GetHeader().(*common.HeaderImpl),
-			Value:  newSDCRecordField(typ, val),
+			Value:  marshalField("/", rootField),
 		}
 	}
 	return sdcRecord, err
 }
 
-func NewRecordFromSDCRecord(stageContext api.StageContext, sdcRecord *SDCRecord) api.Record {
-	record, _ := stageContext.CreateRecord(sdcRecord.Header.GetSourceId(), sdcRecord.Value.Value)
-	originalHeaderImpl := sdcRecord.Header
-	newHeaderImpl := record.GetHeader().(*common.HeaderImpl)
-	//Set Headers to be same as the oldOne
-	*newHeaderImpl = *originalHeaderImpl
-	return record
+func NewRecordFromSDCRecord(stageContext api.StageContext, sdcRecord *SDCRecord) (api.Record, error) {
+	var err error
+	var record api.Record
+	if record, err = stageContext.CreateRecord(sdcRecord.Header.GetSourceId(), nil); err == nil {
+		var f *api.Field
+		if f, err = unmarshalField(sdcRecord.Value); err == nil {
+			record.Set(f)
+			originalHeaderImpl := sdcRecord.Header
+			newHeaderImpl := record.GetHeader().(*common.HeaderImpl)
+			//Set Headers to be same as the oldOne
+			*newHeaderImpl = *originalHeaderImpl
+		}
+	}
+	return record, err
 }

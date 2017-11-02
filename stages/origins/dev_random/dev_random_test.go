@@ -16,7 +16,6 @@
 package dev_random
 
 import (
-	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"github.com/streamsets/datacollector-edge/container/common"
@@ -92,19 +91,18 @@ func TestDevRandomOrigin(t *testing.T) {
 	for _, record := range records {
 		rootField, _ := record.Get()
 		if rootField.Type != fieldtype.MAP {
-			t.Error("Exception Map field type but got - ", rootField.Type, " Value: ", rootField.Value)
+			t.Error("Excepted Map field type but got - ", rootField.Type, " Value: ", rootField.Value)
 			return
 		}
 
 		rootFieldValue := rootField.Value.(map[string]*api.Field)
 		for key, field := range rootFieldValue {
-			if field.Type != fieldtype.INTEGER {
-				t.Error("Exception Map field type but got - ", field.Type, " Value: ", field.Value)
+			if field.Type != fieldtype.LONG {
+				t.Error("Excepted Long field type but got - ", field.Type, " Value: ", field.Value)
 				return
 			}
-			fmt.Println("key - ", key)
 			if !strings.Contains(fields, key) {
-				t.Error("Invalid key")
+				t.Error("Invalid key", key)
 			}
 		}
 	}
@@ -150,19 +148,18 @@ func TestDevRandom_Init_StringEL(t *testing.T) {
 	for _, record := range records {
 		rootField, _ := record.Get()
 		if rootField.Type != fieldtype.MAP {
-			t.Error("Exception Map field type but got - ", rootField.Type, " Value: ", rootField.Value)
+			t.Error("Excepted Map field type but got - ", rootField.Type, " Value: ", rootField.Value)
 			return
 		}
 
 		rootFieldValue := rootField.Value.(map[string]*api.Field)
 		for key, field := range rootFieldValue {
-			if field.Type != fieldtype.INTEGER {
-				t.Error("Exception Map field type but got - ", field.Type, " Value: ", field.Value)
+			if field.Type != fieldtype.LONG {
+				t.Error("Excepted Long field type but got - ", field.Type, " Value: ", field.Value)
 				return
 			}
-			fmt.Println("key - ", key)
 			if !((key == "x") || (key == "y") || (key == "z")) {
-				t.Error("Invalid key")
+				t.Error("Invalid key", key)
 			}
 		}
 	}

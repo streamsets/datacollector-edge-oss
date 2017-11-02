@@ -16,33 +16,42 @@
 package mqtt
 
 import (
-	"encoding/json"
+	"bytes"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/recordio"
+	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	mqttlib "github.com/streamsets/datacollector-edge/stages/lib/mqtt"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"log"
 )
 
 const (
-	LIBRARY    = "streamsets-datacollector-basic-lib"
-	STAGE_NAME = "com_streamsets_pipeline_stage_destination_mqtt_MqttClientDTarget"
+	LIBRARY          = "streamsets-datacollector-basic-lib"
+	STAGE_NAME       = "com_streamsets_pipeline_stage_destination_mqtt_MqttClientDTarget"
+	ERROR_STAGE_NAME = "com_streamsets_pipeline_stage_destination_mqtt_ToErrorMqttClientDTarget"
 )
 
 type MqttClientDestination struct {
 	*common.BaseStage
 	*mqttlib.MqttConnector
-	CommonConf    mqttlib.MqttClientConfigBean `ConfigDefBean:"commonConf"`
-	PublisherConf MqttClientTargetConfigBean   `ConfigDefBean:"publisherConf"`
+	CommonConf          mqttlib.MqttClientConfigBean `ConfigDefBean:"commonConf"`
+	PublisherConf       MqttClientTargetConfigBean   `ConfigDefBean:"publisherConf"`
+	recordWriterFactory recordio.RecordWriterFactory
 }
 
 type MqttClientTargetConfigBean struct {
-	Topic      string `ConfigDef:"type=STRING,required=true"`
-	DataFormat string `ConfigDef:"type=STRING,required=true"`
+	Topic                     string                                  `ConfigDef:"type=STRING,required=true"`
+	DataFormat                string                                  `ConfigDef:"type=STRING,required=true"`
+	DataGeneratorFormatConfig datagenerator.DataGeneratorFormatConfig `ConfigDefBean:"dataGeneratorFormatConfig"`
 }
 
 func init() {
 	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
+		return &MqttClientDestination{BaseStage: &common.BaseStage{}, MqttConnector: &mqttlib.MqttConnector{}}
+	})
+
+	stagelibrary.SetCreator(LIBRARY, ERROR_STAGE_NAME, func() api.Stage {
 		return &MqttClientDestination{BaseStage: &common.BaseStage{}, MqttConnector: &mqttlib.MqttConnector{}}
 	})
 }
@@ -52,14 +61,19 @@ func (md *MqttClientDestination) Init(stageContext api.StageContext) error {
 	if err := md.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-	return md.InitializeClient(md.CommonConf)
+	if err := md.InitializeClient(md.CommonConf); err != nil {
+		return err
+	}
+	if md.GetStageContext().IsErrorStage() {
+		md.PublisherConf.DataFormat = "SDC_JSON"
+	}
+	return md.PublisherConf.DataGeneratorFormatConfig.Init(md.PublisherConf.DataFormat)
 }
 
 func (md *MqttClientDestination) Write(batch api.Batch) error {
 	log.Println("[DEBUG] MqttClientDestination write method")
 	for _, record := range batch.GetRecords() {
-		recordValue, _ := record.Get()
-		err := md.sendRecordToSDC(recordValue.Value)
+		err := md.sendRecordToSDC(record)
 		if err != nil {
 			log.Println("[Error] Error Writing Record", err)
 			md.GetStageContext().ToError(err, record)
@@ -68,11 +82,17 @@ func (md *MqttClientDestination) Write(batch api.Batch) error {
 	return nil
 }
 
-func (md *MqttClientDestination) sendRecordToSDC(recordValue interface{}) error {
+func (md *MqttClientDestination) sendRecordToSDC(record api.Record) error {
 	var err error = nil
-	if jsonValue, e := json.Marshal(recordValue); e == nil {
-		if token := md.Client.Publish(md.PublisherConf.Topic, byte(md.Qos), false, jsonValue); token.Wait() && token.Error() != nil {
-			err = token.Error()
+	var recordWriter recordio.RecordWriter
+	recordValueBuffer := bytes.NewBuffer([]byte{})
+	if recordWriter, err = md.PublisherConf.DataGeneratorFormatConfig.RecordWriterFactory.CreateWriter(md.GetStageContext(), recordValueBuffer); err == nil {
+		if err = recordWriter.WriteRecord(record); err == nil {
+			if err = recordWriter.Close(); err == nil {
+				if token := md.Client.Publish(md.PublisherConf.Topic, byte(md.Qos), false, recordValueBuffer.Bytes()); token.Wait() && token.Error() != nil {
+					err = token.Error()
+				}
+			}
 		}
 	}
 	return err
