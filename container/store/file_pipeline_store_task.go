@@ -169,6 +169,7 @@ func (store *FilePipelineStoreTask) Save(
 	pipelineInfo := pipelineConfiguration.Info
 
 	pipelineInfo.UUID = pipelineUuid
+	pipelineInfo.PipelineId = pipelineConfiguration.PipelineId
 	pipelineInfo.LastModified = currentTime
 	pipelineInfo.Title = pipelineConfiguration.Title
 	pipelineInfo.Description = pipelineConfiguration.Description

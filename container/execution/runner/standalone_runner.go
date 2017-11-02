@@ -110,7 +110,7 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(
 
 	go standaloneRunner.prodPipeline.Run()
 
-	if standaloneRunner.runtimeInfo.DPMEnabled && standaloneRunner.isRemotePipeline() {
+	if standaloneRunner.runtimeInfo.DPMEnabled && standaloneRunner.IsRemotePipeline() {
 		standaloneRunner.metricsEventRunnable = NewMetricsEventRunnable(
 			standaloneRunner.pipelineId,
 			standaloneRunner.pipelineConfig,
@@ -186,7 +186,7 @@ func (standaloneRunner *StandaloneRunner) checkState(toState string) error {
 	return nil
 }
 
-func (standaloneRunner *StandaloneRunner) isRemotePipeline() bool {
+func (standaloneRunner *StandaloneRunner) IsRemotePipeline() bool {
 	attributes := standaloneRunner.pipelineState.Attributes
 	return attributes != nil && attributes[store.IS_REMOTE_PIPELINE] == true
 }

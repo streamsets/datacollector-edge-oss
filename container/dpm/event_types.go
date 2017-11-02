@@ -81,3 +81,25 @@ type PipelineConfigurationAndRules struct {
 	PipelineConfig string `json:"pipelineConfig"`
 	PipelineRules  string `json:"pipelineRules"`
 }
+
+type PipelineStatusEvent struct {
+	Name                  string      `json:"name"`
+	Title                 string      `json:"title"`
+	Rev                   string      `json:"rev"`
+	TimeStamp             int64       `json:"timeStamp"`
+	IsRemote              bool        `json:"remote"`
+	PipelineStatus        string      `json:"pipelineStatus"`
+	Message               string      `json:"message"`
+	WorkerInfos           interface{} `json:"workerInfos"`
+	ValidationStatus      interface{} `json:"validationStatus"`
+	Issues                string      `json:"issues"`
+	IsClusterMode         bool        `json:"clusterMode"`
+	Offset                string      `json:"offset"`
+	OffsetProtocolVersion float64     `json:"offsetProtocolVersion"`
+	Acl                   interface{} `json:"acl"`
+	RunnerCount           float64     `json:"runnerCount"`
+}
+
+type PipelineStatusEvents struct {
+	PipelineStatusEventList []*PipelineStatusEvent `json:"pipelineStatusEventList"`
+}

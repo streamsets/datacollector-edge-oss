@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/satori/go.uuid"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/execution/manager"
 	"github.com/streamsets/datacollector-edge/container/store"
@@ -20,114 +21,201 @@ const (
 )
 
 type MessageEventHandler struct {
-	dpmConfig             Config
-	buildInfo             *common.BuildInfo
-	runtimeInfo           *common.RuntimeInfo
-	manager               manager.Manager
-	pipelineStoreTask     store.PipelineStoreTask
-	quitSendingEventToDPM chan bool
-	ackEventList          []*ClientEvent
+	dpmConfig                        Config
+	buildInfo                        *common.BuildInfo
+	runtimeInfo                      *common.RuntimeInfo
+	manager                          manager.Manager
+	pipelineStoreTask                store.PipelineStoreTask
+	quitSendingEventToDPM            chan bool
+	ackEventList                     []*ClientEvent
+	sendingPipelineStatusElapsedTime time.Time
 }
 
 func (m *MessageEventHandler) Init() {
-	ticker := time.NewTicker(time.Duration(m.dpmConfig.PingFrequency) * time.Millisecond)
-	m.quitSendingEventToDPM = make(chan bool)
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				err := m.SendEvent()
-				if err != nil {
-					log.Println("[ERROR] ", err)
-				}
-			case <-m.quitSendingEventToDPM:
-				ticker.Stop()
-				return
+	if m.dpmConfig.Enabled && m.dpmConfig.AppAuthToken != "" {
+		ticker := time.NewTicker(time.Duration(m.dpmConfig.PingFrequency) * time.Millisecond)
+		m.quitSendingEventToDPM = make(chan bool)
+		go func() {
+			err := m.SendEvent(true)
+			if err != nil {
+				log.Println("[ERROR] ", err)
 			}
-		}
-	}()
+			for {
+				select {
+				case <-ticker.C:
+					err := m.SendEvent(false)
+					if err != nil {
+						log.Println("[ERROR] ", err)
+					}
+				case <-m.quitSendingEventToDPM:
+					ticker.Stop()
+					return
+				}
+			}
+		}()
+	}
 }
 
-func (m *MessageEventHandler) SendEvent() error {
-	if m.dpmConfig.Enabled && m.dpmConfig.AppAuthToken != "" {
-		sdcInfoEvent := SDCInfoEvent{
-			EdgeId:        m.runtimeInfo.ID,
-			HttpUrl:       m.runtimeInfo.HttpUrl,
-			GoVersion:     runtime.Version(),
-			EdgeBuildInfo: m.buildInfo,
-			Labels:        m.dpmConfig.JobLabels,
-			Edge:          true,
-		}
+func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
+	clientEventList := make([]*ClientEvent, 0)
+	for _, ackEvent := range m.ackEventList {
+		clientEventList = append(clientEventList, ackEvent)
+	}
 
-		sdcInfoEventJson, _ := json.Marshal(sdcInfoEvent)
+	if sendInfoEvent {
+		clientEventList = append(clientEventList, m.createSdcEdgeInfoEvent())
+	}
 
-		clientEventList := make([]*ClientEvent, 0)
-		for _, ackEvent := range m.ackEventList {
-			clientEventList = append(clientEventList, ackEvent)
-		}
+	if m.sendingPipelineStatusElapsedTime.IsZero() ||
+		time.Since(m.sendingPipelineStatusElapsedTime).Seconds()*1e3 > float64(m.dpmConfig.StatusEventsInterval) {
+		log.Println("[Debug] Send Pipeline Status Event")
 
-		sdcEdgeInfoEvent := &ClientEvent{
-			EventId:      m.runtimeInfo.HttpUrl,
-			Destinations: []string{m.dpmConfig.EventsRecipient},
-			RequiresAck:  false,
-			IsAckEvent:   false,
-			EventTypeId:  SDC_INFO_EVENT,
-			Payload:      string(sdcInfoEventJson),
-		}
-
-		clientEventList = append(clientEventList, sdcEdgeInfoEvent)
-
-		jsonValue, err := json.Marshal(clientEventList)
+		pipelineInfoList, err := m.pipelineStoreTask.GetPipelines()
 		if err != nil {
 			log.Println(err)
-		}
-
-		var eventsUrl = m.dpmConfig.BaseUrl + MESSAGING_URL_PATH
-
-		req, err := http.NewRequest("POST", eventsUrl, bytes.NewBuffer(jsonValue))
-		req.Header.Set(common.HEADER_X_APP_AUTH_TOKEN, m.dpmConfig.AppAuthToken)
-		req.Header.Set(common.HEADER_X_APP_COMPONENT_ID, m.runtimeInfo.ID)
-		req.Header.Set(common.HEADER_X_REST_CALL, "SDCe")
-		req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
-
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
 			return err
 		}
 
-		log.Println("[DEBUG] DPM Event Status:", resp.Status)
-		if resp.StatusCode != 200 {
-			return errors.New("DPM Send event failed")
-		}
+		pipelineStatusEventList := make([]*PipelineStatusEvent, 0)
+		for _, pipelineInfo := range pipelineInfoList {
+			var offsetString string
+			runner := m.manager.GetRunner(pipelineInfo.PipelineId)
+			if runner != nil {
+				sourceOffset, err := runner.GetOffset()
+				if err != nil {
+					log.Println("[ERROR] ", err)
+					return err
+				}
+				offsetJson, err := json.Marshal(sourceOffset)
+				if err != nil {
+					log.Println("[ERROR] ", err)
+					return err
+				}
 
-		decoder := json.NewDecoder(resp.Body)
-		var serverEventList []ServerEvent
-		err = decoder.Decode(&serverEventList)
-		if err != nil {
-			switch {
-			case err == io.EOF:
-				// empty body
-			case err != nil:
-				// other error
-				return errors.New(fmt.Sprintf("Parsing DPM event failed: %s", err))
+				offsetString = string(offsetJson)
+
+				pipelineState, err := runner.GetStatus()
+				if err != nil {
+					log.Println(err)
+					return err
+				}
+
+				if pipelineState.Status != common.EDITED {
+					pipelineStatusEventList = append(
+						pipelineStatusEventList,
+						m.createPipelineStatusEvent(pipelineState, offsetString, runner.IsRemotePipeline()),
+					)
+				}
 			}
 		}
-
-		defer resp.Body.Close()
-
-		ackClientEventList := make([]*ClientEvent, 0)
-		for _, serverEvent := range serverEventList {
-			ackEvent := m.handleDPMEvent(serverEvent)
-			if ackEvent != nil {
-				ackClientEventList = append(ackClientEventList, ackEvent)
-			}
+		pipelineStatusEvents := &PipelineStatusEvents{
+			PipelineStatusEventList: pipelineStatusEventList,
 		}
+		pipelineStatusEventListJson, _ := json.Marshal(pipelineStatusEvents)
+		pipelineStatusEvent := &ClientEvent{
+			EventId:      uuid.NewV4().String(),
+			Destinations: []string{m.dpmConfig.EventsRecipient},
+			RequiresAck:  false,
+			IsAckEvent:   false,
+			EventTypeId:  STATUS_MULTIPLE_PIPELINES,
+			Payload:      string(pipelineStatusEventListJson),
+		}
+		clientEventList = append(clientEventList, pipelineStatusEvent)
 
-		m.ackEventList = ackClientEventList
+		m.sendingPipelineStatusElapsedTime = time.Now()
 	}
 
+	jsonValue, err := json.Marshal(clientEventList)
+	if err != nil {
+		log.Println("[ERROR] ", err)
+		return err
+	}
+
+	var eventsUrl = m.dpmConfig.BaseUrl + MESSAGING_URL_PATH
+	req, err := http.NewRequest("POST", eventsUrl, bytes.NewBuffer(jsonValue))
+	req.Header.Set(common.HEADER_X_APP_AUTH_TOKEN, m.dpmConfig.AppAuthToken)
+	req.Header.Set(common.HEADER_X_APP_COMPONENT_ID, m.runtimeInfo.ID)
+	req.Header.Set(common.HEADER_X_REST_CALL, "true")
+	req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	log.Println("[DEBUG] DPM Event Status:", resp.Status)
+	if resp.StatusCode != 200 {
+		return errors.New("DPM Send event failed")
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	var serverEventList []ServerEvent
+	err = decoder.Decode(&serverEventList)
+	if err != nil {
+		switch {
+		case err == io.EOF:
+			// empty body
+		case err != nil:
+			// other error
+			return errors.New(fmt.Sprintf("Parsing DPM event failed: %s", err))
+		}
+	}
+
+	defer resp.Body.Close()
+
+	ackClientEventList := make([]*ClientEvent, 0)
+	for _, serverEvent := range serverEventList {
+		ackEvent := m.handleDPMEvent(serverEvent)
+		if ackEvent != nil {
+			ackClientEventList = append(ackClientEventList, ackEvent)
+		}
+	}
+
+	m.ackEventList = ackClientEventList
+
 	return nil
+}
+
+func (m *MessageEventHandler) createSdcEdgeInfoEvent() *ClientEvent {
+	sdcInfoEvent := SDCInfoEvent{
+		EdgeId:        m.runtimeInfo.ID,
+		HttpUrl:       m.runtimeInfo.HttpUrl,
+		GoVersion:     runtime.Version(),
+		EdgeBuildInfo: m.buildInfo,
+		Labels:        m.dpmConfig.JobLabels,
+		Edge:          true,
+	}
+
+	sdcInfoEventJson, _ := json.Marshal(sdcInfoEvent)
+
+	sdcEdgeInfoEvent := &ClientEvent{
+		EventId:      m.runtimeInfo.HttpUrl,
+		Destinations: []string{m.dpmConfig.EventsRecipient},
+		RequiresAck:  false,
+		IsAckEvent:   false,
+		EventTypeId:  SDC_INFO_EVENT,
+		Payload:      string(sdcInfoEventJson),
+	}
+
+	return sdcEdgeInfoEvent
+}
+
+func (m *MessageEventHandler) createPipelineStatusEvent(
+	pipelineState *common.PipelineState,
+	offsetString string,
+	isRemote bool,
+) *PipelineStatusEvent {
+	pipelineStatusEvent := &PipelineStatusEvent{
+		Name:           pipelineState.PipelineId,
+		Title:          pipelineState.PipelineId,
+		TimeStamp:      pipelineState.TimeStamp.UnixNano() / int64(time.Millisecond),
+		IsRemote:       isRemote,
+		PipelineStatus: pipelineState.Status,
+		Message:        pipelineState.Message,
+		Offset:         offsetString,
+	}
+	return pipelineStatusEvent
 }
 
 func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEvent {
@@ -169,12 +257,30 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		}
 
 		pipelineConfiguration.UUID = newPipeline.UUID
+		pipelineConfiguration.PipelineId = newPipeline.PipelineId
 		_, err = m.pipelineStoreTask.Save(pipelineSaveEvent.Name, pipelineConfiguration)
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
 			log.Println("[Error] Error during handling DPM SAVE Pipeline Event:", err)
 			break
+		}
+
+		// Update offset
+		runner := m.manager.GetRunner(pipelineSaveEvent.Name)
+		if runner != nil && len(pipelineSaveEvent.Offset) > 0 {
+			log.Println("[DEBUG] Updating offset:", pipelineSaveEvent.Offset)
+
+			var sourceOffset common.SourceOffset
+			err := json.Unmarshal([]byte(pipelineSaveEvent.Offset), &sourceOffset)
+			if err != nil {
+				log.Println("[Error] Error during desrializing offset:", err)
+			} else {
+				err = runner.CommitOffset(sourceOffset)
+				if err != nil {
+					log.Println("[Error] Error during updating offset:", err)
+				}
+			}
 		}
 	case START_PIPELINE:
 		var pipelineBaseEvent PipelineBaseEvent
