@@ -9,7 +9,7 @@ import (
 func getStageContext(
 	brokerUrl string,
 	clientId string,
-	qos float64,
+	qos string,
 	topicFilters []string,
 	dataFormat string,
 	parameters map[string]interface{},
@@ -48,7 +48,7 @@ func getStageContext(
 func TestMqttClientSource_Init(t *testing.T) {
 	brokerUrl := "http://test:9000"
 	clientId := "clientId"
-	qos := float64(1)
+	qos := "AT_LEAST_ONCE"
 	topicFilters := []string{"Sample/Topic"}
 	dataFormat := "JSON"
 

@@ -37,7 +37,7 @@ func init() {
 func (ms *MqttClientSource) getTopicFilterAndQosMap() map[string]byte {
 	topicFilters := make(map[string]byte, len(ms.SubscriberConf.TopicFilters))
 	for _, topicFilter := range ms.SubscriberConf.TopicFilters {
-		topicFilters[topicFilter] = byte(ms.CommonConf.Qos)
+		topicFilters[topicFilter] = byte(ms.Qos)
 	}
 	return topicFilters
 }

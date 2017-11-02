@@ -56,7 +56,7 @@ func (md *MqttClientDestination) Write(batch api.Batch) error {
 func (md *MqttClientDestination) sendRecordToSDC(recordValue interface{}) error {
 	var err error = nil
 	if jsonValue, e := json.Marshal(recordValue); e == nil {
-		if token := md.Client.Publish(md.PublisherConf.Topic, byte(md.CommonConf.Qos), false, jsonValue); token.Wait() && token.Error() != nil {
+		if token := md.Client.Publish(md.PublisherConf.Topic, byte(md.Qos), false, jsonValue); token.Wait() && token.Error() != nil {
 			err = token.Error()
 		}
 	}
