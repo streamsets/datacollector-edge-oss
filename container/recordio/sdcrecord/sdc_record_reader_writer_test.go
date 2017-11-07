@@ -30,7 +30,7 @@ const (
 		"\"stagesPath\":\"\",\"trackingId\":\"\",\"previousTrackingId\":\"\"," +
 		"\"errorDataCollectorId\":\"\",\"errorPipelineName\":\"\",\"errorStage\":\"\"," +
 		"\"errorMessage\":\"\",\"errorTimestamp\":0,\"values\":{\"Sample Attribute\":\"Sample Value1\"}}," +
-		"\"value\":{\"type\":\"STRING\",\"value\":\"Sample Data1\",\"sqpath\":\"/\",\"dqpath\":\"/\"}}\n"
+		"\"value\":{\"type\":\"STRING\",\"value\":\"Sample Data1\",\"sqpath\":\"/\",\"dqpath\":\"/\"}}"
 	JSON2 = "{\"header\":{\"stageCreator\":\"Dummy Stage\",\"sourceId\":\"Sample Record Id2\"," +
 		"\"stagesPath\":\"\",\"trackingId\":\"\",\"previousTrackingId\":\"\"," +
 		"\"errorDataCollectorId\":\"\",\"errorPipelineName\":\"\",\"errorStage\":\"\"," +
@@ -43,7 +43,7 @@ const (
 		"\"value\":{\"a\":{\"dqpath\":\"/sampleMapField/a\",\"sqpath\":\"/sampleMapField/a\",\"type\":\"INTEGER\"," +
 		"\"value\":\"1\"},\"b\":{\"dqpath\":\"/sampleMapField/b\",\"sqpath\":\"/sampleMapField/b\",\"type\":\"INTEGER\"," +
 		"\"value\":\"2\"}}},\"sampleStringField\":{\"dqpath\":\"/sampleStringField\",\"sqpath\":\"/sampleStringField\"," +
-		"\"type\":\"STRING\",\"value\":\"abc\"}}}}\n"
+		"\"type\":\"STRING\",\"value\":\"abc\"}}}}"
 )
 
 var JSON = string([]byte{SdcJsonMagicNumber}) + JSON1 + JSON2

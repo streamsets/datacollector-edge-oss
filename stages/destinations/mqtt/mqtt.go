@@ -72,30 +72,42 @@ func (md *MqttClientDestination) Init(stageContext api.StageContext) error {
 
 func (md *MqttClientDestination) Write(batch api.Batch) error {
 	log.Println("[DEBUG] MqttClientDestination write method")
-	for _, record := range batch.GetRecords() {
-		err := md.sendRecordToSDC(record)
-		if err != nil {
-			log.Println("[Error] Error Writing Record", err)
-			md.GetStageContext().ToError(err, record)
+	var recordWriter recordio.RecordWriter = nil
+	nonErrorRecordsForWrite := make([]api.Record, 0)
+	recordValueBuffer := bytes.NewBuffer([]byte{})
+	var err error = nil
+	if recordWriter, err = md.PublisherConf.DataGeneratorFormatConfig.RecordWriterFactory.CreateWriter(md.GetStageContext(), recordValueBuffer); err == nil {
+		for _, record := range batch.GetRecords() {
+			if err = recordWriter.WriteRecord(record); err != nil {
+				log.Println("[Error] Error Writing Record", err)
+				md.GetStageContext().ToError(err, record)
+			} else {
+				nonErrorRecordsForWrite = append(nonErrorRecordsForWrite, record)
+			}
 		}
+		if err = recordWriter.Close(); err == nil {
+			if tkn := md.Client.Publish(
+				md.PublisherConf.Topic,
+				byte(md.Qos),
+				false,
+				recordValueBuffer.Bytes(),
+			); tkn.Wait() && tkn.Error() != nil {
+				err = tkn.Error()
+			}
+		} else {
+			md.sendRecordsToError(nonErrorRecordsForWrite, err)
+		}
+	} else {
+		md.sendRecordsToError(batch.GetRecords(), err)
 	}
 	return nil
 }
 
-func (md *MqttClientDestination) sendRecordToSDC(record api.Record) error {
-	var err error = nil
-	var recordWriter recordio.RecordWriter
-	recordValueBuffer := bytes.NewBuffer([]byte{})
-	if recordWriter, err = md.PublisherConf.DataGeneratorFormatConfig.RecordWriterFactory.CreateWriter(md.GetStageContext(), recordValueBuffer); err == nil {
-		if err = recordWriter.WriteRecord(record); err == nil {
-			if err = recordWriter.Close(); err == nil {
-				if token := md.Client.Publish(md.PublisherConf.Topic, byte(md.Qos), false, recordValueBuffer.Bytes()); token.Wait() && token.Error() != nil {
-					err = token.Error()
-				}
-			}
-		}
+func (md *MqttClientDestination) sendRecordsToError(records []api.Record, err error) {
+	log.Println("[Error] Error Writing records to destination", err)
+	for _, record := range records {
+		md.GetStageContext().ToError(err, record)
 	}
-	return err
 }
 
 func (md *MqttClientDestination) Destroy() error {
