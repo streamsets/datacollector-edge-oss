@@ -112,6 +112,7 @@ func (srw *SDCRecordWriterImpl) WriteRecord(r api.Record) error {
 	if err == nil {
 		err = srw.encoder.Encode(*sdcRecord)
 	}
+	srw.writer.Write([]byte("\n"))
 	return err
 }
 
