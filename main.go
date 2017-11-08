@@ -19,6 +19,7 @@ import (
 
 func main() {
 	debugFlag := flag.Bool("debug", false, "Debug flag")
+	logToConsoleFlag := flag.Bool("logToConsole", false, "Log to console flag")
 	startFlag := flag.String("start", "", "Start Pipeline flag")
 	runtimeParametersFlag := flag.String("runtimeParameters", "", "Runtime Parameters flag")
 	flag.Parse()
@@ -33,7 +34,7 @@ func main() {
 	fmt.Printf("OS: %s\nArchitecture: %s\n", runtime.GOOS, runtime.GOARCH)
 	fmt.Println("Base Dir: ", baseDir)
 
-	dataCollectorEdge, _ := edge.DoMain(baseDir, *debugFlag, *startFlag, *runtimeParametersFlag)
+	dataCollectorEdge, _ := edge.DoMain(baseDir, *debugFlag, *logToConsoleFlag, *startFlag, *runtimeParametersFlag)
 	go shutdownHook(dataCollectorEdge)
 	dataCollectorEdge.WebServerTask.Run()
 }

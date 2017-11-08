@@ -181,5 +181,7 @@ func (d *DirectorySpooler) NextFile() *AtomicFileInformation {
 
 func (d *DirectorySpooler) Destroy() {
 	log.Println("Directory Spooler Destroy")
-	d.destroyNotificationChan <- true
+	if d.destroyNotificationChan != nil {
+		d.destroyNotificationChan <- true
+	}
 }
