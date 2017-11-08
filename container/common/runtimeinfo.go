@@ -40,23 +40,23 @@ func (r *RuntimeInfo) init() error {
 }
 
 func (r *RuntimeInfo) getSdeId() string {
-	var sdc2goId string
+	var edgeId string
 	if _, err := os.Stat(r.getSdeIdFilePath()); os.IsNotExist(err) {
 		f, err := os.Create(r.getSdeIdFilePath())
 		check(err)
 
 		defer f.Close()
-		sdc2goId = uuid.NewV4().String()
-		f.WriteString(sdc2goId)
+		edgeId = uuid.NewV4().String()
+		f.WriteString(edgeId)
 	} else {
 		buf, err := ioutil.ReadFile(r.getSdeIdFilePath())
 		if err != nil {
 			log.Fatal(err)
 		}
-		sdc2goId = string(buf)
+		edgeId = string(buf)
 	}
 
-	return sdc2goId
+	return edgeId
 }
 
 func (r *RuntimeInfo) getSdeIdFilePath() string {

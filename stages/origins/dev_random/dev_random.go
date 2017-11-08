@@ -60,11 +60,11 @@ func (d *DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMake
 		for _, field := range d.fieldsList {
 			recordValue[field] = r.Int63()
 		}
-		record, err := d.GetStageContext().CreateRecord("dev-random", recordValue)
-		if err != nil {
-			panic(err)
+		if record, err := d.GetStageContext().CreateRecord("dev-random", recordValue); err == nil {
+			batchMaker.AddRecord(record)
+		} else {
+			d.GetStageContext().ToError(err, record)
 		}
-		batchMaker.AddRecord(record)
 	}
 	return "random", nil
 }

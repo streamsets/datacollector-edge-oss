@@ -89,23 +89,23 @@ func Edited(pipelineId string, isRemote bool) error {
 }
 
 func SaveState(pipelineId string, pipelineState *common.PipelineState) error {
-	pipelineStateJson, err := json.Marshal(pipelineState)
-	check(err)
-	err = ioutil.WriteFile(getPipelineStateFile(pipelineId), pipelineStateJson, 0644)
-	if err != nil {
-		panic(err)
-	}
+	var err error
+	var pipelineStateJson []byte
+	if pipelineStateJson, err = json.Marshal(pipelineState); err == nil {
+		if err = ioutil.WriteFile(getPipelineStateFile(pipelineId), pipelineStateJson, 0644); err == nil {
+			//open for append or create and open for write if it does not exist
+			openFlag := os.O_APPEND | os.O_CREATE | os.O_WRONLY
 
-	//open for append or create and open for write if it does not exist
-	openFlag := os.O_APPEND | os.O_CREATE | os.O_WRONLY
+			var historyFile *os.File
 
-	//save in history file as well.
-	historyFile, err := os.OpenFile(getPipelineStateHistoryFile(pipelineId), openFlag, 0666)
-	defer historyFile.Close()
-	if err == nil {
-		_, err = historyFile.Write(pipelineStateJson)
-		if err == nil {
-			_, err = historyFile.WriteString("\n")
+			//save in history file as well.
+			if historyFile, err = os.OpenFile(getPipelineStateHistoryFile(pipelineId), openFlag, 0666); err == nil {
+				defer historyFile.Close()
+				_, err = historyFile.Write(pipelineStateJson)
+				if err == nil {
+					_, err = historyFile.WriteString("\n")
+				}
+			}
 		}
 	}
 	return err
