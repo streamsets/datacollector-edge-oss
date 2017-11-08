@@ -52,10 +52,11 @@ type DataCollectorEdgeMain struct {
 func DoMain(
 	baseDir string,
 	debugFlag bool,
+	logToConsoleFlag bool,
 	startFlag string,
 	runtimeParametersFlag string,
 ) (*DataCollectorEdgeMain, error) {
-	dataCollectorEdge, err := newDataCollectorEdge(baseDir, debugFlag)
+	dataCollectorEdge, err := newDataCollectorEdge(baseDir, debugFlag, logToConsoleFlag)
 	if err != nil {
 		panic(err)
 	}
@@ -87,12 +88,16 @@ func DoMain(
 	return dataCollectorEdge, nil
 }
 
-func newDataCollectorEdge(baseDir string, debugFlag bool) (*DataCollectorEdgeMain, error) {
-	initializeLog(debugFlag, baseDir)
+func newDataCollectorEdge(baseDir string, debugFlag bool, logToConsoleFlag bool) (*DataCollectorEdgeMain, error) {
+	err := initializeLog(debugFlag, logToConsoleFlag, baseDir)
+	if err != nil {
+		return nil, err
+	}
+
 	log.Println("[INFO] Base Dir: ", baseDir)
 
 	config := NewConfig()
-	err := config.FromTomlFile(baseDir + DefaultConfigFilePath)
+	err = config.FromTomlFile(baseDir + DefaultConfigFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -136,13 +141,24 @@ func newDataCollectorEdge(baseDir string, debugFlag bool) (*DataCollectorEdgeMai
 	}, nil
 }
 
-func initializeLog(debugFlag bool, baseDir string) {
+func initializeLog(debugFlag bool, logToConsoleFlag bool, baseDir string) error {
 	minLevel := util.LogLevel(WARN)
 	if debugFlag {
 		minLevel = util.LogLevel(DEBUG)
 	}
 
-	loggerFile, _ := os.OpenFile(baseDir+DefaultLogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	var loggerFile *os.File
+	var err error
+
+	if logToConsoleFlag {
+		loggerFile = os.Stdout
+	} else {
+		loggerFile, err = os.OpenFile(baseDir+DefaultLogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			return err
+		}
+	}
+
 	logFilter := &util.LevelFilter{
 		Levels:   []util.LogLevel{DEBUG, WARN, ERROR, INFO},
 		MinLevel: minLevel,
@@ -150,4 +166,5 @@ func initializeLog(debugFlag bool, baseDir string) {
 	}
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	log.SetOutput(logFilter)
+	return nil
 }

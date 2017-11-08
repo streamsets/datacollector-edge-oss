@@ -16,6 +16,10 @@
 
     <SDCe_home>/bin/edge -debug -start=tailFileToHttp
 
+### To enable logging to console
+
+    <SDCe_home>/bin/edge -logToConsole
+
 ## SDCe Logs
 
     <SDCe_home>/log/edge.log
