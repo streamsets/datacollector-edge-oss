@@ -112,7 +112,9 @@ func (p *Pipeline) runBatch() error {
 		if p.pipelineBean.Config.DeliveryGuarantee == AT_MOST_ONCE &&
 			pipe.IsTarget() && // if destination
 			!committed {
-			p.offsetTracker.CommitOffset()
+			if err := p.offsetTracker.CommitOffset(); err != nil {
+				return err
+			}
 			committed = true
 		}
 

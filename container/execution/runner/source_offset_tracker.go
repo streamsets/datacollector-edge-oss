@@ -34,7 +34,7 @@ type SourceOffsetTracker interface {
 
 	SetOffset(newOffset string)
 
-	CommitOffset()
+	CommitOffset() error
 
 	GetOffset() string
 

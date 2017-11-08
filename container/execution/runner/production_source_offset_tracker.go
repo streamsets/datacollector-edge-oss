@@ -37,11 +37,11 @@ func (o *ProductionSourceOffsetTracker) SetOffset(newOffset string) {
 	o.newOffset = newOffset
 }
 
-func (o *ProductionSourceOffsetTracker) CommitOffset() {
+func (o *ProductionSourceOffsetTracker) CommitOffset() error {
 	o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY] = o.newOffset
 	o.finished = o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY] == ""
 	o.newOffset = ""
-	store.SaveOffset(o.pipelineId, o.currentOffset)
+	return store.SaveOffset(o.pipelineId, o.currentOffset)
 }
 
 func (o *ProductionSourceOffsetTracker) GetOffset() string {
@@ -52,10 +52,13 @@ func (o *ProductionSourceOffsetTracker) GetLastBatchTime() time.Time {
 	return o.lastBatchTime
 }
 
-func NewProductionSourceOffsetTracker(pipelineId string) *ProductionSourceOffsetTracker {
-	sourceOffset, _ := store.GetOffset(pipelineId)
-	return &ProductionSourceOffsetTracker{
-		pipelineId:    pipelineId,
-		currentOffset: sourceOffset,
+func NewProductionSourceOffsetTracker(pipelineId string) (*ProductionSourceOffsetTracker, error) {
+	if sourceOffset, err := store.GetOffset(pipelineId); err == nil {
+		return &ProductionSourceOffsetTracker{
+			pipelineId:    pipelineId,
+			currentOffset: sourceOffset,
+		}, nil
+	} else {
+		return nil, err
 	}
 }

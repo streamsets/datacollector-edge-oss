@@ -50,12 +50,15 @@ func NewProductionPipeline(
 	pipelineConfiguration common.PipelineConfiguration,
 	runtimeParameters map[string]interface{},
 ) (*ProductionPipeline, error) {
-	sourceOffsetTracker := NewProductionSourceOffsetTracker(pipelineId)
-	metricRegistry := metrics.NewRegistry()
-	pipeline, err := NewPipeline(config, standaloneRunner, sourceOffsetTracker, runtimeParameters, metricRegistry)
-	return &ProductionPipeline{
-		PipelineConfig: pipelineConfiguration,
-		Pipeline:       pipeline,
-		MetricRegistry: metricRegistry,
-	}, err
+	if sourceOffsetTracker, err := NewProductionSourceOffsetTracker(pipelineId); err == nil {
+		metricRegistry := metrics.NewRegistry()
+		pipeline, err := NewPipeline(config, standaloneRunner, sourceOffsetTracker, runtimeParameters, metricRegistry)
+		return &ProductionPipeline{
+			PipelineConfig: pipelineConfiguration,
+			Pipeline:       pipeline,
+			MetricRegistry: metricRegistry,
+		}, err
+	} else {
+		return nil, err
+	}
 }

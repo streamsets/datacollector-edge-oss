@@ -55,7 +55,7 @@ type StandaloneRunner struct {
 	pipelineStoreTask    pipelineStore.PipelineStoreTask
 }
 
-func (standaloneRunner *StandaloneRunner) init() {
+func (standaloneRunner *StandaloneRunner) init() error {
 	standaloneRunner.validTransitions = make(map[string][]string)
 	standaloneRunner.validTransitions[common.EDITED] = []string{common.STARTING}
 	standaloneRunner.validTransitions[common.STARTING] = []string{common.START_ERROR, common.RUNNING, common.STOPPING}
@@ -71,9 +71,7 @@ func (standaloneRunner *StandaloneRunner) init() {
 
 	var err error
 	standaloneRunner.pipelineState, err = store.GetState(standaloneRunner.pipelineId)
-	if err != nil {
-		panic(err)
-	}
+	return err
 }
 
 func (standaloneRunner *StandaloneRunner) GetPipelineConfig() common.PipelineConfiguration {
@@ -112,14 +110,13 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(
 		return nil, err
 	}
 
-	standaloneRunner.prodPipeline, err = NewProductionPipeline(
+	if standaloneRunner.prodPipeline, err = NewProductionPipeline(
 		standaloneRunner.pipelineId,
 		standaloneRunner.config,
 		standaloneRunner,
 		standaloneRunner.pipelineConfig,
 		runtimeParameters,
-	)
-	if err != nil {
+	);err != nil {
 		return nil, err
 	}
 
@@ -138,8 +135,8 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(
 
 	standaloneRunner.pipelineState.Status = common.RUNNING
 	standaloneRunner.pipelineState.TimeStamp = time.Now().UTC()
-	err = store.SaveState(standaloneRunner.pipelineId, standaloneRunner.pipelineState)
-	if err != nil {
+
+	if err = store.SaveState(standaloneRunner.pipelineId, standaloneRunner.pipelineState); err != nil {
 		return nil, err
 	}
 
@@ -219,6 +216,6 @@ func NewStandaloneRunner(
 		pipelineStoreTask: pipelineStoreTask,
 	}
 	store.BaseDir = runtimeInfo.BaseDir
-	standaloneRunner.init()
-	return &standaloneRunner, nil
+	err := standaloneRunner.init()
+	return &standaloneRunner, err
 }

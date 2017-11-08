@@ -46,21 +46,18 @@ func GetOffset(pipelineId string) (common.SourceOffset, error) {
 }
 
 func SaveOffset(pipelineId string, sourceOffset common.SourceOffset) error {
-	offsetJson, err := json.Marshal(sourceOffset)
-	check(err)
-	err1 := ioutil.WriteFile(getPipelineOffsetFile(pipelineId), offsetJson, 0644)
-	return err1
+	var err error
+	var offsetJson []byte
+	if offsetJson, err = json.Marshal(sourceOffset); err == nil {
+		err = ioutil.WriteFile(getPipelineOffsetFile(pipelineId), offsetJson, 0644)
+	}
+	return err
 }
 
 func ResetOffset(pipelineId string) error {
 	return SaveOffset(pipelineId, common.GetDefaultOffset())
 }
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
 
 func getPipelineOffsetFile(pipelineId string) string {
 	return getRunInfoDir(pipelineId) + OFFSET_FILE

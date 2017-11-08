@@ -25,6 +25,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/util"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"reflect"
+	"strconv"
 )
 
 const (
@@ -107,8 +108,22 @@ func injectStageConfigs(
 					if stageInstanceField.CanSet() {
 						switch configDef.Type {
 						case configtype.BOOLEAN:
+							if reflect.TypeOf(resolvedValue).Kind() == reflect.String {
+								var err error
+								resolvedValue, err = strconv.ParseBool(resolvedValue.(string))
+								if err != nil {
+									return errors.New(fmt.Sprintf("Error when processing value '%v' as BOOLEAN", resolvedValue))
+								}
+							}
 							stageInstanceField.SetBool(resolvedValue.(bool))
 						case configtype.NUMBER:
+							if reflect.TypeOf(resolvedValue).Kind() == reflect.String {
+								var err error
+								resolvedValue, err = strconv.ParseFloat(resolvedValue.(string), 64)
+								if err != nil {
+									return errors.New(fmt.Sprintf("Error when processing value '%v' as NUMBER", resolvedValue))
+								}
+							}
 							stageInstanceField.SetFloat(resolvedValue.(float64))
 						case configtype.STRING:
 							stageInstanceField.SetString(resolvedValue.(string))
