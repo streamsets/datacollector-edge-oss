@@ -58,7 +58,6 @@ func ResetOffset(pipelineId string) error {
 	return SaveOffset(pipelineId, common.GetDefaultOffset())
 }
 
-
 func getPipelineOffsetFile(pipelineId string) string {
 	return getRunInfoDir(pipelineId) + OFFSET_FILE
 }
