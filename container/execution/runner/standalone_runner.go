@@ -116,7 +116,7 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(
 		standaloneRunner,
 		standaloneRunner.pipelineConfig,
 		runtimeParameters,
-	);err != nil {
+	); err != nil {
 		return nil, err
 	}
 
