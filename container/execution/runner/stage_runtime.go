@@ -30,8 +30,13 @@ type StageRuntime struct {
 }
 
 func (s *StageRuntime) Init() []validation.Issue {
-	var issues []validation.Issue
-	s.stageBean.Stage.Init(s.stageContext)
+	issues := make([]validation.Issue, 0)
+	if err := s.stageBean.Stage.Init(s.stageContext); err != nil {
+		//TODO: move this to each stage along with information for config group and name
+		issue:= validation.Issue{InstanceName: s.stageBean.Config.InstanceName, Message: err.Error()}
+		issues = append(issues, issue)
+	}
+
 	return issues
 }
 
