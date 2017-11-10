@@ -207,7 +207,7 @@ task buildDockerImage(type: Exec) {
     description = 'Builds Docker Image for Edge'
     dependsOn createDockerfile
     workingDir = "dist"
-    commandLine 'docker', 'build', '-t', "${dockerImageName}:${version}" ,'.'
+    commandLine 'docker', 'build', '--no-cache', '-t', "${dockerImageName}:${version}" ,'.'
 }
 
 publishToMavenLocal.dependsOn(buildAll)
