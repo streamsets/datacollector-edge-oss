@@ -72,7 +72,7 @@
 
 To run a container from the resulting image:
 
-    docker run --publish 18633:18633 --name edge --rm streamsets/datacollector-edge
+    docker run --publish 18633:18633 --name edge --rm streamsets/datacollector-edge:3.0.0.0
 
 Getting inside the container
 

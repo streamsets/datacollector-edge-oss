@@ -38,8 +38,8 @@ func (p *ProductionPipeline) Run() {
 	if len(issues) == 0 {
 		p.Pipeline.Run()
 	} else {
-		for _, issue := range  issues {
-			log.Printf("[ERROR] " + IssueErrorTemplate, issue.Message, issue.InstanceName)
+		for _, issue := range issues {
+			log.Printf("[ERROR] "+IssueErrorTemplate, issue.Message, issue.InstanceName)
 		}
 	}
 }
