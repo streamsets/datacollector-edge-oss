@@ -33,7 +33,7 @@ func (s *StageRuntime) Init() []validation.Issue {
 	issues := make([]validation.Issue, 0)
 	if err := s.stageBean.Stage.Init(s.stageContext); err != nil {
 		//TODO: move this to each stage along with information for config group and name
-		issue:= validation.Issue{InstanceName: s.stageBean.Config.InstanceName, Message: err.Error()}
+		issue := validation.Issue{InstanceName: s.stageBean.Config.InstanceName, Message: err.Error()}
 		issues = append(issues, issue)
 	}
 

@@ -123,7 +123,7 @@ task buildAll {
             go "build -ldflags " + ldFlags + " -o " + baseTarDir + "/bin/${binaryName}\${GOEXE} ${gitPath}"
         }
 
-        def archiveName = "${appName}-" + goOs + '-' + goArch + '-' + "${version}"
+        def archiveName = "${appName}-" + "${version}" + '-' + goOs + '-' + goArch
 
         //Create Tar Task for each platform
         task(tarTaskName, type :Tar) {
@@ -157,7 +157,7 @@ publishing {
         maven(MavenPublication) {
             def publishArtifact = {
               def (goOs, goArch) = it
-              def tarName = "${appName}-" + goOs + '-' + goArch + "-${version}" + '.tgz'
+              def tarName =  "${appName}-" + "${version}" + '-' + goOs + '-' + goArch  + '.tgz'
               artifact('dist/' + tarName) {
                 groupId "com.streamsets"
                 artifactId "${appName}"
@@ -190,7 +190,7 @@ task createDockerfile(type: Dockerfile) {
     destFile = project.file('dist/Dockerfile')
     from 'alpine'
     maintainer 'Madhu "madhu@streamsets.com"'
-    addFile "${appName}-linux-amd64-${version}.tgz", '/'
+    addFile "${appName}*-linux-amd64.tgz", '/'
     defaultCommand '/streamsets-datacollector-edge/bin/edge'
     exposePort 18633
 }
