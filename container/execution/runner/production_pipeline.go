@@ -22,6 +22,10 @@ import (
 	"log"
 )
 
+const (
+	IssueErrorTemplate = "Initialization Error '%s' on Instance : '%s' "
+)
+
 type ProductionPipeline struct {
 	PipelineConfig common.PipelineConfiguration
 	Pipeline       *Pipeline
@@ -30,8 +34,14 @@ type ProductionPipeline struct {
 
 func (p *ProductionPipeline) Run() {
 	log.Println("[DEBUG] Production Pipeline Run")
-	p.Pipeline.Init()
-	p.Pipeline.Run()
+	issues := p.Pipeline.Init()
+	if len(issues) == 0 {
+		p.Pipeline.Run()
+	} else {
+		for _, issue := range  issues {
+			log.Printf("[ERROR] " + IssueErrorTemplate, issue.Message, issue.InstanceName)
+		}
+	}
 }
 
 func (p *ProductionPipeline) Stop() {
