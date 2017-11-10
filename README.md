@@ -38,7 +38,7 @@ If you need help with production systems, you can check out the variety of suppo
 
 
 # Useful resources
-* [Nightly Builds](http://nightly.streamsets.com/latest/tarball/)
+* [Nightly Builds](http://nightly.streamsets.com/latest/tarball/SDCe/)
 * [Quickstart](QUICKSTART.md)
 * [Building StreamSets Data Collector Edge](BUILD.md)
 * [StreamSets Data Collector Edge Documentation](http://streamsets.com/docs)
