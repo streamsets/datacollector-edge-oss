@@ -6,7 +6,7 @@
 
 ### To pass runtime parameters
 
-    <SDCe_home>/bin/edge -start=randomToMqtt -runtimeParameters='{"mqttClientId":"sdeMqttPublisher","mqttBrokerUrl":"http://localhost:9999","mqttTopic":"sample"}'
+    <SDCe_home>/bin/edge -start=randomToMqtt -runtimeParameters='{"mqttClientId":"sdeMqttPublisher","mqttBrokerUrl":"tcp://localhost:1883","mqttTopic":"sample"}'
 
 ## SDCe commands via REST API
 
@@ -14,7 +14,7 @@
     curl -X POST http://localhost:18633/rest/v1/pipeline/randomToMqtt/start
 
 ### To pass runtime parameters during start
-    curl -X POST http://localhost:18633/rest/v1/pipeline/randomToMqtt/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"mqttClientId":"sdeMqttPublisher","mqttBrokerUrl":"http://localhost:9999","mqttTopic":"sample"}'
+    curl -X POST http://localhost:18633/rest/v1/pipeline/randomToMqtt/start -H 'Content-Type: application/json;charset=UTF-8' --data-binary '{"mqttClientId":"sdeMqttPublisher","mqttBrokerUrl":"tcp://localhost:1883","mqttTopic":"sample"}'
 
 ### Check Pipeline Status
     curl -X GET http://localhost:18633/rest/v1/pipeline/randomToMqtt/status
