@@ -133,7 +133,7 @@
     "stageVersion" : "2",
     "configuration" : [ {
       "name" : "commonConf.brokerUrl",
-      "value" : "$[mqttBrokerUrl]"
+      "value" : "${mqttBrokerUrl}"
     }, {
       "name" : "commonConf.clientId",
       "value" : "${mqttClientId}"
