@@ -2,13 +2,13 @@
 
 ### To start pipeline on SDE start
 
-    <SDCe_home>/bin/edge -start=randomToExpressionToHttp
+    <SDC Edge_home>/bin/edge -start=randomToExpressionToHttp
 
 ### To pass runtime parameters
 
-    <SDCe_home>/bin/edge -start=randomToExpressionToHttp -runtimeParameters='{"fields":"a,b,c","batchDelay":"REMOVE", "newField":"/d", "newHeader":"/e", "newFieldFrom":"/b", "newHeaderFrom":"/c", httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    <SDC Edge_home>/bin/edge -start=randomToExpressionToHttp -runtimeParameters='{"fields":"a,b,c","batchDelay":"REMOVE", "newField":"/d", "newHeader":"/e", "newFieldFrom":"/b", "newHeaderFrom":"/c", httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
-## SDCe commands via REST API
+## SDC Edge commands via REST API
 
 ### Start Pipeline
     curl -X POST http://localhost:18633/rest/v1/pipeline/randomToExpressionToHttp/start
@@ -31,7 +31,7 @@
     newFieldFrom    -   Field defined in this parameter is used to create the new field
     newHeaderFrom   -   Field defined in this parameter is used to create the new header
 
-## SDCe Sending Pipeline
+## SDC Edge Sending Pipeline
 
-![Image of SDCe Sending Pipeline](edge.png)
+![Image of SDC Edge Sending Pipeline](edge.png)
 

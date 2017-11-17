@@ -2,13 +2,13 @@
 
 ### To start pipeline on SDE start
 
-    <SDCe_home>/bin/edge -start=tailFileToHttp
+    <SDC Edge_home>/bin/edge -start=tailFileToHttp
 
 ### To pass runtime parameters
 
-    <SDCe_home>/bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/Users/tempUser/log/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    <SDC Edge_home>/bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/Users/tempUser/log/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
-## SDCe commands via REST API
+## SDC Edge commands via REST API
 
 ### Start Pipeline
     curl -X POST http://localhost:18633/rest/v1/pipeline/tailFileToHttp/start
@@ -29,9 +29,9 @@
     curl -X POST http://localhost:18633/rest/v1/pipeline/tailFileToHttp/resetOffset
 
 
-## SDCe Sending Pipeline
+## SDC Edge Sending Pipeline
 
-![Image of SDCe Sending Pipeline](edge.png)
+![Image of SDC Edge Sending Pipeline](edge.png)
 
 
 ## SDC Receiving Pipeline

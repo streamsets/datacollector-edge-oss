@@ -1,4 +1,4 @@
-# StreamSets Data Collector Edge (SDCe)
+# StreamSets Data Collector Edge (SDC Edge)
 
 ## Minimum Requirements
 
@@ -44,7 +44,7 @@
     cd dist
     bin/edge
 
-### To start pipeline on SDCe start
+### To start pipeline on SDC Edge start
 
     bin/edge -start=<pipelineId>
 

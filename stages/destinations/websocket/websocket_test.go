@@ -54,7 +54,7 @@ func TestWebSocketClientDestination_Init(t *testing.T) {
 	headers := make([]interface{}, 2)
 	headers[0] = map[string]interface{}{
 		"key":   "X-SDC-APPLICATION-ID",
-		"value": "SDCe",
+		"value": "SDC Edge",
 	}
 	headers[1] = map[string]interface{}{
 		"key":   "DUMMY-HEADER",

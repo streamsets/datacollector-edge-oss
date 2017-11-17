@@ -50,7 +50,7 @@ func TestHttpClientDestination_Init(t *testing.T) {
 	headers := make([]interface{}, 2)
 	headers[0] = map[string]interface{}{
 		"key":   "X-SDC-APPLICATION-ID",
-		"value": "SDCe",
+		"value": "SDC Edge",
 	}
 	headers[1] = map[string]interface{}{
 		"key":   "DUMMY-HEADER",
@@ -78,7 +78,7 @@ func TestHttpClientDestination_Init(t *testing.T) {
 		return
 	}
 
-	if stageInstance.(*HttpClientDestination).Conf.Headers["X-SDC-APPLICATION-ID"] != "SDCe" {
+	if stageInstance.(*HttpClientDestination).Conf.Headers["X-SDC-APPLICATION-ID"] != "SDC Edge" {
 		t.Error("Failed to inject config value for Headers")
 	}
 

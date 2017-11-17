@@ -2,9 +2,9 @@
 
 ### To start pipeline on SDE start
 
-    <SDCe_home>/bin/edge -start=randomToIdentityToTrash
+    <SDC Edge_home>/bin/edge -start=randomToIdentityToTrash
 
-## SDCe commands via REST API
+## SDC Edge commands via REST API
 
 ### Start Pipeline
     curl -X POST http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/start
@@ -19,7 +19,7 @@
     curl -X POST http://localhost:18633/rest/v1/pipeline/randomToIdentityToTrash/stop
 
 
-## SDCe Sending Pipeline
+## SDC Edge Sending Pipeline
 
-![Image of SDCe Sending Pipeline](edge.png)
+![Image of SDC Edge Sending Pipeline](edge.png)
 

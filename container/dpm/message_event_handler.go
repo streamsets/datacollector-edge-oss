@@ -83,7 +83,7 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 
 	if m.sendingPipelineStatusElapsedTime.IsZero() ||
 		time.Since(m.sendingPipelineStatusElapsedTime).Seconds()*1e3 > float64(m.dpmConfig.StatusEventsInterval) {
-		log.Println("[Debug] Send Pipeline Status Event")
+		log.Println("[DEBUG] Send Pipeline Status Event")
 
 		pipelineInfoList, err := m.pipelineStoreTask.GetPipelines()
 		if err != nil {

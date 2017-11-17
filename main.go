@@ -30,7 +30,7 @@ func main() {
 	}
 	baseDir := strings.TrimSuffix(path.Dir(ex), "/bin")
 
-	fmt.Println("StreamSets Data Collector Edge (SDCe): ")
+	fmt.Println("StreamSets Data Collector Edge (SDC Edge): ")
 	fmt.Printf("OS: %s\nArchitecture: %s\n", runtime.GOOS, runtime.GOARCH)
 	fmt.Println("Base Dir: ", baseDir)
 
