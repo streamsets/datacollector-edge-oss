@@ -2,14 +2,14 @@
 
 ### To start pipeline on SDE start
 
-    <SDCe_home>/bin/edge -start=httpServerToTrash
+    <SDC Edge_home>/bin/edge -start=httpServerToTrash
 
 ### To pass runtime parameters
 
-    <SDCe_home>/bin/edge -start=httpServerToTrash -runtimeParameters='{"httpPort":"8888","sdeAppId":"sde"}'
+    <SDC Edge_home>/bin/edge -start=httpServerToTrash -runtimeParameters='{"httpPort":"8888","sdeAppId":"sde"}'
 
 
-## SDCe commands via REST API
+## SDC Edge commands via REST API
 
 ### Start Pipeline
     curl -X POST http://localhost:18633/rest/v1/pipeline/httpServerToTrash/start
@@ -26,7 +26,7 @@
 ### Stop Pipeline
     curl -X POST http://localhost:18633/rest/v1/pipeline/httpServerToTrash/stop
 
-## SDCe Sending Pipeline
+## SDC Edge Sending Pipeline
 
-![Image of SDCe Sending Pipeline](edge.png)
+![Image of SDC Edge Sending Pipeline](edge.png)
 

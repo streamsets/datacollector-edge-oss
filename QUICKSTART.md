@@ -1,31 +1,31 @@
-# StreamSets Data Collector Edge (SDCe) QuickStart
+# StreamSets Data Collector Edge (SDC Edge) QuickStart
 
 ## Running
 
-    <SDCe_home>/bin/edge
+    <SDC Edge_home>/bin/edge
 
-### To start pipeline on SDCe start
+### To start pipeline on SDC Edge start
 
-    <SDCe_home>/bin/edge -start=<pipelineId>
+    <SDC Edge_home>/bin/edge -start=<pipelineId>
 
 ### To pass runtime parameters
 
-    <SDCe_home>/bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    <SDC Edge_home>/bin/edge -start=tailFileToHttp -runtimeParameters='{"filePath":"/tmp/sds.log","httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 ### To enable DEBUG Log Level
 
-    <SDCe_home>/bin/edge -debug -start=tailFileToHttp
+    <SDC Edge_home>/bin/edge -debug -start=tailFileToHttp
 
 ### To enable logging to console
 
-    <SDCe_home>/bin/edge -logToConsole
+    <SDC Edge_home>/bin/edge -logToConsole
 
-## SDCe Logs
+## SDC Edge Logs
 
-    <SDCe_home>/log/edge.log
+    <SDC Edge_home>/log/edge.log
 
 
-## SDCe commands via REST API
+## SDC Edge commands via REST API
 
 ### List all pipelines
     curl -X POST http://localhost:18633/rest/v1/pipelines

@@ -2,14 +2,14 @@
 
 ### To start pipeline on SDE start
 
-    <SDCe_home>/bin/edge -start=windowsEventToHttp
+    <SDC Edge_home>/bin/edge -start=windowsEventToHttp
 
 ### To pass runtime parameters
 
-    <SDCe_home>/bin/edge -start=windowsEventToHttp -runtimeParameters='{"logName":"System", "httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    <SDC Edge_home>/bin/edge -start=windowsEventToHttp -runtimeParameters='{"logName":"System", "httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
 
 
-## SDCe commands via REST API
+## SDC Edge commands via REST API
 
 ### Start Pipeline
     curl -X POST http://localhost:18633/rest/v1/pipeline/windowsEventToHttp/start
@@ -30,9 +30,9 @@
 ###Note
   In Windows command line, make sure to escape double quotes properly in runtime parameters/curl commands
 
-## SDCe Sending Pipeline
+## SDC Edge Sending Pipeline
 
-![Image of SDCe Sending Pipeline](edge.png)
+![Image of SDC Edge Sending Pipeline](edge.png)
 
 
 ## SDC Receiving Pipeline

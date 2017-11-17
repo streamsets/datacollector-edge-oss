@@ -2,13 +2,13 @@
 
 ### To start pipeline on SDE start
 
-    <SDCe_home>/bin/edge -start=randomToMqtt
+    <SDC Edge_home>/bin/edge -start=randomToMqtt
 
 ### To pass runtime parameters
 
-    <SDCe_home>/bin/edge -start=randomToMqtt -runtimeParameters='{"mqttClientId":"sdeMqttPublisher","mqttBrokerUrl":"tcp://localhost:1883","mqttTopic":"sample"}'
+    <SDC Edge_home>/bin/edge -start=randomToMqtt -runtimeParameters='{"mqttClientId":"sdeMqttPublisher","mqttBrokerUrl":"tcp://localhost:1883","mqttTopic":"sample"}'
 
-## SDCe commands via REST API
+## SDC Edge commands via REST API
 
 ### Start Pipeline
     curl -X POST http://localhost:18633/rest/v1/pipeline/randomToMqtt/start
@@ -26,9 +26,9 @@
     curl -X POST http://localhost:18633/rest/v1/pipeline/randomToMqtt/stop
 
 
-## SDCe Sending Pipeline
+## SDC Edge Sending Pipeline
 
-![Image of SDCe Sending Pipeline](edge.png)
+![Image of SDC Edge Sending Pipeline](edge.png)
 
 
 ## SDC Receiving Pipeline

@@ -74,7 +74,7 @@ func RegisterWithDPM(
 		var registrationUrl = dpmConfig.BaseUrl + REGISTRATION_URL_PATH
 
 		req, err := http.NewRequest("POST", registrationUrl, bytes.NewBuffer(jsonValue))
-		req.Header.Set(common.HEADER_X_REST_CALL, "SDCe")
+		req.Header.Set(common.HEADER_X_REST_CALL, "SDC Edge")
 		req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
 
 		client := &http.Client{}
