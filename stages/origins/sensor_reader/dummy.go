@@ -13,14 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package origins
+package sensor_reader
 
-import (
-	_ "github.com/streamsets/datacollector-edge/stages/origins/dev_random"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/filetail"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/httpserver"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/mqtt"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/sensor_reader"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/spooler"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/windows"
-)
+// Place holder so as not to fail builds on other platforms
