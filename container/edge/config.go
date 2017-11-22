@@ -17,7 +17,7 @@ package edge
 
 import (
 	"github.com/BurntSushi/toml"
-	"github.com/streamsets/datacollector-edge/container/dpm"
+	"github.com/streamsets/datacollector-edge/container/controlhub"
 	"github.com/streamsets/datacollector-edge/container/execution"
 	"github.com/streamsets/datacollector-edge/container/http"
 	"github.com/streamsets/datacollector-edge/container/process"
@@ -28,7 +28,7 @@ import (
 type Config struct {
 	Execution execution.Config
 	Http      http.Config
-	DPM       dpm.Config
+	SCH       controlhub.Config
 	Process   process.Config
 }
 
@@ -37,7 +37,7 @@ func NewConfig() *Config {
 	c := &Config{}
 	c.Execution = execution.NewConfig()
 	c.Http = http.NewConfig()
-	c.DPM = dpm.NewConfig()
+	c.SCH = controlhub.NewConfig()
 	c.Process = process.NewConfig()
 	return c
 }

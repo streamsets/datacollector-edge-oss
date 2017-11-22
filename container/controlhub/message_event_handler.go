@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dpm
+package controlhub
 
 import (
 	"bytes"
@@ -36,7 +36,7 @@ const (
 )
 
 type MessageEventHandler struct {
-	dpmConfig                        Config
+	schConfig                        Config
 	buildInfo                        *common.BuildInfo
 	runtimeInfo                      *common.RuntimeInfo
 	manager                          manager.Manager
@@ -47,8 +47,8 @@ type MessageEventHandler struct {
 }
 
 func (m *MessageEventHandler) Init() {
-	if m.dpmConfig.Enabled && m.dpmConfig.AppAuthToken != "" {
-		ticker := time.NewTicker(time.Duration(m.dpmConfig.PingFrequency) * time.Millisecond)
+	if m.schConfig.Enabled && m.schConfig.AppAuthToken != "" {
+		ticker := time.NewTicker(time.Duration(m.schConfig.PingFrequency) * time.Millisecond)
 		m.quitSendingEventToDPM = make(chan bool)
 		go func() {
 			err := m.SendEvent(true)
@@ -82,7 +82,7 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 	}
 
 	if m.sendingPipelineStatusElapsedTime.IsZero() ||
-		time.Since(m.sendingPipelineStatusElapsedTime).Seconds()*1e3 > float64(m.dpmConfig.StatusEventsInterval) {
+		time.Since(m.sendingPipelineStatusElapsedTime).Seconds()*1e3 > float64(m.schConfig.StatusEventsInterval) {
 		log.Println("[DEBUG] Send Pipeline Status Event")
 
 		pipelineInfoList, err := m.pipelineStoreTask.GetPipelines()
@@ -129,7 +129,7 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 		pipelineStatusEventListJson, _ := json.Marshal(pipelineStatusEvents)
 		pipelineStatusEvent := &ClientEvent{
 			EventId:      uuid.NewV4().String(),
-			Destinations: []string{m.dpmConfig.EventsRecipient},
+			Destinations: []string{m.schConfig.EventsRecipient},
 			RequiresAck:  false,
 			IsAckEvent:   false,
 			EventTypeId:  STATUS_MULTIPLE_PIPELINES,
@@ -146,9 +146,9 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 		return err
 	}
 
-	var eventsUrl = m.dpmConfig.BaseUrl + MESSAGING_URL_PATH
+	var eventsUrl = m.schConfig.BaseUrl + MESSAGING_URL_PATH
 	req, err := http.NewRequest("POST", eventsUrl, bytes.NewBuffer(jsonValue))
-	req.Header.Set(common.HEADER_X_APP_AUTH_TOKEN, m.dpmConfig.AppAuthToken)
+	req.Header.Set(common.HEADER_X_APP_AUTH_TOKEN, m.schConfig.AppAuthToken)
 	req.Header.Set(common.HEADER_X_APP_COMPONENT_ID, m.runtimeInfo.ID)
 	req.Header.Set(common.HEADER_X_REST_CALL, "true")
 	req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
@@ -198,7 +198,7 @@ func (m *MessageEventHandler) createSdcEdgeInfoEvent() *ClientEvent {
 		HttpUrl:       m.runtimeInfo.HttpUrl,
 		GoVersion:     runtime.Version(),
 		EdgeBuildInfo: m.buildInfo,
-		Labels:        m.dpmConfig.JobLabels,
+		Labels:        m.schConfig.JobLabels,
 		Edge:          true,
 	}
 
@@ -206,7 +206,7 @@ func (m *MessageEventHandler) createSdcEdgeInfoEvent() *ClientEvent {
 
 	sdcEdgeInfoEvent := &ClientEvent{
 		EventId:      m.runtimeInfo.HttpUrl,
-		Destinations: []string{m.dpmConfig.EventsRecipient},
+		Destinations: []string{m.schConfig.EventsRecipient},
 		RequiresAck:  false,
 		IsAckEvent:   false,
 		EventTypeId:  SDC_INFO_EVENT,
@@ -386,7 +386,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 
 		ackClientEvent = &ClientEvent{
 			EventId:      serverEvent.EventId,
-			Destinations: []string{m.dpmConfig.EventsRecipient},
+			Destinations: []string{m.schConfig.EventsRecipient},
 			RequiresAck:  false,
 			IsAckEvent:   true,
 			EventTypeId:  ACK_EVENT,
@@ -402,14 +402,14 @@ func (m *MessageEventHandler) Shutdown() {
 }
 
 func NewMessageEventHandler(
-	dpmConfig Config,
+	schConfig Config,
 	buildInfo *common.BuildInfo,
 	runtimeInfo *common.RuntimeInfo,
 	pipelineStoreTask store.PipelineStoreTask,
 	manager manager.Manager,
 ) *MessageEventHandler {
 	messagingEventHandler := &MessageEventHandler{
-		dpmConfig:         dpmConfig,
+		schConfig:         schConfig,
 		buildInfo:         buildInfo,
 		runtimeInfo:       runtimeInfo,
 		manager:           manager,

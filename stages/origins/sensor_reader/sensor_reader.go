@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
- // Development Only Origin
- // Supported only for Linux ARM
+// Development Only Origin
+// Supported only for Linux ARM
 
 package sensor_reader
 

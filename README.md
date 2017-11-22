@@ -38,17 +38,17 @@ If you need help with production systems, you can check out the variety of suppo
 
 
 # Useful resources
-* [Nightly Builds](http://nightly.streamsets.com/latest/tarball/SDC Edge/)
+* [Nightly Builds](http://nightly.streamsets.com/latest/tarball/SDCe)
 * [Quickstart](QUICKSTART.md)
 * [Building StreamSets Data Collector Edge](BUILD.md)
 * [StreamSets Data Collector Edge Documentation](http://streamsets.com/docs)
 
 
 ## Sample Pipelines
-
 * [Windows Event To Http](data/pipelines/windowsEventToHttp)
 * [Tail File To Http](data/pipelines/tailFileToHttp)
 * [Directory Spooler to Http](data/pipelines/directoryToHttp)
+* [Bosch BME280 Humidity, Barometric Pressure, Temperature Sensor data to HTTP](data/pipelines/sensorBME280ToHttp)
 * [MQTT To HTTP](data/pipelines/mqttToHttp)
 * [Random Data to MQTT](data/pipelines/randomToMqtt)
 * [Random Data to CoAP](data/pipelines/randomToCoap)
