@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dpm
+package controlhub
 
 import (
 	"bytes"
@@ -45,11 +45,11 @@ type RegistrationData struct {
 }
 
 func RegisterWithDPM(
-	dpmConfig Config,
+	schConfig Config,
 	buildInfo *common.BuildInfo,
 	runtimeInfo *common.RuntimeInfo,
 ) {
-	if dpmConfig.Enabled && dpmConfig.AppAuthToken != "" {
+	if schConfig.Enabled && schConfig.AppAuthToken != "" {
 		attributes := Attributes{
 			BaseHttpUrl:     runtimeInfo.HttpUrl,
 			Sdc2GoGoVersion: runtime.Version(),
@@ -61,7 +61,7 @@ func RegisterWithDPM(
 		}
 
 		registrationData := RegistrationData{
-			AuthToken:   dpmConfig.AppAuthToken,
+			AuthToken:   schConfig.AppAuthToken,
 			ComponentId: runtimeInfo.ID,
 			Attributes:  attributes,
 		}
@@ -71,7 +71,7 @@ func RegisterWithDPM(
 			log.Println(err)
 		}
 
-		var registrationUrl = dpmConfig.BaseUrl + REGISTRATION_URL_PATH
+		var registrationUrl = schConfig.BaseUrl + REGISTRATION_URL_PATH
 
 		req, err := http.NewRequest("POST", registrationUrl, bytes.NewBuffer(jsonValue))
 		req.Header.Set(common.HEADER_X_REST_CALL, "SDC Edge")
@@ -89,7 +89,7 @@ func RegisterWithDPM(
 			panic("DPM Registration failed")
 		}
 		runtimeInfo.DPMEnabled = true
-		runtimeInfo.AppAuthToken = dpmConfig.AppAuthToken
+		runtimeInfo.AppAuthToken = schConfig.AppAuthToken
 	} else {
 		runtimeInfo.DPMEnabled = false
 	}

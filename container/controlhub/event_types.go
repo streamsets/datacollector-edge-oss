@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dpm
+package controlhub
 
 import "github.com/streamsets/datacollector-edge/container/common"
 

@@ -19,7 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/streamsets/datacollector-edge/container/common"
-	"github.com/streamsets/datacollector-edge/container/dpm"
+	"github.com/streamsets/datacollector-edge/container/controlhub"
 	"github.com/streamsets/datacollector-edge/container/execution/manager"
 	"github.com/streamsets/datacollector-edge/container/http"
 	"github.com/streamsets/datacollector-edge/container/process"
@@ -46,7 +46,7 @@ type DataCollectorEdgeMain struct {
 	PipelineStoreTask      store.PipelineStoreTask
 	Manager                manager.Manager
 	processManager         process.Manager
-	DPMMessageEventHandler *dpm.MessageEventHandler
+	DPMMessageEventHandler *controlhub.MessageEventHandler
 }
 
 func DoMain(
@@ -117,12 +117,12 @@ func newDataCollectorEdge(baseDir string, debugFlag bool, logToConsoleFlag bool)
 	}
 
 	webServerTask, _ := http.NewWebServerTask(config.Http, buildInfo, pipelineManager, pipelineStoreTask, processManager)
-	dpm.RegisterWithDPM(config.DPM, buildInfo, runtimeInfo)
+	controlhub.RegisterWithDPM(config.SCH, buildInfo, runtimeInfo)
 
-	var messagingEventHandler *dpm.MessageEventHandler
+	var messagingEventHandler *controlhub.MessageEventHandler
 	if runtimeInfo.DPMEnabled {
-		messagingEventHandler = dpm.NewMessageEventHandler(
-			config.DPM,
+		messagingEventHandler = controlhub.NewMessageEventHandler(
+			config.SCH,
 			buildInfo, runtimeInfo,
 			pipelineStoreTask,
 			pipelineManager,
