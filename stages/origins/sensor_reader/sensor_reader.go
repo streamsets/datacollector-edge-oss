@@ -75,7 +75,7 @@ func (s *SensorReaderOrigin) Init(stageContext api.StageContext) error {
 	i2cAddressHex, err := strconv.ParseUint(s.Conf.I2cAddress, 0, 16)
 
 	if _, err := host.Init(); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Open a handle to the first available I²C bus:
@@ -104,7 +104,8 @@ func (s *SensorReaderOrigin) Produce(
 		var err error
 		var env devices.Environment
 		if err = s.dev.Sense(&env); err != nil {
-			log.Fatal(err)
+			log.Printf("[ERROR] Failed to read data from sensor: %s", err)
+			return "", err
 		}
 		fmt.Printf("%8s %10s %9s\n", env.Temperature, env.Pressure, env.Humidity)
 
@@ -112,11 +113,11 @@ func (s *SensorReaderOrigin) Produce(
 		recordValue["temperature_C"] = env.Temperature.Float64()
 		recordValue["pressure_KPa"] = env.Pressure.Float64()
 		recordValue["humidity"] = env.Humidity.Float64()
-		record, err := s.GetStageContext().CreateRecord("sensorReader", recordValue)
-		if err != nil {
-			panic(err)
+		if record, err := s.GetStageContext().CreateRecord("sensorReader", recordValue); err == nil {
+			batchMaker.AddRecord(record)
+		} else {
+			s.GetStageContext().ToError(err, record)
 		}
-		batchMaker.AddRecord(record)
 	}
 	return "sensorReader", nil
 }
