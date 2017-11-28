@@ -12,12 +12,17 @@
   limitations under the License. See accompanying LICENSE file.
 --->
 
+<img style="width:100%;" src="sdcEdgeSplash.png">
+
 What is StreamSets Data Collector Edge?
 -----------
 
-Data Collector Edge (SDC Edge) is a light-weight agent that runs pipelines on edge devices with limited resources.
+The StreamSets Data Collector Edge (SDC Edge) enables at-scale data ingestion and analytics for edge systems.
+An ultralight, small-footprint agent, it is an ideal solution for use cases like Internet of Things (IoT) or
+cybersecurity applications that collect data from resource-constrained sensors and personal devices.
 
-To learn more, check out [http://streamsets.com](http://streamsets.com)
+
+To learn more, check out [https://streamsets.com/products/streamsets-data-collector-edge](https://streamsets.com/products/streamsets-data-collector-edge)
 
 License
 ------
