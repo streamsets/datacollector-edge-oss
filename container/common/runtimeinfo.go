@@ -17,8 +17,8 @@ package common
 
 import (
 	"github.com/satori/go.uuid"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"os"
 )
 

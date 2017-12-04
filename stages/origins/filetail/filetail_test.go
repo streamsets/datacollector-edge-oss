@@ -16,12 +16,12 @@
 package filetail
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"testing"

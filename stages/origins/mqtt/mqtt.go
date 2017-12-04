@@ -17,11 +17,11 @@ package mqtt
 
 import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	mqttlib "github.com/streamsets/datacollector-edge/stages/lib/mqtt"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
-	"log"
 	"strconv"
 )
 
@@ -58,7 +58,7 @@ func (ms *MqttClientSource) getTopicFilterAndQosMap() map[string]byte {
 }
 
 func (ms *MqttClientSource) Init(stageContext api.StageContext) error {
-	log.Println("[DEBUG] MqttClientSource Init method")
+	log.Debug("MqttClientSource Init method")
 	if err := ms.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
@@ -82,14 +82,14 @@ func (ms *MqttClientSource) Produce(
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
 ) (string, error) {
-	log.Println("[DEBUG] MqttClientSource - Produce method")
+	log.Debug("MqttClientSource - Produce method")
 	record := <-ms.incomingRecords
 	batchMaker.AddRecord(record)
 	return "", nil
 }
 
 func (ms *MqttClientSource) Destroy() error {
-	log.Println("[DEBUG] MqttClientSource - Destroy method")
+	log.Debug("MqttClientSource - Destroy method")
 	ms.Client.Unsubscribe(ms.SubscriberConf.TopicFilters...).Wait()
 	ms.Client.Disconnect(250)
 	//Close channel after unsubscribe and disconnect
@@ -100,7 +100,7 @@ func (ms *MqttClientSource) Destroy() error {
 func (md *MqttClientSource) MessageHandler(client MQTT.Client, msg MQTT.Message) {
 	value := string(msg.Payload())
 	msgId := strconv.FormatUint(uint64(msg.MessageID()), 10)
-	log.Println("[DEBUG] Incoming Data: ", value)
+	log.WithField("value", value).Debug("Incoming Data")
 	record, _ := md.GetStageContext().CreateRecord(msgId, value)
 	md.incomingRecords <- record
 }

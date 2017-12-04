@@ -17,7 +17,7 @@ package util
 
 import (
 	"github.com/rcrowley/go-metrics"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -77,7 +77,7 @@ func FormatMetricsRegistry(r metrics.Registry) MetricsJson {
 	timers := make(map[string]map[string]interface{})
 
 	r.Each(func(name string, i interface{}) {
-		log.Println("[DEBUG] Metrics:" + name)
+		log.Debug("Metrics:" + name)
 		values := make(map[string]interface{})
 		switch metric := i.(type) {
 		case metrics.Counter:

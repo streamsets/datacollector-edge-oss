@@ -21,11 +21,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/satori/go.uuid"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/execution/manager"
 	"github.com/streamsets/datacollector-edge/container/store"
 	"io"
-	"log"
 	"net/http"
 	"runtime"
 	"time"
@@ -53,14 +53,14 @@ func (m *MessageEventHandler) Init() {
 		go func() {
 			err := m.SendEvent(true)
 			if err != nil {
-				log.Println("[ERROR] ", err)
+				log.WithError(err).Error()
 			}
 			for {
 				select {
 				case <-ticker.C:
 					err := m.SendEvent(false)
 					if err != nil {
-						log.Println("[ERROR] ", err)
+						log.WithError(err).Error()
 					}
 				case <-m.quitSendingEventToDPM:
 					ticker.Stop()
@@ -83,7 +83,7 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 
 	if m.sendingPipelineStatusElapsedTime.IsZero() ||
 		time.Since(m.sendingPipelineStatusElapsedTime).Seconds()*1e3 > float64(m.schConfig.StatusEventsInterval) {
-		log.Println("[DEBUG] Send Pipeline Status Event")
+		log.Debug("Send Pipeline Status Event")
 
 		pipelineInfoList, err := m.pipelineStoreTask.GetPipelines()
 		if err != nil {
@@ -98,12 +98,12 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 			if runner != nil {
 				sourceOffset, err := runner.GetOffset()
 				if err != nil {
-					log.Println("[ERROR] ", err)
+					log.WithError(err).Error()
 					return err
 				}
 				offsetJson, err := json.Marshal(sourceOffset)
 				if err != nil {
-					log.Println("[ERROR] ", err)
+					log.WithError(err).Error()
 					return err
 				}
 
@@ -142,7 +142,7 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 
 	jsonValue, err := json.Marshal(clientEventList)
 	if err != nil {
-		log.Println("[ERROR] ", err)
+		log.WithError(err).Error()
 		return err
 	}
 
@@ -159,7 +159,7 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 		return err
 	}
 
-	log.Println("[DEBUG] DPM Event Status:", resp.Status)
+	log.WithField("status", resp.Status).Debug("DPM Event Status")
 	if resp.StatusCode != 200 {
 		return errors.New("DPM Send event failed")
 	}
@@ -234,7 +234,7 @@ func (m *MessageEventHandler) createPipelineStatusEvent(
 }
 
 func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEvent {
-	log.Printf("[DEBUG] Handling DPM Events: %d", serverEvent.EventTypeId)
+	log.Debug("Handling DPM Events: %d", serverEvent.EventTypeId)
 
 	var ackEventMessage string
 	ackEventStatus := ACK_EVENT_SUCCESS
@@ -245,7 +245,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err := json.Unmarshal([]byte(serverEvent.Payload), &pipelineSaveEvent); err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.Println("[Error] Error during handling DPM SAVE Pipeline Event:", err)
+			log.WithError(err).Error("Error during handling DPM SAVE Pipeline Event")
 			break
 		}
 
@@ -254,7 +254,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 			&pipelineConfiguration); err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.Println("[Error] Error during handling DPM SAVE Pipeline Event:", err)
+			log.WithError(err).Error("Error during handling DPM SAVE Pipeline Event")
 			break
 		}
 
@@ -267,7 +267,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.Println("[Error] Error during handling DPM SAVE Pipeline Event:", err)
+			log.WithError(err).Error("Error during handling DPM SAVE Pipeline Event")
 			break
 		}
 
@@ -277,23 +277,23 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.Println("[Error] Error during handling DPM SAVE Pipeline Event:", err)
+			log.WithError(err).Error("Error during handling DPM SAVE Pipeline Event")
 			break
 		}
 
 		// Update offset
 		runner := m.manager.GetRunner(pipelineSaveEvent.Name)
 		if runner != nil && len(pipelineSaveEvent.Offset) > 0 {
-			log.Println("[DEBUG] Updating offset:", pipelineSaveEvent.Offset)
+			log.Debug("Updating offset:", pipelineSaveEvent.Offset)
 
 			var sourceOffset common.SourceOffset
 			err := json.Unmarshal([]byte(pipelineSaveEvent.Offset), &sourceOffset)
 			if err != nil {
-				log.Println("[Error] Error during desrializing offset:", err)
+				log.WithError(err).Error("Error de-serializing offset")
 			} else {
 				err = runner.CommitOffset(sourceOffset)
 				if err != nil {
-					log.Println("[Error] Error during updating offset:", err)
+					log.WithError(err).Error("Error updating offset")
 				}
 			}
 		}
@@ -302,7 +302,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err := json.Unmarshal([]byte(serverEvent.Payload), &pipelineBaseEvent); err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.Println("[Error] Error during handling DPM Start Pipeline Event:", err)
+			log.WithError(err).Error("Error handling DPM Start Pipeline Event")
 			break
 		}
 
@@ -310,7 +310,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.Println("[Error] Error during handling DPM Start Pipeline Event:", err)
+			log.WithError(err).Error("Error handling DPM Start Pipeline Event")
 			break
 		}
 	case STOP_PIPELINE:
@@ -318,7 +318,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err := json.Unmarshal([]byte(serverEvent.Payload), &pipelineBaseEvent); err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.Println("[Error] Error during handling DPM Stop Pipeline Event:", err)
+			log.WithError(err).Error("Error handling DPM Stop Pipeline Event")
 			break
 		}
 
@@ -326,7 +326,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.Println("[Error] Error during handling DPM Stop Pipeline Event:", err)
+			log.WithError(err).Error("Error handling DPM Stop Pipeline Event")
 			break
 		}
 	case VALIDATE_PIPELINE:
@@ -337,7 +337,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err := json.Unmarshal([]byte(serverEvent.Payload), &pipelineBaseEvent); err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.Println("[Error] Error during handling DPM Delete Pipeline Event:", err)
+			log.WithError(err).Error("Error handling DPM Delete Pipeline Event")
 			break
 		}
 
@@ -345,7 +345,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.Println("[Error] Error during handling DPM Delete Pipeline Event:", err)
+			log.WithError(err).Error("Error handling DPM Delete Pipeline Event")
 			break
 		}
 	case STOP_DELETE_PIPELINE:
@@ -353,7 +353,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err := json.Unmarshal([]byte(serverEvent.Payload), &pipelineBaseEvent); err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.Println("[Error] Error during handling DPM Start Pipeline Event:", err)
+			log.WithError(err).Error("Error handling DPM Start Pipeline Event")
 			break
 		}
 
@@ -361,7 +361,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.Println("[Error] Error during handling DPM Stop Delete Pipeline Event:", err)
+			log.WithError(err).Error("Error handling DPM Stop Delete Pipeline Event")
 			break
 		}
 
@@ -369,7 +369,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.Println("[Error] Error during handling DPM Stop Delete Pipeline Event:", err)
+			log.WithError(err).Error("Error handling DPM Stop Delete Pipeline Event")
 			break
 		}
 	default:

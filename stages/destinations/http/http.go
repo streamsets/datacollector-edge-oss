@@ -21,12 +21,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io/ioutil"
-	"log"
 	"net/http"
 )
 
@@ -70,12 +70,12 @@ func (h *HttpClientDestination) Init(stageContext api.StageContext) error {
 	if err = h.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] HttpClientDestination Init method")
+	log.Debug("HttpClientDestination Init method")
 	return h.Conf.DataGeneratorFormatConfig.Init(h.Conf.DataFormat)
 }
 
 func (h *HttpClientDestination) Write(batch api.Batch) error {
-	log.Println("[DEBUG] HttpClientDestination write method")
+	log.Debug("HttpClientDestination write method")
 	if h.Conf.SingleRequestPerBatch && len(batch.GetRecords()) > 0 {
 		return h.writeSingleRequestPerBatch(batch)
 	} else {
@@ -178,7 +178,7 @@ func (h *HttpClientDestination) sendToSDC(jsonValue []byte) error {
 	}
 	defer resp.Body.Close()
 
-	log.Println("[DEBUG] response Status:", resp.Status)
+	log.WithField("status", resp.Status).Debug("Response status")
 	if resp.StatusCode != 200 {
 		return errors.New(resp.Status)
 	}

@@ -17,10 +17,10 @@ package runner
 
 import (
 	"github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/execution"
 	"github.com/streamsets/datacollector-edge/container/util"
 	"github.com/streamsets/datacollector-edge/container/validation"
-	"log"
 	"time"
 )
 
@@ -103,7 +103,7 @@ func (s *StagePipe) Init() []validation.Issue {
 }
 
 func (s *StagePipe) Process(pipeBatch *FullPipeBatch) error {
-	log.Println("[DEBUG] Processing Stage - " + s.Stage.config.InstanceName)
+	log.WithField("stage", s.Stage.config.InstanceName).Debug("Processing Stage")
 	start := time.Now()
 	batchMaker := pipeBatch.StartStage(*s)
 	batchImpl := pipeBatch.GetBatch(*s)

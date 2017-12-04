@@ -16,11 +16,11 @@
 package httpserver
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -62,7 +62,7 @@ func (h *HttpServerOrigin) Destroy() error {
 	if err := h.httpServer.Shutdown(nil); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] HTTP Server - server shutdown successfully")
+	log.Debug("HTTP Server - server shutdown successfully")
 	return nil
 }
 
@@ -71,9 +71,9 @@ func (h *HttpServerOrigin) Produce(
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
 ) (string, error) {
-	log.Println("[DEBUG] HTTP Server - Produce method")
+	log.Debug("HTTP Server - Produce method")
 	value := <-h.incomingData
-	log.Println("[DEBUG] Incoming Data: ", value)
+	log.WithField("value", value).Debug("Incoming Data")
 	record, _ := h.GetStageContext().CreateRecord(time.Now().String(), value)
 	batchMaker.AddRecord(record)
 	return "", nil
@@ -82,7 +82,7 @@ func (h *HttpServerOrigin) Produce(
 func (h *HttpServerOrigin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Println("[DEBUG] HTTP Server error reading request body : ", err)
+		log.WithError(err).Error("HTTP Server error reading request body")
 		h.GetStageContext().ReportError(err)
 	} else {
 		h.incomingData <- string(body)
@@ -96,9 +96,9 @@ func (h *HttpServerOrigin) startHttpServer() *http.Server {
 	}
 
 	go func() {
-		log.Println("[DEBUG] HTTP Server - Running on URI : http://localhost:", h.HttpConfigs.Port)
+		log.Debug("HTTP Server - Running on URI : http://localhost:", h.HttpConfigs.Port)
 		if err := srv.ListenAndServe(); err != nil {
-			log.Printf("[ERROR] Httpserver: ListenAndServe() error: %s", err)
+			log.WithError(err).Error("HttpServer: ListenAndServe() error")
 			h.GetStageContext().ReportError(err)
 		}
 	}()

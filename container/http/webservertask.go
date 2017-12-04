@@ -20,12 +20,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/execution/manager"
 	"github.com/streamsets/datacollector-edge/container/process"
 	"github.com/streamsets/datacollector-edge/container/store"
 	"github.com/streamsets/datacollector-edge/container/util"
-	"log"
 	"net/http"
 	"net/http/pprof"
 )
@@ -41,7 +41,7 @@ type WebServerTask struct {
 
 func (webServerTask *WebServerTask) Init() error {
 	fmt.Println("Running on URI : http://localhost" + webServerTask.config.BindAddress)
-	log.Println("[INFO] Running on URI : http://localhost" + webServerTask.config.BindAddress)
+	log.Info("Running on URI : http://localhost" + webServerTask.config.BindAddress)
 
 	router := httprouter.New()
 	router.GET("/", webServerTask.homeHandler)
@@ -92,7 +92,7 @@ func (webServerTask *WebServerTask) Run() {
 func (webServerTask *WebServerTask) Shutdown() {
 	err := webServerTask.httpServer.Shutdown(context.Background())
 	if err != nil {
-		log.Printf("[ERROR] Error happened when shutting webserver : %s\n", err.Error())
+		log.WithError(err).Error("Error happened when shutting down web server")
 	}
 }
 

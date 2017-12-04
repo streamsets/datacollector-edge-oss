@@ -17,9 +17,9 @@ package runner
 
 import (
 	"github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/execution"
-	"log"
 )
 
 const (
@@ -33,7 +33,7 @@ type ProductionPipeline struct {
 }
 
 func (p *ProductionPipeline) Run() {
-	log.Println("[DEBUG] Production Pipeline Run")
+	log.Debug("Production Pipeline Run")
 	issues := p.Pipeline.Init()
 	if len(issues) == 0 {
 		p.Pipeline.Run()
@@ -45,7 +45,7 @@ func (p *ProductionPipeline) Run() {
 }
 
 func (p *ProductionPipeline) Stop() {
-	log.Println("[DEBUG] Production Pipeline Stop")
+	log.Debug("Production Pipeline Stop")
 	p.Pipeline.Stop()
 }
 

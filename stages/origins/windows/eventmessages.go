@@ -22,7 +22,7 @@ package windows
 import (
 	"bytes"
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
 	"strings"
@@ -60,23 +60,23 @@ func replaceEnvVars(value string) string {
 func replaceTokens(value string, tokenSpecialChar string, tokens map[string]string) string {
 	if strings.Contains(value, tokenSpecialChar) {
 		origValue := value
-		log.Printf("ResourceLibraries - About to expand '%s' with %v", origValue, tokens)
+		log.Infof("ResourceLibraries - About to expand '%s' with %v", origValue, tokens)
 		for k, v := range tokens {
 			if strings.Contains(value, k) {
 				value = strings.Replace(value, k, v, -1)
 			}
 		}
-		log.Printf("ResourceLibraries - Expansion from='%s' to='%s'", origValue, value)
+		log.Infof("ResourceLibraries - Expansion from='%s' to='%s'", origValue, value)
 	}
 	return value
 }
 
 func loadResourceLibrary(libname string) (handle syscall.Handle, err error) {
-	log.Printf("[DEBUG] ResourceLibraries - Trying to load %s", libname)
+	log.WithField("libname", libname).Debug("ResourceLibraries - Loading")
 	//win32: LOAD_LIBRARY_AS_IMAGE_RESOURCE | LOAD_LIBRARY_AS_DATAFILE
 	var loadMode uintptr = 0x00000002 | 0x00000020
 	handle, err = loadLibraryEx(libname, loadMode)
-	log.Printf("[DEBUG] ResourceLibraries - Loaded %s %t", libname, handle != 0)
+	log.WithFields(log.Fields{"libname": libname, "loaded": handle != 0}).Debug("ResourceLibraries - Loaded")
 	return
 }
 
@@ -92,7 +92,7 @@ func findLibNames(logName, appName string) (libs map[string]string, err error) {
 	if entries, err := ReadFromRegistryKey(key, registryEntries); err == nil {
 		return entries, nil
 	} else {
-		log.Printf("[WARN] ResourceLibraries - Application=%s could not find libraries under key=%s, error: %v", appName, key, err)
+		log.Warnf("ResourceLibraries - Application=%s could not find libraries under key=%s, error: %v", appName, key, err)
 		return nil, err
 	}
 }
@@ -101,13 +101,13 @@ func getResourceLibraries(logName, appName string) map[string]syscall.Handle {
 	librariesLock.RLock()
 	if handles, found := appLibraries[appName]; found {
 		librariesLock.RUnlock()
-		log.Printf("[DEBUG] ResourceLibraries - Application=%s libraries found (arleady in cache), %v", appName, handles)
+		log.Debugf("ResourceLibraries - Application=%s libraries found (already in cache), %v", appName, handles)
 		return handles
 	} else {
 		librariesLock.RUnlock()
-		log.Printf("[DEBUG] ResourceLibraries - LogName=%s Application=%s looking for libraries", logName, appName)
+		log.Debugf("ResourceLibraries - LogName=%s Application=%s looking for libraries", logName, appName)
 		libNames, err := findLibNames(logName, appName)
-		log.Printf("[DEBUG] ResourceLibraries - Application=%s uses libraries=%v", appName, libNames)
+		log.Debugf("ResourceLibraries - Application=%s uses libraries=%v", appName, libNames)
 		handles = make(map[string]syscall.Handle)
 		librariesLock.Lock()
 		defer librariesLock.Unlock()
@@ -116,15 +116,15 @@ func getResourceLibraries(logName, appName string) map[string]syscall.Handle {
 				if len(libName) > 0 {
 					libName = replaceEnvVars(libName)
 					if handle, found := libraries[libName]; found {
-						log.Printf("[DEBUG] ResourceLibraries - LibType=%s Application='%s' found library=%s handle in library cache",
+						log.Debugf("ResourceLibraries - LibType=%s Application='%s' found library=%s handle in library cache",
 							libType, appName, libName)
 						handles[libType] = handle
 					} else if handle, err := loadResourceLibrary(libName); err == nil {
-						log.Printf("[DEBUG] ResourceLibraries - Application=%s loaded library=%s handle", appName, libName)
+						log.Debugf("ResourceLibraries - Application=%s loaded library=%s handle", appName, libName)
 						libraries[libName] = handle
 						handles[libType] = handle
 					} else {
-						log.Printf("[DEBUG] ResourceLibraries - Application=%s library=%s handle could not be loaded, error=%v "+
+						log.Debugf("ResourceLibraries - Application=%s library=%s handle could not be loaded, error=%v "+
 							"setting NIL", appName, libName, err)
 						libraries[libName] = 0
 						handles[libType] = 0
@@ -133,7 +133,7 @@ func getResourceLibraries(logName, appName string) map[string]syscall.Handle {
 			}
 		}
 		appLibraries[appName] = handles
-		log.Printf("[DEBUG] ResourceLibraries - Application=%s libraries found (added to cache), %v", appName, handles)
+		log.Debugf("ResourceLibraries - Application=%s libraries found (added to cache), %v", appName, handles)
 		return handles
 	}
 }
@@ -141,7 +141,7 @@ func getResourceLibraries(logName, appName string) map[string]syscall.Handle {
 func ReleaseResourceLibraries() {
 	librariesLock.Lock()
 	defer librariesLock.Unlock()
-	log.Printf("[DEBUG] ResourceLibraries - Releasing cached resource libraries, count=%d", len(libraries))
+	log.WithField("count", len(libraries)).Debug("ResourceLibraries - Releasing cached resource libraries")
 	for _, handle := range libraries {
 		syscall.FreeLibrary(handle)
 	}
@@ -159,7 +159,7 @@ func getMessageString(handle syscall.Handle, id uint32) (string, error) {
 	//using 0 as LANGID to trigger cascading lookup:
 	//   http://msdn.microsoft.com/en-us/library/windows/desktop/ms679351%28v=vs.85%29.aspx
 	n, err := syscall.FormatMessage(flags, uint32(handle), id, 0, buffer, dummyArgsRef)
-	log.Printf("[DEBUG] ResourceLibraries - FormatMessage handle=%d id=%d err=%v", handle, id, err)
+	log.Debugf("ResourceLibraries - FormatMessage handle=%d id=%d err=%v", handle, id, err)
 	if err != nil {
 		return "", fmt.Errorf("Message template not found, handle=%d id=%d", handle, id)
 	}
@@ -193,10 +193,10 @@ func messageF(value string, args []string) string {
 func findResourceString(logName string, libType string, event *EventLogRecord, resourceId uint32) string {
 	handles := getResourceLibraries(logName, event.SourceName)
 	if msgTemplate, err := getMessageString(handles[libType], resourceId); err == nil {
-		log.Printf("[DEBUG] ResourceLibraries - Found %s resource string for '%s' for resource %d: %s", libType, event.SourceName, resourceId, msgTemplate)
+		log.Debugf("ResourceLibraries - Found %s resource string for '%s' for resource %d: %s", libType, event.SourceName, resourceId, msgTemplate)
 		return msgTemplate
 	}
-	log.Printf("[DEBUG] ResourceLibraries - Did not find %s resource string for '%s' for resource %d", libType, event.SourceName, resourceId)
+	log.Debugf("ResourceLibraries - Did not find %s resource string for '%s' for resource %d", libType, event.SourceName, resourceId)
 	return ""
 }
 

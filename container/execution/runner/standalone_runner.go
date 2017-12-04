@@ -18,12 +18,12 @@ package runner
 import (
 	"errors"
 	"github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/execution"
 	"github.com/streamsets/datacollector-edge/container/execution/store"
 	pipelineStore "github.com/streamsets/datacollector-edge/container/store"
 	"github.com/streamsets/datacollector-edge/container/util"
-	"log"
 	"time"
 )
 
@@ -96,7 +96,7 @@ func (standaloneRunner *StandaloneRunner) GetMetrics() (metrics.Registry, error)
 func (standaloneRunner *StandaloneRunner) StartPipeline(
 	runtimeParameters map[string]interface{},
 ) (*common.PipelineState, error) {
-	log.Printf("[INFO] Starting pipeline %s", standaloneRunner.pipelineId)
+	log.WithField("id", standaloneRunner.pipelineId).Info("Starting pipeline")
 	var err error
 	err = standaloneRunner.checkState(common.STARTING)
 	if err != nil {
@@ -144,7 +144,7 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(
 }
 
 func (standaloneRunner *StandaloneRunner) StopPipeline() (*common.PipelineState, error) {
-	log.Printf("[INFO] Stopping pipeline %s", standaloneRunner.pipelineId)
+	log.WithField("id", standaloneRunner.pipelineId).Info("Stopping pipeline")
 	var err error
 	err = standaloneRunner.checkState(common.STOPPING)
 	if err != nil {

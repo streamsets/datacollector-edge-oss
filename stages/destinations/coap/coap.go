@@ -18,12 +18,12 @@ package coap
 import (
 	"bytes"
 	"github.com/dustin/go-coap"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"github.com/streamsets/datacollector-edge/container/recordio/jsonrecord"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
-	"log"
 	"net/url"
 )
 
@@ -65,7 +65,7 @@ func (c *CoapClientDestination) Init(stageContext api.StageContext) error {
 	if err := c.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] CoapClientDestination Init method")
+	log.Debug("CoapClientDestination Init method")
 	// TODO: Create RecordWriter based on configuration
 	c.recordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{}
 	mid = 0
@@ -73,7 +73,7 @@ func (c *CoapClientDestination) Init(stageContext api.StageContext) error {
 }
 
 func (c *CoapClientDestination) Write(batch api.Batch) error {
-	log.Println("[DEBUG] CoapClientDestination Write method")
+	log.Debug("CoapClientDestination Write method")
 	for _, record := range batch.GetRecords() {
 		err := c.sendRecordToSDC(record)
 		if err != nil {
@@ -117,7 +117,7 @@ func (c *CoapClientDestination) sendRecordToSDC(record api.Record) error {
 
 	_, err = coapClient.Send(req)
 	if err != nil {
-		log.Printf("[ERROR] Error sending request: %v", err)
+		log.WithError(err).Error("Error sending request")
 		return err
 	}
 

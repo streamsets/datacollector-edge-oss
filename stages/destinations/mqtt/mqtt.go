@@ -17,13 +17,13 @@ package mqtt
 
 import (
 	"bytes"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	mqttlib "github.com/streamsets/datacollector-edge/stages/lib/mqtt"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
-	"log"
 )
 
 const (
@@ -57,7 +57,7 @@ func init() {
 }
 
 func (md *MqttClientDestination) Init(stageContext api.StageContext) error {
-	log.Println("[DEBUG] MqttClientDestination Init method")
+	log.Debug("MqttClientDestination Init method")
 	if err := md.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (md *MqttClientDestination) Init(stageContext api.StageContext) error {
 }
 
 func (md *MqttClientDestination) Write(batch api.Batch) error {
-	log.Println("[DEBUG] MqttClientDestination write method")
+	log.Debug("MqttClientDestination write method")
 	var recordWriter recordio.RecordWriter = nil
 	nonErrorRecordsForWrite := make([]api.Record, 0)
 	recordValueBuffer := bytes.NewBuffer([]byte{})
@@ -79,7 +79,7 @@ func (md *MqttClientDestination) Write(batch api.Batch) error {
 	if recordWriter, err = md.PublisherConf.DataGeneratorFormatConfig.RecordWriterFactory.CreateWriter(md.GetStageContext(), recordValueBuffer); err == nil {
 		for _, record := range batch.GetRecords() {
 			if err = recordWriter.WriteRecord(record); err != nil {
-				log.Println("[Error] Error Writing Record", err)
+				log.WithError(err).Error("Error Writing Record")
 				md.GetStageContext().ToError(err, record)
 			} else {
 				nonErrorRecordsForWrite = append(nonErrorRecordsForWrite, record)
@@ -104,14 +104,14 @@ func (md *MqttClientDestination) Write(batch api.Batch) error {
 }
 
 func (md *MqttClientDestination) sendRecordsToError(records []api.Record, err error) {
-	log.Println("[Error] Error Writing records to destination", err)
+	log.WithError(err).Error("Error Writing records to destination")
 	for _, record := range records {
 		md.GetStageContext().ToError(err, record)
 	}
 }
 
 func (md *MqttClientDestination) Destroy() error {
-	log.Println("[DEBUG] MqttClientDestination Destroy method")
+	log.Debug("MqttClientDestination Destroy method")
 	md.Client.Disconnect(250)
 	return nil
 }

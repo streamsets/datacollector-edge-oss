@@ -16,8 +16,8 @@
 package spooler
 
 import (
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -30,13 +30,13 @@ type DirectorySpooler struct {
 	dirPath                 string
 	processSubDirs          bool
 	maxNumberOfFiles        int
-	destroyNotificationChan chan (bool)
+	destroyNotificationChan chan bool
 	filesQueue              *SynchronizedFilesHeap
 	spoolWaitDuration       time.Duration
 	readOrder               string
 	filePattern             string
 	pathMatcherMode         string
-	currentFileChange       chan (*AtomicFileInformation)
+	currentFileChange       chan *AtomicFileInformation
 }
 
 func isFileEligible(
@@ -108,16 +108,16 @@ func (d *DirectorySpooler) addPathToQueueIfEligible(
 	if isFileEligible(path, modTime, currentFileInfo, d.readOrder) {
 		fileInfo := NewAtomicFileInformation(path, modTime, 0)
 		if !d.filesQueue.Contains(fileInfo.getFullPath()) {
-			log.Printf("[DEBUG] Pushing %s to queue", fileInfo.createOffset())
+			log.WithField("offset", fileInfo.createOffset()).Debug("Pushing offset to queue")
 			d.filesQueue.Push(fileInfo)
 		}
 	} else {
-		log.Printf("[DEBUG] File '%s' ignored because it is not eligible", path)
+		log.WithField("ignored", path).Debug("File ignored because it is not eligible")
 	}
 }
 
 func (d *DirectorySpooler) walkDirectoryPath(currentFileInfo *AtomicFileInformation) error {
-	log.Println("[INFO] Spooler Starting")
+	log.Info("Spooler Starting")
 	if d.processSubDirs {
 		return filepath.Walk(d.dirPath, func(path string, info os.FileInfo, err error) error {
 			if err == nil && path != d.dirPath {
@@ -134,9 +134,9 @@ func (d *DirectorySpooler) walkDirectoryPath(currentFileInfo *AtomicFileInformat
 }
 
 func (d *DirectorySpooler) Init() {
-	d.destroyNotificationChan = make(chan (bool))
+	d.destroyNotificationChan = make(chan bool)
 	d.filesQueue = NewSynchronizedFilesHeap(d.readOrder)
-	d.currentFileChange = make(chan (*AtomicFileInformation))
+	d.currentFileChange = make(chan *AtomicFileInformation)
 	if strings.HasSuffix(d.dirPath, "/") {
 		d.dirPath = strings.TrimRight(d.dirPath, "/")
 	}
@@ -170,7 +170,7 @@ func (d *DirectorySpooler) NextFile() *AtomicFileInformation {
 	fi := d.filesQueue.Pop()
 	for fi != nil {
 		if isFileEligible(fi.getFullPath(), fi.getModTime(), d.currentFileInfo, d.readOrder) {
-			log.Printf("[DEBUG] File '%s' is picked for ingestion", fi.getFullPath())
+			log.WithField("file", fi.getFullPath()).Debug("File picked for ingestion")
 			d.setCurrentFileInfo(fi)
 			return fi
 		}
@@ -180,7 +180,7 @@ func (d *DirectorySpooler) NextFile() *AtomicFileInformation {
 }
 
 func (d *DirectorySpooler) Destroy() {
-	log.Println("Directory Spooler Destroy")
+	log.Info("Directory Spooler Destroy")
 	if d.destroyNotificationChan != nil {
 		d.destroyNotificationChan <- true
 	}

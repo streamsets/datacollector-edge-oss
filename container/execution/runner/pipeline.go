@@ -17,13 +17,13 @@ package runner
 
 import (
 	"github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution"
 	"github.com/streamsets/datacollector-edge/container/util"
 	"github.com/streamsets/datacollector-edge/container/validation"
-	"log"
 	"time"
 )
 
@@ -86,13 +86,13 @@ func (p *Pipeline) Init() []validation.Issue {
 }
 
 func (p *Pipeline) Run() {
-	log.Println("[DEBUG] Pipeline Run()")
+	log.Debug("Pipeline Run()")
 
 	for !p.offsetTracker.IsFinished() && !p.stop {
 		err := p.runBatch()
 		if err != nil {
-			log.Println("[Error] Error happened when processing batch", err)
-			log.Println("[Error] Stopping Pipeline")
+			log.WithError(err).Error("Error while processing batch")
+			log.Info("Stopping Pipeline")
 			p.Stop()
 		}
 	}
@@ -120,7 +120,7 @@ func (p *Pipeline) runBatch() error {
 
 		err := pipe.Process(pipeBatch)
 		if err != nil {
-			log.Println("[ERROR] ", err)
+			log.WithError(err).Error()
 		}
 	}
 
@@ -166,7 +166,7 @@ func (p *Pipeline) runBatch() error {
 }
 
 func (p *Pipeline) Stop() {
-	log.Println("[DEBUG] Pipeline Stop()")
+	log.Debug("Pipeline Stop()")
 	for _, stagePipe := range p.pipes {
 		stagePipe.Destroy()
 	}
@@ -215,7 +215,7 @@ func NewPipeline(
 		pipes[i] = NewStagePipe(stageRuntimeList[i], config)
 	}
 
-	log.Println("[DEBUG] Error Stage:", pipelineBean.ErrorStage.Config.InstanceName)
+	log.Debug("Error Stage:", pipelineBean.ErrorStage.Config.InstanceName)
 	errorStageContext := &common.StageContextImpl{
 		StageConfig: pipelineBean.ErrorStage.Config,
 		Parameters:  resolvedParameters,

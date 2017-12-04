@@ -18,15 +18,18 @@ package edge
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/controlhub"
 	"github.com/streamsets/datacollector-edge/container/execution/manager"
 	"github.com/streamsets/datacollector-edge/container/http"
 	"github.com/streamsets/datacollector-edge/container/process"
 	"github.com/streamsets/datacollector-edge/container/store"
-	"github.com/streamsets/datacollector-edge/container/util"
-	"log"
-	"os"
+	"path"
+	"runtime"
+	"strings"
 )
 
 const (
@@ -79,7 +82,7 @@ func DoMain(
 
 		state, err = dataCollectorEdge.Manager.StartPipeline(startFlag, runtimeParameters)
 		if err != nil {
-			panic(err)
+			log.Panic(err)
 		}
 		stateJson, _ := json.Marshal(state)
 		fmt.Println(string(stateJson))
@@ -94,7 +97,7 @@ func newDataCollectorEdge(baseDir string, debugFlag bool, logToConsoleFlag bool)
 		return nil, err
 	}
 
-	log.Println("[INFO] Base Dir: ", baseDir)
+	log.Info("Base Dir: ", baseDir)
 
 	config := NewConfig()
 	err = config.FromTomlFile(baseDir + DefaultConfigFilePath)
@@ -141,10 +144,34 @@ func newDataCollectorEdge(baseDir string, debugFlag bool, logToConsoleFlag bool)
 	}, nil
 }
 
+type ContextHook struct{}
+
+func (hook ContextHook) Levels() []log.Level {
+	return log.AllLevels
+}
+
+/* Adds file/line info to logrus fields */
+func (hook ContextHook) Fire(entry *log.Entry) error {
+	pc := make([]uintptr, 3, 3)
+	cnt := runtime.Callers(6, pc)
+
+	for i := 0; i < cnt; i++ {
+		fu := runtime.FuncForPC(pc[i] - 1)
+		name := fu.Name()
+		if !strings.Contains(name, "github.com/Sirupsen/logrus") {
+			file, line := fu.FileLine(pc[i] - 1)
+			entry.Data["file"] = fmt.Sprintf("%s:%d", path.Base(file), line)
+			break
+		}
+	}
+	return nil
+}
+
 func initializeLog(debugFlag bool, logToConsoleFlag bool, baseDir string) error {
-	minLevel := util.LogLevel(WARN)
+	minLevel := log.InfoLevel
 	if debugFlag {
-		minLevel = util.LogLevel(DEBUG)
+		minLevel = log.DebugLevel
+		log.AddHook(ContextHook{})
 	}
 
 	var loggerFile *os.File
@@ -153,18 +180,15 @@ func initializeLog(debugFlag bool, logToConsoleFlag bool, baseDir string) error 
 	if logToConsoleFlag {
 		loggerFile = os.Stdout
 	} else {
-		loggerFile, err = os.OpenFile(baseDir+DefaultLogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		loggerFile, err = os.OpenFile(baseDir+DefaultLogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			return err
 		}
 	}
 
-	logFilter := &util.LevelFilter{
-		Levels:   []util.LogLevel{DEBUG, WARN, ERROR, INFO},
-		MinLevel: minLevel,
-		Writer:   loggerFile,
-	}
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	log.SetOutput(logFilter)
+	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+	log.SetLevel(minLevel)
+	log.SetOutput(loggerFile)
+
 	return nil
 }

@@ -19,11 +19,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/el"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
-	"log"
 )
 
 const (
@@ -104,7 +104,7 @@ func (f *ExpressionProcessor) Process(batch api.Batch, batchMaker api.BatchMaker
 		}
 
 		if err != nil {
-			log.Println("[ERROR] Error when evaluating record", err.Error())
+			log.WithError(err).Error("Error evaluating record")
 			f.GetStageContext().ToError(err, record)
 		} else {
 			batchMaker.AddRecord(record)

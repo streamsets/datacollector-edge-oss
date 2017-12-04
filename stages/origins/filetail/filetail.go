@@ -17,11 +17,11 @@ package filetail
 
 import (
 	"github.com/hpcloud/tail"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io"
-	"log"
 	"strconv"
 	"time"
 )
@@ -59,12 +59,12 @@ func (f *FileTailOrigin) Init(stageContext api.StageContext) error {
 	if err := f.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] Reading file - " + f.Conf.FileInfos[0].FileFullPath)
+	log.WithField("file", f.Conf.FileInfos[0].FileFullPath).Debug("Reading file")
 	return nil
 }
 
 func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {
-	log.Println("[DEBUG] Last Source Offset : ", lastSourceOffset)
+	log.WithField("lastSourceOffset", lastSourceOffset).Debug("Produce called")
 
 	tailConfig := tail.Config{
 		MustExist: true,
@@ -96,12 +96,12 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 				recordCount++
 				if recordCount >= f.Conf.BatchSize {
 					currentOffset, _ = tailObj.Tell()
-					log.Println("[DEBUG] Calling stop for max record size")
+					log.WithField("BatchSize", f.Conf.BatchSize).Debug("Calling stop due to MaxBatchSize")
 					end = true
 				}
 			}
 		case <-time.After(time.Duration(f.Conf.MaxWaitTimeSecs) * time.Second):
-			log.Println("[DEBUG] Calling stop for max Wait TimeSecs")
+			log.WithField("MaxWaitTimeSecs", f.Conf.MaxWaitTimeSecs).Debug("Calling stop due to MaxWaitTimeSecs")
 			currentOffset, _ = tailObj.Tell()
 			end = true
 		}

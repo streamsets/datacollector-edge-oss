@@ -23,6 +23,7 @@ golang {
 
 dependencies {
     golang {
+        build name: 'github.com/sirupsen/logrus', tag:'v1.0.3'
         build name: 'github.com/AllenDang/w32', commit:'9a4ee0f7d224efbff75947fa7060daadccc4741c'
         build name: 'github.com/BurntSushi/toml', commit:'b26d9c308763d68093482582cea63d69be07a0f0'
         build name: 'github.com/dustin/go-coap', commit:'ddcc80675fa42611359d91a6dfa5aa57fb90e72b'

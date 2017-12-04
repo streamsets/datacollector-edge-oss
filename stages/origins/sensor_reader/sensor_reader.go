@@ -24,10 +24,10 @@ package sensor_reader
 import (
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
-	"log"
 	"periph.io/x/periph/conn/i2c"
 	"periph.io/x/periph/conn/i2c/i2creg"
 	"periph.io/x/periph/devices"
@@ -104,7 +104,7 @@ func (s *SensorReaderOrigin) Produce(
 		var err error
 		var env devices.Environment
 		if err = s.dev.Sense(&env); err != nil {
-			log.Printf("[ERROR] Failed to read data from sensor: %s", err)
+			log.WithError(err).Error("Failed to read data from sensor")
 			return "", err
 		}
 		fmt.Printf("%8s %10s %9s\n", env.Temperature, env.Pressure, env.Humidity)

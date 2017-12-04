@@ -19,11 +19,11 @@ import (
 	"bytes"
 	"errors"
 	"github.com/gorilla/websocket"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
-	"log"
 	"net/http"
 )
 
@@ -54,12 +54,12 @@ func (w *WebSocketClientDestination) Init(stageContext api.StageContext) error {
 	if err := w.BaseStage.Init(stageContext); err != nil {
 		return err
 	}
-	log.Println("[DEBUG] WebSocketClientDestination Init method")
+	log.Debug("WebSocketClientDestination Init method")
 	return w.Conf.DataGeneratorFormatConfig.Init(w.Conf.DataFormat)
 }
 
 func (w *WebSocketClientDestination) Write(batch api.Batch) error {
-	log.Println("[DEBUG] WebSocketClientDestination write method = " + w.Conf.ResourceUrl)
+	log.WithField("url", w.Conf.ResourceUrl).Debug("WebSocketClientDestination write method")
 	recordWriterFactory := w.Conf.DataGeneratorFormatConfig.RecordWriterFactory
 	if recordWriterFactory == nil {
 		return errors.New("recordWriterFactory is null")
@@ -92,7 +92,7 @@ func (w *WebSocketClientDestination) Write(batch api.Batch) error {
 
 		err = c.WriteMessage(websocket.TextMessage, recordBuffer.Bytes())
 		if err != nil {
-			log.Println("[ERROR] write:", err)
+			log.WithError(err).Error("Websocket write error")
 			w.GetStageContext().ToError(err, record)
 		}
 	}

@@ -3,12 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/edge"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations"
 	_ "github.com/streamsets/datacollector-edge/stages/origins"
 	_ "github.com/streamsets/datacollector-edge/stages/processors"
-	"log"
 	"os"
 	"os/signal"
 	"path"
@@ -42,15 +42,15 @@ func main() {
 func shutdownHook(dataCollectorEdge *edge.DataCollectorEdgeMain) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-	log.Printf("[INFO] Program got a system signal %v\n", <-c)
+	log.Infof("Program got a system signal %v", <-c)
 	if pipelineInfos, er := dataCollectorEdge.PipelineStoreTask.GetPipelines(); er == nil {
 		for _, pipelineInfo := range pipelineInfos {
 			runner := dataCollectorEdge.Manager.GetRunner(pipelineInfo.PipelineId)
 			if pipelineState, er := runner.GetStatus(); er == nil &&
 				(pipelineState.Status == common.RUNNING || pipelineState.Status == common.STARTING) {
-				log.Printf("[INFO] Stopping pipeline : %s\n", pipelineInfo.PipelineId)
+				log.WithField("id", pipelineInfo.PipelineId).Info("Stopping pipeline")
 				if runner.StopPipeline(); er != nil {
-					log.Printf("[INFO] Error happened when stopping pipeline : %s\n", pipelineInfo.PipelineId)
+					log.WithField("id", pipelineInfo.PipelineId).Error("Error stopping pipeline")
 				}
 			}
 		}
@@ -59,5 +59,5 @@ func shutdownHook(dataCollectorEdge *edge.DataCollectorEdgeMain) {
 	if dataCollectorEdge.RuntimeInfo.DPMEnabled {
 		dataCollectorEdge.DPMMessageEventHandler.Shutdown()
 	}
-	log.Println("[INFO] Data Collector Edge shutting down")
+	log.Info("Data Collector Edge shutting down")
 }

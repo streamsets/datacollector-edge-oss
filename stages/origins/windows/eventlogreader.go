@@ -24,8 +24,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/AllenDang/w32"
+	log "github.com/sirupsen/logrus"
 	"io"
-	"log"
 	"syscall"
 	"unsafe"
 )
@@ -65,7 +65,7 @@ func NewReader(logName string, mode EventLogReaderMode, initialOffset uint32, kn
 }
 
 func (elreader *EventLogReader) Open() error {
-	log.Printf("[DEBUG] EventLogReader[%s] - Opening\n", elreader.log)
+	log.Debug("EventLogReader[%s] - Opening\n", elreader.log)
 	w32Handle := w32.OpenEventLog(`\\localhost`, elreader.log)
 	if w32Handle == 0 {
 		return fmt.Errorf("Could not open event log reader for '%s'", elreader.log)
@@ -81,7 +81,7 @@ func (elreader *EventLogReader) GetCurrentOffset() uint32 {
 }
 
 func (elreader *EventLogReader) Close() error {
-	log.Printf("[DEBUG] EventLogReader[%s] - Closing\n", elreader.log)
+	log.Debug("EventLogReader[%s] - Closing\n", elreader.log)
 	if w32.CloseEventLog(elreader.handle) {
 		return nil
 	} else {
@@ -90,8 +90,9 @@ func (elreader *EventLogReader) Close() error {
 }
 
 func (elreader *EventLogReader) determineFirstEventToRead() error {
+	elReaderLogger := log.WithFields(log.Fields{"log": elreader.log})
 	if !elreader.knownOffset {
-		log.Printf("[DEBUG] EventLogReader[%s] - First event record number to read not known, finding out\n", elreader.log)
+		elReaderLogger.Debug("First event record number to read not known, locating...")
 		var flags uint32
 		if elreader.mode == READ_ALL {
 			flags = w32.EVENTLOG_FORWARDS_READ | w32.EVENTLOG_SEQUENTIAL_READ
@@ -103,8 +104,7 @@ func (elreader *EventLogReader) determineFirstEventToRead() error {
 		if events, err := elreader.read(flags, 0, 1); err == nil {
 			if len(events) == 0 {
 				elreader.offset = 0
-				log.Printf("[WARN] EventLogReader[%s] - Event log is empty, will start reading from first "+
-					" record to be written\n", elreader.log)
+				elReaderLogger.Warn("Event log is empty, will start reading from first record to be written")
 				//Handle special case that log is empty at the moment, we must do a forward/sequential read
 				//to acquire the first avail record, then seek as usual
 				elreader.emptyLog = true
@@ -113,43 +113,43 @@ func (elreader *EventLogReader) determineFirstEventToRead() error {
 				if elreader.mode == READ_NEW {
 					elreader.offset += 1
 				}
-				log.Printf("[DEBUG] EventLogReader[%s] - First event record number to read %d\n", elreader.log, elreader.offset)
+				elReaderLogger.WithField("offset", elReaderLogger).Debug("First event record number to read")
 			}
 			return nil
 		} else {
 			return err
 		}
 	} else {
-		log.Printf("[DEBUG] EventLogReader[%s] - Verifying first event record number to read %d\n", elreader.log, elreader.offset)
+		elReaderLogger.WithField("offset", elreader.offset).Debug("Verifying first event record number to read")
 		var flags uint32 = w32.EVENTLOG_FORWARDS_READ | w32.EVENTLOG_SEEK_READ
 		if events, err := elreader.read(flags, elreader.offset, 1); err == nil {
 			if len(events) != 0 {
-				log.Printf("[DEBUG] EventLogReader[%s] - Verified first event record number to read %d\n", elreader.log,
-					elreader.offset)
+				elReaderLogger.WithField("offset", elreader.offset).Debug("Verified first event record number to read")
 				return nil
 			} else {
 				if events, err := elreader.read(flags, elreader.offset-1, 1); err == nil {
 					if len(events) != 0 {
-						log.Printf("[DEBUG] EventLogReader[%s] - Verified first event record number to read %d (not yet "+
-							"available)", elreader.log, elreader.offset)
+						elReaderLogger.WithField("offset", elreader.offset).Debug(
+							"Verified first event record number to read (not yet available)",
+						)
 						return nil
 					} else {
-						log.Printf("[WARN] EventLogReader[%s] - Verification of first event record to read failed, "+
-							"repositioning", elreader.log)
+						elReaderLogger.Warn("Verification of first event record to read failed, repositioning")
 						// if offset and offset - 1 do not return a record it means we have a gap and we should
 						// start from the beginning of the log after reporting the issue
 						flags = w32.EVENTLOG_FORWARDS_READ | w32.EVENTLOG_SEQUENTIAL_READ
 						if events, err := elreader.read(flags, 0, 1); err == nil {
 							if len(events) == 0 {
-								log.Printf("[WARN] EventLogReader[%s] - Repositioning, event log is empty, will start reading "+
-									"from first record to be written\n", elreader.log)
+								elReaderLogger.Warn("Repositioning, event log is empty, will start reading " +
+									"from first record to be written")
 								//Handle special case that log is empty at the moment, we must do a forward/sequential
 								//read to acquire the first avail record, then seek as usual
 								elreader.emptyLog = true
 							} else {
 								elreader.offset = events[0].RecordNumber
-								log.Printf("[WARN] EventLogReader[%s] - Repositioning, first record found is %d, will start "+
-									"with it\n", elreader.log, elreader.offset)
+								elReaderLogger.WithField("offset", elreader.offset).Warn(
+									"Repositioning, first record found, will start with it",
+								)
 							}
 							return nil
 						} else {
@@ -217,8 +217,11 @@ func (elreader *EventLogReader) read(flags uint32, offset uint32, maxRecords int
 
 func (elreader *EventLogReader) Read(maxRecords int) ([]EventLogRecord, error) {
 	var flags uint32
-	log.Printf("[DEBUG] EventLogReader[%s] - Attempting to read, emptyLog=%t offset=%d, maxRecords=%d", elreader.log,
-		elreader.emptyLog, elreader.offset, maxRecords)
+	log.WithFields(log.Fields{
+		"emptyLog":   elreader.log,
+		"offset":     elreader.offset,
+		"maxRecords": maxRecords,
+	}).Debug("Attempting to read")
 	if elreader.emptyLog {
 		//special case where the event log is empty at the time of opening the reader
 		flags = w32.EVENTLOG_FORWARDS_READ | w32.EVENTLOG_SEQUENTIAL_READ
@@ -228,12 +231,15 @@ func (elreader *EventLogReader) Read(maxRecords int) ([]EventLogRecord, error) {
 	if events, err := elreader.read(flags, uint32(elreader.offset), maxRecords); err == nil {
 		if len(events) > 0 {
 			elreader.offset = events[len(events)-1].RecordNumber + 1
-			log.Printf("[DEBUG] EventLogReader[%s] - Read %d event records, last event record number %d", elreader.log,
-				len(events), events[len(events)-1].RecordNumber)
+			log.WithFields(log.Fields{
+				"log":              elreader.log,
+				"eventRecordsRead": len(events),
+				"lastRecordNumber": events[len(events)-1].RecordNumber,
+			}).Debug()
 			//after we read a record, we must rest the emtpyLog flag in case it is set
 			elreader.emptyLog = false
 		} else {
-			log.Printf("[DEBUG] EventLogReader[%s] - No event records to read", elreader.log)
+			log.WithField("log", elreader.log).Debug("No event records to read")
 		}
 		return events, nil
 	} else {
@@ -246,7 +252,7 @@ func extractStrings(byteData []byte, stringCount uint16) (strs []string) {
 	wordArray := make([]uint16, len(byteData)/2)
 	err := binary.Read(bytes.NewReader(byteData), binary.LittleEndian, wordArray)
 	if err != nil {
-		log.Fatal(err)
+		log.WithError(err).Fatal()
 	}
 	pos := 0
 	for idx, value := range wordArray {

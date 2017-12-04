@@ -18,8 +18,8 @@ package controlhub
 import (
 	"bytes"
 	"encoding/json"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/common"
-	"log"
 	"net/http"
 	"runtime"
 )
@@ -84,9 +84,9 @@ func RegisterWithDPM(
 		}
 		defer resp.Body.Close()
 
-		log.Println("[INFO] DPM Registration Status:", resp.Status)
+		log.WithField("status", resp.Status).Info("DPM Registration Status")
 		if resp.StatusCode != 200 {
-			panic("DPM Registration failed")
+			log.Panic("DPM Registration failed")
 		}
 		runtimeInfo.DPMEnabled = true
 		runtimeInfo.AppAuthToken = schConfig.AppAuthToken

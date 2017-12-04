@@ -19,12 +19,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/el"
 	"github.com/streamsets/datacollector-edge/container/util"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
-	"log"
 )
 
 const (
@@ -88,7 +88,7 @@ func (s *SelectorProcessor) Process(batch api.Batch, batchMaker api.BatchMaker) 
 				evaluateRes, err := s.GetStageContext().Evaluate(predicateLaneMap[PREDICATE], PREDICATE, recordContext)
 
 				if err != nil {
-					log.Println("[Error] Error evaluating Record", err)
+					log.WithError(err).Error("Error evaluating record")
 					s.GetStageContext().ToError(err, record)
 				}
 

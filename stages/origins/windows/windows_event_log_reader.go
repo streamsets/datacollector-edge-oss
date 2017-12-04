@@ -20,10 +20,10 @@ package windows
 
 import (
 	"errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
-	"log"
 	"runtime"
 	"strconv"
 )
@@ -90,14 +90,14 @@ func (wel *WindowsEventLogSource) Produce(
 			off, err := strconv.ParseUint(lastSourceOffset, 10, 32)
 			if err != nil {
 				wel.GetStageContext().ReportError(err)
-				log.Printf("[ERROR] Error happened on Parsing Offset '%s' : %s\n", lastSourceOffset, err.Error())
+				log.WithError(err).WithField("offset", lastSourceOffset).Error("Error while parsing offset")
 				return lastSourceOffset, err
 			}
 			wel.eventLogReader = NewReader(wel.logName, wel.readMode, uint32(off), true)
 		}
 		if err := wel.eventLogReader.Open(); err != nil {
 			wel.GetStageContext().ReportError(err)
-			log.Printf("[ERROR] Error happened on Opening Event Reader : %s\n", err.Error())
+			log.WithError(err).Error("Error while opening event reader")
 			return lastSourceOffset, err
 		}
 	}
@@ -107,7 +107,7 @@ func (wel *WindowsEventLogSource) Produce(
 			for _, event := range events {
 				er := wel.createRecordAndAddToBatch(event, batchMaker)
 				if er != nil {
-					log.Printf("[ERROR] Error when creating record : %s\n", er.Error())
+					log.WithError(er).Error("Error when creating record")
 					wel.GetStageContext().ReportError(er)
 					return lastSourceOffset, er
 				}
@@ -115,7 +115,7 @@ func (wel *WindowsEventLogSource) Produce(
 		}
 	} else {
 		wel.GetStageContext().ReportError(err)
-		log.Printf("[ERROR] Error happened on Event Log Read : %s\n", err.Error())
+		log.WithError(err).Error("Error on event log read")
 		return lastSourceOffset, err
 	}
 
@@ -156,7 +156,7 @@ func (wel *WindowsEventLogSource) createRecordAndAddToBatch(event EventLogRecord
 func (wel *WindowsEventLogSource) Destroy() error {
 	err := wel.eventLogReader.Close()
 	if err != nil {
-		log.Printf("[ERROR] Error %s when closing event reader", err.Error())
+		log.WithError(err).Error("Error closing event reader")
 	}
 	ReleaseResourceLibraries()
 	return nil

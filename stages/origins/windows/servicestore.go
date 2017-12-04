@@ -21,9 +21,9 @@ package windows
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows/registry"
 	"golang.org/x/sys/windows/svc/mgr"
-	"log"
 	"syscall"
 	"unsafe"
 )
@@ -107,10 +107,10 @@ func readFromServiceKey(serviceName string, prefix string, dataKeys []string) (m
 func doWithKey(keyPath string, action func(key *registry.Key) error) error {
 	if sKey, err := registry.OpenKey(syscall.HKEY_LOCAL_MACHINE, keyPath, 0); err == nil {
 		defer sKey.Close()
-		log.Printf("[DEBUG] Registry - Opened key=%s", keyPath)
+		log.WithField("key", keyPath).Debug("Registry - Opened key")
 		return action(&sKey)
 	} else {
-		log.Printf("[DEBUG] Registry - Could not open key=%s, error %v", keyPath, err)
+		log.WithField("key", keyPath).WithError(err).Error("Registry - Could not open key")
 		return err
 	}
 }
@@ -127,7 +127,7 @@ func ReadFromRegistryKey(keyPath string, dataKeys []string) (map[string]string, 
 			err := syscall.RegQueryValueEx(hand, syscall.StringToUTF16Ptr(dataK), nil,
 				&typ, (*byte)(unsafe.Pointer(&buffer[0])), &n)
 			if err != nil && err != syscall.ERROR_FILE_NOT_FOUND {
-				log.Printf("[ERROR] err %d %v", n, err)
+				log.WithError(err).WithField("n", n).Error()
 				return err
 			} else {
 				if err == nil {
@@ -137,9 +137,9 @@ func ReadFromRegistryKey(keyPath string, dataKeys []string) (map[string]string, 
 		}
 		return nil
 	}
-	log.Printf("[DEBUG] Registry - Reading key=%s values=%v", keyPath, dataKeys)
+	log.WithFields(log.Fields{"key": keyPath, "values": dataKeys}).Debug("Registry - Reading key")
 	if err := doWithKey(keyPath, readFromKey); err == nil {
-		log.Printf("[DEBUG] Registry - Read key=%s values=%v", keyPath, data)
+		log.WithFields(log.Fields{"key": keyPath, "values": data}).Debug("Registry - Read key")
 		return data, nil
 	} else {
 		return nil, err
@@ -155,11 +155,11 @@ func writeToRegistryKey(keyPath string, data map[string]string) error {
 		}
 		return nil
 	}
-	log.Printf("[DEBUG] Registry - Writing key=%s values=%v", keyPath, data)
+	log.WithFields(log.Fields{"key": keyPath, "values": data}).Debug("Registry - Writing key")
 	if err := doWithKey(keyPath, writeInKey); err != nil {
 		return err
 	} else {
-		log.Printf("[DEBUG] ServiceStore - Written key=%s values=%v", keyPath, data)
+		log.WithFields(log.Fields{"key": keyPath, "values": data}).Debug("ServiceStore - Written key")
 		return nil
 	}
 }

@@ -17,10 +17,10 @@ package trash
 
 import (
 	"encoding/json"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
-	"log"
 )
 
 const (
@@ -59,10 +59,10 @@ func (t *TrashDestination) Write(batch api.Batch) error {
 		recordValue, _ := record.Get()
 		jsonValue, err := json.Marshal(recordValue.Value)
 		if err != nil {
-			log.Println("[Error] Json Serialization Error", err)
+			log.WithError(err).Error("Json Serialization Error")
 			t.GetStageContext().ToError(err, record)
 		}
-		log.Println("[DEBUG] Trash record: ", string(jsonValue))
+		log.WithField("record", string(jsonValue)).Debug("Trashed record")
 	}
 	return nil
 }

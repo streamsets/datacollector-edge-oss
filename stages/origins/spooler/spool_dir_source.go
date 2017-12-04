@@ -18,11 +18,11 @@ package spooler
 import (
 	"bufio"
 	"errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -158,7 +158,7 @@ func (s *SpoolDirSource) initCurrentFileIfNeeded(lastSourceOffset string) (bool,
 				currentStartOffset,
 			),
 		)
-		log.Printf("[DEBUG] Using Initial File To Process '%s' ", currentFilePath)
+		log.WithField("file", currentFilePath).Debug("Using Initial File To Process")
 	}
 
 	//End of the file or empty offset, let's get a new file
@@ -166,7 +166,7 @@ func (s *SpoolDirSource) initCurrentFileIfNeeded(lastSourceOffset string) (bool,
 		nextFileInfoToProcess := s.spooler.NextFile()
 		//No more files to process at the moment
 		if nextFileInfoToProcess == nil {
-			log.Println("[DEBUG] No more files to process")
+			log.Debug("No more files to process")
 			return false, nil
 		}
 	}
@@ -210,7 +210,7 @@ func (s *SpoolDirSource) readAndCreateRecords(
 		if err != nil {
 			if err != io.EOF {
 				//TODO Try Error Archiving for file?
-				log.Printf("[Error] Error happened When reading file '%s'", err.Error())
+				log.WithError(err).Error("Error while reading file")
 				return startOffsetForBatch, err
 			}
 			isEof = true
@@ -220,7 +220,7 @@ func (s *SpoolDirSource) readAndCreateRecords(
 		s.createRecordAndAddToBatch(line_bytes, batchMaker)
 
 		if isEof {
-			log.Printf("[DEBUG] Reached End of File '%s'", s.spooler.getCurrentFileInfo().getFullPath())
+			log.WithField("file", s.spooler.getCurrentFileInfo().getFullPath()).Debug("Reached End of File")
 			s.spooler.getCurrentFileInfo().setOffsetToRead(EOF_OFFSET)
 			s.resetFileAndBuffReader()
 			break
@@ -256,7 +256,7 @@ func (s *SpoolDirSource) Produce(
 
 	if err != nil {
 		s.GetStageContext().ReportError(err)
-		log.Printf("[ERROR] Error Happened : %s", err.Error())
+		log.WithError(err).Error("Error occurred")
 		return lastSourceOffset, err
 	}
 
@@ -287,11 +287,7 @@ func (s *SpoolDirSource) resetFileAndBuffReader() {
 	if s.file != nil {
 		//Close Quietly
 		if err := s.file.Close(); err != nil {
-			log.Printf(
-				"[ERROR] Error During file '%s' close  : %s",
-				s.file.Name(),
-				err.Error(),
-			)
+			log.WithError(err).WithField("file", s.file.Name()).Error("Error During file close")
 		}
 		s.file = nil
 	}

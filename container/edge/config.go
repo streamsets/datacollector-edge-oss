@@ -17,11 +17,11 @@ package edge
 
 import (
 	"github.com/BurntSushi/toml"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/controlhub"
 	"github.com/streamsets/datacollector-edge/container/execution"
 	"github.com/streamsets/datacollector-edge/container/http"
 	"github.com/streamsets/datacollector-edge/container/process"
-	"log"
 )
 
 // Config represents the configuration format for the Data Collector Edge binary.
@@ -45,7 +45,7 @@ func NewConfig() *Config {
 // FromTomlFile loads the config from a TOML file.
 func (c *Config) FromTomlFile(fPath string) error {
 	if _, err := toml.DecodeFile(fPath, c); err != nil {
-		log.Println(err)
+		log.WithError(err).Error()
 		return err
 	}
 	return nil

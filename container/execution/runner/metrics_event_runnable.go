@@ -21,11 +21,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/util"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 )
@@ -73,11 +73,11 @@ func (m *MetricsEventRunnable) Run() {
 			case <-ticker.C:
 				err := m.sendMetricsToDPM()
 				if err != nil {
-					log.Println("[ERROR] ", err)
+					log.WithError(err).Error()
 				}
 			case <-m.quitSendingMetricsToDPM:
 				ticker.Stop()
-				log.Printf("[DEBUG] Sending metrics to DPM is stopped")
+				log.Debug("Sending metrics to DPM is stopped")
 				return
 			}
 		}
@@ -91,7 +91,7 @@ func (m *MetricsEventRunnable) Stop() {
 }
 
 func (m *MetricsEventRunnable) sendMetricsToDPM() error {
-	log.Printf("[DEBUG] Sending metrics to DPM")
+	log.Debug("Sending metrics to DPM")
 	metricsJson := SDCMetrics{
 		Timestamp:   time.Now().UnixNano() / int64(time.Millisecond),
 		Metadata:    m.metadata,
@@ -119,7 +119,7 @@ func (m *MetricsEventRunnable) sendMetricsToDPM() error {
 		return err
 	}
 
-	log.Println("[DEBUG] DPM Send Metrics Status:", resp.Status)
+	log.WithField("status", resp.Status).Debug("DPM Send Metrics Status")
 	if resp.StatusCode != 200 {
 		responseData, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
