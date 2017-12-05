@@ -114,12 +114,21 @@ func (s *StageContextImpl) Evaluate(
 	configName string,
 	ctx context.Context,
 ) (interface{}, error) {
-	evaluator, _ := el.NewEvaluator(
-		configName,
-		s.Parameters,
-		[]el.Definitions{&el.StringEL{}, &el.MathEL{}, &el.RecordEL{Context: ctx}},
-	)
-	return evaluator.Evaluate(value)
+	if el.IsElString(value) {
+		evaluator, _ := el.NewEvaluator(
+			configName,
+			s.Parameters,
+			[]el.Definitions{
+				&el.StringEL{},
+				&el.MathEL{},
+				&el.RecordEL{Context: ctx},
+				&el.MapListEL{},
+			},
+		)
+		return evaluator.Evaluate(value)
+	} else {
+		return value, nil
+	}
 }
 
 func (s *StageContextImpl) IsErrorStage() bool {
