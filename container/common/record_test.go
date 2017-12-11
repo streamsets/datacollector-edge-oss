@@ -224,7 +224,7 @@ func TestRecordImpl_Delete(t *testing.T) {
 		t.Error("Error when removing root map field")
 	}
 
-	if f, _ := record.Get("/"); f != nil {
+	if f, _ := record.Get("/"); f.Value != nil {
 		t.Error("Root map not deleted")
 	}
 }

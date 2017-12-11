@@ -36,7 +36,7 @@ func (r *RecordImpl) Get(fieldPath ...string) (*api.Field, error) {
 	if len(fieldPath) == 0 {
 		return r.value, nil
 	} else {
-		var field *api.Field
+		field := &api.Field{}
 		pathElements, err := r.parse(fieldPath[0])
 		if err != nil {
 			return field, err
