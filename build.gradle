@@ -4,7 +4,6 @@ plugins {
 }
 
 import com.bmuschko.gradle.docker.tasks.image.Dockerfile
-import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
 
 apply plugin : 'maven-publish'
 
