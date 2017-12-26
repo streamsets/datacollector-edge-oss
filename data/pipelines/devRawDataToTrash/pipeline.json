@@ -1,0 +1,479 @@
+{
+  "schemaVersion" : 5,
+  "version" : 7,
+  "pipelineId" : "devRawDataToTrashfb908c5a-2b99-4a05-9d2d-604dffdfacd2",
+  "title" : "devRawDataToTrash",
+  "description" : "",
+  "uuid" : "544bb82b-b35c-4b94-94b6-7f2b1bc8de3a",
+  "configuration" : [ {
+    "name" : "executionMode",
+    "value" : "EDGE"
+  }, {
+    "name" : "deliveryGuarantee",
+    "value" : "AT_LEAST_ONCE"
+  }, {
+    "name" : "startEventStage",
+    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+  }, {
+    "name" : "stopEventStage",
+    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+  }, {
+    "name" : "shouldRetry",
+    "value" : true
+  }, {
+    "name" : "retryAttempts",
+    "value" : -1
+  }, {
+    "name" : "memoryLimit",
+    "value" : "${jvm:maxMemoryMB() * 0.85}"
+  }, {
+    "name" : "memoryLimitExceeded",
+    "value" : "LOG"
+  }, {
+    "name" : "notifyOnStates",
+    "value" : [ "RUN_ERROR", "STOPPED", "FINISHED" ]
+  }, {
+    "name" : "emailIDs",
+    "value" : [ ]
+  }, {
+    "name" : "constants",
+    "value" : [ ]
+  }, {
+    "name" : "badRecordsHandling",
+    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+  }, {
+    "name" : "errorRecordPolicy",
+    "value" : "ORIGINAL_RECORD"
+  }, {
+    "name" : "workerCount",
+    "value" : 0
+  }, {
+    "name" : "clusterSlaveMemory",
+    "value" : 2048
+  }, {
+    "name" : "clusterSlaveJavaOpts",
+    "value" : "-XX:+UseConcMarkSweepGC -XX:+UseParNewGC -Dlog4j.debug"
+  }, {
+    "name" : "clusterLauncherEnv",
+    "value" : [ ]
+  }, {
+    "name" : "mesosDispatcherURL",
+    "value" : null
+  }, {
+    "name" : "hdfsS3ConfDir",
+    "value" : null
+  }, {
+    "name" : "rateLimit",
+    "value" : 0
+  }, {
+    "name" : "maxRunners",
+    "value" : 0
+  }, {
+    "name" : "shouldCreateFailureSnapshot",
+    "value" : true
+  }, {
+    "name" : "webhookConfigs",
+    "value" : [ ]
+  }, {
+    "name" : "sparkConfigs",
+    "value" : [ ]
+  }, {
+    "name" : "statsAggregatorStage",
+    "value" : ""
+  } ],
+  "uiInfo" : {
+    "previewConfig" : {
+      "previewSource" : "CONFIGURED_SOURCE",
+      "batchSize" : 10,
+      "timeout" : 10000,
+      "writeToDestinations" : false,
+      "executeLifecycleEvents" : false,
+      "showHeader" : false,
+      "showFieldType" : true,
+      "rememberMe" : true
+    }
+  },
+  "stages" : [ {
+    "instanceName" : "DevRawDataSource_01",
+    "library" : "streamsets-datacollector-dev-lib",
+    "stageName" : "com_streamsets_pipeline_stage_devtest_rawdata_RawDataDSource",
+    "stageVersion" : "2",
+    "configuration" : [ {
+      "name" : "dataFormat",
+      "value" : "JSON"
+    }, {
+      "name" : "dataFormatConfig.compression",
+      "value" : "NONE"
+    }, {
+      "name" : "dataFormatConfig.filePatternInArchive",
+      "value" : "*"
+    }, {
+      "name" : "dataFormatConfig.charset",
+      "value" : "UTF-8"
+    }, {
+      "name" : "dataFormatConfig.removeCtrlChars",
+      "value" : false
+    }, {
+      "name" : "dataFormatConfig.textMaxLineLen",
+      "value" : 1024
+    }, {
+      "name" : "dataFormatConfig.useCustomDelimiter",
+      "value" : false
+    }, {
+      "name" : "dataFormatConfig.customDelimiter",
+      "value" : "\\r\\n"
+    }, {
+      "name" : "dataFormatConfig.includeCustomDelimiterInTheText",
+      "value" : false
+    }, {
+      "name" : "dataFormatConfig.jsonContent",
+      "value" : "MULTIPLE_OBJECTS"
+    }, {
+      "name" : "dataFormatConfig.jsonMaxObjectLen",
+      "value" : 4096
+    }, {
+      "name" : "dataFormatConfig.csvFileFormat",
+      "value" : "CSV"
+    }, {
+      "name" : "dataFormatConfig.csvHeader",
+      "value" : "NO_HEADER"
+    }, {
+      "name" : "dataFormatConfig.csvAllowExtraColumns",
+      "value" : false
+    }, {
+      "name" : "dataFormatConfig.csvExtraColumnPrefix",
+      "value" : "_extra_"
+    }, {
+      "name" : "dataFormatConfig.csvMaxObjectLen",
+      "value" : 1024
+    }, {
+      "name" : "dataFormatConfig.csvCustomDelimiter",
+      "value" : "|"
+    }, {
+      "name" : "dataFormatConfig.csvCustomEscape",
+      "value" : "\\"
+    }, {
+      "name" : "dataFormatConfig.csvCustomQuote",
+      "value" : "\""
+    }, {
+      "name" : "dataFormatConfig.csvEnableComments",
+      "value" : false
+    }, {
+      "name" : "dataFormatConfig.csvCommentMarker",
+      "value" : "#"
+    }, {
+      "name" : "dataFormatConfig.csvIgnoreEmptyLines",
+      "value" : true
+    }, {
+      "name" : "dataFormatConfig.csvRecordType",
+      "value" : "LIST_MAP"
+    }, {
+      "name" : "dataFormatConfig.csvSkipStartLines",
+      "value" : 0
+    }, {
+      "name" : "dataFormatConfig.parseNull",
+      "value" : false
+    }, {
+      "name" : "dataFormatConfig.nullConstant",
+      "value" : "\\\\N"
+    }, {
+      "name" : "dataFormatConfig.xmlRecordElement",
+      "value" : null
+    }, {
+      "name" : "dataFormatConfig.includeFieldXpathAttributes",
+      "value" : false
+    }, {
+      "name" : "dataFormatConfig.xPathNamespaceContext",
+      "value" : [ ]
+    }, {
+      "name" : "dataFormatConfig.outputFieldAttributes",
+      "value" : false
+    }, {
+      "name" : "dataFormatConfig.xmlMaxObjectLen",
+      "value" : 4096
+    }, {
+      "name" : "dataFormatConfig.logMode",
+      "value" : "COMMON_LOG_FORMAT"
+    }, {
+      "name" : "dataFormatConfig.logMaxObjectLen",
+      "value" : 1024
+    }, {
+      "name" : "dataFormatConfig.retainOriginalLine",
+      "value" : false
+    }, {
+      "name" : "dataFormatConfig.customLogFormat",
+      "value" : "%h %l %u %t \"%r\" %>s %b"
+    }, {
+      "name" : "dataFormatConfig.regex",
+      "value" : "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(\\S+) (\\S+) (\\S+)\" (\\d{3}) (\\d+)"
+    }, {
+      "name" : "dataFormatConfig.fieldPathsToGroupName",
+      "value" : [ {
+        "fieldPath" : "/",
+        "group" : 1
+      } ]
+    }, {
+      "name" : "dataFormatConfig.grokPatternDefinition",
+      "value" : null
+    }, {
+      "name" : "dataFormatConfig.grokPattern",
+      "value" : "%{COMMONAPACHELOG}"
+    }, {
+      "name" : "dataFormatConfig.onParseError",
+      "value" : "ERROR"
+    }, {
+      "name" : "dataFormatConfig.maxStackTraceLines",
+      "value" : 50
+    }, {
+      "name" : "dataFormatConfig.enableLog4jCustomLogFormat",
+      "value" : false
+    }, {
+      "name" : "dataFormatConfig.log4jCustomLogFormat",
+      "value" : "%r [%t] %-5p %c %x - %m%n"
+    }, {
+      "name" : "dataFormatConfig.avroSchemaSource",
+      "value" : null
+    }, {
+      "name" : "dataFormatConfig.avroSchema",
+      "value" : null
+    }, {
+      "name" : "dataFormatConfig.schemaRegistryUrls",
+      "value" : [ ]
+    }, {
+      "name" : "dataFormatConfig.schemaLookupMode",
+      "value" : "SUBJECT"
+    }, {
+      "name" : "dataFormatConfig.subject",
+      "value" : null
+    }, {
+      "name" : "dataFormatConfig.schemaId",
+      "value" : null
+    }, {
+      "name" : "dataFormatConfig.protoDescriptorFile",
+      "value" : null
+    }, {
+      "name" : "dataFormatConfig.messageType",
+      "value" : null
+    }, {
+      "name" : "dataFormatConfig.isDelimited",
+      "value" : true
+    }, {
+      "name" : "dataFormatConfig.binaryMaxObjectLen",
+      "value" : 1024
+    }, {
+      "name" : "dataFormatConfig.datagramMode",
+      "value" : "SYSLOG"
+    }, {
+      "name" : "dataFormatConfig.typesDbPath",
+      "value" : null
+    }, {
+      "name" : "dataFormatConfig.convertTime",
+      "value" : false
+    }, {
+      "name" : "dataFormatConfig.excludeInterval",
+      "value" : true
+    }, {
+      "name" : "dataFormatConfig.authFilePath",
+      "value" : null
+    }, {
+      "name" : "dataFormatConfig.netflowOutputValuesMode",
+      "value" : "RAW_AND_INTERPRETED"
+    }, {
+      "name" : "dataFormatConfig.maxTemplateCacheSize",
+      "value" : -1
+    }, {
+      "name" : "dataFormatConfig.templateCacheTimeoutMs",
+      "value" : -1
+    }, {
+      "name" : "dataFormatConfig.netflowOutputValuesModeDatagram",
+      "value" : "RAW_AND_INTERPRETED"
+    }, {
+      "name" : "dataFormatConfig.maxTemplateCacheSizeDatagram",
+      "value" : -1
+    }, {
+      "name" : "dataFormatConfig.templateCacheTimeoutMsDatagram",
+      "value" : -1
+    }, {
+      "name" : "dataFormatConfig.wholeFileMaxObjectLen",
+      "value" : 8192
+    }, {
+      "name" : "dataFormatConfig.rateLimit",
+      "value" : "-1"
+    }, {
+      "name" : "dataFormatConfig.verifyChecksum",
+      "value" : false
+    }, {
+      "name" : "rawData",
+      "value" : "{\n  \"f1\": \"abc\"\n}\n{\n  \"f1\": \"xyz\"\n}"
+    }, {
+      "name" : "stopAfterFirstBatch",
+      "value" : false
+    }, {
+      "name" : "stageOnRecordError",
+      "value" : "TO_ERROR"
+    } ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Dev Raw Data Source 1",
+      "xPos" : 60,
+      "yPos" : 50,
+      "stageType" : "SOURCE"
+    },
+    "inputLanes" : [ ],
+    "outputLanes" : [ "DevRawDataSource_01OutputLane15140113255770" ],
+    "eventLanes" : [ ],
+    "services" : [ ]
+  }, {
+    "instanceName" : "StreamSelector_01",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_processor_selector_SelectorDProcessor",
+    "stageVersion" : "1",
+    "configuration" : [ {
+      "name" : "lanePredicates",
+      "value" : [ {
+        "outputLane" : "StreamSelector_01OutputLane1514056887871",
+        "predicate" : "${record:value('/f1') == 'abc'}"
+      }, {
+        "outputLane" : "StreamSelector_01OutputLane1514056881039",
+        "predicate" : "default"
+      } ]
+    }, {
+      "name" : "stageOnRecordError",
+      "value" : "TO_ERROR"
+    }, {
+      "name" : "stageRequiredFields",
+      "value" : [ ]
+    }, {
+      "name" : "stageRecordPreconditions",
+      "value" : [ ]
+    } ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Stream Selector 1",
+      "xPos" : 280,
+      "yPos" : 110,
+      "stageType" : "PROCESSOR"
+    },
+    "inputLanes" : [ "DevRawDataSource_01OutputLane15140113255770" ],
+    "outputLanes" : [ "StreamSelector_01OutputLane1514056887871", "StreamSelector_01OutputLane1514056881039" ],
+    "eventLanes" : [ ],
+    "services" : [ ]
+  }, {
+    "instanceName" : "Trash_01",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_NullDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Trash 1",
+      "xPos" : 500,
+      "yPos" : 170,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ "StreamSelector_01OutputLane1514056881039" ],
+    "outputLanes" : [ ],
+    "eventLanes" : [ ],
+    "services" : [ ]
+  }, {
+    "instanceName" : "Trash_02",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_NullDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Trash 2",
+      "xPos" : 500,
+      "yPos" : 40,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ "StreamSelector_01OutputLane1514056887871" ],
+    "outputLanes" : [ ],
+    "eventLanes" : [ ],
+    "services" : [ ]
+  } ],
+  "errorStage" : {
+    "instanceName" : "Discard_ErrorStage",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Error Records - Discard",
+      "xPos" : 720,
+      "yPos" : 50,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ ],
+    "outputLanes" : [ ],
+    "eventLanes" : [ ],
+    "services" : [ ]
+  },
+  "info" : {
+    "pipelineId" : "devRawDataToTrashfb908c5a-2b99-4a05-9d2d-604dffdfacd2",
+    "title" : "devRawDataToTrash",
+    "description" : "",
+    "created" : 1514057707874,
+    "lastModified" : 1514057707952,
+    "creator" : "admin",
+    "lastModifier" : "admin",
+    "lastRev" : "0",
+    "uuid" : "544bb82b-b35c-4b94-94b6-7f2b1bc8de3a",
+    "valid" : true,
+    "metadata" : {
+      "labels" : [ ]
+    },
+    "name" : "devRawDataToTrashfb908c5a-2b99-4a05-9d2d-604dffdfacd2",
+    "sdcVersion" : "3.1.0.0-SNAPSHOT",
+    "sdcId" : "4800ee11-e672-11e7-9d74-4b0e0feef06f"
+  },
+  "metadata" : {
+    "labels" : [ ]
+  },
+  "statsAggregatorStage" : null,
+  "startEventStages" : [ {
+    "instanceName" : "Discard_StartEventStage",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Start Event - Discard",
+      "xPos" : 280,
+      "yPos" : 50,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ ],
+    "outputLanes" : [ ],
+    "eventLanes" : [ ],
+    "services" : [ ]
+  } ],
+  "stopEventStages" : [ {
+    "instanceName" : "Discard_StopEventStage",
+    "library" : "streamsets-datacollector-basic-lib",
+    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
+    "stageVersion" : "1",
+    "configuration" : [ ],
+    "uiInfo" : {
+      "description" : "",
+      "label" : "Stop Event - Discard",
+      "xPos" : 280,
+      "yPos" : 50,
+      "stageType" : "TARGET"
+    },
+    "inputLanes" : [ ],
+    "outputLanes" : [ ],
+    "eventLanes" : [ ],
+    "services" : [ ]
+  } ],
+  "issues" : {
+    "pipelineIssues" : [ ],
+    "stageIssues" : { },
+    "issueCount" : 0
+  },
+  "previewable" : true,
+  "valid" : true
+}

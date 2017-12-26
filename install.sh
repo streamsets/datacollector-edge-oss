@@ -39,7 +39,6 @@ execute() {
 
   (cd "${TMPDIR}" && untar "${TARBALL}")
   echo "$PREFIX: extracted in ${TMPDIR}"
-  echo "$PREFIX: extracted in ${TMPDIR}"
   echo "Running SDC Edge: "
   echo "${TMPDIR}/streamsets-datacollector-edge/bin/edge -logToConsole"
 }

@@ -1,0 +1,18 @@
+{
+  "pipelineId" : "devRawDataToTrashfb908c5a-2b99-4a05-9d2d-604dffdfacd2",
+  "title" : "devRawDataToTrash",
+  "description" : "",
+  "created" : 1514057707874,
+  "lastModified" : 1514057707952,
+  "creator" : "admin",
+  "lastModifier" : "admin",
+  "lastRev" : "0",
+  "uuid" : "544bb82b-b35c-4b94-94b6-7f2b1bc8de3a",
+  "valid" : true,
+  "metadata" : {
+    "labels" : [ ]
+  },
+  "name" : "devRawDataToTrashfb908c5a-2b99-4a05-9d2d-604dffdfacd2",
+  "sdcVersion" : "3.1.0.0-SNAPSHOT",
+  "sdcId" : "4800ee11-e672-11e7-9d74-4b0e0feef06f"
+}
