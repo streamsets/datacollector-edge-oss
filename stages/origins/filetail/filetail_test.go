@@ -27,11 +27,23 @@ import (
 	"testing"
 )
 
-func getStageContext(filePath string, maxWaitTimeSecs float64, batchSize float64) *common.StageContextImpl {
+const (
+	CONF_FILE_INFOS         = "conf.fileInfos"
+	CONF_MAX_WAIT_TIME_SECS = "conf.maxWaitTimeSecs"
+	CONF_BATCH_SIZE         = "conf.batchSize"
+	CONF_DATA_FORMAT        = "conf.dataFormat"
+)
+
+func getStageContext(
+	filePath string,
+	maxWaitTimeSecs float64,
+	batchSize float64,
+	dataFormat string,
+) *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = LIBRARY
 	stageConfig.StageName = STAGE_NAME
-	stageConfig.Configuration = make([]common.Config, 3)
+	stageConfig.Configuration = make([]common.Config, 4)
 
 	fileInfoSlice := make([]interface{}, 1, 1)
 	fileInfoSlice[0] = map[string]interface{}{
@@ -50,6 +62,10 @@ func getStageContext(filePath string, maxWaitTimeSecs float64, batchSize float64
 		Name:  CONF_MAX_WAIT_TIME_SECS,
 		Value: maxWaitTimeSecs,
 	}
+	stageConfig.Configuration[3] = common.Config{
+		Name:  CONF_DATA_FORMAT,
+		Value: dataFormat,
+	}
 
 	return &common.StageContextImpl{
 		StageConfig: stageConfig,
@@ -58,7 +74,7 @@ func getStageContext(filePath string, maxWaitTimeSecs float64, batchSize float64
 }
 
 func TestInvalidFilePath(t *testing.T) {
-	stageContext := getStageContext("/no/such/file", 2, 1000)
+	stageContext := getStageContext("/no/such/file", 2, 1000, "TEXT")
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
@@ -93,7 +109,7 @@ func TestValidFilePath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stageContext := getStageContext(filePath, 2, 4)
+	stageContext := getStageContext(filePath, 2, 4, "TEXT")
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
@@ -166,10 +182,72 @@ func TestValidFilePath(t *testing.T) {
 	stageInstance.Destroy()
 }
 
+func TestFileTailOrigin_Produce_JSON(t *testing.T) {
+	content := []byte(
+		"{\"temperature_C\": \"12.34\", \"pressure_KPa\": \"567.89\", \"humidity\": \"534.44\"}" + "\n" +
+			"{\"temperature_C\": \"13.34\", \"pressure_KPa\": \"667.89\", \"humidity\": \"634.44\"}" + "\n" +
+			"{\"temperature_C\": \"14.34\", \"pressure_KPa\": \"767.89\", \"humidity\": \"734.44\"}" + "\n",
+	)
+	dir, err := ioutil.TempDir("", "TestFileTailOrigin_Produce_JSON")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer os.RemoveAll(dir) // clean up
+
+	filePath := filepath.Join(dir, "tmpFile.log")
+	if err := ioutil.WriteFile(filePath, content, 0666); err != nil {
+		t.Fatal(err)
+	}
+
+	stageContext := getStageContext(filePath, 2, 4, "JSON")
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	if err != nil {
+		t.Error(err)
+	}
+	stageInstance := stageBean.Stage
+	err = stageInstance.Init(stageContext)
+	if err != nil {
+		t.Error(err)
+	}
+
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
+	lastSourceOffset, err := stageInstance.(api.Origin).Produce("", 1000, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+	}
+
+	if lastSourceOffset == "" {
+		t.Error("No offset returned :")
+	}
+	log.Println("offset - " + lastSourceOffset)
+
+	records := batchMaker.GetStageOutput()
+	if len(records) != 3 {
+		t.Error("Excepted 3 records but got - ", len(records))
+	}
+
+	rootField, _ := records[0].Get()
+	mapFieldValue := rootField.Value.(map[string]*api.Field)
+	if mapFieldValue["temperature_C"].Value != "12.34" {
+		t.Error("Excepted '12.34' but got - ", rootField.Value)
+	}
+
+	if mapFieldValue["pressure_KPa"].Value != "567.89" {
+		t.Error("Excepted '567.89' but got - ", rootField.Value)
+	}
+
+	if mapFieldValue["humidity"].Value != "534.44" {
+		t.Error("Excepted '534.44' but got - ", rootField.Value)
+	}
+
+	stageInstance.Destroy()
+}
+
 func _TestChannelDeadlockIssue(t *testing.T) {
 	filePath1 := "/Users/test/dpm.log"
 
-	stageContext := getStageContext(filePath1, 2, 1000)
+	stageContext := getStageContext(filePath1, 2, 1000, "TEXT")
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)

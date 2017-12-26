@@ -16,10 +16,12 @@
 package filetail
 
 import (
+	"bytes"
 	"github.com/hpcloud/tail"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io"
 	"strconv"
@@ -27,11 +29,8 @@ import (
 )
 
 const (
-	LIBRARY                 = "streamsets-datacollector-basic-lib"
-	STAGE_NAME              = "com_streamsets_pipeline_stage_origin_logtail_FileTailDSource"
-	CONF_FILE_INFOS         = "conf.fileInfos"
-	CONF_MAX_WAIT_TIME_SECS = "conf.maxWaitTimeSecs"
-	CONF_BATCH_SIZE         = "conf.batchSize"
+	LIBRARY    = "streamsets-datacollector-basic-lib"
+	STAGE_NAME = "com_streamsets_pipeline_stage_origin_logtail_FileTailDSource"
 )
 
 type FileTailOrigin struct {
@@ -40,9 +39,11 @@ type FileTailOrigin struct {
 }
 
 type FileTailConfigBean struct {
-	BatchSize       float64    `ConfigDef:"type=NUMBER,required=true"`
-	MaxWaitTimeSecs float64    `ConfigDef:"type=NUMBER,required=true"`
-	FileInfos       []FileInfo `ConfigDef:"type=MODEL" ListBeanModel:"name=fileInfos"`
+	BatchSize        float64                           `ConfigDef:"type=NUMBER,required=true"`
+	MaxWaitTimeSecs  float64                           `ConfigDef:"type=NUMBER,required=true"`
+	FileInfos        []FileInfo                        `ConfigDef:"type=MODEL" ListBeanModel:"name=fileInfos"`
+	DataFormat       string                            `ConfigDef:"type=STRING,required=true"`
+	DataFormatConfig dataparser.DataParserFormatConfig `ConfigDefBean:"dataFormatConfig"`
 }
 
 type FileInfo struct {
@@ -60,11 +61,13 @@ func (f *FileTailOrigin) Init(stageContext api.StageContext) error {
 		return err
 	}
 	log.WithField("file", f.Conf.FileInfos[0].FileFullPath).Debug("Reading file")
-	return nil
+	return f.Conf.DataFormatConfig.Init(f.Conf.DataFormat)
 }
 
 func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {
 	log.WithField("lastSourceOffset", lastSourceOffset).Debug("Produce called")
+
+	recordReaderFactory := f.Conf.DataFormatConfig.RecordReaderFactory
 
 	tailConfig := tail.Config{
 		MustExist: true,
@@ -89,11 +92,29 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 		select {
 		case line := <-tailObj.Lines:
 			if line != nil {
-				recordId := tailObj.Filename + "::" + strconv.FormatInt(currentOffset, 10)
-				recordValue := map[string]interface{}{"text": line.Text}
-				record, _ := f.GetStageContext().CreateRecord(recordId, recordValue)
-				batchMaker.AddRecord(record)
-				recordCount++
+
+				recordBuffer := bytes.NewBufferString(line.Text)
+				recordReader, err := recordReaderFactory.CreateReader(f.GetStageContext(), recordBuffer)
+				if err != nil {
+					log.WithError(err).Error("Failed to create record reader")
+					return "", err
+				}
+				defer recordReader.Close()
+
+				for {
+					record, err := recordReader.ReadRecord()
+					if err != nil {
+						log.WithError(err).Error("Failed to parse raw data")
+						return "", err
+					}
+
+					if record == nil {
+						break
+					}
+					batchMaker.AddRecord(record)
+					recordCount++
+				}
+
 				if recordCount >= f.Conf.BatchSize {
 					currentOffset, _ = tailObj.Tell()
 					log.WithField("BatchSize", f.Conf.BatchSize).Debug("Calling stop due to MaxBatchSize")
