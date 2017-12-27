@@ -19,6 +19,30 @@ import (
 	"github.com/streamsets/datacollector-edge/container/common"
 )
 
+const (
+	ExecutionMode        = "executionMode"
+	DeliveryGuarantee    = "deliveryGuarantee"
+	ShouldRetry          = "shouldRetry"
+	RetryAttempts        = "retryAttempts"
+	MemoryLimit          = "memoryLimit"
+	MemoryLmtExceeded    = "memoryLimitExceeded"
+	NotifyOnStates       = "notifyOnStates"
+	EmailIds             = "emailIDs"
+	Constants            = "constants"
+	BadRecordsHandling   = "badRecordsHandling"
+	RateLimit            = "rateLimit"
+	MaxRunners           = "maxRunners"
+	StatsAggregatorStage = "statsAggregatorStage"
+	ErrorRecordPolicy    = "errorRecordPolicy"
+
+	ClusterSlaveMemory   = "clusterSlaveMemory"
+	ClusterSlaveJavaOpts = "clusterSlaveJavaOpts"
+	ClusterLauncherEnv   = "clusterLauncherEnv"
+	MesosDispatchUrl     = "mesosDispatcherURL"
+	HdfsS3ConfigDir      = "hdfsS3ConfDir"
+	WebHookConfigs       = "webhookConfigs"
+)
+
 type PipelineConfigBean struct {
 	Version              string
 	ExecutionMode        string
@@ -31,6 +55,7 @@ type PipelineConfigBean struct {
 	EmailIDs             []interface{}
 	Constants            map[string]interface{}
 	BadRecordsHandling   string
+	ErrorRecordPolicy    string
 	StatsAggregatorStage string
 	RateLimit            float64
 	MaxRunners           float64
@@ -44,23 +69,23 @@ func NewPipelineConfigBean(pipelineConfig common.PipelineConfiguration) Pipeline
 			continue
 		}
 		switch config.Name {
-		case "executionMode":
+		case ExecutionMode:
 			pipelineConfigBean.ExecutionMode = config.Value.(string)
-		case "deliveryGuarantee":
+		case DeliveryGuarantee:
 			pipelineConfigBean.DeliveryGuarantee = config.Value.(string)
-		case "shouldRetry":
+		case ShouldRetry:
 			pipelineConfigBean.ShouldRetry = config.Value.(bool)
-		case "retryAttempts":
+		case RetryAttempts:
 			pipelineConfigBean.RetryAttempts = config.Value.(float64)
-		case "memoryLimit":
+		case MemoryLimit:
 			pipelineConfigBean.MemoryLimit = config.Value.(string)
-		case "memoryLimitExceeded":
+		case MemoryLmtExceeded:
 			pipelineConfigBean.MemoryLimitExceeded = config.Value.(string)
-		case "notifyOnStates":
+		case NotifyOnStates:
 			pipelineConfigBean.NotifyOnStates = config.Value.([]interface{})
-		case "emailIDs":
+		case EmailIds:
 			pipelineConfigBean.EmailIDs = config.Value.([]interface{})
-		case "constants":
+		case Constants:
 			constants := config.Value.([]interface{})
 			pipelineConfigBean.Constants = make(map[string]interface{})
 			for _, constant := range constants {
@@ -68,13 +93,15 @@ func NewPipelineConfigBean(pipelineConfig common.PipelineConfiguration) Pipeline
 				key := constantMap["key"]
 				pipelineConfigBean.Constants[key.(string)] = constantMap["value"]
 			}
-		case "badRecordsHandling":
+		case ErrorRecordPolicy:
+			pipelineConfigBean.ErrorRecordPolicy = config.Value.(string)
+		case BadRecordsHandling:
 			pipelineConfigBean.BadRecordsHandling = config.Value.(string)
-		case "statsAggregatorStage":
+		case StatsAggregatorStage:
 			pipelineConfigBean.StatsAggregatorStage = config.Value.(string)
-		case "rateLimit":
+		case RateLimit:
 			pipelineConfigBean.RateLimit = config.Value.(float64)
-		case "maxRunners":
+		case MaxRunners:
 			pipelineConfigBean.MaxRunners = config.Value.(float64)
 		}
 	}
@@ -84,25 +111,26 @@ func NewPipelineConfigBean(pipelineConfig common.PipelineConfiguration) Pipeline
 
 func GetDefaultPipelineConfigs() []common.Config {
 	pipelineConfigs := []common.Config{
-		common.Config{Name: "executionMode", Value: "STANDALONE"},
-		common.Config{Name: "deliveryGuarantee", Value: "AT_LEAST_ONCE"},
-		common.Config{Name: "shouldRetry", Value: true},
-		common.Config{Name: "retryAttempts", Value: -1},
-		common.Config{Name: "memoryLimit", Value: "${jvm:maxMemoryMB() * 0.65}"},
-		common.Config{Name: "memoryLimitExceeded", Value: "STOP_PIPELINE"},
-		common.Config{Name: "notifyOnStates", Value: []string{"RUN_ERROR", "STOPPED", "FINISHED"}},
-		common.Config{Name: "emailIDs", Value: []string{}},
-		common.Config{Name: "constants", Value: []string{}},
-		common.Config{Name: "badRecordsHandling", Value: "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"},
-		common.Config{Name: "clusterSlaveMemory", Value: 1024},
-		common.Config{Name: "clusterSlaveJavaOpts", Value: "-XX:+UseConcMarkSweepGC -XX:+UseParNewGC -Dlog4j.debug"},
-		common.Config{Name: "clusterLauncherEnv", Value: []string{}},
-		common.Config{Name: "mesosDispatcherURL", Value: nil},
-		common.Config{Name: "hdfsS3ConfDir", Value: nil},
-		common.Config{Name: "rateLimit", Value: 0},
-		common.Config{Name: "maxRunners", Value: 0},
-		common.Config{Name: "webhookConfigs", Value: []interface{}{}},
-		common.Config{Name: "statsAggregatorStage", Value: "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget::1"},
+		{Name: ExecutionMode, Value: "STANDALONE"},
+		{Name: DeliveryGuarantee, Value: "AT_LEAST_ONCE"},
+		{Name: ShouldRetry, Value: true},
+		{Name: RetryAttempts, Value: -1},
+		{Name: MemoryLimit, Value: "${jvm:maxMemoryMB() * 0.65}"},
+		{Name: MemoryLmtExceeded, Value: "STOP_PIPELINE"},
+		{Name: NotifyOnStates, Value: []string{common.RUN_ERROR, common.STOPPED, common.FINISHED}},
+		{Name: EmailIds, Value: []string{}},
+		{Name: Constants, Value: []string{}},
+		{Name: BadRecordsHandling, Value: "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"},
+		{Name: ErrorRecordPolicy, Value: common.ErrorRecordPolicyOriginal},
+		{Name: ClusterSlaveMemory, Value: 1024},
+		{Name: ClusterSlaveJavaOpts, Value: "-XX:+UseConcMarkSweepGC -XX:+UseParNewGC -Dlog4j.debug"},
+		{Name: ClusterLauncherEnv, Value: []string{}},
+		{Name: MesosDispatchUrl, Value: nil},
+		{Name: HdfsS3ConfigDir, Value: nil},
+		{Name: RateLimit, Value: 0},
+		{Name: MaxRunners, Value: 0},
+		{Name: WebHookConfigs, Value: []interface{}{}},
+		{Name: StatsAggregatorStage, Value: "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget::1"},
 	}
 
 	return pipelineConfigs

@@ -235,6 +235,7 @@ type HeaderImpl struct {
 	ErrorMessage         string                 `json:"errorMessage"`
 	ErrorTimestamp       int64                  `json:"errorTimestamp"`
 	Attributes           map[string]interface{} `json:"values"`
+	sourceRecord         api.Record
 }
 
 func (h *HeaderImpl) GetStageCreator() string {
@@ -275,6 +276,10 @@ func (h *HeaderImpl) GetErrorStage() string {
 
 func (h *HeaderImpl) GetErrorTimestamp() int64 {
 	return h.ErrorTimestamp
+}
+
+func (h *HeaderImpl) GetSourceRecord() api.Record {
+	return h.sourceRecord
 }
 
 func (h *HeaderImpl) GetAttributeNames() []string {
@@ -330,11 +335,22 @@ func (h *HeaderImpl) SetErrorDataCollectorId(errorDataCollectorId string) {
 	h.ErrorDataCollectorId = errorDataCollectorId
 }
 
+func (h *HeaderImpl) SetSourceRecord(sourceRecord api.Record) {
+	h.sourceRecord = sourceRecord
+}
+
 func (h *HeaderImpl) clone() *HeaderImpl {
 	clonedHeaderImpl := &HeaderImpl{Attributes: make(map[string]interface{})}
 	for k, v := range h.GetAttributes() {
 		clonedHeaderImpl.SetAttribute(k, v)
 	}
+	//Don't clone the source record
+	clonedHeaderImpl.SetSourceRecord(h.sourceRecord)
+
+	clonedHeaderImpl.SetSourceId(h.SourceId)
+	clonedHeaderImpl.SetTrackingId(h.TrackingId)
+	clonedHeaderImpl.SetStageCreator(h.StageCreator)
+	clonedHeaderImpl.PreviousTrackingId = h.PreviousTrackingId
 	return clonedHeaderImpl
 }
 

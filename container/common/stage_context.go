@@ -24,14 +24,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	log "github.com/sirupsen/logrus"
 )
 
 type StageContextImpl struct {
-	StageConfig StageConfiguration
-	Parameters  map[string]interface{}
-	Metrics     metrics.Registry
-	ErrorSink   *ErrorSink
-	ErrorStage  bool
+	StageConfig       StageConfiguration
+	Parameters        map[string]interface{}
+	Metrics           metrics.Registry
+	ErrorSink         *ErrorSink
+	ErrorStage        bool
+	ErrorRecordPolicy string
 }
 
 func (s *StageContextImpl) GetResolvedValue(configValue interface{}) (interface{}, error) {
@@ -90,19 +92,20 @@ func (s *StageContextImpl) CreateRecord(recordSourceId string, value interface{}
 	}
 	headerImplForRecord := record.GetHeader().(*HeaderImpl)
 	headerImplForRecord.SetStageCreator(s.StageConfig.InstanceName)
+	if s.ErrorRecordPolicy == ErrorRecordPolicyOriginal {
+		//Clone the current record to the header for error record handling
+		headerImplForRecord.SetSourceRecord(record.Clone())
+	}
 	return record, err
 }
 
 func (s *StageContextImpl) ToError(err error, record api.Record) {
-	errorRecord := constructErrorRecord(s.StageConfig.InstanceName, err, record)
+	errorRecord := constructErrorRecord(s.StageConfig.InstanceName, err, s.ErrorRecordPolicy, record)
 	s.ErrorSink.ToError(s.StageConfig.InstanceName, errorRecord)
 }
 
 func (s *StageContextImpl) ReportError(err error) {
-	s.ErrorSink.ReportError(
-		s.StageConfig.InstanceName,
-		err,
-	)
+	s.ErrorSink.ReportError(s.StageConfig.InstanceName, err)
 }
 
 func (s *StageContextImpl) GetOutputLanes() []string {
@@ -135,13 +138,22 @@ func (s *StageContextImpl) IsErrorStage() bool {
 	return s.ErrorStage
 }
 
-func constructErrorRecord(instanceName string, err error, record api.Record) api.Record {
-	// TODO: revisit this if we support processors
-	// no need to clone the record, look for original record to be added to error lane
-	// as the record is not transformed anywhere (i.e no processors in between at the moment)
-	headerImplForRecord := record.GetHeader().(*HeaderImpl)
+func constructErrorRecord(instanceName string, err error, errorRecordPolicy string, record api.Record) api.Record {
+	var recordToBeSentToError api.Record
+	switch errorRecordPolicy {
+	case ErrorRecordPolicyStage:
+		recordToBeSentToError = record
+	case ErrorRecordPolicyOriginal:
+		headerForRecord := record.GetHeader().(*HeaderImpl)
+		recordToBeSentToError = headerForRecord.GetSourceRecord()
+	default:
+		log.Errorf("Unsupported Error Record Policy: %s, Using the original record from source", errorRecordPolicy)
+		headerForRecord := record.GetHeader().(*HeaderImpl)
+		recordToBeSentToError = headerForRecord.GetSourceRecord()
+	}
+	headerImplForRecord := recordToBeSentToError.GetHeader().(*HeaderImpl)
 	headerImplForRecord.SetErrorStageInstance(instanceName)
 	headerImplForRecord.SetErrorMessage(err.Error())
 	headerImplForRecord.SetErrorTimeStamp(util.ConvertTimeToLong(time.Now()))
-	return record
+	return recordToBeSentToError
 }

@@ -210,6 +210,7 @@ func NewPipeline(
 			Metrics:     metricRegistry,
 			ErrorSink:   errorSink,
 			ErrorStage:  false,
+			ErrorRecordPolicy: pipelineConfigForParam.ErrorRecordPolicy,
 		}
 		stageRuntimeList[i] = NewStageRuntime(pipelineBean, stageBean, stageContext)
 		pipes[i] = NewStagePipe(stageRuntimeList[i], config)

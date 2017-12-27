@@ -71,6 +71,7 @@ func getStageContext() (*common.StageContextImpl, *common.ErrorSink) {
 		StageConfig: stageConfig,
 		Parameters:  nil,
 		ErrorSink:   errorSink,
+		ErrorRecordPolicy: common.ErrorRecordPolicyStage,
 	}, errorSink
 }
 

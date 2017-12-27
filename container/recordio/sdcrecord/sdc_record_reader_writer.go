@@ -29,6 +29,8 @@ const (
 	SdcJsonMagicNumber = byte(0xa0) | byte(0x01)
 )
 
+var NewLineBytes = []byte("\n")
+
 type SDCRecordReaderFactoryImpl struct {
 	//TODO: Add needed configs
 }
@@ -112,7 +114,7 @@ func (srw *SDCRecordWriterImpl) WriteRecord(r api.Record) error {
 	if err == nil {
 		err = srw.encoder.Encode(*sdcRecord)
 	}
-	srw.writer.Write([]byte("\n"))
+	srw.writer.Write(NewLineBytes)
 	return err
 }
 

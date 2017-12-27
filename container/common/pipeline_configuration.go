@@ -18,6 +18,9 @@ package common
 const (
 	PIPELINE_CONFIG_SCHEMA_VERSION = 3
 	PIPELINE_CONFIG_VERSION        = 6
+
+	ErrorRecordPolicyOriginal = "ORIGINAL_RECORD"
+	ErrorRecordPolicyStage    = "STAGE_RECORD"
 )
 
 type PipelineConfiguration struct {
