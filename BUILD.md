@@ -5,6 +5,22 @@
 * Go 1.9
 * Gradle 4.2
 
+## Requirements for Kafka Connector
+
+* librdkafka
+
+### Installing librdkafka
+
+Kafka destination stage depends on librdkafka v0.11.0 or later, so you either need to install librdkafka through your OS/distributions package manager,
+or download and build it from source.
+
+- For Debian and Ubuntu based distros, install `librdkafka-dev` from the standard
+repositories or using [Confluent's Deb repository](http://docs.confluent.io/current/installation.html#installation-apt).
+- For Redhat based distros, install `librdkafka-devel` using [Confluent's YUM repository](http://docs.confluent.io/current/installation.html#rpm-packages-via-yum).
+- For MacOS X, install `librdkafka` from Homebrew.
+- For Windows, see the `librdkafka.redist` NuGet package.
+
+
 ## Clone Repository
 
 * Create directory $GOPATH/src/github.com/streamsets
@@ -26,6 +42,10 @@
 ## Building DockerImage
 
     ./gradlew buildDockerImage
+
+## By default Kafka Connector is not included in build, to include Kafka Connector pass '-PincludeStage=kafka'
+
+    ./gradlew clean build -PincludeStage=kafka
 
 ## Run tests
 

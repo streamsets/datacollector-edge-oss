@@ -18,13 +18,13 @@ package common
 import (
 	"context"
 	"github.com/rcrowley/go-metrics"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/el"
 	"github.com/streamsets/datacollector-edge/container/util"
 	"strconv"
 	"strings"
 	"time"
-	log "github.com/sirupsen/logrus"
 )
 
 type StageContextImpl struct {

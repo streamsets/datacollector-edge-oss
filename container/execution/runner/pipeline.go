@@ -205,11 +205,11 @@ func NewPipeline(
 
 	for i, stageBean := range pipelineBean.Stages {
 		stageContext := &common.StageContextImpl{
-			StageConfig: stageBean.Config,
-			Parameters:  resolvedParameters,
-			Metrics:     metricRegistry,
-			ErrorSink:   errorSink,
-			ErrorStage:  false,
+			StageConfig:       stageBean.Config,
+			Parameters:        resolvedParameters,
+			Metrics:           metricRegistry,
+			ErrorSink:         errorSink,
+			ErrorStage:        false,
 			ErrorRecordPolicy: pipelineConfigForParam.ErrorRecordPolicy,
 		}
 		stageRuntimeList[i] = NewStageRuntime(pipelineBean, stageBean, stageContext)

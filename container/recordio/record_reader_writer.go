@@ -16,9 +16,9 @@
 package recordio
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"io"
-	log "github.com/sirupsen/logrus"
 )
 
 type RecordReaderFactory interface {

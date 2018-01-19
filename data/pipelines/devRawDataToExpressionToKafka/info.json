@@ -1,0 +1,18 @@
+{
+  "pipelineId" : "devRawDataToExpressionToKafka",
+  "title" : "Dev Raw Data to Expression Evaluator to Apache Kafka",
+  "description" : "",
+  "created" : 1516399277543,
+  "lastModified" : 1516399728513,
+  "creator" : "admin",
+  "lastModifier" : "admin",
+  "lastRev" : "0",
+  "uuid" : "c7223fa1-73af-4030-9e15-29c02c58115c",
+  "valid" : true,
+  "metadata" : {
+    "labels" : [ ]
+  },
+  "name" : "devRawDataToExpressionToKafka",
+  "sdcVersion" : "3.1.0.0-SNAPSHOT",
+  "sdcId" : "5da2dceb-fd43-11e7-a52e-23c27814d369"
+}

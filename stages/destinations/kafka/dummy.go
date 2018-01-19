@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 StreamSets Inc.
+ * Copyright 2018 StreamSets Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package destinations
 
-import (
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/coap"
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/http"
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/kafka"
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/mqtt"
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/trash"
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/websocket"
-)
+package kafka
+
+// Place holder so as not to fail builds when kafka tag is not passed (-PincludeStage=kafka)
