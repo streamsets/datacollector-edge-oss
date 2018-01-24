@@ -37,9 +37,9 @@ const (
 
 type KafkaDestination struct {
 	*common.BaseStage
-	Conf     KafkaTargetConfig `ConfigDefBean:"conf"`
+	Conf            KafkaTargetConfig `ConfigDefBean:"conf"`
 	kafkaClientConf *sarama.Config
-	brokerList []string
+	brokerList      []string
 }
 
 type KafkaTargetConfig struct {

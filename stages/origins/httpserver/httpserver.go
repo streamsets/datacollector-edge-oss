@@ -91,7 +91,7 @@ func (h *HttpServerOrigin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *HttpServerOrigin) startHttpServer() *http.Server {
 	srv := &http.Server{
-		Addr:    ":" + strconv.FormatFloat(h.HttpConfigs.Port, 'E', -1, 64),
+		Addr:    ":" + strconv.FormatFloat(h.HttpConfigs.Port, 'f', 0, 64),
 		Handler: h,
 	}
 
