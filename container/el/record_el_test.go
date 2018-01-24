@@ -18,16 +18,21 @@ package el
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"testing"
+	"time"
 )
 
 type MockRecord struct {
 }
 
+type MockHeader struct {
+}
+
 func (r *MockRecord) GetHeader() api.Header {
-	return nil
+	return &MockHeader{}
 }
 
 func (r *MockRecord) Get(fieldPath ...string) (*api.Field, error) {
@@ -70,6 +75,71 @@ func (r *MockRecord) SetField(fieldPath string, field *api.Field) (*api.Field, e
 
 func (r *MockRecord) Delete(fieldPath string) (*api.Field, error) {
 	return nil, errors.New("unsupported operation")
+}
+
+func (h *MockHeader) GetStageCreator() string {
+	return ""
+}
+
+func (h *MockHeader) GetSourceId() string {
+	return ""
+}
+
+func (h *MockHeader) GetTrackingId() string {
+	return ""
+}
+
+func (h *MockHeader) GetPreviousTrackingId() string {
+	return ""
+}
+
+func (h *MockHeader) GetStagesPath() string {
+	return ""
+}
+
+func (h *MockHeader) GetErrorDataCollectorId() string {
+	return ""
+}
+
+func (h *MockHeader) GetErrorPipelineName() string {
+	return ""
+}
+
+func (h *MockHeader) GetErrorMessage() string {
+	return ""
+}
+
+func (h *MockHeader) GetErrorStage() string {
+	return ""
+}
+
+func (h *MockHeader) GetErrorTimestamp() int64 {
+	return time.Now().Unix()
+}
+
+func (h *MockHeader) GetSourceRecord() api.Record {
+	return nil
+}
+
+func (h *MockHeader) GetAttributeNames() []string {
+	var attributeNames []string
+	return attributeNames
+}
+
+func (h *MockHeader) GetAttributes() map[string]string {
+	attributes := make(map[string]string)
+	return attributes
+}
+
+func (h *MockHeader) GetAttribute(name string) interface{} {
+	fmt.Print(name)
+	if name == "sampleAttributeName" {
+		return "Sample Attribute Value"
+	}
+	return nil
+}
+
+func (h *MockHeader) SetAttribute(name string, value string) {
 }
 
 func TestRecordEL(test *testing.T) {
@@ -130,7 +200,43 @@ func TestRecordEL(test *testing.T) {
 			Expected:   "invalid fieldPath '/inValid'",
 			ErrorCase:  true,
 		},
-
+		{
+			Name:       "Test function record:attribute",
+			Expression: "${record:attribute('sampleAttributeName')}",
+			Expected:   "Sample Attribute Value",
+		},
+		{
+			Name:       "Test function record:attribute - Error 1",
+			Expression: "${record:attribute()}",
+			Expected:   "The function 'record:attribute' requires 1 arguments but was passed 0",
+			ErrorCase:  true,
+		},
+		{
+			Name:       "Test function record:attribute - Error 2",
+			Expression: "${record:attribute('inValidAttributeName')}",
+			Expected:   nil,
+		},
+		{
+			Name:       "Test function record:attributeOrDefault",
+			Expression: "${record:attributeOrDefault('notValid', 'test default value')}",
+			Expected:   "test default value",
+		},
+		{
+			Name:       "Test function record:attributeOrDefault",
+			Expression: "${record:attributeOrDefault('sampleAttributeName', 'test default value')}",
+			Expected:   "Sample Attribute Value",
+		},
+		{
+			Name:       "Test function record:attributeOrDefault - Error 1",
+			Expression: "${record:attributeOrDefault()}",
+			Expected:   "The function 'record:attributeOrDefault' requires 2 arguments but was passed 0",
+			ErrorCase:  true,
+		},
+		{
+			Name:       "Test function record:attributeOrDefault - Error 2",
+			Expression: "${record:attributeOrDefault('inValidAttributeName', 'inValid')}",
+			Expected:   "inValid",
+		},
 		{
 			Name:       "Test function record:exists",
 			Expression: "${record:exists('/a/b')}",

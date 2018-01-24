@@ -103,6 +103,50 @@ func (r *RecordEL) GetValueOrDefault(args ...interface{}) (interface{}, error) {
 	return defaultValue, nil
 }
 
+func (r *RecordEL) GetAttribute(args ...interface{}) (interface{}, error) {
+	if len(args) < 1 {
+		return "", errors.New(
+			fmt.Sprintf("The function 'record:attribute' requires 1 arguments but was passed %d", len(args)),
+		)
+	}
+
+	attributeName := args[0].(string)
+
+	record, err := r.getRecordInContext()
+	if err != nil {
+		return nil, err
+	}
+
+	attributeValue := record.GetHeader().GetAttribute(attributeName)
+	return attributeValue, nil
+}
+
+func (r *RecordEL) GetAttributeOrDefault(args ...interface{}) (interface{}, error) {
+	if len(args) < 2 {
+		return "", errors.New(
+			fmt.Sprintf("The function 'record:attributeOrDefault' requires 2 arguments but was passed %d",
+				len(args),
+			),
+		)
+	}
+
+	attributeName := args[0].(string)
+	defaultValue := args[1]
+
+	record, err := r.getRecordInContext()
+	if err != nil {
+		return nil, err
+	}
+
+	attributeValue := record.GetHeader().GetAttribute(attributeName)
+
+	if attributeValue != nil {
+		return attributeValue, nil
+	}
+
+	return defaultValue, nil
+}
+
 func (r *RecordEL) Exists(args ...interface{}) (interface{}, error) {
 	if len(args) < 1 {
 		return "", errors.New(
@@ -139,10 +183,12 @@ func (r *RecordEL) getRecordInContext() (api.Record, error) {
 
 func (r *RecordEL) GetELFunctionDefinitions() map[string]govaluate.ExpressionFunction {
 	functions := map[string]govaluate.ExpressionFunction{
-		"record:type":           r.GetType,
-		"record:value":          r.GetValue,
-		"record:valueOrDefault": r.GetValueOrDefault,
-		"record:exists":         r.Exists,
+		"record:type":               r.GetType,
+		"record:value":              r.GetValue,
+		"record:valueOrDefault":     r.GetValueOrDefault,
+		"record:attribute":          r.GetAttribute,
+		"record:attributeOrDefault": r.GetAttributeOrDefault,
+		"record:exists":             r.Exists,
 		// TODO: SDCE-63 Add remaining record el functions
 	}
 	return functions

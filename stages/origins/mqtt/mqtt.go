@@ -16,18 +16,20 @@
 package mqtt
 
 import (
+	"bytes"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	mqttlib "github.com/streamsets/datacollector-edge/stages/lib/mqtt"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
-	"strconv"
 )
 
 const (
-	LIBRARY    = "streamsets-datacollector-basic-lib"
-	STAGE_NAME = "com_streamsets_pipeline_stage_origin_mqtt_MqttClientDSource"
+	LIBRARY           = "streamsets-datacollector-basic-lib"
+	STAGE_NAME        = "com_streamsets_pipeline_stage_origin_mqtt_MqttClientDSource"
+	TOPIC_HEADER_NAME = "topic"
 )
 
 type MqttClientSource struct {
@@ -39,8 +41,9 @@ type MqttClientSource struct {
 }
 
 type MqttClientSourceConfigBean struct {
-	TopicFilters []string `ConfigDef:"type=LIST,required=true"`
-	DataFormat   string   `ConfigDef:"type=STRING,required=true"`
+	TopicFilters     []string                          `ConfigDef:"type=LIST,required=true"`
+	DataFormat       string                            `ConfigDef:"type=STRING,required=true"`
+	DataFormatConfig dataparser.DataParserFormatConfig `ConfigDefBean:"dataFormatConfig"`
 }
 
 func init() {
@@ -74,7 +77,7 @@ func (ms *MqttClientSource) Init(stageContext api.StageContext) error {
 			err = token.Error()
 		}
 	}
-	return err
+	return ms.SubscriberConf.DataFormatConfig.Init(ms.SubscriberConf.DataFormat)
 }
 
 func (ms *MqttClientSource) Produce(
@@ -92,15 +95,30 @@ func (ms *MqttClientSource) Destroy() error {
 	log.Debug("MqttClientSource - Destroy method")
 	ms.Client.Unsubscribe(ms.SubscriberConf.TopicFilters...).Wait()
 	ms.Client.Disconnect(250)
-	//Close channel after unsubscribe and disconnect
+	// Close channel after unsubscribe and disconnect
 	close(ms.incomingRecords)
 	return nil
 }
 
-func (md *MqttClientSource) MessageHandler(client MQTT.Client, msg MQTT.Message) {
-	value := string(msg.Payload())
-	msgId := strconv.FormatUint(uint64(msg.MessageID()), 10)
-	log.WithField("value", value).Debug("Incoming Data")
-	record, _ := md.GetStageContext().CreateRecord(msgId, value)
-	md.incomingRecords <- record
+func (ms *MqttClientSource) MessageHandler(client MQTT.Client, msg MQTT.Message) {
+	recordReaderFactory := ms.SubscriberConf.DataFormatConfig.RecordReaderFactory
+	recordBuffer := bytes.NewBufferString(string(msg.Payload()))
+	recordReader, err := recordReaderFactory.CreateReader(ms.GetStageContext(), recordBuffer)
+	if err != nil {
+		log.WithError(err).Error("Failed to create record reader")
+	}
+	defer recordReader.Close()
+
+	for {
+		record, err := recordReader.ReadRecord()
+		if err != nil {
+			log.WithError(err).Error("Failed to parse raw data")
+		}
+
+		if record == nil {
+			break
+		}
+		record.GetHeader().SetAttribute(TOPIC_HEADER_NAME, msg.Topic())
+		ms.incomingRecords <- record
+	}
 }

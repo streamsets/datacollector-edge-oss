@@ -82,6 +82,7 @@ func DoMain(
 
 		state, err = dataCollectorEdge.Manager.StartPipeline(startFlag, runtimeParameters)
 		if err != nil {
+			fmt.Println(err)
 			log.Panic(err)
 		}
 		stateJson, _ := json.Marshal(state)

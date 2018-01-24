@@ -57,5 +57,7 @@ type Header interface {
 
 	GetAttributes() map[string]string
 
+	GetAttribute(name string) interface{}
+
 	SetAttribute(name string, value string)
 }

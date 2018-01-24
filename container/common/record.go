@@ -299,6 +299,10 @@ func (h *HeaderImpl) GetAttributes() map[string]string {
 	return attributes
 }
 
+func (h *HeaderImpl) GetAttribute(name string) interface{} {
+	return h.Attributes[name]
+}
+
 func (h *HeaderImpl) SetAttribute(name string, value string) {
 	h.Attributes[name] = value
 }
