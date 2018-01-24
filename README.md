@@ -55,6 +55,7 @@ If you need help with production systems, you can check out the variety of suppo
 * [Directory Spooler to Http](data/pipelines/directoryToHttp)
 * [Bosch BME280 Humidity, Barometric Pressure, Temperature Sensor data to HTTP](data/pipelines/sensorBME280ToHttp)
 * [MQTT To HTTP](data/pipelines/mqttToHttp)
+* [Dev Raw Data To Expression Evaluator to Kafka](data/pipelines/devRawDataToExpressionToKafka)
 * [Random Data to MQTT](data/pipelines/randomToMqtt)
 * [Random Data to CoAP](data/pipelines/randomToCoap)
 * [Random Data To Http](data/pipelines/randomToHttp)

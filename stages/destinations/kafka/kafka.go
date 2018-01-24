@@ -20,25 +20,26 @@ package kafka
 import (
 	"bytes"
 	"context"
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/Shopify/sarama"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/el"
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
+	"strings"
 )
 
 const (
-	LIBRARY           = "streamsets-datacollector-apache-kafka_1_0-lib"
-	STAGE_NAME        = "com_streamsets_pipeline_stage_destination_kafka_KafkaDTarget"
-	BOOTSTRAP_SERVERS = "bootstrap.servers"
+	LIBRARY    = "streamsets-datacollector-apache-kafka_1_0-lib"
+	STAGE_NAME = "com_streamsets_pipeline_stage_destination_kafka_KafkaDTarget"
 )
 
 type KafkaDestination struct {
 	*common.BaseStage
-	Producer *kafka.Producer
 	Conf     KafkaTargetConfig `ConfigDefBean:"conf"`
+	kafkaClientConf *sarama.Config
+	brokerList []string
 }
 
 type KafkaTargetConfig struct {
@@ -69,62 +70,61 @@ func (dest *KafkaDestination) Init(context api.StageContext) error {
 		return err
 	}
 
-	kafkaConfigMap := kafka.ConfigMap{
-		BOOTSTRAP_SERVERS: dest.Conf.MetadataBrokerList,
-	}
-
-	for key, value := range dest.Conf.KafkaProducerConfigs {
-		kafkaConfigMap[key] = value
-	}
-
-	producer, err := kafka.NewProducer(&kafkaConfigMap)
-
+	dest.kafkaClientConf = sarama.NewConfig()
+	dest.kafkaClientConf.Producer.Return.Successes = true
+	// TODO: Map KafkaProducerConfigs to sarama producer config
+	dest.kafkaClientConf.Producer.Partitioner, err = getPartitionerConstructor(dest.Conf.PartitionStrategy)
 	if err != nil {
 		return err
 	}
-
-	dest.Producer = producer
+	dest.brokerList = strings.Split(dest.Conf.MetadataBrokerList, ",")
 
 	return nil
 }
 
 func (dest *KafkaDestination) Write(batch api.Batch) error {
 	var err error
-	recordWriterFactory := dest.Conf.DataGeneratorFormatConfig.RecordWriterFactory
 
+	kafkaProducer, err := sarama.NewAsyncProducer(dest.brokerList, dest.kafkaClientConf)
 	if err != nil {
 		return err
 	}
 
-	doneChan := make(chan bool)
+	defer func() {
+		if err := kafkaProducer.Close(); err != nil {
+			log.WithError(err).Error("Failed to close Kafka Producer")
+		}
+	}()
+
+	recordWriterFactory := dest.Conf.DataGeneratorFormatConfig.RecordWriterFactory
+	if err != nil {
+		return err
+	}
 
 	go func() {
-		defer close(doneChan)
-		for e := range dest.Producer.Events() {
-			switch ev := e.(type) {
-			case *kafka.Message:
-				m := ev
-				msgLogger := log.WithFields(log.Fields{
-					"key":       m.Key,
-					"topic":     m.TopicPartition.Topic,
-					"partition": m.TopicPartition.Partition,
-					"offset":    m.TopicPartition.Offset,
-				})
-				if m.TopicPartition.Error != nil {
-					msgLogger.WithError(m.TopicPartition.Error).Error("Message delivery failed!")
-				} else {
-					msgLogger.Debug("Message delivered")
-				}
-				return
+		for msg := range kafkaProducer.Successes() {
+			log.WithFields(log.Fields{
+				"key":       msg.Key,
+				"topic":     msg.Topic,
+				"partition": msg.Partition,
+				"offset":    msg.Offset,
+			}).Debug("Message delivered")
+		}
+	}()
 
-			default:
-				log.WithField("event", ev).Warn("Ignored event")
-			}
+	go func() {
+		for err := range kafkaProducer.Errors() {
+			log.WithFields(log.Fields{
+				"key":       err.Msg.Key,
+				"topic":     err.Msg.Topic,
+				"partition": err.Msg.Partition,
+				"offset":    err.Msg.Offset,
+			}).WithError(err.Err).Error("Message delivery failed!")
 		}
 	}()
 
 	// TODO: Support sending single message per batch -
-	// SDCE-176 - Support sending sing message per batch in Kafka destination
+	// SDCE-176 - Support sending single message per batch in Kafka destination
 
 	for _, record := range batch.GetRecords() {
 		recordContext := context.WithValue(context.Background(), el.RECORD_CONTEXT_VAR, record)
@@ -152,30 +152,18 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 			return err
 		}
 
-		p, err := nextPartition(dest.Producer, topic, dest.Conf.PartitionStrategy)
-		if err != nil {
-			return err
-		}
+		log.Debug("Sending message")
 
-		log.WithField("partition", p).Debug("Sending message")
-
-		dest.Producer.ProduceChannel() <- &kafka.Message{
-			TopicPartition: kafka.TopicPartition{
-				Topic: topic, Partition: p,
-			},
-			Value: recordBuffer.Bytes(),
+		kafkaProducer.Input() <- &sarama.ProducerMessage{
+			Topic: *topic,
+			Value: sarama.ByteEncoder(recordBuffer.Bytes()),
 		}
 	}
 
-	// wait for delivery report
-	_ = <-doneChan
 	return nil
 }
 
 func (dest *KafkaDestination) Destroy() error {
-	if dest.Producer != nil {
-		dest.Producer.Close()
-	}
 	return nil
 }
 
