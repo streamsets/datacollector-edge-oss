@@ -31,7 +31,18 @@ import (
 )
 
 const (
-	LIBRARY    = "streamsets-datacollector-apache-kafka_1_0-lib"
+	APACHE_KAFKA_0_10_LIBRARY = "streamsets-datacollector-apache-kafka_0_10-lib"
+	APACHE_KAFKA_0_11_LIBRARY = "streamsets-datacollector-apache-kafka_0_11-lib"
+	APACHE_KAFKA_1_0_LIBRARY  = "streamsets-datacollector-apache-kafka_1_0-lib"
+
+	CDH_KAFKA_2_0_LIBRARY = "streamsets-datacollector-cdh_kafka_2_0-lib"
+	CDH_KAFKA_2_1_LIBRARY = "streamsets-datacollector-cdh_kafka_2_1-lib"
+	CDH_KAFKA_3_0_LIBRARY = "streamsets-datacollector-cdh_kafka_3_0-lib"
+
+	HDP_KAFKA_2_4_LIBRARY = "streamsets-datacollector-hdp_2_4-lib"
+	HDP_KAFKA_2_5_LIBRARY = "streamsets-datacollector-hdp_2_5-lib"
+	HDP_KAFKA_2_6_LIBRARY = "streamsets-datacollector-hdp_2_6-lib"
+
 	STAGE_NAME = "com_streamsets_pipeline_stage_destination_kafka_KafkaDTarget"
 )
 
@@ -56,7 +67,33 @@ type KafkaTargetConfig struct {
 }
 
 func init() {
-	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(APACHE_KAFKA_0_10_LIBRARY, STAGE_NAME, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+	})
+	stagelibrary.SetCreator(APACHE_KAFKA_0_11_LIBRARY, STAGE_NAME, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+	})
+	stagelibrary.SetCreator(APACHE_KAFKA_1_0_LIBRARY, STAGE_NAME, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+	})
+
+	stagelibrary.SetCreator(CDH_KAFKA_2_0_LIBRARY, STAGE_NAME, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+	})
+	stagelibrary.SetCreator(CDH_KAFKA_2_1_LIBRARY, STAGE_NAME, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+	})
+	stagelibrary.SetCreator(CDH_KAFKA_3_0_LIBRARY, STAGE_NAME, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+	})
+
+	stagelibrary.SetCreator(HDP_KAFKA_2_4_LIBRARY, STAGE_NAME, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+	})
+	stagelibrary.SetCreator(HDP_KAFKA_2_5_LIBRARY, STAGE_NAME, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+	})
+	stagelibrary.SetCreator(HDP_KAFKA_2_6_LIBRARY, STAGE_NAME, func() api.Stage {
 		return &KafkaDestination{BaseStage: &common.BaseStage{}}
 	})
 }
