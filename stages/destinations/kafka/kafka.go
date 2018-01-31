@@ -51,6 +51,7 @@ type KafkaDestination struct {
 	Conf            KafkaTargetConfig `ConfigDefBean:"conf"`
 	kafkaClientConf *sarama.Config
 	brokerList      []string
+	kafkaClient     sarama.Client
 }
 
 type KafkaTargetConfig struct {
@@ -108,6 +109,7 @@ func (dest *KafkaDestination) Init(context api.StageContext) error {
 	}
 
 	dest.kafkaClientConf = sarama.NewConfig()
+	dest.kafkaClientConf.Producer.Retry.Max = 10
 	dest.kafkaClientConf.Producer.Return.Successes = true
 	// TODO: Map KafkaProducerConfigs to sarama producer config
 	dest.kafkaClientConf.Producer.Partitioner, err = getPartitionerConstructor(dest.Conf.PartitionStrategy)
@@ -116,13 +118,18 @@ func (dest *KafkaDestination) Init(context api.StageContext) error {
 	}
 	dest.brokerList = strings.Split(dest.Conf.MetadataBrokerList, ",")
 
+	dest.kafkaClient, err = sarama.NewClient(dest.brokerList, dest.kafkaClientConf)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (dest *KafkaDestination) Write(batch api.Batch) error {
 	var err error
 
-	kafkaProducer, err := sarama.NewAsyncProducer(dest.brokerList, dest.kafkaClientConf)
+	kafkaProducer, err := sarama.NewAsyncProducerFromClient(dest.kafkaClient)
 	if err != nil {
 		return err
 	}
@@ -201,6 +208,12 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 }
 
 func (dest *KafkaDestination) Destroy() error {
+	if dest.kafkaClient != nil {
+		if err := dest.kafkaClient.Close(); err != nil {
+			log.WithError(err).Error("Failed to close Kafka Client")
+			return err
+		}
+	}
 	return nil
 }
 
