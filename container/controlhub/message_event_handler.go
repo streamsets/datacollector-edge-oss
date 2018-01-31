@@ -159,9 +159,9 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 		return err
 	}
 
-	log.WithField("status", resp.Status).Debug("DPM Event Status")
+	log.WithField("status", resp.Status).Debug("SCH Event Status")
 	if resp.StatusCode != 200 {
-		return errors.New("DPM Send event failed")
+		return errors.New("SCH Send event failed")
 	}
 
 	decoder := json.NewDecoder(resp.Body)
@@ -173,7 +173,7 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 			// empty body
 		case err != nil:
 			// other error
-			return errors.New(fmt.Sprintf("Parsing DPM event failed: %s", err))
+			return errors.New(fmt.Sprintf("Parsing SCH event failed: %s", err))
 		}
 	}
 
@@ -234,7 +234,7 @@ func (m *MessageEventHandler) createPipelineStatusEvent(
 }
 
 func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEvent {
-	log.Debug("Handling DPM Events: %d", serverEvent.EventTypeId)
+	log.Debug("Handling SCH Events: %d", serverEvent.EventTypeId)
 
 	var ackEventMessage string
 	ackEventStatus := ACK_EVENT_SUCCESS
@@ -245,7 +245,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err := json.Unmarshal([]byte(serverEvent.Payload), &pipelineSaveEvent); err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.WithError(err).Error("Error during handling DPM SAVE Pipeline Event")
+			log.WithError(err).Error("Error during handling SCH SAVE Pipeline Event")
 			break
 		}
 
@@ -254,7 +254,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 			&pipelineConfiguration); err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.WithError(err).Error("Error during handling DPM SAVE Pipeline Event")
+			log.WithError(err).Error("Error during handling SCH SAVE Pipeline Event")
 			break
 		}
 
@@ -267,7 +267,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.WithError(err).Error("Error during handling DPM SAVE Pipeline Event")
+			log.WithError(err).Error("Error during handling SCH SAVE Pipeline Event")
 			break
 		}
 
@@ -277,7 +277,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.WithError(err).Error("Error during handling DPM SAVE Pipeline Event")
+			log.WithError(err).Error("Error during handling SCH SAVE Pipeline Event")
 			break
 		}
 
@@ -302,7 +302,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err := json.Unmarshal([]byte(serverEvent.Payload), &pipelineBaseEvent); err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.WithError(err).Error("Error handling DPM Start Pipeline Event")
+			log.WithError(err).Error("Error handling SCH Start Pipeline Event")
 			break
 		}
 
@@ -310,7 +310,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.WithError(err).Error("Error handling DPM Start Pipeline Event")
+			log.WithError(err).Error("Error handling SCH Start Pipeline Event")
 			break
 		}
 	case STOP_PIPELINE:
@@ -318,7 +318,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err := json.Unmarshal([]byte(serverEvent.Payload), &pipelineBaseEvent); err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.WithError(err).Error("Error handling DPM Stop Pipeline Event")
+			log.WithError(err).Error("Error handling SCH Stop Pipeline Event")
 			break
 		}
 
@@ -326,7 +326,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.WithError(err).Error("Error handling DPM Stop Pipeline Event")
+			log.WithError(err).Error("Error handling SCH Stop Pipeline Event")
 			break
 		}
 	case VALIDATE_PIPELINE:
@@ -337,7 +337,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err := json.Unmarshal([]byte(serverEvent.Payload), &pipelineBaseEvent); err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.WithError(err).Error("Error handling DPM Delete Pipeline Event")
+			log.WithError(err).Error("Error handling SCH Delete Pipeline Event")
 			break
 		}
 
@@ -345,7 +345,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.WithError(err).Error("Error handling DPM Delete Pipeline Event")
+			log.WithError(err).Error("Error handling SCH Delete Pipeline Event")
 			break
 		}
 	case STOP_DELETE_PIPELINE:
@@ -353,7 +353,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err := json.Unmarshal([]byte(serverEvent.Payload), &pipelineBaseEvent); err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.WithError(err).Error("Error handling DPM Start Pipeline Event")
+			log.WithError(err).Error("Error handling SCH Start Pipeline Event")
 			break
 		}
 
@@ -361,7 +361,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.WithError(err).Error("Error handling DPM Stop Delete Pipeline Event")
+			log.WithError(err).Error("Error handling SCH Stop Delete Pipeline Event")
 			break
 		}
 
@@ -369,7 +369,7 @@ func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEve
 		if err != nil {
 			ackEventMessage = err.Error()
 			ackEventStatus = ACK_EVENT_ERROR
-			log.WithError(err).Error("Error handling DPM Stop Delete Pipeline Event")
+			log.WithError(err).Error("Error handling SCH Stop Delete Pipeline Event")
 			break
 		}
 	default:
