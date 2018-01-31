@@ -84,9 +84,9 @@ func RegisterWithDPM(
 		}
 		defer resp.Body.Close()
 
-		log.WithField("status", resp.Status).Info("DPM Registration Status")
+		log.WithField("status", resp.Status).Info("SCH Registration Status")
 		if resp.StatusCode != 200 {
-			log.Panic("DPM Registration failed")
+			log.Panic("SCH Registration failed")
 		}
 		runtimeInfo.DPMEnabled = true
 		runtimeInfo.AppAuthToken = schConfig.AppAuthToken

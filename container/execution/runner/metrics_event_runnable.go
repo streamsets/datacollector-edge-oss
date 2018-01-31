@@ -77,7 +77,7 @@ func (m *MetricsEventRunnable) Run() {
 				}
 			case <-m.quitSendingMetricsToDPM:
 				ticker.Stop()
-				log.Debug("Sending metrics to DPM is stopped")
+				log.Debug("Sending metrics to SCH is stopped")
 				return
 			}
 		}
@@ -91,7 +91,7 @@ func (m *MetricsEventRunnable) Stop() {
 }
 
 func (m *MetricsEventRunnable) sendMetricsToDPM() error {
-	log.Debug("Sending metrics to DPM")
+	log.Debug("Sending metrics to SCH")
 	metricsJson := SDCMetrics{
 		Timestamp:   time.Now().UnixNano() / int64(time.Millisecond),
 		Metadata:    m.metadata,
@@ -119,13 +119,13 @@ func (m *MetricsEventRunnable) sendMetricsToDPM() error {
 		return err
 	}
 
-	log.WithField("status", resp.Status).Debug("DPM Send Metrics Status")
+	log.WithField("status", resp.Status).Debug("SCH Send Metrics Status")
 	if resp.StatusCode != 200 {
 		responseData, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return err
 		}
-		return errors.New(fmt.Sprintf("DPM Send Metrics failed - %s ", string(responseData)))
+		return errors.New(fmt.Sprintf("SCH Send Metrics failed - %s ", string(responseData)))
 	}
 
 	return nil
