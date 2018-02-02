@@ -17,9 +17,8 @@ package edge
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"os"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/controlhub"
@@ -27,6 +26,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/http"
 	"github.com/streamsets/datacollector-edge/container/process"
 	"github.com/streamsets/datacollector-edge/container/store"
+	"os"
 	"path"
 	"runtime"
 	"strings"
@@ -35,6 +35,7 @@ import (
 const (
 	DefaultLogFilePath    = "/log/edge.log"
 	DefaultConfigFilePath = "/etc/edge.conf"
+	LogFileName           = "edge.log"
 	DEBUG                 = "DEBUG"
 	WARN                  = "WARN"
 	ERROR                 = "ERROR"
@@ -57,17 +58,18 @@ func DoMain(
 	debugFlag bool,
 	logToConsoleFlag bool,
 	startFlag string,
-	runtimeParametersFlag string,
+	runtimeParametersArg string,
+	logDirArg string,
 ) (*DataCollectorEdgeMain, error) {
-	dataCollectorEdge, err := newDataCollectorEdge(baseDir, debugFlag, logToConsoleFlag)
+	dataCollectorEdge, err := newDataCollectorEdge(baseDir, debugFlag, logToConsoleFlag, logDirArg)
 	if err != nil {
 		panic(err)
 	}
 
 	if len(startFlag) > 0 {
 		var runtimeParameters map[string]interface{}
-		if len(runtimeParametersFlag) > 0 {
-			err := json.Unmarshal([]byte(runtimeParametersFlag), &runtimeParameters)
+		if len(runtimeParametersArg) > 0 {
+			err := json.Unmarshal([]byte(runtimeParametersArg), &runtimeParameters)
 			if err != nil {
 				panic(err)
 			}
@@ -92,8 +94,13 @@ func DoMain(
 	return dataCollectorEdge, nil
 }
 
-func newDataCollectorEdge(baseDir string, debugFlag bool, logToConsoleFlag bool) (*DataCollectorEdgeMain, error) {
-	err := initializeLog(debugFlag, logToConsoleFlag, baseDir)
+func newDataCollectorEdge(
+	baseDir string,
+	debugFlag bool,
+	logToConsoleFlag bool,
+	logDirArg string,
+) (*DataCollectorEdgeMain, error) {
+	err := initializeLog(debugFlag, logToConsoleFlag, baseDir, logDirArg)
 	if err != nil {
 		return nil, err
 	}
@@ -168,11 +175,15 @@ func (hook ContextHook) Fire(entry *log.Entry) error {
 	return nil
 }
 
-func initializeLog(debugFlag bool, logToConsoleFlag bool, baseDir string) error {
+func initializeLog(debugFlag bool, logToConsoleFlag bool, baseDir string, logDirArg string) error {
 	minLevel := log.InfoLevel
 	if debugFlag {
 		minLevel = log.DebugLevel
 		log.AddHook(ContextHook{})
+	}
+
+	if logToConsoleFlag && logDirArg != "" {
+		panic(errors.New("logDir argument is supported only when writing logs to file"))
 	}
 
 	var loggerFile *os.File
@@ -181,7 +192,11 @@ func initializeLog(debugFlag bool, logToConsoleFlag bool, baseDir string) error 
 	if logToConsoleFlag {
 		loggerFile = os.Stdout
 	} else {
-		loggerFile, err = os.OpenFile(baseDir+DefaultLogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		logFile := baseDir + DefaultLogFilePath
+		if logDirArg != "" {
+			logFile = logDirArg + "/" + LogFileName
+		}
+		loggerFile, err = os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
 			return err
 		}
