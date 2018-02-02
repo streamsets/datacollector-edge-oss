@@ -20,8 +20,9 @@ import (
 func main() {
 	debugFlag := flag.Bool("debug", false, "Debug flag")
 	logToConsoleFlag := flag.Bool("logToConsole", false, "Log to console flag")
-	startFlag := flag.String("start", "", "Start Pipeline flag")
-	runtimeParametersFlag := flag.String("runtimeParameters", "", "Runtime Parameters flag")
+	startFlag := flag.String("start", "", "Start Pipeline ID")
+	runtimeParametersArg := flag.String("runtimeParameters", "", "Runtime Parameters")
+	logDirArg := flag.String("logDir", "", "SDC Edge log directory")
 	flag.Parse()
 
 	ex, err := os.Executable()
@@ -34,7 +35,14 @@ func main() {
 	fmt.Printf("OS: %s\nArchitecture: %s\n", runtime.GOOS, runtime.GOARCH)
 	fmt.Println("Base Dir: ", baseDir)
 
-	dataCollectorEdge, _ := edge.DoMain(baseDir, *debugFlag, *logToConsoleFlag, *startFlag, *runtimeParametersFlag)
+	dataCollectorEdge, _ := edge.DoMain(
+		baseDir,
+		*debugFlag,
+		*logToConsoleFlag,
+		*startFlag,
+		*runtimeParametersArg,
+		*logDirArg,
+	)
 	go shutdownHook(dataCollectorEdge)
 	dataCollectorEdge.WebServerTask.Run()
 }

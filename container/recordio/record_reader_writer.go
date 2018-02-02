@@ -16,7 +16,6 @@
 package recordio
 
 import (
-	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"io"
 )
@@ -48,8 +47,6 @@ func Flush(v interface{}) error {
 	c, ok := v.(Flusher)
 	if ok {
 		return c.Flush()
-	} else {
-		log.Debug("Flush is not supported for this stream")
 	}
 	return nil
 }
@@ -58,8 +55,6 @@ func Close(v interface{}) error {
 	c, ok := v.(io.Closer)
 	if ok {
 		return c.Close()
-	} else {
-		log.Debug("Close is not supported for this stream")
 	}
 	return nil
 }
