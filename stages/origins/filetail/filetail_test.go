@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 )
 
@@ -271,6 +272,52 @@ func _TestChannelDeadlockIssue(t *testing.T) {
 	for true {
 		lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 1000, batchMaker)
 		log.Println("offset - " + lastSourceOffset)
+	}
+
+	stageInstance.Destroy()
+}
+
+func TestFileTailOrigin_offsetIssue(t *testing.T) {
+	dir, err := ioutil.TempDir("", "TestValidFilePath")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir) // clean up
+	filePath := filepath.Join(dir, "offsetTest.jso")
+	f, err := os.Create(filePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+
+	for i := 0; i < 100; i++ {
+		f.WriteString("{\"count\": \"34\", \"total\": \"45\", \"page\": \"" + strconv.Itoa(i) + "\"}\n")
+	}
+
+	stageContext := getStageContext(filePath, 2, 10, "JSON")
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	if err != nil {
+		t.Error(err)
+	}
+	stageInstance := stageBean.Stage
+	err = stageInstance.Init(stageContext)
+	if err != nil {
+		t.Error(err)
+	}
+
+	lastSourceOffset := ""
+	recordsCount := int64(0)
+	for i := 0; i < 11; i++ {
+		batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
+		lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 10, batchMaker)
+		recordsCount += batchMaker.GetSize()
+		if err != nil {
+			t.Error(err)
+		}
+	}
+
+	if recordsCount != 100 {
+		t.Error("Missed some records, expected 100 but got ", recordsCount)
 	}
 
 	stageInstance.Destroy()

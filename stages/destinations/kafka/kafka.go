@@ -208,7 +208,7 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 }
 
 func (dest *KafkaDestination) Destroy() error {
-	if dest.kafkaClient != nil {
+	if dest.kafkaClient != nil && !dest.kafkaClient.Closed() {
 		if err := dest.kafkaClient.Close(); err != nil {
 			log.WithError(err).Error("Failed to close Kafka Client")
 			return err

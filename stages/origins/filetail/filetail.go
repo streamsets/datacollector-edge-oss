@@ -21,6 +21,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/recordio"
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io"
@@ -37,6 +38,8 @@ type FileTailOrigin struct {
 	*common.BaseStage
 	Conf FileTailConfigBean `ConfigDefBean:"name=conf"`
 }
+
+var lastLineReadAfterStop string
 
 type FileTailConfigBean struct {
 	BatchSize        float64                           `ConfigDef:"type=NUMBER,required=true"`
@@ -92,62 +95,87 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 		select {
 		case line := <-tailObj.Lines:
 			if line != nil {
-
-				recordBuffer := bytes.NewBufferString(line.Text)
-				recordReader, err := recordReaderFactory.CreateReader(f.GetStageContext(), recordBuffer)
-				if err != nil {
-					log.WithError(err).Error("Failed to create record reader")
-					return "", err
-				}
-				defer recordReader.Close()
-
-				for {
-					record, err := recordReader.ReadRecord()
+				if recordCount == 0 && lastLineReadAfterStop == line.Text {
+					// Duplicate line from last batch, due to offset issue with tail library
+					log.WithField("data", line.Text).Warn("Ignoring duplicate line from last batch")
+				} else {
+					err = f.parseLine(recordReaderFactory, line.Text, batchMaker, &recordCount)
 					if err != nil {
-						log.WithError(err).Error("Failed to parse raw data")
 						return "", err
 					}
 
-					if record == nil {
-						break
+					if recordCount == f.Conf.BatchSize {
+						currentOffset, _ = tailObj.Tell()
+						end = true
 					}
-					batchMaker.AddRecord(record)
-					recordCount++
-				}
-
-				if recordCount >= f.Conf.BatchSize {
-					currentOffset, _ = tailObj.Tell()
-					log.WithField("BatchSize", f.Conf.BatchSize).Debug("Calling stop due to MaxBatchSize")
-					end = true
 				}
 			}
 		case <-time.After(time.Duration(f.Conf.MaxWaitTimeSecs) * time.Second):
-			log.WithField("MaxWaitTimeSecs", f.Conf.MaxWaitTimeSecs).Debug("Calling stop due to MaxWaitTimeSecs")
 			currentOffset, _ = tailObj.Tell()
 			end = true
 		}
 	}
 
-	go f.stopTailing(tailObj)
+	f.stopTailing(tailObj, recordReaderFactory, batchMaker, &recordCount)
 
 	return strconv.FormatInt(currentOffset, 10), err
 }
 
-func (f *FileTailOrigin) stopTailing(tailObj *tail.Tail) {
+func (f *FileTailOrigin) parseLine(
+	recordReaderFactory recordio.RecordReaderFactory,
+	lineText string,
+	batchMaker api.BatchMaker,
+	recordCount *float64,
+) error {
+	recordBuffer := bytes.NewBufferString(lineText)
+	recordReader, err := recordReaderFactory.CreateReader(f.GetStageContext(), recordBuffer)
+	if err != nil {
+		log.WithError(err).Error("Failed to create record reader")
+		return err
+	}
+	defer recordReader.Close()
+
+	for {
+		record, err := recordReader.ReadRecord()
+		if err != nil {
+			log.WithError(err).Error("Failed to parse raw data")
+			return err
+		}
+
+		if record == nil {
+			break
+		}
+		batchMaker.AddRecord(record)
+		*recordCount++
+	}
+	return nil
+}
+
+func (f *FileTailOrigin) stopTailing(
+	tailObj *tail.Tail,
+	recordReaderFactory recordio.RecordReaderFactory,
+	batchMaker api.BatchMaker,
+	recordCount *float64,
+) error {
+	lastLineReadAfterStop = ""
 	tailObj.Kill(nil)
 	time.Sleep(time.Microsecond)
-
 	end := false
 	for !end {
 		select {
-		case _, ok := <-tailObj.Lines:
+		case line, ok := <-tailObj.Lines:
 			if !ok {
 				end = true
+			} else if line != nil {
+				err := f.parseLine(recordReaderFactory, line.Text, batchMaker, recordCount)
+				if err != nil {
+					return err
+				}
+				lastLineReadAfterStop = line.Text
 			}
 		default:
 			end = true
 		}
 	}
-
-	tailObj.Wait()
+	return nil
 }
