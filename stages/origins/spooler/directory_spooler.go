@@ -46,7 +46,7 @@ func isFileEligible(
 	readOrder string,
 ) bool {
 	if currentFileInformation != nil {
-		return (readOrder == LAST_MODIFIED &&
+		return (readOrder == TIMESTAMP &&
 			(modTime.After(currentFileInformation.getModTime()) ||
 				(modTime.Equal(currentFileInformation.getModTime()) &&
 					strings.Compare(path, currentFileInformation.getFullPath()) > 0))) ||
@@ -137,6 +137,7 @@ func (d *DirectorySpooler) Init() {
 	d.destroyNotificationChan = make(chan bool)
 	d.filesQueue = NewSynchronizedFilesHeap(d.readOrder)
 	d.currentFileChange = make(chan *AtomicFileInformation)
+	d.currentFileInfo = nil
 	if strings.HasSuffix(d.dirPath, "/") {
 		d.dirPath = strings.TrimRight(d.dirPath, "/")
 	}
@@ -170,7 +171,7 @@ func (d *DirectorySpooler) NextFile() *AtomicFileInformation {
 	fi := d.filesQueue.Pop()
 	for fi != nil {
 		if isFileEligible(fi.getFullPath(), fi.getModTime(), d.currentFileInfo, d.readOrder) {
-			log.WithField("file", fi.getFullPath()).Debug("File picked for ingestion")
+			log.WithField("File Name", fi.getFullPath()).Debug("File picked for ingestion")
 			d.setCurrentFileInfo(fi)
 			return fi
 		}

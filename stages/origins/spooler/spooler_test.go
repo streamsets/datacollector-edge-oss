@@ -66,7 +66,7 @@ func createStageContext(
 	readOrder := LEXICOGRAPHICAL
 
 	if useLastModified {
-		readOrder = LAST_MODIFIED
+		readOrder = TIMESTAMP
 	}
 
 	stageConfig.Configuration[4] = common.Config{
