@@ -33,7 +33,7 @@ import (
 const (
 	LIBRARY         = "streamsets-datacollector-basic-lib"
 	STAGE_NAME      = "com_streamsets_pipeline_stage_origin_spooldir_SpoolDirDSource"
-	LAST_MODIFIED   = "LAST_MODIFIED"
+	TIMESTAMP       = "TIMESTAMP"
 	LEXICOGRAPHICAL = "LEXICOGRAPHICAL"
 	EOF_OFFSET      = int64(-1)
 	INVALID_OFFSET  = int64(-2)
@@ -158,7 +158,7 @@ func (s *SpoolDirSource) initCurrentFileIfNeeded(lastSourceOffset string) (bool,
 				currentStartOffset,
 			),
 		)
-		log.WithField("file", currentFilePath).Debug("Using Initial File To Process")
+		log.WithField("File Name", currentFilePath).Debug("Using Initial File To Process")
 	}
 
 	//End of the file or empty offset, let's get a new file
@@ -220,7 +220,7 @@ func (s *SpoolDirSource) readAndCreateRecords(
 		s.createRecordAndAddToBatch(line_bytes, batchMaker)
 
 		if isEof {
-			log.WithField("file", s.spooler.getCurrentFileInfo().getFullPath()).Debug("Reached End of File")
+			log.WithField("File Name", s.spooler.getCurrentFileInfo().getFullPath()).Debug("Reached End of File")
 			s.spooler.getCurrentFileInfo().setOffsetToRead(EOF_OFFSET)
 			s.resetFileAndBuffReader()
 			break
