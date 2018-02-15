@@ -101,17 +101,25 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 				} else {
 					err = f.parseLine(recordReaderFactory, line.Text, batchMaker, &recordCount)
 					if err != nil {
-						return "", err
+						f.GetStageContext().ReportError(err)
 					}
 
-					if recordCount == f.Conf.BatchSize {
-						currentOffset, _ = tailObj.Tell()
+					if recordCount >= f.Conf.BatchSize {
+						currentOffset, err = tailObj.Tell()
+						if err != nil {
+							log.WithError(err).Error("Failed to get file offset information")
+							f.GetStageContext().ReportError(err)
+						}
 						end = true
 					}
 				}
 			}
 		case <-time.After(time.Duration(f.Conf.MaxWaitTimeSecs) * time.Second):
-			currentOffset, _ = tailObj.Tell()
+			currentOffset, err = tailObj.Tell()
+			if err != nil {
+				log.WithError(err).Error("Failed to get file offset information")
+				f.GetStageContext().ReportError(err)
+			}
 			end = true
 		}
 	}

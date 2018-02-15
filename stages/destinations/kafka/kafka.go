@@ -27,6 +27,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/el"
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
+	"strconv"
 	"strings"
 )
 
@@ -52,6 +53,7 @@ type KafkaDestination struct {
 	kafkaClientConf *sarama.Config
 	brokerList      []string
 	kafkaClient     sarama.Client
+	keyCounter      int
 }
 
 type KafkaTargetConfig struct {
@@ -109,7 +111,9 @@ func (dest *KafkaDestination) Init(context api.StageContext) error {
 	}
 
 	dest.kafkaClientConf = sarama.NewConfig()
-	dest.kafkaClientConf.Producer.Retry.Max = 10
+	dest.kafkaClientConf.ClientID = "SDCEdge"
+	dest.kafkaClientConf.Producer.RequiredAcks = sarama.WaitForAll
+	dest.kafkaClientConf.Producer.Retry.Max = 0
 	dest.kafkaClientConf.Producer.Return.Successes = true
 	// TODO: Map KafkaProducerConfigs to sarama producer config
 	dest.kafkaClientConf.Producer.Partitioner, err = getPartitionerConstructor(dest.Conf.PartitionStrategy)
@@ -122,6 +126,10 @@ func (dest *KafkaDestination) Init(context api.StageContext) error {
 	if err != nil {
 		return err
 	}
+
+	dest.keyCounter = 0
+
+	// sarama.Logger = log.StandardLogger()
 
 	return nil
 }
@@ -197,8 +205,9 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 		}
 
 		log.Debug("Sending message")
-
+		dest.keyCounter++
 		kafkaProducer.Input() <- &sarama.ProducerMessage{
+			Key:   sarama.StringEncoder(dest.Conf.Topic + strconv.Itoa(dest.keyCounter)),
 			Topic: *topic,
 			Value: sarama.ByteEncoder(recordBuffer.Bytes()),
 		}
