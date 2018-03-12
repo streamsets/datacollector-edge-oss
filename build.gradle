@@ -35,6 +35,7 @@ dependencies {
         build name: 'github.com/rcrowley/go-metrics', commit:'1f30fe9094a513ce4c700b9a54458bbb0c96996c'
         build name: 'github.com/satori/go.uuid', commit:'879c5887cd475cd7864858769793b2ceb0d44feb'
         build name: 'periph.io/x/periph', commit: '687bb43ba5ad417371dc0d1a1f7189119aafcede'
+        build name: 'github.com/robertkrimen/otto', commit: '6c383dd335ef8dcccef05e651ce1eccfe4d0f011'
     }
 }
 

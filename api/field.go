@@ -52,8 +52,7 @@ func (f *Field) Clone() *Field {
 		}
 		return &Field{Type: f.Type, Value: returnList}
 	default:
-		field, _ := CreateField(f.Value)
-		return field
+		return &Field{Type: f.Type, Value: f.Value}
 	}
 }
 
@@ -210,4 +209,8 @@ func CreateListFieldWithListOfFields(listFields []*Field) *Field {
 
 func CreateMapFieldWithMapOfFields(mapFields map[string]*Field) *Field {
 	return &Field{Type: fieldtype.MAP, Value: mapFields}
+}
+
+func Create(fieldType string, value interface{}) (*Field, error) {
+	return &Field{Type: fieldType, Value: value}, nil
 }
