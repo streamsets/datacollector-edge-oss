@@ -27,17 +27,20 @@ import (
 	"github.com/streamsets/datacollector-edge/container/util"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 )
 
 const (
-	STATS_DPM_DIRECTLY_TARGET = "com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget"
-	REMOTE_TIMESERIES_URL     = "REMOTE_TIMESERIES_URL"
-	PIPELINE_COMMIT_ID        = "PIPELINE_COMMIT_ID"
-	JOB_ID                    = "JOB_ID"
-	UPDATE_WAIT_TIME_MS       = "UPDATE_WAIT_TIME_MS"
-	DPM_PIPELINE_COMMIT_ID    = "dpm.pipeline.commitId"
-	DPM_JOB_ID                = "dpm.job.id"
+	STATS_DPM_DIRECTLY_TARGET        = "com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget"
+	REMOTE_TIMESERIES_URL            = "REMOTE_TIMESERIES_URL"
+	PIPELINE_COMMIT_ID               = "PIPELINE_COMMIT_ID"
+	JOB_ID                           = "JOB_ID"
+	UPDATE_WAIT_TIME_MS              = "UPDATE_WAIT_TIME_MS"
+	DPM_PIPELINE_COMMIT_ID           = "dpm.pipeline.commitId"
+	DPM_JOB_ID                       = "dpm.job.id"
+	TIME_SERIES_ANALYSIS_PARAM_ID    = "TIME_SERIES_ANALYSIS"
+	TIME_SERIES_ANALYSIS_METADATA_ID = "timeSeriesAnalysis"
 )
 
 type MetricsEventRunnable struct {
@@ -51,6 +54,7 @@ type MetricsEventRunnable struct {
 	pipelineCommitId        string
 	jobId                   string
 	waitTimeBetweenUpdates  int64
+	timeSeriesAnalysis      bool
 	metadata                map[string]string
 }
 
@@ -150,12 +154,15 @@ func (m *MetricsEventRunnable) initializeDPMMetricsVariables() {
 			m.jobId = v.(string)
 		case UPDATE_WAIT_TIME_MS:
 			m.waitTimeBetweenUpdates = int64(v.(float64))
+		case TIME_SERIES_ANALYSIS_PARAM_ID:
+			m.timeSeriesAnalysis = v.(bool)
 		}
 	}
 
 	m.metadata = make(map[string]string)
 	m.metadata[DPM_PIPELINE_COMMIT_ID] = m.pipelineCommitId
 	m.metadata[DPM_JOB_ID] = m.jobId
+	m.metadata[TIME_SERIES_ANALYSIS_METADATA_ID] = strconv.FormatBool(m.timeSeriesAnalysis)
 	for k, v := range m.pipelineConfig.Metadata {
 		switch v.(type) {
 		case string:

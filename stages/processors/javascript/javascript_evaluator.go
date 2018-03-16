@@ -19,15 +19,15 @@
 package javascript
 
 import (
+	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"github.com/robertkrimen/otto"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/lib/scripting"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"strings"
-	"errors"
 )
 
 const (
