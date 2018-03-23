@@ -206,6 +206,10 @@ func (s *SpoolDirSource) readAndCreateRecords(
 	startOffsetForBatch := s.spooler.getCurrentFileInfo().getOffsetToRead()
 
 	for recordCnt := 0; recordCnt < maxBatchSize; recordCnt++ {
+		if s.bufReader == nil {
+			// if pipeline stopped
+			break
+		}
 		line_bytes, err := s.bufReader.ReadBytes('\n')
 		if err != nil {
 			if err != io.EOF {
