@@ -51,7 +51,7 @@ func NewPipelineBean(
 		}
 	}
 
-	if pipelineConfig.StatsAggregatorStage.InstanceName != "" {
+	if pipelineConfig.StatsAggregatorStage != nil && pipelineConfig.StatsAggregatorStage.InstanceName != "" {
 		pipelineBean.StatsAggregatorStage, err = NewStageBean(pipelineConfig.StatsAggregatorStage, runtimeParameters)
 		if err != nil {
 			return pipelineBean, err
