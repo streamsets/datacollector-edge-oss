@@ -85,7 +85,7 @@ func createStageContext(
 	}
 
 	return &common.StageContextImpl{
-		StageConfig: stageConfig,
+		StageConfig: &stageConfig,
 		Parameters:  nil,
 	}
 }

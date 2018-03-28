@@ -29,7 +29,7 @@ func getStageContext() *common.StageContextImpl {
 	stageConfig.StageName = STAGE_NAME
 	stageConfig.Configuration = make([]common.Config, 0)
 	return &common.StageContextImpl{
-		StageConfig: stageConfig,
+		StageConfig: &stageConfig,
 		Parameters:  nil,
 	}
 }

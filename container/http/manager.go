@@ -43,24 +43,26 @@ func (webServerTask *WebServerTask) startHandler(w http.ResponseWriter, r *http.
 	defer r.Body.Close()
 
 	state, err := webServerTask.manager.StartPipeline(pipelineId, runtimeParameters)
+	w.Header().Set(ContentType, ApplicationJson)
 	if err == nil {
 		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "\t")
 		encoder.Encode(state)
 	} else {
-		fmt.Fprintf(w, "Failed to Start:  %s! ", err)
+		serverErrorReq(w, fmt.Sprintf("Failed to Start:  %s! ", err))
 	}
 }
 
 func (webServerTask *WebServerTask) stopHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	pipelineId := ps.ByName("pipelineId")
 	state, err := webServerTask.manager.StopPipeline(pipelineId)
+	w.Header().Set(ContentType, ApplicationJson)
 	if err == nil {
 		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "\t")
 		encoder.Encode(state)
 	} else {
-		fmt.Fprintf(w, "Failed to Stop:  %s! ", err)
+		serverErrorReq(w, fmt.Sprintf("Failed to Stop:  %s! ", err))
 	}
 }
 
@@ -77,12 +79,13 @@ func (webServerTask *WebServerTask) resetOffsetHandler(w http.ResponseWriter, r 
 func (webServerTask *WebServerTask) getOffsetHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	pipelineId := ps.ByName("pipelineId")
 	sourceOffset, err := webServerTask.manager.GetRunner(pipelineId).GetOffset()
+	w.Header().Set(ContentType, ApplicationJson)
 	if err == nil {
 		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "\t")
 		encoder.Encode(sourceOffset)
 	} else {
-		fmt.Fprintf(w, "Failed to get status:  %s! ", err)
+		serverErrorReq(w, fmt.Sprintf("Failed to get status:  %s! ", err))
 	}
 }
 
@@ -109,35 +112,38 @@ func (webServerTask *WebServerTask) updateOffsetHandler(w http.ResponseWriter, r
 func (webServerTask *WebServerTask) statusHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	pipelineId := ps.ByName("pipelineId")
 	state, err := webServerTask.manager.GetRunner(pipelineId).GetStatus()
+	w.Header().Set(ContentType, ApplicationJson)
 	if err == nil {
 		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "\t")
 		encoder.Encode(state)
 	} else {
-		fmt.Fprintf(w, "Failed to get status:  %s! ", err)
+		serverErrorReq(w, fmt.Sprintf("Failed to get status:  %s! ", err))
 	}
 }
 
 func (webServerTask *WebServerTask) historyHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	pipelineId := ps.ByName("pipelineId")
 	pipelineHistoryStates, err := webServerTask.manager.GetRunner(pipelineId).GetHistory()
+	w.Header().Set(ContentType, ApplicationJson)
 	if err == nil {
 		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "\t")
 		encoder.Encode(pipelineHistoryStates)
 	} else {
-		fmt.Fprintf(w, "Failed to get history:  %s! ", err)
+		serverErrorReq(w, fmt.Sprintf("Failed to get history:  %s! ", err))
 	}
 }
 
 func (webServerTask *WebServerTask) metricsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	pipelineId := ps.ByName("pipelineId")
 	metricRegistry, err := webServerTask.manager.GetRunner(pipelineId).GetMetrics()
+	w.Header().Set(ContentType, ApplicationJson)
 	if err == nil {
 		encoder := json.NewEncoder(w)
 		encoder.SetIndent("", "\t")
 		encoder.Encode(util.FormatMetricsRegistry(metricRegistry))
 	} else {
-		fmt.Fprintf(w, "Failed to get metrics:  %s! ", err)
+		serverErrorReq(w, fmt.Sprintf("Failed to get metrics:  %s! ", err))
 	}
 }

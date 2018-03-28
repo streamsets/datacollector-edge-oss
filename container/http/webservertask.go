@@ -30,6 +30,11 @@ import (
 	"net/http/pprof"
 )
 
+const (
+	ContentType     = "Content-Type"
+	ApplicationJson = "application/json"
+)
+
 type WebServerTask struct {
 	config            Config
 	buildInfo         *common.BuildInfo
@@ -100,6 +105,12 @@ func (webServerTask *WebServerTask) processMetricsHandler(w http.ResponseWriter,
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "\t")
 	encoder.Encode(util.FormatMetricsRegistry(webServerTask.processManager.GetProcessMetrics()))
+}
+
+func serverErrorReq(w http.ResponseWriter, err string) {
+	w.Header().Set(ContentType, ApplicationJson)
+	w.WriteHeader(http.StatusInternalServerError)
+	fmt.Fprintf(w, `{"result":"", "error":%q}`, err)
 }
 
 func NewWebServerTask(

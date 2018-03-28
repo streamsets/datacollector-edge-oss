@@ -28,7 +28,7 @@ import (
 )
 
 type StageContextImpl struct {
-	StageConfig       StageConfiguration
+	StageConfig       *StageConfiguration
 	Parameters        map[string]interface{}
 	Metrics           metrics.Registry
 	ErrorSink         *ErrorSink

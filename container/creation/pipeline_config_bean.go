@@ -136,8 +136,8 @@ func GetDefaultPipelineConfigs() []common.Config {
 	return pipelineConfigs
 }
 
-func GetTrashErrorStageInstance() common.StageConfiguration {
-	return common.StageConfiguration{
+func GetTrashErrorStageInstance() *common.StageConfiguration {
+	return &common.StageConfiguration{
 		InstanceName:  "Discard_ErrorStage",
 		Library:       "streamsets-datacollector-basic-lib",
 		StageName:     "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
@@ -150,8 +150,8 @@ func GetTrashErrorStageInstance() common.StageConfiguration {
 	}
 }
 
-func GetDefaultStatsAggregatorStageInstance() common.StageConfiguration {
-	return common.StageConfiguration{
+func GetDefaultStatsAggregatorStageInstance() *common.StageConfiguration {
+	return &common.StageConfiguration{
 		InstanceName:  "WritetoDPMdirectly_StatsAggregatorStage",
 		Library:       "streamsets-datacollector-basic-lib",
 		StageName:     "com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget",

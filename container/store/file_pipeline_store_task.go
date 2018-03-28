@@ -130,7 +130,7 @@ func (store *FilePipelineStoreTask) Create(
 		UUID:                 pipelineUuid,
 		Configuration:        creation.GetDefaultPipelineConfigs(),
 		UiInfo:               map[string]interface{}{},
-		Stages:               []common.StageConfiguration{},
+		Stages:               []*common.StageConfiguration{},
 		ErrorStage:           creation.GetTrashErrorStageInstance(),
 		StatsAggregatorStage: creation.GetDefaultStatsAggregatorStageInstance(),
 		Previewable:          true,

@@ -32,9 +32,9 @@ type PipelineConfiguration struct {
 	UUID                 string                 `json:"uuid"`
 	Configuration        []Config               `json:"configuration"`
 	UiInfo               map[string]interface{} `json:"uiInfo"`
-	Stages               []StageConfiguration   `json:"stages"`
-	ErrorStage           StageConfiguration     `json:"errorStage"`
-	StatsAggregatorStage StageConfiguration     `json:"statsAggregatorStage"`
+	Stages               []*StageConfiguration  `json:"stages"`
+	ErrorStage           *StageConfiguration    `json:"errorStage"`
+	StatsAggregatorStage *StageConfiguration    `json:"statsAggregatorStage"`
 	Previewable          bool                   `json:"previewable"`
 	Info                 PipelineInfo           `json:"info"`
 	Metadata             map[string]interface{} `json:"metadata"`

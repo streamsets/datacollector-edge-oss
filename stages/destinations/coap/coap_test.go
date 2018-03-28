@@ -42,7 +42,7 @@ func getStageContext(resourceUrl string, coapMethod string, messageType string) 
 	}
 
 	return &common.StageContextImpl{
-		StageConfig: stageConfig,
+		StageConfig: &stageConfig,
 		Parameters:  nil,
 	}
 }

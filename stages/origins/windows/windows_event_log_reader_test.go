@@ -23,7 +23,6 @@ import (
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
-	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"testing"
 )
 
@@ -42,7 +41,7 @@ func createStageContext(logName string) *common.StageContextImpl {
 		Value: "ALL",
 	}
 	return &common.StageContextImpl{
-		StageConfig: stageConfig,
+		StageConfig: &stageConfig,
 		Parameters:  nil,
 	}
 }

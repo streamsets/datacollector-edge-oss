@@ -24,7 +24,7 @@ import (
 
 type StageRuntime struct {
 	pipelineBean creation.PipelineBean
-	config       common.StageConfiguration
+	config       *common.StageConfiguration
 	stageBean    creation.StageBean
 	stageContext api.StageContext
 }

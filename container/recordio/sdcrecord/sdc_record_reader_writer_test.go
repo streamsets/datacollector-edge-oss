@@ -69,7 +69,7 @@ var allTypesRecordField = map[string]interface{}{
 
 func CreateStageContext() api.StageContext {
 	return &common.StageContextImpl{
-		StageConfig: common.StageConfiguration{InstanceName: "Dummy Stage"},
+		StageConfig: &common.StageConfiguration{InstanceName: "Dummy Stage"},
 		Parameters:  nil,
 	}
 }

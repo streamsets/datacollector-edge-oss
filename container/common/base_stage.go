@@ -37,6 +37,6 @@ func (b *BaseStage) Destroy() error {
 	return nil
 }
 
-func (b *BaseStage) GetStageConfig() StageConfiguration {
+func (b *BaseStage) GetStageConfig() *StageConfiguration {
 	return b.stageContext.(*StageContextImpl).StageConfig
 }

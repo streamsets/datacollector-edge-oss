@@ -25,7 +25,7 @@ type StageConfigBean struct {
 	StageRecordPreconditions []interface{}
 }
 
-func NewStageConfigBean(pipelineConfig common.StageConfiguration) StageConfigBean {
+func NewStageConfigBean(pipelineConfig *common.StageConfiguration) StageConfigBean {
 	stageConfigBean := StageConfigBean{}
 
 	for _, config := range pipelineConfig.Configuration {

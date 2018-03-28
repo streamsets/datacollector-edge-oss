@@ -36,7 +36,7 @@ const (
 )
 
 type StageBean struct {
-	Config        common.StageConfiguration
+	Config        *common.StageConfiguration
 	Stage         api.Stage
 	SystemConfigs StageConfigBean
 }
@@ -57,7 +57,7 @@ func (s *StageBean) IsTarget() bool {
 }
 
 func NewStageBean(
-	stageConfig common.StageConfiguration,
+	stageConfig *common.StageConfiguration,
 	runtimeParameters map[string]interface{},
 ) (StageBean, error) {
 	stageBean := StageBean{}

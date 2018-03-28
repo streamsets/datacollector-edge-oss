@@ -34,7 +34,7 @@ func getStageContext(delay float64) *common.StageContextImpl {
 		},
 	}
 	return &common.StageContextImpl{
-		StageConfig: stageConfig,
+		StageConfig: &stageConfig,
 		Parameters:  nil,
 	}
 }

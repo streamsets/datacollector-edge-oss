@@ -39,7 +39,7 @@ func getStageContext(fields string, delay float64, parameters map[string]interfa
 		Value: delay,
 	}
 	return &common.StageContextImpl{
-		StageConfig: stageConfig,
+		StageConfig: &stageConfig,
 		Parameters:  parameters,
 	}
 }

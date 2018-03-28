@@ -35,7 +35,7 @@ func getStageContext(portNumber float64, appId string, parameters map[string]int
 		Value: appId,
 	}
 	return &common.StageContextImpl{
-		StageConfig: stageConfig,
+		StageConfig: &stageConfig,
 		Parameters:  parameters,
 	}
 }

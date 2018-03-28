@@ -44,7 +44,7 @@ func getStageContext(
 		},
 	}
 	return &common.StageContextImpl{
-		StageConfig: stageConfig,
+		StageConfig: &stageConfig,
 		Parameters:  parameters,
 	}
 }

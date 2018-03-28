@@ -38,7 +38,7 @@ func getStageContext(fields []interface{}, filterOperation string, parameters ma
 		Value: filterOperation,
 	}
 	return &common.StageContextImpl{
-		StageConfig: stageConfig,
+		StageConfig: &stageConfig,
 		Parameters:  parameters,
 	}
 }

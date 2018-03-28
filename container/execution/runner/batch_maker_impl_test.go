@@ -27,7 +27,7 @@ func TestMultipleLanesClone(t *testing.T) {
 	stageConfig.Library = "abc"
 	stageConfig.StageName = "bcd"
 	stageContext := &common.StageContextImpl{
-		StageConfig: stageConfig,
+		StageConfig: &stageConfig,
 		Parameters:  nil,
 	}
 

@@ -50,7 +50,7 @@ func getStageContext() *common.StageContextImpl {
 		"lane2",
 	}
 	return &common.StageContextImpl{
-		StageConfig: stageConfig,
+		StageConfig: &stageConfig,
 		Parameters:  nil,
 	}
 }
