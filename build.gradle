@@ -3,6 +3,7 @@ plugins {
     id 'com.bmuschko.docker-remote-api'  version '3.2.0'
 }
 
+import groovy.json.JsonSlurper
 import com.bmuschko.gradle.docker.tasks.image.Dockerfile
 
 apply plugin : 'maven-publish'
@@ -141,7 +142,7 @@ task buildAll {
         def archiveName = "${appName}-" + "${version}" + '-' + goOs + '-' + goArch
 
         //Create Tar Task for each platform
-        task(tarTaskName, type :Tar) {
+        task(tarTaskName, type: Tar) {
             description = 'Packages Edge Binaries for ' + targetPlatform
 
             //Tar depends on build task for each platform
@@ -199,20 +200,6 @@ publishing {
     }
 }
 
-task createDockerfile(type: Dockerfile) {
-    description = 'Creates Docker File for Edge'
-    dependsOn('tar-linux-amd64')
-    destFile = project.file('dist/Dockerfile')
-    from 'alpine'
-    maintainer 'Madhu "madhu@streamsets.com"'
-    runCommand('apk --no-cache update')
-    runCommand('apk --no-cache add libc6-compat')
-    runCommand('apk --no-cache add file')
-    addFile "${appName}*-linux-amd64.tgz", '/'
-    defaultCommand '/streamsets-datacollector-edge/bin/edge'
-    exposePort 18633
-}
-
 docker {
     def dockerCertPath = System.env.DOCKER_CERT_PATH
     if (dockerCertPath != null) {
@@ -221,11 +208,45 @@ docker {
     }
 }
 
-task buildDockerImage(type: Exec) {
-    description = 'Builds Docker Image for Edge'
-    dependsOn createDockerfile
-    workingDir = "dist"
-    commandLine 'docker', 'build', '--no-cache', '-t', "${dockerImageName}:${version}" ,'.'
+def architectures = ["amd64", "arm"]
+
+architectures.each { def arch ->
+    tasks.create(name: "createDockerfile-${arch}", type: Dockerfile) {
+      description = 'Creates Docker File for Edge'
+      dependsOn "tar-linux-${arch}"
+
+      destFile = project.file("dist/Dockerfile-${arch}")
+
+      def manifests
+      new ByteArrayOutputStream().withStream { os ->
+        def result = exec {
+          standardOutput = os
+          commandLine 'docker', 'manifest', 'inspect', 'alpine'
+        }
+        manifests = new JsonSlurper().parseText(os.toString()).manifests
+      }
+      def digest = manifests.find { manifest ->
+          manifest.platform.architecture == "${arch}"
+      }.digest
+      println("Using digest: ${digest}")
+      from "alpine@${digest}"
+      maintainer 'Madhu "madhu@streamsets.com"'
+      addFile "${appName}*-linux-${arch}.tgz", '/'
+      defaultCommand '/streamsets-datacollector-edge/bin/edge'
+      exposePort 18633
+    }
+
+    tasks.create(name: "buildDockerImage-${arch}", type: Exec) {
+      description = 'Builds Docker Image for Edge'
+      dependsOn "createDockerfile-${arch}"
+      workingDir = "dist"
+      commandLine 'docker', 'build', '--no-cache', '-f', "Dockerfile-${arch}", '-t', "${dockerImageName}:${version}-${arch}" ,'.'
+    }
+
+    tasks.create(name: "pushDockerImage-${arch}", type: Exec) {
+      dependsOn "buildDockerImage-${arch}"
+      commandLine 'docker', 'push', "${dockerImageName}:${version}-${arch}"
+    }
 }
 
 publishToMavenLocal.dependsOn(buildAll)
@@ -234,6 +255,6 @@ publish.dependsOn(publishToMavenLocal)
 task release {
   description = 'Release task'
   dependsOn buildAll
-  dependsOn buildDockerImage
+  dependsOn architectures.collect { def arch -> "buildDockerImage-${arch}" }
   dependsOn publish
 }

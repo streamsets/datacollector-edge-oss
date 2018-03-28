@@ -4,6 +4,7 @@
 
 * Go 1.9
 * Gradle 4.2
+* Docker 18.03-ce with experimental features enabled
 
 ## Clone Repository
 
