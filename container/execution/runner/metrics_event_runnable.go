@@ -137,7 +137,7 @@ func (m *MetricsEventRunnable) sendMetricsToDPM() error {
 
 func (m *MetricsEventRunnable) isWriteStatsToDPMDirectlyEnabled() bool {
 	statsAggregatorStage := m.pipelineConfig.StatsAggregatorStage
-	if len(statsAggregatorStage.StageName) > 0 || statsAggregatorStage.StageName == STATS_DPM_DIRECTLY_TARGET {
+	if statsAggregatorStage != nil && statsAggregatorStage.StageName == STATS_DPM_DIRECTLY_TARGET {
 		return true
 	}
 	return false
