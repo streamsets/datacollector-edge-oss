@@ -84,9 +84,9 @@ func RegisterWithDPM(
 		}
 		defer resp.Body.Close()
 
-		log.WithField("status", resp.Status).Info("SCH Registration Status")
+		log.WithField("status", resp.Status).Info("Control Hub Registration Status")
 		if resp.StatusCode != 200 {
-			log.Panic("SCH Registration failed")
+			log.Panic("Control Hub Registration failed")
 		}
 		runtimeInfo.DPMEnabled = true
 		runtimeInfo.AppAuthToken = schConfig.AppAuthToken
