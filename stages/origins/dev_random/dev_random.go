@@ -25,19 +25,22 @@ import (
 )
 
 const (
-	LIBRARY     = "streamsets-datacollector-dev-lib"
-	STAGE_NAME  = "com_streamsets_pipeline_stage_devtest_RandomSource"
-	CONF_FIELDS = "fields"
-	CONF_DELAY  = "delay"
+	LIBRARY                  = "streamsets-datacollector-dev-lib"
+	STAGE_NAME               = "com_streamsets_pipeline_stage_devtest_RandomSource"
+	ConfFields               = "fields"
+	ConfDelay                = "delay"
+	ConfMaxRecordsToGenerate = "maxRecordsToGenerate"
 )
 
-var randomOffset string = "random"
+var randomOffset = "random"
 
 type DevRandom struct {
 	*common.BaseStage
-	Fields     string  `ConfigDef:"type=STRING,required=true"`
-	Delay      float64 `ConfigDef:"type=NUMBER,required=true"`
-	fieldsList []string
+	Fields               string  `ConfigDef:"type=STRING,required=true"`
+	Delay                float64 `ConfigDef:"type=NUMBER,required=true"`
+	MaxRecordsToGenerate float64 `ConfigDef:"type=NUMBER,required=true"`
+	fieldsList           []string
+	recordsProduced      float64
 }
 
 func init() {
@@ -51,13 +54,14 @@ func (d *DevRandom) Init(stageContext api.StageContext) error {
 		return err
 	}
 	d.fieldsList = strings.Split(d.Fields, ",")
+	d.recordsProduced = 0
 	return nil
 }
 
 func (d *DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (*string, error) {
 	r := rand.New(rand.NewSource(99))
 	time.Sleep(time.Duration(d.Delay) * time.Millisecond)
-	for i := 0; i < maxBatchSize; i++ {
+	for i := 0; i < maxBatchSize && d.recordsProduced < d.MaxRecordsToGenerate; i++ {
 		var recordValue = make(map[string]interface{})
 		for _, field := range d.fieldsList {
 			recordValue[field] = r.Int63()
@@ -67,6 +71,7 @@ func (d *DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMake
 		} else {
 			d.GetStageContext().ToError(err, record)
 		}
+		d.recordsProduced++
 	}
 	return &randomOffset, nil
 }

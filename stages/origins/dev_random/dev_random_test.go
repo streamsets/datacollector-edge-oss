@@ -25,18 +25,27 @@ import (
 	"testing"
 )
 
-func getStageContext(fields string, delay float64, parameters map[string]interface{}) *common.StageContextImpl {
+func getStageContext(
+	fields string,
+	delay float64,
+	maxRecordsToGenerate float64,
+	parameters map[string]interface{},
+) *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = LIBRARY
 	stageConfig.StageName = STAGE_NAME
-	stageConfig.Configuration = make([]common.Config, 2)
+	stageConfig.Configuration = make([]common.Config, 3)
 	stageConfig.Configuration[0] = common.Config{
-		Name:  CONF_FIELDS,
+		Name:  ConfFields,
 		Value: fields,
 	}
 	stageConfig.Configuration[1] = common.Config{
-		Name:  CONF_DELAY,
+		Name:  ConfDelay,
 		Value: delay,
+	}
+	stageConfig.Configuration[2] = common.Config{
+		Name:  ConfMaxRecordsToGenerate,
+		Value: maxRecordsToGenerate,
 	}
 	return &common.StageContextImpl{
 		StageConfig: &stageConfig,
@@ -46,7 +55,7 @@ func getStageContext(fields string, delay float64, parameters map[string]interfa
 
 func TestDevRandom_Init(t *testing.T) {
 	fields := "a,b,c"
-	stageContext := getStageContext(fields, 10, nil)
+	stageContext := getStageContext(fields, 10, 922337203685, nil)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
@@ -64,7 +73,7 @@ func TestDevRandom_Init(t *testing.T) {
 
 func TestDevRandomOrigin(t *testing.T) {
 	fields := "a,b,c"
-	stageContext := getStageContext(fields, 10, nil)
+	stageContext := getStageContext(fields, 10, 922337203685, nil)
 
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
@@ -111,7 +120,7 @@ func TestDevRandomOrigin(t *testing.T) {
 
 func TestDevRandom_Init_Parameter(t *testing.T) {
 	fields := "${fields}"
-	stageContext := getStageContext(fields, 10, nil)
+	stageContext := getStageContext(fields, 10, 922337203685, nil)
 	_, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err == nil || !strings.Contains(err.Error(), "No parameter 'fields' found") {
 		t.Error("Excepted error - No parameter 'fields' found")
@@ -123,7 +132,7 @@ func TestDevRandom_Init_StringEL(t *testing.T) {
 	parameters := map[string]interface{}{
 		"FIELDS_PARAM": "x,y,z  ",
 	}
-	stageContext := getStageContext(fields, 10, parameters)
+	stageContext := getStageContext(fields, 10, 922337203685, parameters)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
 	if err != nil {
 		t.Error(err)
@@ -164,4 +173,42 @@ func TestDevRandom_Init_StringEL(t *testing.T) {
 		}
 	}
 	stageInstance.Destroy()
+}
+
+func TestDevRandomOrigin_MaxRecordsToGenerate(t *testing.T) {
+	fields := "a,b,c"
+	stageContext := getStageContext(fields, 10, 3, nil)
+
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	if err != nil {
+		t.Error(err)
+	}
+	stageInstance := stageBean.Stage
+
+	err = stageInstance.Init(stageContext)
+	if err != nil {
+		t.Error(err)
+	}
+
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
+	_, err = stageInstance.(api.Origin).Produce("", 5, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+	}
+
+	records := batchMaker.GetStageOutput()
+	if len(records) != 3 {
+		t.Error("Excepted 3 records but got - ", len(records))
+	}
+
+	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{})
+	_, err = stageInstance.(api.Origin).Produce("", 5, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+	}
+
+	records = batchMaker.GetStageOutput()
+	if len(records) != 0 {
+		t.Error("Excepted 0 records but got - ", len(records))
+	}
 }
