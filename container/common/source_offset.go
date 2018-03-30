@@ -20,14 +20,16 @@ const (
 	POLL_SOURCE_OFFSET_KEY = "$com.streamsets.sdc2go.pollsource.offset$"
 )
 
+var emptyOffset = ""
+
 type SourceOffset struct {
 	Version int
-	Offset  map[string]string
+	Offset  map[string]*string
 }
 
 func GetDefaultOffset() SourceOffset {
 	return SourceOffset{
 		Version: CURRENT_OFFSET_VERSION,
-		Offset:  map[string]string{POLL_SOURCE_OFFSET_KEY: ""},
+		Offset:  map[string]*string{POLL_SOURCE_OFFSET_KEY: &emptyOffset},
 	}
 }

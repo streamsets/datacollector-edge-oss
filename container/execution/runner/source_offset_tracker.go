@@ -32,7 +32,7 @@ import "time"
 type SourceOffsetTracker interface {
 	IsFinished() bool
 
-	SetOffset(newOffset string)
+	SetOffset(newOffset *string)
 
 	CommitOffset() error
 

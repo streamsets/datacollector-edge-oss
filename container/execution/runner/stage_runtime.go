@@ -45,8 +45,8 @@ func (s *StageRuntime) Execute(
 	batchSize int,
 	batch *BatchImpl,
 	batchMaker *BatchMakerImpl,
-) (string, error) {
-	var newOffset string
+) (*string, error) {
+	var newOffset *string
 	var err error
 	if s.stageBean.IsSource() {
 		newOffset, err = s.stageBean.Stage.(api.Origin).Produce(previousOffset, batchSize, batchMaker)

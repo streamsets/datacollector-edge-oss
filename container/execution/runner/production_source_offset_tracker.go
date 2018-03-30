@@ -24,28 +24,30 @@ import (
 type ProductionSourceOffsetTracker struct {
 	pipelineId    string
 	currentOffset common.SourceOffset
-	newOffset     string
+	newOffset     *string
 	finished      bool
 	lastBatchTime time.Time
 }
+
+var emptyOffset = ""
 
 func (o *ProductionSourceOffsetTracker) IsFinished() bool {
 	return false
 }
 
-func (o *ProductionSourceOffsetTracker) SetOffset(newOffset string) {
+func (o *ProductionSourceOffsetTracker) SetOffset(newOffset *string) {
 	o.newOffset = newOffset
 }
 
 func (o *ProductionSourceOffsetTracker) CommitOffset() error {
 	o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY] = o.newOffset
-	o.finished = o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY] == ""
-	o.newOffset = ""
+	o.finished = o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY] == &emptyOffset
+	o.newOffset = &emptyOffset
 	return store.SaveOffset(o.pipelineId, o.currentOffset)
 }
 
 func (o *ProductionSourceOffsetTracker) GetOffset() string {
-	return o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY]
+	return *o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY]
 }
 
 func (o *ProductionSourceOffsetTracker) GetLastBatchTime() time.Time {

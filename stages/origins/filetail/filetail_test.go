@@ -127,10 +127,10 @@ func TestValidFilePath(t *testing.T) {
 		t.Error("Err :", err)
 	}
 
-	if lastSourceOffset == "" {
+	if lastSourceOffset == nil {
 		t.Error("No offset returned :")
 	}
-	log.Println("offset - " + lastSourceOffset)
+	log.Println("offset - " + *lastSourceOffset)
 
 	records := batchMaker.GetStageOutput()
 	if len(records) != 4 {
@@ -164,7 +164,7 @@ func TestValidFilePath(t *testing.T) {
 
 	// With maxBatchSize 2 - batch 2
 	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{})
-	lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 2, batchMaker)
+	lastSourceOffset, err = stageInstance.(api.Origin).Produce(*lastSourceOffset, 2, batchMaker)
 	if err != nil {
 		t.Error("Err :", err)
 	}
@@ -218,10 +218,10 @@ func TestFileTailOrigin_Produce_JSON(t *testing.T) {
 		t.Error("Err :", err)
 	}
 
-	if lastSourceOffset == "" {
+	if lastSourceOffset == nil {
 		t.Error("No offset returned :")
 	}
-	log.Println("offset - " + lastSourceOffset)
+	log.Println("offset - " + *lastSourceOffset)
 
 	records := batchMaker.GetStageOutput()
 	if len(records) != 3 {
@@ -261,17 +261,17 @@ func _TestChannelDeadlockIssue(t *testing.T) {
 
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 	lastSourceOffset, err := stageInstance.(api.Origin).Produce("", 1000, batchMaker)
-	log.Println("offset - " + lastSourceOffset)
+	log.Println("offset - " + *lastSourceOffset)
 
-	lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 1000, batchMaker)
-	log.Println("offset - " + lastSourceOffset)
+	lastSourceOffset, err = stageInstance.(api.Origin).Produce(*lastSourceOffset, 1000, batchMaker)
+	log.Println("offset - " + *lastSourceOffset)
 
-	lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 1000, batchMaker)
-	log.Println("offset - " + lastSourceOffset)
+	lastSourceOffset, err = stageInstance.(api.Origin).Produce(*lastSourceOffset, 1000, batchMaker)
+	log.Println("offset - " + *lastSourceOffset)
 
 	for true {
-		lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 1000, batchMaker)
-		log.Println("offset - " + lastSourceOffset)
+		lastSourceOffset, err = stageInstance.(api.Origin).Produce(*lastSourceOffset, 1000, batchMaker)
+		log.Println("offset - " + *lastSourceOffset)
 	}
 
 	stageInstance.Destroy()
@@ -305,11 +305,12 @@ func TestFileTailOrigin_offsetIssue(t *testing.T) {
 		t.Error(err)
 	}
 
-	lastSourceOffset := ""
+	lastSourceOffsetStr := ""
+	lastSourceOffset := &lastSourceOffsetStr
 	recordsCount := int64(0)
 	for i := 0; i < 11; i++ {
 		batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
-		lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 10, batchMaker)
+		lastSourceOffset, err = stageInstance.(api.Origin).Produce(*lastSourceOffset, 10, batchMaker)
 		recordsCount += batchMaker.GetSize()
 		if err != nil {
 			t.Error(err)

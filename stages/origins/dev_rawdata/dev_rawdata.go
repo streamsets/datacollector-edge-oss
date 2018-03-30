@@ -29,6 +29,8 @@ const (
 	STAGE_NAME = "com_streamsets_pipeline_stage_devtest_rawdata_RawDataDSource"
 )
 
+var randomOffset string = "random"
+
 type DevRawDataDSource struct {
 	*common.BaseStage
 	RawData             string                            `ConfigDef:"type=STRING,required=true"`
@@ -55,21 +57,21 @@ func (d *DevRawDataDSource) Produce(
 	lastSourceOffset string,
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
-) (string, error) {
+) (*string, error) {
 	var err error
 	recordReaderFactory := d.DataFormatConfig.RecordReaderFactory
 	recordBuffer := bytes.NewBufferString(d.RawData)
 	recordReader, err := recordReaderFactory.CreateReader(d.GetStageContext(), recordBuffer)
 	if err != nil {
 		log.WithError(err).Error("Failed to create record reader")
-		return "", err
+		return nil, err
 	}
 	defer recordReader.Close()
 	for {
 		record, err := recordReader.ReadRecord()
 		if err != nil {
 			log.WithError(err).Error("Failed to parse raw data")
-			return "", err
+			return nil, err
 		}
 
 		if record == nil {
@@ -79,9 +81,8 @@ func (d *DevRawDataDSource) Produce(
 	}
 
 	if d.StopAfterFirstBatch {
-		// TODO: Support sending nil for source offset - SDCE-167
-		return "", err
+		return nil, err
 	}
 
-	return "random", err
+	return &randomOffset, err
 }

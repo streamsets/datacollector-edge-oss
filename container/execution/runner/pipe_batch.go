@@ -60,7 +60,7 @@ func (b *FullPipeBatch) GetPreviousOffset() string {
 	return b.offsetTracker.GetOffset()
 }
 
-func (b *FullPipeBatch) SetNewOffset(newOffset string) {
+func (b *FullPipeBatch) SetNewOffset(newOffset *string) {
 	b.offsetTracker.SetOffset(newOffset)
 }
 

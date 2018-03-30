@@ -32,6 +32,8 @@ const (
 	TOPIC_HEADER_NAME = "topic"
 )
 
+var stringOffset string = "mqtt-subscriber-offset"
+
 type MqttClientSource struct {
 	*common.BaseStage
 	*mqttlib.MqttConnector
@@ -84,11 +86,11 @@ func (ms *MqttClientSource) Produce(
 	lastSourceOffset string,
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
-) (string, error) {
+) (*string, error) {
 	log.Debug("MqttClientSource - Produce method")
 	record := <-ms.incomingRecords
 	batchMaker.AddRecord(record)
-	return "", nil
+	return &stringOffset, nil
 }
 
 func (ms *MqttClientSource) Destroy() error {

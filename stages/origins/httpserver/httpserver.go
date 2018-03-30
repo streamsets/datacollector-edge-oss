@@ -31,6 +31,8 @@ const (
 	STAGE_NAME = "com_streamsets_pipeline_stage_origin_httpserver_HttpServerDPushSource"
 )
 
+var stringOffset string = "http-server-offset"
+
 type HttpServerOrigin struct {
 	*common.BaseStage
 	HttpConfigs  RawHttpConfigs `ConfigDefBean:"name=httpConfigs"`
@@ -70,13 +72,13 @@ func (h *HttpServerOrigin) Produce(
 	lastSourceOffset string,
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
-) (string, error) {
+) (*string, error) {
 	log.Debug("HTTP Server - Produce method")
 	value := <-h.incomingData
 	log.WithField("value", value).Debug("Incoming Data")
 	record, _ := h.GetStageContext().CreateRecord(time.Now().String(), value)
 	batchMaker.AddRecord(record)
-	return "", nil
+	return &stringOffset, nil
 }
 
 func (h *HttpServerOrigin) ServeHTTP(w http.ResponseWriter, r *http.Request) {

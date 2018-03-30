@@ -42,6 +42,8 @@ const (
 	STAGE_NAME = "com_streamsets_pipeline_stage_origin_sensorreader_SensorReaderDSource"
 )
 
+var stringOffset string = "sensor-reader-offset"
+
 type SensorReaderOrigin struct {
 	*common.BaseStage
 	Conf SensorReaderConfigBean `ConfigDefBean:"name=conf"`
@@ -98,14 +100,14 @@ func (s *SensorReaderOrigin) Produce(
 	lastSourceOffset string,
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
-) (string, error) {
+) (*string, error) {
 	time.Sleep(time.Duration(s.Conf.Delay) * time.Millisecond)
 	if s.dev != nil {
 		var err error
 		var env devices.Environment
 		if err = s.dev.Sense(&env); err != nil {
 			log.WithError(err).Error("Failed to read data from sensor")
-			return "", err
+			return &stringOffset, err
 		}
 		fmt.Printf("%8s %10s %9s\n", env.Temperature, env.Pressure, env.Humidity)
 
@@ -119,7 +121,7 @@ func (s *SensorReaderOrigin) Produce(
 			s.GetStageContext().ToError(err, record)
 		}
 	}
-	return "sensorReader", nil
+	return &stringOffset, nil
 }
 
 func (s *SensorReaderOrigin) Destroy() error {

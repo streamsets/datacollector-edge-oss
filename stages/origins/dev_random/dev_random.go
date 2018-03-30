@@ -31,6 +31,8 @@ const (
 	CONF_DELAY  = "delay"
 )
 
+var randomOffset string = "random"
+
 type DevRandom struct {
 	*common.BaseStage
 	Fields     string  `ConfigDef:"type=STRING,required=true"`
@@ -52,7 +54,7 @@ func (d *DevRandom) Init(stageContext api.StageContext) error {
 	return nil
 }
 
-func (d *DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {
+func (d *DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (*string, error) {
 	r := rand.New(rand.NewSource(99))
 	time.Sleep(time.Duration(d.Delay) * time.Millisecond)
 	for i := 0; i < maxBatchSize; i++ {
@@ -66,5 +68,5 @@ func (d *DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMake
 			d.GetStageContext().ToError(err, record)
 		}
 	}
-	return "random", nil
+	return &randomOffset, nil
 }

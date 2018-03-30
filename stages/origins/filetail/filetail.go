@@ -67,7 +67,11 @@ func (f *FileTailOrigin) Init(stageContext api.StageContext) error {
 	return f.Conf.DataFormatConfig.Init(f.Conf.DataFormat)
 }
 
-func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (string, error) {
+func (f *FileTailOrigin) Produce(
+	lastSourceOffset string,
+	maxBatchSize int,
+	batchMaker api.BatchMaker,
+) (*string, error) {
 	log.WithField("lastSourceOffset", lastSourceOffset).Debug("Produce called")
 
 	recordReaderFactory := f.Conf.DataFormatConfig.RecordReaderFactory
@@ -85,7 +89,7 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 
 	tailObj, err := tail.TailFile(f.Conf.FileInfos[0].FileFullPath, tailConfig)
 	if err != nil {
-		return lastSourceOffset, err
+		return &lastSourceOffset, err
 	}
 
 	var currentOffset int64
@@ -126,7 +130,9 @@ func (f *FileTailOrigin) Produce(lastSourceOffset string, maxBatchSize int, batc
 
 	f.stopTailing(tailObj, recordReaderFactory, batchMaker, &recordCount)
 
-	return strconv.FormatInt(currentOffset, 10), err
+	stringOffset := strconv.FormatInt(currentOffset, 10)
+
+	return &stringOffset, err
 }
 
 func (f *FileTailOrigin) parseLine(
