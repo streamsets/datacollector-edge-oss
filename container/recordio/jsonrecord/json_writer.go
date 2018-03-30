@@ -23,8 +23,13 @@ import (
 	"io"
 )
 
+const (
+	ArrayObjects    = "ARRAY_OBJECTS"
+	MultipleObjects = "MULTIPLE_OBJECTS"
+)
+
 type JsonWriterFactoryImpl struct {
-	// TODO: Add needed configs
+	Mode string
 }
 
 func (j *JsonWriterFactoryImpl) CreateWriter(
@@ -32,14 +37,16 @@ func (j *JsonWriterFactoryImpl) CreateWriter(
 	writer io.Writer,
 ) (recordio.RecordWriter, error) {
 	var recordWriter recordio.RecordWriter
-	recordWriter = newRecordWriter(context, writer)
+	recordWriter = newRecordWriter(context, writer, j.Mode)
 	return recordWriter, nil
 }
 
 type JsonWriterImpl struct {
-	context api.StageContext
-	writer  io.Writer
-	encoder *json.Encoder
+	context      api.StageContext
+	writer       io.Writer
+	encoder      *json.Encoder
+	isArray      bool
+	arrayRecords []interface{}
 }
 
 func (jsonWriter *JsonWriterImpl) WriteRecord(r api.Record) error {
@@ -48,7 +55,11 @@ func (jsonWriter *JsonWriterImpl) WriteRecord(r api.Record) error {
 	if err != nil {
 		return err
 	}
-	jsonWriter.encoder.Encode(jsonObject)
+	if jsonWriter.isArray {
+		jsonWriter.arrayRecords = append(jsonWriter.arrayRecords, jsonObject)
+	} else {
+		jsonWriter.encoder.Encode(jsonObject)
+	}
 	return nil
 }
 
@@ -57,15 +68,24 @@ func (jsonWriter *JsonWriterImpl) Flush() error {
 }
 
 func (jsonWriter *JsonWriterImpl) Close() error {
+	if jsonWriter.isArray {
+		jsonWriter.encoder.Encode(jsonWriter.arrayRecords)
+		recordio.Flush(jsonWriter.writer)
+	}
 	return recordio.Close(jsonWriter.writer)
 }
 
-func newRecordWriter(context api.StageContext, writer io.Writer) *JsonWriterImpl {
-	return &JsonWriterImpl{
+func newRecordWriter(context api.StageContext, writer io.Writer, mode string) *JsonWriterImpl {
+	jsonWriter := &JsonWriterImpl{
 		context: context,
 		writer:  writer,
 		encoder: json.NewEncoder(writer),
+		isArray: mode == ArrayObjects,
 	}
+	if jsonWriter.isArray {
+		jsonWriter.arrayRecords = make([]interface{}, 0)
+	}
+	return jsonWriter
 }
 
 func writeFieldToJsonObject(field *api.Field) (interface{}, error) {

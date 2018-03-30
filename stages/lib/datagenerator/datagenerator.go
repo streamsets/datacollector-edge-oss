@@ -84,7 +84,7 @@ func (d *DataGeneratorFormatConfig) Init(dataFormat string) error {
 	case "TEXT":
 		d.RecordWriterFactory = &textrecord.TextWriterFactoryImpl{}
 	case "JSON":
-		d.RecordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{}
+		d.RecordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{Mode: d.JsonMode}
 	case "SDC_JSON":
 		d.RecordWriterFactory = &sdcrecord.SDCRecordWriterFactoryImpl{}
 	default:

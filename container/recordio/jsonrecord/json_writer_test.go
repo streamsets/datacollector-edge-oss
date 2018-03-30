@@ -37,7 +37,7 @@ func TestWriteMapRecord(t *testing.T) {
 
 	bufferWriter := bytes.NewBuffer([]byte{})
 
-	recordWriterFactory := &JsonWriterFactoryImpl{}
+	recordWriterFactory := &JsonWriterFactoryImpl{Mode: MultipleObjects}
 	recordWriter, err := recordWriterFactory.CreateWriter(stageContext, bufferWriter)
 
 	if err != nil {
@@ -87,7 +87,7 @@ func TestWriteListRecord(t *testing.T) {
 	bufferWriter := bytes.NewBuffer([]byte{})
 
 	//
-	recordWriterFactory := &JsonWriterFactoryImpl{}
+	recordWriterFactory := &JsonWriterFactoryImpl{Mode: MultipleObjects}
 	recordWriter, err := recordWriterFactory.CreateWriter(stageContext, bufferWriter)
 	if err != nil {
 		t.Fatal(err)
@@ -112,5 +112,62 @@ func TestWriteListRecord(t *testing.T) {
 
 	if listRecordObject[0] != stringSlice[0] {
 		t.Errorf("Excepted: %s, but got: %s", stringSlice[0], listRecordObject[0])
+	}
+}
+
+func TestWriteMapRecord_ArrayObjects(t *testing.T) {
+	stageContext := CreateStageContext()
+	commits := map[string]interface{}{
+		"rsc": 3711,
+		"r":   2138,
+		"gri": 1908,
+		"adg": 912,
+	}
+	record1, err := stageContext.CreateRecord("Id1", commits)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record1.GetHeader().SetAttribute("Sample Attribute", "Sample Value1")
+
+	bufferWriter := bytes.NewBuffer([]byte{})
+
+	recordWriterFactory := &JsonWriterFactoryImpl{Mode: ArrayObjects}
+	recordWriter, err := recordWriterFactory.CreateWriter(stageContext, bufferWriter)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = recordWriter.WriteRecord(record1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	recordWriter.Flush()
+	recordWriter.Close()
+
+	decoder := json.NewDecoder(bufferWriter)
+	var recordObjectList = make([]map[string]int, 1)
+	err = decoder.Decode(&recordObjectList)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	recordObject := recordObjectList[0]
+
+	if recordObject["rsc"] != commits["rsc"] {
+		t.Errorf("Excepted: %d, but got: %d", commits["rsc"], recordObject["rsc"])
+	}
+
+	if recordObject["r"] != commits["r"] {
+		t.Errorf("Excepted: %d, but got: %d", commits["r"], recordObject["r"])
+	}
+
+	if recordObject["gri"] != commits["gri"] {
+		t.Errorf("Excepted: %d, but got: %d", commits["gri"], recordObject["gri"])
+	}
+
+	if recordObject["adg"] != commits["adg"] {
+		t.Errorf("Excepted: %d, but got: %d", commits["adg"], recordObject["adg"])
 	}
 }

@@ -77,7 +77,7 @@ func TestWriteAndReadStringRecord(t *testing.T) {
 
 	bufferWriter := bytes.NewBuffer([]byte{})
 
-	recordWriterFactory := &JsonWriterFactoryImpl{}
+	recordWriterFactory := &JsonWriterFactoryImpl{Mode: MultipleObjects}
 	recordWriter, err := recordWriterFactory.CreateWriter(stageContext, bufferWriter)
 
 	if err != nil {
