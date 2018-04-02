@@ -97,7 +97,7 @@ func (m *MetricsEventRunnable) Stop() {
 func (m *MetricsEventRunnable) sendMetricsToDPM() error {
 	log.Debug("Sending metrics to Control Hub")
 	metricsJson := SDCMetrics{
-		Timestamp:   time.Now().UnixNano() / int64(time.Millisecond),
+		Timestamp:   util.ConvertTimeToLong(time.Now()),
 		Metadata:    m.metadata,
 		SdcId:       m.runtimeInfo.ID,
 		Aggregated:  false,

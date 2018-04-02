@@ -134,7 +134,7 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(
 	}
 
 	standaloneRunner.pipelineState.Status = common.RUNNING
-	standaloneRunner.pipelineState.TimeStamp = time.Now().UTC()
+	standaloneRunner.pipelineState.TimeStamp = util.ConvertTimeToLong(time.Now())
 
 	if err = store.SaveState(standaloneRunner.pipelineId, standaloneRunner.pipelineState); err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func (standaloneRunner *StandaloneRunner) StopPipeline() (*common.PipelineState,
 	}
 
 	standaloneRunner.pipelineState.Status = common.STOPPED
-	standaloneRunner.pipelineState.TimeStamp = time.Now().UTC()
+	standaloneRunner.pipelineState.TimeStamp = util.ConvertTimeToLong(time.Now())
 	err = store.SaveState(standaloneRunner.pipelineId, standaloneRunner.pipelineState)
 	if err != nil {
 		return nil, err

@@ -15,10 +15,6 @@
  */
 package common
 
-import (
-	"time"
-)
-
 const (
 	EDITED        = "EDITED"        // pipeline job has been create/modified, didn't run since the creation/modification
 	STARTING      = "STARTING"      // pipeline job starting (initialization)
@@ -37,7 +33,7 @@ type PipelineState struct {
 	PipelineId string                 `json:"pipelineId"`
 	Status     string                 `json:"status"`
 	Message    string                 `json:"message"`
-	TimeStamp  time.Time              `json:"timeStamp"`
+	TimeStamp  int64                  `json:"timeStamp"`
 	Attributes map[string]interface{} `json:"attributes"`
 	Metrics    string                 `json:"metrics"`
 }

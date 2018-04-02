@@ -93,7 +93,7 @@ func (s *StageContextImpl) CreateRecord(recordSourceId string, value interface{}
 	headerImplForRecord := record.GetHeader().(*HeaderImpl)
 	headerImplForRecord.SetStageCreator(s.StageConfig.InstanceName)
 	if s.ErrorRecordPolicy == ErrorRecordPolicyOriginal {
-		//Clone the current record to the header for error record handling
+		// Clone the current record to the header for error record handling
 		headerImplForRecord.SetSourceRecord(record.Clone())
 	}
 	return record, err

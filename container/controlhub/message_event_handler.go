@@ -224,7 +224,7 @@ func (m *MessageEventHandler) createPipelineStatusEvent(
 	pipelineStatusEvent := &PipelineStatusEvent{
 		Name:           pipelineState.PipelineId,
 		Title:          pipelineState.PipelineId,
-		TimeStamp:      pipelineState.TimeStamp.UnixNano() / int64(time.Millisecond),
+		TimeStamp:      pipelineState.TimeStamp,
 		IsRemote:       isRemote,
 		PipelineStatus: pipelineState.Status,
 		Message:        pipelineState.Message,

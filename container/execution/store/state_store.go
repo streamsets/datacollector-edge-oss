@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/util"
 	"io"
 	"io/ioutil"
 	"os"
@@ -52,7 +53,7 @@ func GetState(pipelineId string) (*common.PipelineState, error) {
 			PipelineId: pipelineId,
 			Status:     common.EDITED,
 			Message:    "",
-			TimeStamp:  time.Now().UTC(),
+			TimeStamp:  util.ConvertTimeToLong(time.Now()),
 		}
 		pipelineState.Attributes = make(map[string]interface{})
 		pipelineState.Attributes[IS_REMOTE_PIPELINE] = false
