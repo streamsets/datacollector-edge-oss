@@ -77,6 +77,8 @@ func TestJavaScriptProcessor_Success(t *testing.T) {
 		  try {
             var record = records[i];
 			record.value.a = 20.2 + state.counter;
+            record.value.newMapField = { e: "eValue" };
+            record.value.newArrayField = ['Element 1', 'Element 2'];
 			output.write(record);
 		  } catch (e) {
 			// Send record to error
@@ -135,6 +137,17 @@ func TestJavaScriptProcessor_Success(t *testing.T) {
 
 	if aValue.Value.(float64) != float64(21.2) {
 		t.Errorf("Error in javascript evaluator when evaluating /d, Expected : 20.2. Actual:%d", aValue.Value)
+	}
+
+	eValue, err := record.Get("/newMapField/e")
+
+	if err != nil {
+		t.Error("Error when getting value of /newMapField/e " + err.Error())
+	}
+
+	if eValue.Value.(string) != "eValue" {
+		t.Errorf("Error in javascript evaluator when evaluating /newMapField/e, Expected : eValue. Actual:%s",
+			aValue.Value)
 	}
 
 	if errSink.GetTotalErrorRecords() != 0 {

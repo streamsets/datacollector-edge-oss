@@ -98,6 +98,9 @@ func (r *RecordImpl) getFromPathElements(pathElements []PathElement) []*api.Fiel
 	if r.value != nil {
 		current := r.value
 		for _, pathElement := range pathElements {
+			if current == nil {
+				break
+			}
 			var next *api.Field
 			switch pathElement.Type {
 			case ROOT:
