@@ -16,9 +16,11 @@
 package validation
 
 type Issue struct {
-	InstanceName   string
-	ConfigGroup    string
-	ConfigName     string
-	Message        string
-	AdditionalInfo map[string]string
+	InstanceName   string            `json:"instanceName"`
+	ConfigGroup    string            `json:"configGroup"`
+	ConfigName     string            `json:"configName"`
+	Message        string            `json:"message"`
+	Level          string            `json:"level"`
+	Count          int               `json:"count"`
+	AdditionalInfo map[string]string `json:"additionalInfo"`
 }

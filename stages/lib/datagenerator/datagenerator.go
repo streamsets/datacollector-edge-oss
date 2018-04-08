@@ -16,7 +16,8 @@
 package datagenerator
 
 import (
-	"errors"
+	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"github.com/streamsets/datacollector-edge/container/recordio/jsonrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/sdcrecord"
@@ -79,7 +80,11 @@ type DataGeneratorFormatConfig struct {
 	RecordWriterFactory recordio.RecordWriterFactory
 }
 
-func (d *DataGeneratorFormatConfig) Init(dataFormat string) error {
+func (d *DataGeneratorFormatConfig) Init(
+	dataFormat string,
+	stageContext api.StageContext,
+	issues []validation.Issue,
+) []validation.Issue {
 	switch dataFormat {
 	case "TEXT":
 		d.RecordWriterFactory = &textrecord.TextWriterFactoryImpl{}
@@ -88,7 +93,7 @@ func (d *DataGeneratorFormatConfig) Init(dataFormat string) error {
 	case "SDC_JSON":
 		d.RecordWriterFactory = &sdcrecord.SDCRecordWriterFactoryImpl{}
 	default:
-		return errors.New("Unsupported Data Format - " + dataFormat)
+		issues = append(issues, stageContext.CreateConfigIssue("Unsupported Data Format - "+dataFormat))
 	}
-	return nil
+	return issues
 }

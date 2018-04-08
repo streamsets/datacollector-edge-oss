@@ -20,6 +20,7 @@ import (
 	"github.com/dustin/go-coap"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"github.com/streamsets/datacollector-edge/container/recordio/jsonrecord"
@@ -61,15 +62,13 @@ func init() {
 	})
 }
 
-func (c *CoapClientDestination) Init(stageContext api.StageContext) error {
-	if err := c.BaseStage.Init(stageContext); err != nil {
-		return err
-	}
+func (c *CoapClientDestination) Init(stageContext api.StageContext) []validation.Issue {
+	issues := c.BaseStage.Init(stageContext)
 	log.Debug("CoapClientDestination Init method")
 	// TODO: Create RecordWriter based on configuration
 	c.recordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{}
 	mid = 0
-	return nil
+	return issues
 }
 
 func (c *CoapClientDestination) Write(batch api.Batch) error {

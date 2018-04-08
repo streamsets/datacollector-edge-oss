@@ -18,6 +18,7 @@ package api
 import (
 	"context"
 	"github.com/rcrowley/go-metrics"
+	"github.com/streamsets/datacollector-edge/api/validation"
 )
 
 type StageContext interface {
@@ -30,4 +31,5 @@ type StageContext interface {
 	GetOutputLanes() []string
 	Evaluate(value string, configName string, ctx context.Context) (interface{}, error)
 	IsErrorStage() bool
+	CreateConfigIssue(error string, optional ...interface{}) validation.Issue
 }

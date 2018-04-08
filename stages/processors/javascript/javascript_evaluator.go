@@ -24,6 +24,7 @@ import (
 	"github.com/robertkrimen/otto"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/lib/scripting"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
@@ -57,7 +58,8 @@ func init() {
 	})
 }
 
-func (j *JavaScriptProcessor) Init(stageContext api.StageContext) error {
+func (j *JavaScriptProcessor) Init(stageContext api.StageContext) []validation.Issue {
+	issues := j.BaseStage.Init(stageContext)
 	j.state = make(map[string]interface{})
 
 	if j.InitScript != "" {
@@ -66,13 +68,14 @@ func (j *JavaScriptProcessor) Init(stageContext api.StageContext) error {
 		_, err := vm.Run(j.InitScript)
 		if err != nil {
 			log.Error(fmt.Sprintf("Failed to execute init script code due to error: %s", err.Error()))
-			return err
+			issues = append(issues, stageContext.CreateConfigIssue(err.Error()))
+			return issues
 		}
 	}
 
 	j.Script = j.preProcessScript(j.Script)
 
-	return j.BaseStage.Init(stageContext)
+	return issues
 }
 
 func (j *JavaScriptProcessor) Process(batch api.Batch, batchMaker api.BatchMaker) error {

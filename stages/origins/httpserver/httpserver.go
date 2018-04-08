@@ -18,6 +18,7 @@ package httpserver
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io/ioutil"
@@ -51,13 +52,11 @@ func init() {
 	})
 }
 
-func (h *HttpServerOrigin) Init(stageContext api.StageContext) error {
-	if err := h.BaseStage.Init(stageContext); err != nil {
-		return err
-	}
+func (h *HttpServerOrigin) Init(stageContext api.StageContext) []validation.Issue {
+	issues := h.BaseStage.Init(stageContext)
 	h.httpServer = h.startHttpServer()
 	h.incomingData = make(chan interface{})
-	return nil
+	return issues
 }
 
 func (h *HttpServerOrigin) Destroy() error {

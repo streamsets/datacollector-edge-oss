@@ -23,6 +23,7 @@ import (
 	"github.com/Shopify/sarama"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/el"
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
@@ -101,15 +102,11 @@ func init() {
 	})
 }
 
-func (dest *KafkaDestination) Init(context api.StageContext) error {
-	var err error
-	if err = dest.BaseStage.Init(context); err != nil {
-		return err
-	}
-	if err = dest.Conf.DataGeneratorFormatConfig.Init(dest.Conf.DataFormat); err != nil {
-		return err
-	}
+func (dest *KafkaDestination) Init(context api.StageContext) []validation.Issue {
+	issues := dest.BaseStage.Init(context)
+	issues = dest.Conf.DataGeneratorFormatConfig.Init(dest.Conf.DataFormat, context, issues)
 
+	var err error
 	dest.kafkaClientConf = sarama.NewConfig()
 	dest.kafkaClientConf.ClientID = "SDCEdge"
 	dest.kafkaClientConf.Producer.RequiredAcks = sarama.WaitForAll
@@ -118,20 +115,22 @@ func (dest *KafkaDestination) Init(context api.StageContext) error {
 	// TODO: Map KafkaProducerConfigs to sarama producer config
 	dest.kafkaClientConf.Producer.Partitioner, err = getPartitionerConstructor(dest.Conf.PartitionStrategy)
 	if err != nil {
-		return err
+		issues = append(issues, context.CreateConfigIssue(err.Error()))
+		return issues
 	}
 	dest.brokerList = strings.Split(dest.Conf.MetadataBrokerList, ",")
 
 	dest.kafkaClient, err = sarama.NewClient(dest.brokerList, dest.kafkaClientConf)
 	if err != nil {
-		return err
+		issues = append(issues, context.CreateConfigIssue(err.Error()))
+		return issues
 	}
 
 	dest.keyCounter = 0
 
 	// sarama.Logger = log.StandardLogger()
 
-	return nil
+	return issues
 }
 
 func (dest *KafkaDestination) Write(batch api.Batch) error {

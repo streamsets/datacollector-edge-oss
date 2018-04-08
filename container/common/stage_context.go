@@ -20,12 +20,15 @@ import (
 	"github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/el"
 	"github.com/streamsets/datacollector-edge/container/util"
 	"strconv"
 	"strings"
 	"time"
 )
+
+const StageConfig = "STAGE_CONFIG"
 
 type StageContextImpl struct {
 	StageConfig       *StageConfiguration
@@ -136,6 +139,26 @@ func (s *StageContextImpl) Evaluate(
 
 func (s *StageContextImpl) IsErrorStage() bool {
 	return s.ErrorStage
+}
+
+// optional argument, first optional argument is configGroup, second optional argument- configName
+func (s *StageContextImpl) CreateConfigIssue(error string, optional ...interface{}) validation.Issue {
+	issue := validation.Issue{
+		InstanceName: s.StageConfig.InstanceName,
+		Level:        StageConfig,
+		Count:        1,
+		Message:      error,
+	}
+
+	if len(optional) > 0 {
+		issue.ConfigGroup = optional[0].(string)
+	}
+
+	if len(optional) > 1 {
+		issue.ConfigName = optional[1].(string)
+	}
+
+	return issue
 }
 
 func constructErrorRecord(instanceName string, err error, errorRecordPolicy string, record api.Record) api.Record {

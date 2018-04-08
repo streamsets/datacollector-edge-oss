@@ -17,9 +17,9 @@ package runner
 
 import (
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
-	"github.com/streamsets/datacollector-edge/container/validation"
 )
 
 type StageRuntime struct {
@@ -30,14 +30,7 @@ type StageRuntime struct {
 }
 
 func (s *StageRuntime) Init() []validation.Issue {
-	issues := make([]validation.Issue, 0)
-	if err := s.stageBean.Stage.Init(s.stageContext); err != nil {
-		//TODO: move this to each stage along with information for config group and name
-		issue := validation.Issue{InstanceName: s.stageBean.Config.InstanceName, Message: err.Error()}
-		issues = append(issues, issue)
-	}
-
-	return issues
+	return s.stageBean.Stage.Init(s.stageContext)
 }
 
 func (s *StageRuntime) Execute(

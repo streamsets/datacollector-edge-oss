@@ -28,13 +28,6 @@ import (
 	"testing"
 )
 
-const (
-	CONF_FILE_INFOS         = "conf.fileInfos"
-	CONF_MAX_WAIT_TIME_SECS = "conf.maxWaitTimeSecs"
-	CONF_BATCH_SIZE         = "conf.batchSize"
-	CONF_DATA_FORMAT        = "conf.dataFormat"
-)
-
 func getStageContext(
 	filePath string,
 	maxWaitTimeSecs float64,
@@ -52,19 +45,19 @@ func getStageContext(
 	}
 
 	stageConfig.Configuration[0] = common.Config{
-		Name:  CONF_FILE_INFOS,
+		Name:  ConfFileInfos,
 		Value: fileInfoSlice,
 	}
 	stageConfig.Configuration[1] = common.Config{
-		Name:  CONF_BATCH_SIZE,
+		Name:  ConfBatchSize,
 		Value: batchSize,
 	}
 	stageConfig.Configuration[2] = common.Config{
-		Name:  CONF_MAX_WAIT_TIME_SECS,
+		Name:  ConfMaxWaitTimeSecs,
 		Value: maxWaitTimeSecs,
 	}
 	stageConfig.Configuration[3] = common.Config{
-		Name:  CONF_DATA_FORMAT,
+		Name:  ConfDataFormat,
 		Value: dataFormat,
 	}
 
@@ -82,9 +75,9 @@ func TestInvalidFilePath(t *testing.T) {
 		return
 	}
 	stageInstance := stageBean.Stage
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Error(err)
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
@@ -116,9 +109,9 @@ func TestValidFilePath(t *testing.T) {
 		t.Error(err)
 	}
 	stageInstance := stageBean.Stage
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Error(err)
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
@@ -207,9 +200,9 @@ func TestFileTailOrigin_Produce_JSON(t *testing.T) {
 		t.Error(err)
 	}
 	stageInstance := stageBean.Stage
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Error(err)
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
@@ -254,9 +247,9 @@ func _TestChannelDeadlockIssue(t *testing.T) {
 		t.Error(err)
 	}
 	stageInstance := stageBean.Stage
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Error(err)
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
@@ -300,9 +293,9 @@ func TestFileTailOrigin_offsetIssue(t *testing.T) {
 		t.Error(err)
 	}
 	stageInstance := stageBean.Stage
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Error(err)
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 
 	lastSourceOffsetStr := ""

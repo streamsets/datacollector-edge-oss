@@ -67,8 +67,8 @@ func TestFieldRemoverProcessor_InitUnsupported(t *testing.T) {
 		t.Error(err)
 	}
 	stageInstance := stageBean.Stage
-	err = stageInstance.Init(stageContext)
-	if err == nil || !strings.Contains(err.Error(), "Unsupported") {
+	issues := stageInstance.Init(stageContext)
+	if len(issues) == 0 || !strings.Contains(issues[0].Message, "Unsupported") {
 		t.Error("Filter operation not properly flagged as unsupported")
 	}
 }
@@ -82,8 +82,8 @@ func TestFieldRemoverProcessor_InitUnexpected(t *testing.T) {
 		t.Error(err)
 	}
 	stageInstance := stageBean.Stage
-	err = stageInstance.Init(stageContext)
-	if err == nil || !strings.Contains(err.Error(), "Unexpected") {
+	issues := stageInstance.Init(stageContext)
+	if len(issues) == 0 || !strings.Contains(issues[0].Message, "Unexpected") {
 		t.Error("Fields list integer not properly flagged as unexpected")
 	}
 }
@@ -99,9 +99,9 @@ func TestFieldRemoverProcessorRemove(t *testing.T) {
 	}
 	stageInstance := stageBean.Stage
 
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Error(err)
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 
 	records := make([]api.Record, 3)
@@ -152,9 +152,9 @@ func TestFieldRemoverProcessorKeep(t *testing.T) {
 	}
 	stageInstance := stageBean.Stage
 
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Error(err)
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 
 	records := make([]api.Record, 1)
@@ -186,9 +186,9 @@ func TestFieldRemoverProcessorRemoveNull(t *testing.T) {
 	}
 	stageInstance := stageBean.Stage
 
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Error(err)
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 
 	records := make([]api.Record, 1)

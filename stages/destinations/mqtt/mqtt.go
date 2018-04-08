@@ -19,6 +19,7 @@ import (
 	"bytes"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
@@ -56,18 +57,17 @@ func init() {
 	})
 }
 
-func (md *MqttClientDestination) Init(stageContext api.StageContext) error {
+func (md *MqttClientDestination) Init(stageContext api.StageContext) []validation.Issue {
 	log.Debug("MqttClientDestination Init method")
-	if err := md.BaseStage.Init(stageContext); err != nil {
-		return err
-	}
+	issues := md.BaseStage.Init(stageContext)
 	if err := md.InitializeClient(md.CommonConf); err != nil {
-		return err
+		issues = append(issues, stageContext.CreateConfigIssue(err.Error()))
+		return issues
 	}
 	if md.GetStageContext().IsErrorStage() {
 		md.PublisherConf.DataFormat = "SDC_JSON"
 	}
-	return md.PublisherConf.DataGeneratorFormatConfig.Init(md.PublisherConf.DataFormat)
+	return md.PublisherConf.DataGeneratorFormatConfig.Init(md.PublisherConf.DataFormat, stageContext, issues)
 }
 
 func (md *MqttClientDestination) Write(batch api.Batch) error {

@@ -1,7 +1,8 @@
 package dataparser
 
 import (
-	"errors"
+	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"github.com/streamsets/datacollector-edge/container/recordio/jsonrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/sdcrecord"
@@ -109,7 +110,11 @@ type RegExConfig struct {
 	Group     float64 `ConfigDef:"type=NUMBER,required=true"`
 }
 
-func (d *DataParserFormatConfig) Init(dataFormat string) error {
+func (d *DataParserFormatConfig) Init(
+	dataFormat string,
+	stageContext api.StageContext,
+	issues []validation.Issue,
+) []validation.Issue {
 	switch dataFormat {
 	case "TEXT":
 		d.RecordReaderFactory = &textrecord.TextReaderFactoryImpl{}
@@ -118,7 +123,7 @@ func (d *DataParserFormatConfig) Init(dataFormat string) error {
 	case "SDC_JSON":
 		d.RecordReaderFactory = &sdcrecord.SDCRecordReaderFactoryImpl{}
 	default:
-		return errors.New("Unsupported Data Format - " + dataFormat)
+		issues = append(issues, stageContext.CreateConfigIssue("Unsupported Data Format - "+dataFormat))
 	}
-	return nil
+	return issues
 }

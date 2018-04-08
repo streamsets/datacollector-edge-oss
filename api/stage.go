@@ -16,6 +16,8 @@
 
 package api
 
+import "github.com/streamsets/datacollector-edge/api/validation"
+
 // Stage is the base interface for Data Collector Edge stages implementations defining their common context and lifecycle.
 //
 // Init method initializes the stage.
@@ -31,6 +33,6 @@ package api
 // This method is also called after a failed initialization to allow releasing resources created before the
 // initialization failed.
 type Stage interface {
-	Init(stageContext StageContext) error
+	Init(stageContext StageContext) []validation.Issue
 	Destroy() error
 }

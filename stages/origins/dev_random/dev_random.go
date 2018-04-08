@@ -17,6 +17,7 @@ package dev_random
 
 import (
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"math/rand"
@@ -49,13 +50,11 @@ func init() {
 	})
 }
 
-func (d *DevRandom) Init(stageContext api.StageContext) error {
-	if err := d.BaseStage.Init(stageContext); err != nil {
-		return err
-	}
+func (d *DevRandom) Init(stageContext api.StageContext) []validation.Issue {
+	issues := d.BaseStage.Init(stageContext)
 	d.fieldsList = strings.Split(d.Fields, ",")
 	d.recordsProduced = 0
-	return nil
+	return issues
 }
 
 func (d *DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (*string, error) {

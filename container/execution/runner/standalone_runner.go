@@ -19,6 +19,7 @@ import (
 	"errors"
 	"github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/execution"
 	"github.com/streamsets/datacollector-edge/container/execution/store"
@@ -120,6 +121,19 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(
 		return nil, err
 	}
 
+	issues := standaloneRunner.prodPipeline.Init()
+
+	if len(issues) != 0 {
+		standaloneRunner.pipelineState.Status = common.START_ERROR
+		standaloneRunner.pipelineState.TimeStamp = util.ConvertTimeToLong(time.Now())
+		standaloneRunner.pipelineState.Message = issues[0].Message
+		standaloneRunner.pipelineState.Attributes[store.ISSUES] = validation.NewIssues(issues)
+		if err = store.SaveState(standaloneRunner.pipelineId, standaloneRunner.pipelineState); err != nil {
+			return nil, err
+		}
+		return standaloneRunner.pipelineState, nil
+	}
+
 	go standaloneRunner.prodPipeline.Run()
 
 	if standaloneRunner.runtimeInfo.DPMEnabled && standaloneRunner.IsRemotePipeline() {
@@ -141,6 +155,7 @@ func (standaloneRunner *StandaloneRunner) StartPipeline(
 	}
 
 	return standaloneRunner.pipelineState, nil
+
 }
 
 func (standaloneRunner *StandaloneRunner) StopPipeline() (*common.PipelineState, error) {

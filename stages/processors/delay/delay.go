@@ -17,6 +17,7 @@ package delay
 
 import (
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"time"
@@ -39,7 +40,7 @@ func init() {
 	})
 }
 
-func (d *DelayProcessor) Init(stageContext api.StageContext) error {
+func (d *DelayProcessor) Init(stageContext api.StageContext) []validation.Issue {
 	return d.BaseStage.Init(stageContext)
 }
 

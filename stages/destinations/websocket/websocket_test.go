@@ -82,9 +82,9 @@ func TestWebSocketClientDestination_Init(t *testing.T) {
 		return
 	}
 
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Error(err)
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 
 	if stageInstance.(*WebSocketClientDestination).Conf.DataGeneratorFormatConfig.RecordWriterFactory == nil {

@@ -17,9 +17,9 @@ package spooler
 
 import (
 	"bufio"
-	"errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io"
@@ -77,10 +77,8 @@ func init() {
 	})
 }
 
-func (s *SpoolDirSource) Init(stageContext api.StageContext) error {
-	if err := s.BaseStage.Init(stageContext); err != nil {
-		return err
-	}
+func (s *SpoolDirSource) Init(stageContext api.StageContext) []validation.Issue {
+	issues := s.BaseStage.Init(stageContext)
 	s.spooler = &DirectorySpooler{
 		dirPath:           s.Conf.SpoolDir,
 		readOrder:         s.Conf.UseLastModified,
@@ -91,24 +89,27 @@ func (s *SpoolDirSource) Init(stageContext api.StageContext) error {
 	}
 
 	if s.spooler.pathMatcherMode != GLOB && s.spooler.pathMatcherMode != REGEX {
-		return errors.New("Unsupported Path Matcher mode :" + s.spooler.pathMatcherMode)
+		issues = append(issues, stageContext.CreateConfigIssue(
+			"Unsupported Path Matcher mode :"+s.spooler.pathMatcherMode,
+		))
+		return issues
 	}
 
 	s.spooler.Init()
-	var err error = nil
 	if s.Conf.InitialFileToProcess != "" {
 		file_matches, err := filepath.Glob(s.Conf.InitialFileToProcess)
 		if err == nil {
 			if len(file_matches) > 1 {
-				return errors.New(
-					"Initial File to Process '" +
-						s.Conf.InitialFileToProcess + "' matches multiple files",
-				)
+				issues = append(issues, stageContext.CreateConfigIssue(
+					"Initial File to Process '"+
+						s.Conf.InitialFileToProcess+"' matches multiple files",
+				))
+				return issues
 			}
 			s.Conf.InitialFileToProcess = file_matches[0]
 		}
 	}
-	return err
+	return issues
 }
 
 func (s *SpoolDirSource) initializeBuffReaderIfNeeded() error {

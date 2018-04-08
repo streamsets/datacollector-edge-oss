@@ -86,9 +86,9 @@ func TestExpressionProcessor_Success(t *testing.T) {
 	if stageInstance == nil {
 		t.Fatal("Failed to create stage instance")
 	}
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Fatal("Error initializing stage context for the stage")
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 	defer stageInstance.Destroy()
 
@@ -154,9 +154,9 @@ func TestExpressionProcessor_Error(t *testing.T) {
 	if stageInstance == nil {
 		t.Fatal("Failed to create stage instance")
 	}
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Fatal("Error initializing stage context for the stage")
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 	defer stageInstance.Destroy()
 

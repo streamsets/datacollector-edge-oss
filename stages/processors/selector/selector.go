@@ -21,6 +21,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/el"
 	"github.com/streamsets/datacollector-edge/container/util"
@@ -50,24 +51,23 @@ func init() {
 	})
 }
 
-func (s *SelectorProcessor) Init(stageContext api.StageContext) error {
-	err := s.BaseStage.Init(stageContext)
-	if err != nil {
-		return err
-	}
+func (s *SelectorProcessor) Init(stageContext api.StageContext) []validation.Issue {
+	issues := s.BaseStage.Init(stageContext)
 
-	err = s.parsePredicateLanes()
+	err := s.parsePredicateLanes()
 	if err != nil {
-		return err
+		issues = append(issues, stageContext.CreateConfigIssue(err.Error()))
+		return issues
 	}
 
 	if s.LanePredicates[len(s.LanePredicates)-1][PREDICATE] != DEFAULT {
-		return errors.New(SELECTOR_07_ERROR)
+		issues = append(issues, stageContext.CreateConfigIssue(SELECTOR_07_ERROR))
+		return issues
 	} else {
 		s.defaultLane = s.LanePredicates[len(s.LanePredicates)-1][OUTPUT_LANE]
 	}
 
-	return err
+	return issues
 }
 
 func (s *SelectorProcessor) parsePredicateLanes() error {

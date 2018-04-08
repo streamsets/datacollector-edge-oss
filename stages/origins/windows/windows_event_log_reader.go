@@ -19,9 +19,9 @@
 package windows
 
 import (
-	"errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"runtime"
@@ -49,33 +49,37 @@ func init() {
 	})
 }
 
-func (wel *WindowsEventLogSource) Init(stageContext api.StageContext) error {
-	if err := wel.BaseStage.Init(stageContext); err != nil {
-		return err
-	}
+func (wel *WindowsEventLogSource) Init(stageContext api.StageContext) []validation.Issue {
+	issues := wel.BaseStage.Init(stageContext)
 	stageConfig := wel.GetStageConfig()
 
 	if runtime.GOOS != WINDOWS {
-		return errors.New("Windows Event Log Source should be run on Windows OS")
+		issues = append(issues, stageContext.CreateConfigIssue(
+			"Windows Event Log Source should be run on Windows OS",
+		))
+		return issues
 	}
 
 	for _, config := range stageConfig.Configuration {
 		value, err := wel.GetStageContext().GetResolvedValue(config.Value)
 		if err != nil {
-			return err
+			issues = append(issues, stageContext.CreateConfigIssue(err.Error()))
+			return issues
 		}
 		switch config.Name {
 		case LOG_NAME_CONFIG:
 			logName := value.(string)
 			if !(logName == SYSTEM || logName == APPLICATION || logName == SECURITY) {
-				return errors.New("Unsupported Log Name :" + logName)
+				issues = append(issues, stageContext.CreateConfigIssue("Unsupported Log Name :"+logName))
+				return issues
+
 			}
 			wel.logName = logName
 		case READ_MODE_CONFIG:
 			wel.readMode = EventLogReaderMode(value.(string))
 		}
 	}
-	return nil
+	return issues
 }
 
 func (wel *WindowsEventLogSource) Produce(

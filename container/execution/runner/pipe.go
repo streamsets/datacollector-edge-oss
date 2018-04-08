@@ -18,9 +18,9 @@ package runner
 import (
 	"github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/execution"
 	"github.com/streamsets/datacollector-edge/container/util"
-	"github.com/streamsets/datacollector-edge/container/validation"
 	"time"
 )
 

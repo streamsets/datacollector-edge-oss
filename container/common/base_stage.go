@@ -17,6 +17,7 @@ package common
 
 import (
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 )
 
 type BaseStage struct {
@@ -27,9 +28,10 @@ func (b *BaseStage) GetStageContext() api.StageContext {
 	return b.stageContext
 }
 
-func (b *BaseStage) Init(stageContext api.StageContext) error {
+func (b *BaseStage) Init(stageContext api.StageContext) []validation.Issue {
+	issues := make([]validation.Issue, 0)
 	b.stageContext = stageContext
-	return nil
+	return issues
 }
 
 func (b *BaseStage) Destroy() error {

@@ -22,10 +22,10 @@
 package sensor_reader
 
 import (
-	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"periph.io/x/periph/conn/i2c"
@@ -63,37 +63,41 @@ func init() {
 	})
 }
 
-func (s *SensorReaderOrigin) Init(stageContext api.StageContext) error {
+func (s *SensorReaderOrigin) Init(stageContext api.StageContext) []validation.Issue {
 	var err error
-	if err := s.BaseStage.Init(stageContext); err != nil {
-		return err
-	}
+	issues := s.BaseStage.Init(stageContext)
 
 	// Currently only Sensor device supported value is BMxx80
 	if s.Conf.SensorDevice != "BMxx80" {
-		return errors.New(fmt.Sprintf("Not supported reading from device: %s", s.Conf.SensorDevice))
+		issues = append(issues, stageContext.CreateConfigIssue(
+			fmt.Sprintf("Not supported reading from device: %s", s.Conf.SensorDevice),
+		))
+		return issues
 	}
 
 	i2cAddressHex, err := strconv.ParseUint(s.Conf.I2cAddress, 0, 16)
 
 	if _, err := host.Init(); err != nil {
-		return err
+		issues = append(issues, stageContext.CreateConfigIssue(err.Error()))
+		return issues
 	}
 
 	// Open a handle to the first available I²C bus:
 	s.bus, err = i2creg.Open("")
 	if err != nil {
-		return err
+		issues = append(issues, stageContext.CreateConfigIssue(err.Error()))
+		return issues
 	}
 
 	// Open a handle to a bme280/bmp280 connected on the I²C bus using default
 	// settings:
 	s.dev, err = bmxx80.NewI2C(s.bus, uint16(i2cAddressHex), nil)
 	if err != nil {
-		return err
+		issues = append(issues, stageContext.CreateConfigIssue(err.Error()))
+		return issues
 	}
 
-	return nil
+	return issues
 }
 
 func (s *SensorReaderOrigin) Produce(

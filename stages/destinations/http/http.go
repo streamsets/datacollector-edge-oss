@@ -23,6 +23,7 @@ import (
 	"errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
@@ -65,13 +66,10 @@ func init() {
 	})
 }
 
-func (h *HttpClientDestination) Init(stageContext api.StageContext) error {
-	var err error
-	if err = h.BaseStage.Init(stageContext); err != nil {
-		return err
-	}
+func (h *HttpClientDestination) Init(stageContext api.StageContext) []validation.Issue {
+	issues := h.BaseStage.Init(stageContext)
 	log.Debug("HttpClientDestination Init method")
-	return h.Conf.DataGeneratorFormatConfig.Init(h.Conf.DataFormat)
+	return h.Conf.DataGeneratorFormatConfig.Init(h.Conf.DataFormat, stageContext, issues)
 }
 
 func (h *HttpClientDestination) Write(batch api.Batch) error {

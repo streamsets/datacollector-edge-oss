@@ -21,6 +21,7 @@ import (
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
@@ -50,12 +51,10 @@ func init() {
 	})
 }
 
-func (w *WebSocketClientDestination) Init(stageContext api.StageContext) error {
-	if err := w.BaseStage.Init(stageContext); err != nil {
-		return err
-	}
+func (w *WebSocketClientDestination) Init(stageContext api.StageContext) []validation.Issue {
+	issues := w.BaseStage.Init(stageContext)
 	log.Debug("WebSocketClientDestination Init method")
-	return w.Conf.DataGeneratorFormatConfig.Init(w.Conf.DataFormat)
+	return w.Conf.DataGeneratorFormatConfig.Init(w.Conf.DataFormat, stageContext, issues)
 }
 
 func (w *WebSocketClientDestination) Write(batch api.Batch) error {

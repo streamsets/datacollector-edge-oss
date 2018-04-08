@@ -17,6 +17,7 @@ package identity
 
 import (
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 )
@@ -37,7 +38,7 @@ func init() {
 	})
 }
 
-func (i *IdentityProcessor) Init(stageContext api.StageContext) error {
+func (i *IdentityProcessor) Init(stageContext api.StageContext) []validation.Issue {
 	return i.BaseStage.Init(stageContext)
 }
 

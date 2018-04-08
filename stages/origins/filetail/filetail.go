@@ -20,6 +20,7 @@ import (
 	"github.com/hpcloud/tail"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
@@ -30,8 +31,14 @@ import (
 )
 
 const (
-	LIBRARY    = "streamsets-datacollector-basic-lib"
-	STAGE_NAME = "com_streamsets_pipeline_stage_origin_logtail_FileTailDSource"
+	LIBRARY             = "streamsets-datacollector-basic-lib"
+	STAGE_NAME          = "com_streamsets_pipeline_stage_origin_logtail_FileTailDSource"
+	ConfGroupFiles      = "FILES"
+	ConfFileInfos       = "conf.fileInfos"
+	ConfMaxWaitTimeSecs = "conf.maxWaitTimeSecs"
+	ConfBatchSize       = "conf.batchSize"
+	ConfDataFormat      = "conf.dataFormat"
+	ErrorTail20         = "File path cannot be null or empty"
 )
 
 type FileTailOrigin struct {
@@ -59,12 +66,15 @@ func init() {
 	})
 }
 
-func (f *FileTailOrigin) Init(stageContext api.StageContext) error {
-	if err := f.BaseStage.Init(stageContext); err != nil {
-		return err
+func (f *FileTailOrigin) Init(stageContext api.StageContext) []validation.Issue {
+	issues := f.BaseStage.Init(stageContext)
+	// validate file path
+	if len(f.Conf.FileInfos) == 0 || f.Conf.FileInfos[0].FileFullPath == "" {
+		issues = append(issues, stageContext.CreateConfigIssue(ErrorTail20, ConfGroupFiles, ConfFileInfos))
+		return issues
 	}
 	log.WithField("file", f.Conf.FileInfos[0].FileFullPath).Debug("Reading file")
-	return f.Conf.DataFormatConfig.Init(f.Conf.DataFormat)
+	return f.Conf.DataFormatConfig.Init(f.Conf.DataFormat, stageContext, issues)
 }
 
 func (f *FileTailOrigin) Produce(

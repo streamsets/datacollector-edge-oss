@@ -19,6 +19,7 @@ import (
 	"bytes"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
@@ -45,12 +46,11 @@ func init() {
 	})
 }
 
-func (d *DevRawDataDSource) Init(stageContext api.StageContext) error {
-	if err := d.BaseStage.Init(stageContext); err != nil {
-		return err
-	}
+func (d *DevRawDataDSource) Init(stageContext api.StageContext) []validation.Issue {
+	issues := d.BaseStage.Init(stageContext)
 	log.Debug("DevRawDataDSource Init method")
-	return d.DataFormatConfig.Init(d.DataFormat)
+	d.DataFormatConfig.Init(d.DataFormat, stageContext, issues)
+	return issues
 }
 
 func (d *DevRawDataDSource) Produce(

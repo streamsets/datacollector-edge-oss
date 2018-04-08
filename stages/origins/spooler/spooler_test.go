@@ -129,9 +129,9 @@ func createSpooler(t *testing.T, stageContext *common.StageContextImpl) api.Stag
 		t.Error(err)
 	}
 	stageInstance := stageBean.Stage
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Fatal(err)
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 	return stageInstance
 }

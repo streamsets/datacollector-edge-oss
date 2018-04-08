@@ -21,6 +21,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/el"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
@@ -62,7 +63,7 @@ func init() {
 	})
 }
 
-func (f *ExpressionProcessor) Init(stageContext api.StageContext) error {
+func (f *ExpressionProcessor) Init(stageContext api.StageContext) []validation.Issue {
 	return f.BaseStage.Init(stageContext)
 }
 

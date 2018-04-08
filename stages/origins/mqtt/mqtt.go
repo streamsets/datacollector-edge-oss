@@ -20,6 +20,7 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	mqttlib "github.com/streamsets/datacollector-edge/stages/lib/mqtt"
@@ -62,11 +63,9 @@ func (ms *MqttClientSource) getTopicFilterAndQosMap() map[string]byte {
 	return topicFilters
 }
 
-func (ms *MqttClientSource) Init(stageContext api.StageContext) error {
+func (ms *MqttClientSource) Init(stageContext api.StageContext) []validation.Issue {
 	log.Debug("MqttClientSource Init method")
-	if err := ms.BaseStage.Init(stageContext); err != nil {
-		return err
-	}
+	issues := ms.BaseStage.Init(stageContext)
 
 	ms.incomingRecords = make(chan api.Record)
 
@@ -79,7 +78,7 @@ func (ms *MqttClientSource) Init(stageContext api.StageContext) error {
 			err = token.Error()
 		}
 	}
-	return ms.SubscriberConf.DataFormatConfig.Init(ms.SubscriberConf.DataFormat)
+	return ms.SubscriberConf.DataFormatConfig.Init(ms.SubscriberConf.DataFormat, stageContext, issues)
 }
 
 func (ms *MqttClientSource) Produce(

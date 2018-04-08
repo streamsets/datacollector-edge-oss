@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 )
@@ -47,24 +48,27 @@ func init() {
 	})
 }
 
-func (f *FieldRemoverProcessor) Init(stageContext api.StageContext) error {
-	if err := f.BaseStage.Init(stageContext); err != nil {
-		return err
-	}
+func (f *FieldRemoverProcessor) Init(stageContext api.StageContext) []validation.Issue {
+	issues := f.BaseStage.Init(stageContext)
 
 	f.fieldList = make([]string, len(f.Fields))
 	for i, field := range f.Fields {
 		fieldPath, ok := field.(string)
 		if !ok {
-			return errors.New("Unexpected field list value")
+			issues = append(issues, stageContext.CreateConfigIssue("Unexpected field list value"))
+			return issues
 		}
 		f.fieldList[i] = fieldPath
 	}
 
 	if f.FilterOperation != KEEP && f.FilterOperation != REMOVE && f.FilterOperation != REMOVE_NULL {
-		return errors.New("Unsupported field FilterOperation: " + f.FilterOperation)
+		issues = append(
+			issues,
+			stageContext.CreateConfigIssue("Unsupported field FilterOperation: "+f.FilterOperation),
+		)
+		return issues
 	}
-	return nil
+	return issues
 }
 
 func (f *FieldRemoverProcessor) Process(batch api.Batch, batchMaker api.BatchMaker) error {

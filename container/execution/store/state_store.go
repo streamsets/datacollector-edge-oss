@@ -30,6 +30,7 @@ const (
 	PIPELINE_STATE_FILE         = "pipelineState.json"
 	PIPELINE_STATE_HISTORY_FILE = "pipelineStateHistory.json"
 	IS_REMOTE_PIPELINE          = "IS_REMOTE_PIPELINE"
+	ISSUES                      = "issues"
 )
 
 func checkFileExists(filePath string) (bool, error) {

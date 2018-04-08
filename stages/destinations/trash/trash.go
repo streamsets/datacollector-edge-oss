@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 )
@@ -50,7 +51,7 @@ func init() {
 	})
 }
 
-func (t *TrashDestination) Init(stageContext api.StageContext) error {
+func (t *TrashDestination) Init(stageContext api.StageContext) []validation.Issue {
 	return t.BaseStage.Init(stageContext)
 }
 

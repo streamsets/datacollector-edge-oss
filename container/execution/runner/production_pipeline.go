@@ -18,6 +18,7 @@ package runner
 import (
 	"github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/execution"
 )
@@ -32,16 +33,19 @@ type ProductionPipeline struct {
 	MetricRegistry metrics.Registry
 }
 
-func (p *ProductionPipeline) Run() {
-	log.Debug("Production Pipeline Run")
+func (p *ProductionPipeline) Init() []validation.Issue {
 	issues := p.Pipeline.Init()
-	if len(issues) == 0 {
-		p.Pipeline.Run()
-	} else {
+	if len(issues) != 0 {
 		for _, issue := range issues {
 			log.Printf("[ERROR] "+IssueErrorTemplate, issue.Message, issue.InstanceName)
 		}
 	}
+	return issues
+}
+
+func (p *ProductionPipeline) Run() {
+	log.Debug("Production Pipeline Run")
+	p.Pipeline.Run()
 }
 
 func (p *ProductionPipeline) Stop() {

@@ -81,9 +81,9 @@ func TestDevRandomOrigin(t *testing.T) {
 	}
 	stageInstance := stageBean.Stage
 
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Error(err)
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
@@ -138,9 +138,9 @@ func TestDevRandom_Init_StringEL(t *testing.T) {
 		t.Error(err)
 	}
 	stageInstance := stageBean.Stage
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Error(err)
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
@@ -185,9 +185,9 @@ func TestDevRandomOrigin_MaxRecordsToGenerate(t *testing.T) {
 	}
 	stageInstance := stageBean.Stage
 
-	err = stageInstance.Init(stageContext)
-	if err != nil {
-		t.Error(err)
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
 	}
 
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
