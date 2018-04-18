@@ -20,12 +20,14 @@ import (
 	"github.com/streamsets/datacollector-edge/container/common"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
 var BaseDir = "."
 
 const (
-	OFFSET_FILE = "offset.json"
+	OFFSET_FILE               = "offset.json"
+	PIPELINES_RUN_INFO_FOLDER = "/data/runInfo/"
 )
 
 func GetOffset(pipelineId string) (common.SourceOffset, error) {
@@ -63,5 +65,6 @@ func getPipelineOffsetFile(pipelineId string) string {
 }
 
 func getRunInfoDir(pipelineId string) string {
-	return BaseDir + "/data/runInfo/" + pipelineId + "/"
+	validPipelineId := strings.Replace(pipelineId, ":", "", -1)
+	return BaseDir + PIPELINES_RUN_INFO_FOLDER + validPipelineId + "/"
 }

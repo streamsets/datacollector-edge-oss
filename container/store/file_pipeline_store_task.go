@@ -24,6 +24,7 @@ import (
 	pipelineStateStore "github.com/streamsets/datacollector-edge/container/execution/store"
 	"io/ioutil"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -259,11 +260,13 @@ func (store *FilePipelineStoreTask) getPipelineInfoFile(pipelineId string) strin
 }
 
 func (store *FilePipelineStoreTask) getPipelineDir(pipelineId string) string {
-	return store.runtimeInfo.BaseDir + PIPELINES_FOLDER + pipelineId + "/"
+	validPipelineId := strings.Replace(pipelineId, ":", "", -1)
+	return store.runtimeInfo.BaseDir + PIPELINES_FOLDER + validPipelineId + "/"
 }
 
 func (store *FilePipelineStoreTask) getPipelineRunInfoDir(pipelineId string) string {
-	return store.runtimeInfo.BaseDir + PIPELINES_RUN_INFO_FOLDER + pipelineId + "/"
+	validPipelineId := strings.Replace(pipelineId, ":", "", -1)
+	return store.runtimeInfo.BaseDir + PIPELINES_RUN_INFO_FOLDER + validPipelineId + "/"
 }
 
 func NewFilePipelineStoreTask(runtimeInfo common.RuntimeInfo) PipelineStoreTask {
