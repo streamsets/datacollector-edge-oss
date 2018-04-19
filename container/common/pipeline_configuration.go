@@ -16,28 +16,51 @@
 package common
 
 const (
-	PIPELINE_CONFIG_SCHEMA_VERSION = 3
-	PIPELINE_CONFIG_VERSION        = 6
-
-	ErrorRecordPolicyOriginal = "ORIGINAL_RECORD"
-	ErrorRecordPolicyStage    = "STAGE_RECORD"
+	PipelineConfigSchemaVersion = 5
+	PipelineConfigVersion       = 9
+	ErrorRecordPolicyOriginal   = "ORIGINAL_RECORD"
+	ErrorRecordPolicyStage      = "STAGE_RECORD"
+	FragmentSourceStageName     = "com_streamsets_pipeline_stage_origin_fragment_FragmentSource"
+	FragmentProcessorStageName  = "com_streamsets_pipeline_stage_processor_fragment_FragmentProcessor"
+	FragmentTargetStageName     = "com_streamsets_pipeline_stage_destination_fragment_FragmentTarget"
+	ConfFragmentId              = "conf.fragmentId"
+	ConfFragmentInstanceId      = "conf.fragmentInstanceId"
 )
 
 type PipelineConfiguration struct {
-	SchemaVersion        int                    `json:"schemaVersion"`
-	Version              int                    `json:"version"`
-	PipelineId           string                 `json:"pipelineId"`
-	Title                string                 `json:"title"`
-	Description          string                 `json:"description"`
-	UUID                 string                 `json:"uuid"`
-	Configuration        []Config               `json:"configuration"`
-	UiInfo               map[string]interface{} `json:"uiInfo"`
-	Stages               []*StageConfiguration  `json:"stages"`
-	ErrorStage           *StageConfiguration    `json:"errorStage"`
-	StatsAggregatorStage *StageConfiguration    `json:"statsAggregatorStage"`
-	Previewable          bool                   `json:"previewable"`
-	Info                 PipelineInfo           `json:"info"`
-	Metadata             map[string]interface{} `json:"metadata"`
+	SchemaVersion        int                              `json:"schemaVersion"`
+	Version              int                              `json:"version"`
+	PipelineId           string                           `json:"pipelineId"`
+	Title                string                           `json:"title"`
+	Description          string                           `json:"description"`
+	UUID                 string                           `json:"uuid"`
+	Configuration        []Config                         `json:"configuration"`
+	UiInfo               map[string]interface{}           `json:"uiInfo"`
+	Stages               []*StageConfiguration            `json:"stages"`
+	ErrorStage           *StageConfiguration              `json:"errorStage"`
+	StatsAggregatorStage *StageConfiguration              `json:"statsAggregatorStage"`
+	Previewable          bool                             `json:"previewable"`
+	Info                 PipelineInfo                     `json:"info"`
+	Metadata             map[string]interface{}           `json:"metadata"`
+	Fragments            []*PipelineFragmentConfiguration `json:"fragments"`
+}
+
+
+type PipelineFragmentConfiguration struct {
+	SchemaVersion      int                              `json:"schemaVersion"`
+	Version            int                              `json:"version"`
+	PipelineId         string                           `json:"fragmentId"`
+	FragmentInstanceId string                           `json:"fragmentInstanceId"`
+	Title              string                           `json:"title"`
+	Description        string                           `json:"description"`
+	UUID               string                           `json:"uuid"`
+	Configuration      []Config                         `json:"configuration"`
+	UiInfo             map[string]interface{}           `json:"uiInfo"`
+	Stages             []*StageConfiguration            `json:"stages"`
+	Previewable        bool                             `json:"previewable"`
+	Info               PipelineInfo                     `json:"info"`
+	Metadata           map[string]interface{}           `json:"metadata"`
+	Fragments          []*PipelineFragmentConfiguration `json:"fragments"`
 }
 
 type PipelineInfo struct {
@@ -91,3 +114,41 @@ type PipelineEnvelope struct {
 	PipelineRules      map[string]interface{} `json:"pipelineRules"`
 	LibraryDefinitions map[string]interface{} `json:"libraryDefinitions"`
 }
+
+
+func (p *PipelineConfiguration) ProcessFragmentStages() {
+	if p.Fragments != nil && len(p.Fragments) > 0 {
+		resolvedStages := make([]*StageConfiguration, 0)
+		for _, stageInstance := range p.Stages {
+			if isFragmentGroupStage(stageInstance) {
+				stageConfig := stageInstance.GetConfigurationMap()
+				fragmentIdConfig := stageConfig[ConfFragmentId]
+				fragmentInstanceIdConfig := stageConfig[ConfFragmentInstanceId]
+
+				if fragmentIdConfig.Value != nil && fragmentInstanceIdConfig.Value != nil {
+					fragmentId := fragmentIdConfig.Value.(string)
+					fragmentInstanceId := fragmentInstanceIdConfig.Value.(string)
+					for _, fragment := range p.Fragments {
+						if fragment.PipelineId == fragmentId && fragment.FragmentInstanceId == fragmentInstanceId {
+							resolvedStages = append(resolvedStages, fragment.Stages...)
+						}
+					}
+				}
+
+			} else {
+				resolvedStages = append(resolvedStages, stageInstance)
+			}
+		}
+
+		// TODO: sort stage instances
+
+		p.Stages = resolvedStages
+	}
+}
+
+func isFragmentGroupStage(stageInstance *StageConfiguration) bool {
+	return stageInstance.StageName == FragmentSourceStageName ||
+		stageInstance.StageName == FragmentProcessorStageName ||
+		stageInstance.StageName == FragmentTargetStageName
+}
+
