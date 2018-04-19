@@ -123,8 +123,8 @@ func (store *FilePipelineStoreTask) Create(
 	}
 
 	pipelineConfiguration := common.PipelineConfiguration{
-		SchemaVersion:        common.PIPELINE_CONFIG_SCHEMA_VERSION,
-		Version:              common.PIPELINE_CONFIG_VERSION,
+		SchemaVersion:        common.PipelineConfigSchemaVersion,
+		Version:              common.PipelineConfigVersion,
 		PipelineId:           pipelineId,
 		Title:                pipelineTitle,
 		Description:          description,
@@ -224,6 +224,9 @@ func (store *FilePipelineStoreTask) LoadPipelineConfig(pipelineId string) (commo
 	if pipelineConfiguration.PipelineId == "" {
 		err = errors.New("InValid pipeline configuration")
 	}
+
+	// Process fragment stages
+	pipelineConfiguration.ProcessFragmentStages()
 
 	return pipelineConfiguration, err
 }
