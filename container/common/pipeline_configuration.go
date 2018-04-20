@@ -45,7 +45,6 @@ type PipelineConfiguration struct {
 	Fragments            []*PipelineFragmentConfiguration `json:"fragments"`
 }
 
-
 type PipelineFragmentConfiguration struct {
 	SchemaVersion      int                              `json:"schemaVersion"`
 	Version            int                              `json:"version"`
@@ -115,7 +114,6 @@ type PipelineEnvelope struct {
 	LibraryDefinitions map[string]interface{} `json:"libraryDefinitions"`
 }
 
-
 func (p *PipelineConfiguration) ProcessFragmentStages() {
 	if p.Fragments != nil && len(p.Fragments) > 0 {
 		resolvedStages := make([]*StageConfiguration, 0)
@@ -139,10 +137,7 @@ func (p *PipelineConfiguration) ProcessFragmentStages() {
 				resolvedStages = append(resolvedStages, stageInstance)
 			}
 		}
-
-		// TODO: sort stage instances
-
-		p.Stages = resolvedStages
+		p.Stages = sortStageInstances(resolvedStages)
 	}
 }
 
@@ -152,3 +147,41 @@ func isFragmentGroupStage(stageInstance *StageConfiguration) bool {
 		stageInstance.StageName == FragmentTargetStageName
 }
 
+func sortStageInstances(stageInstances []*StageConfiguration) []*StageConfiguration {
+	sorted := make([]*StageConfiguration, 0)
+	removedMap := make(map[string]bool)
+	producedOutputs := make([]string, 0)
+	ok := true
+	iteration := 0
+	for ok {
+		prior := len(sorted)
+		for _, stageInstance := range stageInstances {
+			if !removedMap[stageInstance.InstanceName] {
+				alreadyProduced := make([]string, 0)
+				for _, p := range producedOutputs {
+					for _, inputLane := range stageInstance.InputLanes {
+						if inputLane == p {
+							alreadyProduced = append(alreadyProduced, p)
+						}
+					}
+				}
+				if len(alreadyProduced) == len(stageInstance.InputLanes) {
+					producedOutputs = append(producedOutputs, stageInstance.OutputLanes...)
+
+					removedMap[stageInstance.InstanceName] = true
+					sorted = append(sorted, stageInstance)
+				}
+			}
+		}
+		iteration++
+		if prior == len(sorted) && iteration >= len(sorted) {
+			ok = false
+			for _, stageInstance := range stageInstances {
+				if !removedMap[stageInstance.InstanceName] {
+					sorted = append(sorted, stageInstance)
+				}
+			}
+		}
+	}
+	return sorted
+}
