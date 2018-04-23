@@ -232,7 +232,9 @@ architectures.each { def arch ->
       println("Using digest: ${digest}")
       from "alpine@${digest}"
       maintainer 'Madhu "madhu@streamsets.com"'
+      runCommand('apk --no-cache update')
       runCommand 'apk --no-cache add libc6-compat'
+      runCommand('apk --no-cache add file')
       addFile "${appName}*-linux-${arch}.tgz", '/'
       defaultCommand '/streamsets-datacollector-edge/bin/edge'
       exposePort 18633
