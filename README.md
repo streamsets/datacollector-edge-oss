@@ -12,25 +12,24 @@
   limitations under the License. See accompanying LICENSE file.
 --->
 
-<img style="width:100%;" src="sdcEdgeSplash.png">
+![Data Collector Edge Splash Image](sdcEdgeSplash.png)
 
-What is StreamSets Data Collector Edge?
------------
+# What is StreamSets Data Collector Edge?
 
 The StreamSets Data Collector Edge (SDC Edge) enables at-scale data ingestion and analytics for edge systems.
 An ultralight, small-footprint agent, it is an ideal solution for use cases like Internet of Things (IoT) or
 cybersecurity applications that collect data from resource-constrained sensors and personal devices.
 
-
 To learn more, check out [https://streamsets.com/products/streamsets-data-collector-edge](https://streamsets.com/products/streamsets-data-collector-edge)
 
-License
-------
+## License
+
 StreamSets Data Collector Edge is built on open source technologies, our code is licensed with the
 [Apache License 2.0](LICENSE.txt).
 
-Getting Help
-----------
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fstreamsets%2Fdatacollector-edge.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fstreamsets%2Fdatacollector-edge?ref=badge_shield)
+
+## Getting Help
 
 A good place to start is to check out [http://streamsets.com/community](http://streamsets.com/community). On that page
 you will find all the ways you can reach us and channels our team monitors. You can post questions on
@@ -40,16 +39,15 @@ tag #StreamSets. Post bugs at [http://issues.streamsets.com](http://issues.strea
 If you need help with production systems, you can check out the variety of support options offered on our
 [support page](http://streamsets.com/support).
 
-
-
 # Useful resources
+
 * [Nightly Builds](http://nightly.streamsets.com/latest/tarball/SDCe)
 * [Quickstart](QUICKSTART.md)
 * [Building StreamSets Data Collector Edge](BUILD.md)
 * [StreamSets Data Collector Edge Documentation](https://streamsets.com/documentation/datacollector/latest/help/index.html#Edge_Mode/EdgePipelines_title.html%23concept_fyf_gkq_4bb)
 
-
 ## Sample Pipelines
+
 * [Windows Event To Http](data/pipelines/windowsEventToHttp)
 * [Tail File To Http](data/pipelines/tailFileToHttp)
 * [Directory Spooler to Http](data/pipelines/directoryToHttp)
@@ -62,7 +60,6 @@ If you need help with production systems, you can check out the variety of suppo
 * [HTTP Server To Trash](data/pipelines/httpServerToTrash)
 * [Random Data To Identity Processor To Trash](data/pipelines/randomToIdentityToTrash)
 
+## Contributing code
 
-Contributing code
------------
 We welcome contributors, please check out our [guidelines](CONTRIBUTING.md) to get started.
