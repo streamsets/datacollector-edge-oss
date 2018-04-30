@@ -11,7 +11,7 @@ import (
 	_ "github.com/streamsets/datacollector-edge/stages/processors"
 	"os"
 	"os/signal"
-	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
@@ -29,7 +29,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	baseDir := strings.TrimSuffix(path.Dir(ex), "/bin")
+
+	baseDir := strings.TrimSuffix(filepath.Dir(ex), "/bin")
+	baseDir = strings.TrimSuffix(baseDir, "\\bin") // for windows
 
 	fmt.Println("StreamSets Data Collector Edge (SDC Edge): ")
 	fmt.Printf("OS: %s\nArchitecture: %s\n", runtime.GOOS, runtime.GOARCH)
