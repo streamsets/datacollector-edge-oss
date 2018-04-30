@@ -76,7 +76,7 @@ func (f *ExpressionProcessor) Process(batch api.Batch, batchMaker api.BatchMaker
 			evaluatedRes, err = f.GetStageContext().Evaluate(exprProcessorConfig.Expression, EXPRESSION, recordContext)
 			if err == nil {
 				var evalField *api.Field
-				if evalField, err = api.CreateField(evaluatedRes); err == nil {
+				if evalField, err = api.CreateFieldFromSDCField(evaluatedRes); err == nil {
 					record.SetField(exprProcessorConfig.FieldToSet, evalField)
 				}
 			}

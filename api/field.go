@@ -94,10 +94,10 @@ func CreateField(value interface{}) (*Field, error) {
 		return CreateStringField(value.(string))
 	case []string:
 		return CreateStringListField(value.([]string))
-	case map[string]interface{}:
-		return CreateMapField(value.(map[string]interface{}))
 	case []interface{}:
 		return CreateListField(value.([]interface{}))
+	case map[string]interface{}:
+		return CreateMapField(value.(map[string]interface{}))
 	default:
 		err = errors.New(fmt.Sprintf("Unsupported Field Type %s", reflect.TypeOf(value)))
 	}
@@ -213,4 +213,16 @@ func CreateMapFieldWithMapOfFields(mapFields map[string]*Field) *Field {
 
 func Create(fieldType string, value interface{}) (*Field, error) {
 	return &Field{Type: fieldType, Value: value}, nil
+}
+
+
+func CreateFieldFromSDCField(value interface{}) (*Field, error) {
+	switch value.(type) {
+	case []*Field:
+		return CreateListFieldWithListOfFields(value.([]*Field)), nil
+	case map[string]*Field:
+		return CreateMapFieldWithMapOfFields(value.(map[string]*Field)), nil
+	default:
+		return CreateField(value)
+	}
 }
