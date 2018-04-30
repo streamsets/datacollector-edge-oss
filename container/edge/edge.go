@@ -105,8 +105,6 @@ func newDataCollectorEdge(
 		return nil, err
 	}
 
-	log.Info("Base Dir: ", baseDir)
-
 	config := NewConfig()
 	err = config.FromTomlFile(baseDir + DefaultConfigFilePath)
 	if err != nil {
@@ -117,6 +115,10 @@ func newDataCollectorEdge(
 	var httpUrl = "http://" + hostName + config.Http.BindAddress
 
 	buildInfo, _ := common.NewBuildInfo()
+	fmt.Println("Version: ", buildInfo.Version)
+	log.Info("Base Dir: ", baseDir)
+	log.Info("Version: ", buildInfo.Version)
+
 	runtimeInfo, _ := common.NewRuntimeInfo(httpUrl, baseDir)
 	pipelineStoreTask := store.NewFilePipelineStoreTask(*runtimeInfo)
 	pipelineManager, _ := manager.NewManager(config.Execution, runtimeInfo, pipelineStoreTask)
