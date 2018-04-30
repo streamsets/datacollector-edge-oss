@@ -137,6 +137,7 @@ func (wel *WindowsEventLogSource) createRecordAndAddToBatch(event EventLogRecord
 		"DataLength":    event.DataLength,
 		"Category":      event.EventCategory,
 		"EventId":       event.EventID,
+		"EventType":     event.EventType,
 		"SourceName":    event.SourceName,
 		"LogName":       wel.logName,
 		"StringOffset":  event.StringOffset,
