@@ -6,7 +6,7 @@
 
 ### To pass runtime parameters
 
-    <SDC Edge_home>/bin/edge -start=windowsEventToHttp -runtimeParameters='{"logName":"System", "httpUrl":"http://localhost:9999","sdcAppId":"sde"}'
+    <SDC Edge_home>/bin/edge -start=windowsEventToHttp -runtimeParameters="{\"logName\":\"System\", \"httpUrl\":\"http://localhost:9999\",\"sdcAppId\":\"sde\"}"
 
 
 ## SDC Edge commands via REST API
