@@ -82,7 +82,7 @@ func (ms *MqttClientSource) Init(stageContext api.StageContext) []validation.Iss
 }
 
 func (ms *MqttClientSource) Produce(
-	lastSourceOffset string,
+	lastSourceOffset *string,
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
 ) (*string, error) {

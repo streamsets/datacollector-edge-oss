@@ -22,10 +22,10 @@ import (
 type BatchImpl struct {
 	instanceName string
 	records      []api.Record
-	sourceOffset string
+	sourceOffset *string
 }
 
-func (b *BatchImpl) GetSourceOffset() string {
+func (b *BatchImpl) GetSourceOffset() *string {
 	return b.sourceOffset
 }
 
@@ -33,7 +33,7 @@ func (b *BatchImpl) GetRecords() []api.Record {
 	return b.records
 }
 
-func NewBatchImpl(instanceName string, records []api.Record, sourceOffset string) *BatchImpl {
+func NewBatchImpl(instanceName string, records []api.Record, sourceOffset *string) *BatchImpl {
 	return &BatchImpl{
 		instanceName: instanceName,
 		records:      records,

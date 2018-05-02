@@ -101,7 +101,7 @@ func (s *SensorReaderOrigin) Init(stageContext api.StageContext) []validation.Is
 }
 
 func (s *SensorReaderOrigin) Produce(
-	lastSourceOffset string,
+	lastSourceOffset *string,
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
 ) (*string, error) {

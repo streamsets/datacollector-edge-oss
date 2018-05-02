@@ -83,26 +83,26 @@ func (wel *WindowsEventLogSource) Init(stageContext api.StageContext) []validati
 }
 
 func (wel *WindowsEventLogSource) Produce(
-	lastSourceOffset string,
+	lastSourceOffset *string,
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
 ) (*string, error) {
 	if wel.eventLogReader == nil {
-		if lastSourceOffset == "" {
+		if lastSourceOffset == nil || *lastSourceOffset == "" {
 			wel.eventLogReader = NewReader(wel.logName, wel.readMode, 0, false)
 		} else {
-			off, err := strconv.ParseUint(lastSourceOffset, 10, 32)
+			off, err := strconv.ParseUint(*lastSourceOffset, 10, 32)
 			if err != nil {
 				wel.GetStageContext().ReportError(err)
 				log.WithError(err).WithField("offset", lastSourceOffset).Error("Error while parsing offset")
-				return &lastSourceOffset, err
+				return lastSourceOffset, err
 			}
 			wel.eventLogReader = NewReader(wel.logName, wel.readMode, uint32(off), true)
 		}
 		if err := wel.eventLogReader.Open(); err != nil {
 			wel.GetStageContext().ReportError(err)
 			log.WithError(err).Error("Error while opening event reader")
-			return &lastSourceOffset, err
+			return lastSourceOffset, err
 		}
 	}
 
@@ -113,14 +113,14 @@ func (wel *WindowsEventLogSource) Produce(
 				if er != nil {
 					log.WithError(er).Error("Error when creating record")
 					wel.GetStageContext().ReportError(er)
-					return &lastSourceOffset, er
+					return lastSourceOffset, er
 				}
 			}
 		}
 	} else {
 		wel.GetStageContext().ReportError(err)
 		log.WithError(err).Error("Error on event log read")
-		return &lastSourceOffset, err
+		return lastSourceOffset, err
 	}
 
 	newOffset := strconv.FormatUint(uint64(wel.eventLogReader.GetCurrentOffset()), 10)

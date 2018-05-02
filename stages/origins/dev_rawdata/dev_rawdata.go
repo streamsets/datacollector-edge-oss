@@ -30,7 +30,7 @@ const (
 	STAGE_NAME = "com_streamsets_pipeline_stage_devtest_rawdata_RawDataDSource"
 )
 
-var randomOffset string = "random"
+var randomOffset = "random"
 
 type DevRawDataDSource struct {
 	*common.BaseStage
@@ -54,7 +54,7 @@ func (d *DevRawDataDSource) Init(stageContext api.StageContext) []validation.Iss
 }
 
 func (d *DevRawDataDSource) Produce(
-	lastSourceOffset string,
+	lastSourceOffset *string,
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
 ) (*string, error) {

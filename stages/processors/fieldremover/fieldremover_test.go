@@ -111,7 +111,7 @@ func TestFieldRemoverProcessorRemove(t *testing.T) {
 	)
 	records[1], _ = stageContext.CreateRecord("1", map[string]interface{}{"b": 456, "d": 78, "g": "9"})
 	records[2], _ = stageContext.CreateRecord("2", map[string]interface{}{"x": nil, "y": 3e2, "z": 'a'})
-	batch := runner.NewBatchImpl("fieldRemover", records, "randomOffset")
+	batch := runner.NewBatchImpl("fieldRemover", records, nil)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
 	err = stageInstance.(api.Processor).Process(batch, batchMaker)
@@ -159,7 +159,7 @@ func TestFieldRemoverProcessorKeep(t *testing.T) {
 
 	records := make([]api.Record, 1)
 	records[0], _ = stageContext.CreateRecord("1", map[string]interface{}{"a": 123, "b": 456, "d": 78})
-	batch := runner.NewBatchImpl("fieldRemover", records, "randomOffset")
+	batch := runner.NewBatchImpl("fieldRemover", records, nil)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
 	err = stageInstance.(api.Processor).Process(batch, batchMaker)
@@ -197,7 +197,7 @@ func TestFieldRemoverProcessorRemoveNull(t *testing.T) {
 		map[string]interface{}{"a": 123, "b": 456, "d": 78, "c": nil, "g": nil,
 			"e": map[string]interface{}{"h": nil, "i": 5}},
 	)
-	batch := runner.NewBatchImpl("fieldRemover", records, "randomOffset")
+	batch := runner.NewBatchImpl("fieldRemover", records, nil)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
 	err = stageInstance.(api.Processor).Process(batch, batchMaker)

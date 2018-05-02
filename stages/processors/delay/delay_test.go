@@ -60,7 +60,7 @@ func TestDelayProcessor(t *testing.T) {
 	stageInstance.Init(stageContext)
 	records := make([]api.Record, 1)
 	records[0], _ = stageContext.CreateRecord("1", "TestData")
-	batch := runner.NewBatchImpl("random", records, "randomOffset")
+	batch := runner.NewBatchImpl("random", records, nil)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
 	err = stageInstance.Process(batch, batchMaker)

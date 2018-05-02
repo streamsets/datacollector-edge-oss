@@ -24,6 +24,6 @@ package api
 // GetRecords returns an iterator with all the records in the batch for the current stage.
 // Every time this method is called it returns a new iterator with all records in the batch.
 type Batch interface {
-	GetSourceOffset() string
+	GetSourceOffset() *string
 	GetRecords() []Record
 }

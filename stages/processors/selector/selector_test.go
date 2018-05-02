@@ -100,7 +100,7 @@ func TestSelectorProcessor(t *testing.T) {
 	}
 	records := make([]api.Record, 1)
 	records[0], _ = stageContext.CreateRecord("1", map[string]interface{}{"a": "sample"})
-	batch := runner.NewBatchImpl("random", records, "randomOffset")
+	batch := runner.NewBatchImpl("random", records, nil)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
 	err = stageInstance.(api.Processor).Process(batch, batchMaker)

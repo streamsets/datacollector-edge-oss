@@ -128,8 +128,8 @@ func (s *SpoolDirSource) initializeBuffReaderIfNeeded() error {
 	return nil
 }
 
-func (s *SpoolDirSource) initCurrentFileIfNeeded(lastSourceOffset string) (bool, error) {
-	currentFilePath, currentStartOffset, modTime, err := parseLastOffset(lastSourceOffset)
+func (s *SpoolDirSource) initCurrentFileIfNeeded(lastSourceOffset *string) (bool, error) {
+	currentFilePath, currentStartOffset, modTime, err := parseLastOffset(*lastSourceOffset)
 
 	if err != nil {
 		return false, err
@@ -252,7 +252,7 @@ func parseLastOffset(offsetString string) (string, int64, time.Time, error) {
 }
 
 func (s *SpoolDirSource) Produce(
-	lastSourceOffset string,
+	lastSourceOffset *string,
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
 ) (*string, error) {
@@ -262,31 +262,31 @@ func (s *SpoolDirSource) Produce(
 	if err != nil {
 		s.GetStageContext().ReportError(err)
 		log.WithError(err).Error("Error occurred")
-		return &lastSourceOffset, err
+		return lastSourceOffset, err
 	}
 
 	if shouldProduce {
 		if s.spooler.getCurrentFileInfo() == nil {
-			return &lastSourceOffset, nil
+			return lastSourceOffset, nil
 		}
 
 		err = s.initializeBuffReaderIfNeeded()
 
 		if err != nil {
 			s.GetStageContext().ReportError(err)
-			return &lastSourceOffset, err
+			return lastSourceOffset, err
 		}
 
 		offset, err := s.readAndCreateRecords(maxBatchSize, batchMaker)
 
 		if offset == INVALID_OFFSET && err != nil {
 			s.GetStageContext().ReportError(err)
-			return &lastSourceOffset, err
+			return lastSourceOffset, err
 		}
 		newOffset := s.spooler.getCurrentFileInfo().createOffset()
 		return &newOffset, nil
 	}
-	return &lastSourceOffset, err
+	return lastSourceOffset, err
 }
 
 func (s *SpoolDirSource) resetFileAndBuffReader() {

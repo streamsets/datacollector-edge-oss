@@ -145,7 +145,7 @@ func createSpoolerAndRun(
 	stageInstance := createSpooler(t, stageContext)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
-	offset, err := stageInstance.(api.Origin).Produce(lastSourceOffset, batchSize, batchMaker)
+	offset, err := stageInstance.(api.Origin).Produce(&lastSourceOffset, batchSize, batchMaker)
 	if err != nil {
 		t.Fatal("Err :", err)
 	}
@@ -507,7 +507,7 @@ func TestReadingFileAcrossBatches(t *testing.T) {
 
 	for noOfRecords < totalLines {
 		batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
-		lastSourceOffset, _ = stageInstance.(api.Origin).Produce(*lastSourceOffset, rand.Intn(19)+1, batchMaker)
+		lastSourceOffset, _ = stageInstance.(api.Origin).Produce(lastSourceOffset, rand.Intn(19)+1, batchMaker)
 		records := batchMaker.GetStageOutput()
 		for rIdx, record := range records {
 			checkRecord(t, record, expectedRecordContents[noOfRecords+rIdx], map[string]string{})
@@ -517,7 +517,7 @@ func TestReadingFileAcrossBatches(t *testing.T) {
 
 	//No more records to read
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
-	lastSourceOffset, _ = stageInstance.(api.Origin).Produce(*lastSourceOffset, rand.Intn(19)+1, batchMaker)
+	lastSourceOffset, _ = stageInstance.(api.Origin).Produce(lastSourceOffset, rand.Intn(19)+1, batchMaker)
 	if len(batchMaker.GetStageOutput()) != 0 {
 		t.Fatal("Read more number of records than expected")
 	}

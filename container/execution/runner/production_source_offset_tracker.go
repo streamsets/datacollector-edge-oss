@@ -46,8 +46,8 @@ func (o *ProductionSourceOffsetTracker) CommitOffset() error {
 	return store.SaveOffset(o.pipelineId, o.currentOffset)
 }
 
-func (o *ProductionSourceOffsetTracker) GetOffset() string {
-	return *o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY]
+func (o *ProductionSourceOffsetTracker) GetOffset() *string {
+	return o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY]
 }
 
 func (o *ProductionSourceOffsetTracker) GetLastBatchTime() time.Time {

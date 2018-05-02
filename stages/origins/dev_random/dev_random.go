@@ -57,7 +57,7 @@ func (d *DevRandom) Init(stageContext api.StageContext) []validation.Issue {
 	return issues
 }
 
-func (d *DevRandom) Produce(lastSourceOffset string, maxBatchSize int, batchMaker api.BatchMaker) (*string, error) {
+func (d *DevRandom) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker api.BatchMaker) (*string, error) {
 	r := rand.New(rand.NewSource(99))
 	time.Sleep(time.Duration(d.Delay) * time.Millisecond)
 	for i := 0; i < maxBatchSize && d.recordsProduced < d.MaxRecordsToGenerate; i++ {

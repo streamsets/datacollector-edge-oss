@@ -68,7 +68,7 @@ func (h *HttpServerOrigin) Destroy() error {
 }
 
 func (h *HttpServerOrigin) Produce(
-	lastSourceOffset string,
+	lastSourceOffset *string,
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
 ) (*string, error) {

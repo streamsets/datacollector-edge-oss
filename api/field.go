@@ -215,7 +215,6 @@ func Create(fieldType string, value interface{}) (*Field, error) {
 	return &Field{Type: fieldType, Value: value}, nil
 }
 
-
 func CreateFieldFromSDCField(value interface{}) (*Field, error) {
 	switch value.(type) {
 	case []*Field:

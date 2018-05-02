@@ -94,7 +94,7 @@ func TestExpressionProcessor_Success(t *testing.T) {
 
 	records := make([]api.Record, 1)
 	records[0], _ = stageContext.CreateRecord("abc", map[string]interface{}{"a": float64(2.55), "b": float64(3.55), "c": "random"})
-	batch := runner.NewBatchImpl("random", records, "randomOffset")
+	batch := runner.NewBatchImpl("random", records, nil)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
 	err = stageInstance.Process(batch, batchMaker)
@@ -162,7 +162,7 @@ func TestExpressionProcessor_Error(t *testing.T) {
 
 	records := make([]api.Record, 1)
 	records[0], _ = stageContext.CreateRecord("abc", map[string]interface{}{"a": float64(2.55), "b": float64(3.55), "c": "random"})
-	batch := runner.NewBatchImpl("random", records, "randomOffset")
+	batch := runner.NewBatchImpl("random", records, nil)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 	err = stageInstance.Process(batch, batchMaker)
 
@@ -209,7 +209,7 @@ func TestExpressionProcessor_DefaultConfig(t *testing.T) {
 		"abc",
 		map[string]interface{}{"a": float64(2.55), "b": float64(3.55), "c": "random"},
 	)
-	batch := runner.NewBatchImpl("random", records, "randomOffset")
+	batch := runner.NewBatchImpl("random", records, nil)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
 	err = stageInstance.Process(batch, batchMaker)

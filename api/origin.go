@@ -35,5 +35,5 @@ package api
 // pipeline should finish once the current batch is fully processed.
 // Return error if the Source had an error while consuming data or creating records.
 type Origin interface {
-	Produce(lastSourceOffset string, maxBatchSize int, batchMaker BatchMaker) (*string, error)
+	Produce(lastSourceOffset *string, maxBatchSize int, batchMaker BatchMaker) (*string, error)
 }

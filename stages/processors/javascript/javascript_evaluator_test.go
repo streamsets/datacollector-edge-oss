@@ -111,7 +111,7 @@ func TestJavaScriptProcessor_Success(t *testing.T) {
 			"c": "random",
 		},
 	)
-	batch := runner.NewBatchImpl("random", records, "randomOffset")
+	batch := runner.NewBatchImpl("random", records, nil)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
 	err = stageInstance.Process(batch, batchMaker)
@@ -205,7 +205,7 @@ func TestJavaScriptProcessor_Failure(t *testing.T) {
 			"c": "random",
 		},
 	)
-	batch := runner.NewBatchImpl("random", records, "randomOffset")
+	batch := runner.NewBatchImpl("random", records, nil)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
 	err = stageInstance.Process(batch, batchMaker)
@@ -279,7 +279,7 @@ func TestJavaScriptProcessor_TypedNullObject(t *testing.T) {
 			"c": "random",
 		},
 	)
-	batch := runner.NewBatchImpl("random", records, "randomOffset")
+	batch := runner.NewBatchImpl("random", records, nil)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
 	err = stageInstance.Process(batch, batchMaker)

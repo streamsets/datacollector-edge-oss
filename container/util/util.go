@@ -46,3 +46,7 @@ func LcFirst(str string) string {
 	}
 	return ""
 }
+
+func IsStringEmpty(str *string) bool {
+	return str != nil && *str != ""
+}

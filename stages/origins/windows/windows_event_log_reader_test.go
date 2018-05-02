@@ -63,7 +63,7 @@ func testWindowsEventLogRead(t *testing.T, logName string, maxBatchSize int) {
 	defer stageInstance.Destroy()
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
 
-	_, err = stageInstance.(api.Origin).Produce("", maxBatchSize, batchMaker)
+	_, err = stageInstance.(api.Origin).Produce(nil, maxBatchSize, batchMaker)
 
 	if err != nil {
 		t.Fatalf("Error when Producing %s", err.Error())

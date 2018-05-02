@@ -34,7 +34,7 @@ func (s *StageRuntime) Init() []validation.Issue {
 }
 
 func (s *StageRuntime) Execute(
-	previousOffset string,
+	previousOffset *string,
 	batchSize int,
 	batch *BatchImpl,
 	batchMaker *BatchMakerImpl,

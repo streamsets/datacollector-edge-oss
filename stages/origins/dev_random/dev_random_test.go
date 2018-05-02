@@ -87,7 +87,7 @@ func TestDevRandomOrigin(t *testing.T) {
 	}
 
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
-	_, err = stageInstance.(api.Origin).Produce("", 5, batchMaker)
+	_, err = stageInstance.(api.Origin).Produce(&randomOffset, 5, batchMaker)
 	if err != nil {
 		t.Error("Err :", err)
 	}
@@ -144,7 +144,7 @@ func TestDevRandom_Init_StringEL(t *testing.T) {
 	}
 
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
-	_, err = stageInstance.(api.Origin).Produce("", 1, batchMaker)
+	_, err = stageInstance.(api.Origin).Produce(&randomOffset, 1, batchMaker)
 	if err != nil {
 		t.Error("Err :", err)
 	}
@@ -191,7 +191,7 @@ func TestDevRandomOrigin_MaxRecordsToGenerate(t *testing.T) {
 	}
 
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
-	_, err = stageInstance.(api.Origin).Produce("", 5, batchMaker)
+	_, err = stageInstance.(api.Origin).Produce(&randomOffset, 5, batchMaker)
 	if err != nil {
 		t.Error("Err :", err)
 	}
@@ -202,7 +202,7 @@ func TestDevRandomOrigin_MaxRecordsToGenerate(t *testing.T) {
 	}
 
 	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{})
-	_, err = stageInstance.(api.Origin).Produce("", 5, batchMaker)
+	_, err = stageInstance.(api.Origin).Produce(&randomOffset, 5, batchMaker)
 	if err != nil {
 		t.Error("Err :", err)
 	}

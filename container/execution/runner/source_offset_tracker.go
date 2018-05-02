@@ -36,7 +36,7 @@ type SourceOffsetTracker interface {
 
 	CommitOffset() error
 
-	GetOffset() string
+	GetOffset() *string
 
 	GetLastBatchTime() time.Time
 }

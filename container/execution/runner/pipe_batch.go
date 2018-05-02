@@ -22,8 +22,8 @@ import (
 
 type PipeBatch interface {
 	GetBatchSize() int
-	GetPreviousOffset() map[string]string
-	SetNewOffset(offset map[string]string)
+	GetPreviousOffset() *string
+	SetNewOffset(offset *string)
 	GetBatch(pipe Pipe) BatchImpl
 	SkipStage(pipe Pipe)
 	StartStage(pipe StagePipe) BatchMakerImpl
@@ -56,7 +56,7 @@ func (b *FullPipeBatch) GetBatchSize() int {
 	return b.batchSize
 }
 
-func (b *FullPipeBatch) GetPreviousOffset() string {
+func (b *FullPipeBatch) GetPreviousOffset() *string {
 	return b.offsetTracker.GetOffset()
 }
 

@@ -23,6 +23,7 @@ import (
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
+	"github.com/streamsets/datacollector-edge/container/util"
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io"
@@ -78,7 +79,7 @@ func (f *FileTailOrigin) Init(stageContext api.StageContext) []validation.Issue 
 }
 
 func (f *FileTailOrigin) Produce(
-	lastSourceOffset string,
+	lastSourceOffset *string,
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
 ) (*string, error) {
@@ -92,14 +93,14 @@ func (f *FileTailOrigin) Produce(
 		Logger:    tail.DiscardingLogger,
 	}
 
-	if lastSourceOffset != "" {
-		intOffset, _ := strconv.ParseInt(lastSourceOffset, 10, 64)
+	if util.IsStringEmpty(lastSourceOffset) {
+		intOffset, _ := strconv.ParseInt(*lastSourceOffset, 10, 64)
 		tailConfig.Location = &tail.SeekInfo{Offset: intOffset, Whence: io.SeekStart}
 	}
 
 	tailObj, err := tail.TailFile(f.Conf.FileInfos[0].FileFullPath, tailConfig)
 	if err != nil {
-		return &lastSourceOffset, err
+		return lastSourceOffset, err
 	}
 
 	var currentOffset int64

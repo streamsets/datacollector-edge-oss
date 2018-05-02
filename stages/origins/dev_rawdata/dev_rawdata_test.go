@@ -83,7 +83,7 @@ func TestDevRandomOrigin_TextFormat(t *testing.T) {
 	}
 
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
-	_, err = stageInstance.(api.Origin).Produce("", 5, batchMaker)
+	_, err = stageInstance.(api.Origin).Produce(&randomOffset, 5, batchMaker)
 	if err != nil {
 		t.Error("Err :", err)
 	}
@@ -119,7 +119,7 @@ func TestDevRandomOrigin_JsonFormat(t *testing.T) {
 	}
 
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
-	_, err = stageInstance.(api.Origin).Produce("", 5, batchMaker)
+	_, err = stageInstance.(api.Origin).Produce(&randomOffset, 5, batchMaker)
 	if err != nil {
 		t.Error("Err :", err)
 	}
