@@ -18,6 +18,7 @@ package jsonrecord
 import (
 	"encoding/json"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"io"
@@ -35,10 +36,8 @@ type JsonWriterFactoryImpl struct {
 func (j *JsonWriterFactoryImpl) CreateWriter(
 	context api.StageContext,
 	writer io.Writer,
-) (recordio.RecordWriter, error) {
-	var recordWriter recordio.RecordWriter
-	recordWriter = newRecordWriter(context, writer, j.Mode)
-	return recordWriter, nil
+) (dataformats.RecordWriter, error) {
+	return newRecordWriter(context, writer, j.Mode), nil
 }
 
 type JsonWriterImpl struct {

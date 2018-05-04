@@ -17,10 +17,12 @@ package dev_random
 
 import (
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
+	"github.com/streamsets/datacollector-edge/stages/services"
 	"testing"
 )
 
@@ -42,11 +44,18 @@ func getStageContext(
 			Name:  CONF_RAW_DATA,
 			Value: rawData,
 		},
+	}
+
+	serviceConfig := &common.ServiceConfiguration{}
+	serviceConfig.Service = dataformats.DataFormatParserServiceName
+	serviceConfig.Configuration = []common.Config{
 		{
 			Name:  CONF_DATA_FORMAT,
 			Value: dataFormat,
 		},
 	}
+	stageConfig.Services = []*common.ServiceConfiguration{serviceConfig}
+
 	return &common.StageContextImpl{
 		StageConfig: &stageConfig,
 		Parameters:  parameters,
@@ -76,8 +85,19 @@ func TestDevRandomOrigin_TextFormat(t *testing.T) {
 		t.Error(err)
 	}
 	stageInstance := stageBean.Stage
+	serviceInstance := stageBean.Services[0].Service
 
-	issues := stageInstance.Init(stageContext)
+	stageContext.Services = map[string]api.Service{
+		services.GetDataFormatParserServiceName(): serviceInstance,
+	}
+
+	// initialize service instance
+	issues := serviceInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
+	}
+
+	issues = stageInstance.Init(stageContext)
 	if len(issues) != 0 {
 		t.Error(issues[0].Message)
 	}
@@ -112,8 +132,19 @@ func TestDevRandomOrigin_JsonFormat(t *testing.T) {
 		t.Error(err)
 	}
 	stageInstance := stageBean.Stage
+	serviceInstance := stageBean.Services[0].Service
 
-	issues := stageInstance.Init(stageContext)
+	stageContext.Services = map[string]api.Service{
+		services.GetDataFormatParserServiceName(): serviceInstance,
+	}
+
+	// initialize service instance
+	issues := serviceInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
+	}
+
+	issues = stageInstance.Init(stageContext)
 	if len(issues) != 0 {
 		t.Error(issues[0].Message)
 	}

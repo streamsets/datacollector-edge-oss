@@ -27,19 +27,24 @@ import (
 )
 
 type NewStageCreator func() api.Stage
+type NewServiceCreator func() api.Service
 
 var reg *registry
 
 type registry struct {
 	sync.RWMutex
-	newStageCreatorMap map[string]NewStageCreator
-	stageDefinitionMap map[string]*common.StageDefinition
+	newStageCreatorMap   map[string]NewStageCreator
+	stageDefinitionMap   map[string]*common.StageDefinition
+	newServiceCreatorMap map[string]NewServiceCreator
+	serviceDefinitionMap map[string]*common.ServiceDefinition
 }
 
 func init() {
 	reg = new(registry)
 	reg.newStageCreatorMap = make(map[string]NewStageCreator)
 	reg.stageDefinitionMap = make(map[string]*common.StageDefinition)
+	reg.newServiceCreatorMap = make(map[string]NewServiceCreator)
+	reg.serviceDefinitionMap = make(map[string]*common.ServiceDefinition)
 }
 
 func SetCreator(library string, stageName string, newStageCreator NewStageCreator) {
@@ -60,7 +65,6 @@ func GetCreator(library string, stageName string) (NewStageCreator, bool) {
 func CreateStageInstance(library string, stageName string) (api.Stage, *common.StageDefinition, error) {
 	if t, ok := GetCreator(library, stageName); ok {
 		v := t()
-
 		stageDefinition := extractStageDefinition(library, stageName, v)
 		return v, stageDefinition, nil
 	} else {
@@ -131,4 +135,42 @@ func extractConfigDefinition(
 	}
 
 	configDefinitionsMap[configDef.Name] = configDef
+}
+
+func SetServiceCreator(serviceName string, newServiceCreator NewServiceCreator) {
+	serviceKey := serviceName
+	reg.Lock()
+	reg.newServiceCreatorMap[serviceKey] = newServiceCreator
+	reg.Unlock()
+}
+
+func GetServiceCreator(serviceName string) (NewServiceCreator, bool) {
+	serviceKey := serviceName
+	reg.RLock()
+	s, b := reg.newServiceCreatorMap[serviceKey]
+	reg.RUnlock()
+	return s, b
+}
+
+func CreateServiceInstance(serviceName string) (api.Service, *common.ServiceDefinition, error) {
+	if t, ok := GetServiceCreator(serviceName); ok {
+		v := t()
+		serviceDefinition := extractServiceDefinition(serviceName, v)
+		return v, serviceDefinition, nil
+	} else {
+		return nil, nil, errors.New("No Service Instance found for : service: " + serviceName)
+	}
+}
+
+func extractServiceDefinition(
+	serviceName string,
+	serviceInstance interface{},
+) *common.ServiceDefinition {
+	serviceDefinition := &common.ServiceDefinition{
+		Name:                 serviceName,
+		ConfigDefinitionsMap: make(map[string]*common.ConfigDefinition),
+	}
+	t := reflect.TypeOf(serviceInstance).Elem()
+	extractConfigDefinitions(t, "", serviceDefinition.ConfigDefinitionsMap)
+	return serviceDefinition
 }

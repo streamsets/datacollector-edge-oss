@@ -9,6 +9,7 @@ import (
 	_ "github.com/streamsets/datacollector-edge/stages/destinations"
 	_ "github.com/streamsets/datacollector-edge/stages/origins"
 	_ "github.com/streamsets/datacollector-edge/stages/processors"
+	_ "github.com/streamsets/datacollector-edge/stages/services"
 	"os"
 	"os/signal"
 	"path/filepath"

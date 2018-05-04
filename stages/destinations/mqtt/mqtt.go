@@ -19,6 +19,7 @@ import (
 	"bytes"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
@@ -72,7 +73,7 @@ func (md *MqttClientDestination) Init(stageContext api.StageContext) []validatio
 
 func (md *MqttClientDestination) Write(batch api.Batch) error {
 	log.Debug("MqttClientDestination write method")
-	var recordWriter recordio.RecordWriter = nil
+	var recordWriter dataformats.RecordWriter = nil
 	nonErrorRecordsForWrite := make([]api.Record, 0)
 	recordValueBuffer := bytes.NewBuffer([]byte{})
 	var err error = nil

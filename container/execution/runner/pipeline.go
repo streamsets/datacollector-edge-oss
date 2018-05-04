@@ -79,8 +79,8 @@ func (p *Pipeline) Init() []validation.Issue {
 		issues = append(issues, stageIssues...)
 	}
 
-	errorStageissues := p.errorStageRuntime.Init()
-	issues = append(issues, errorStageissues...)
+	errorStageIssues := p.errorStageRuntime.Init()
+	issues = append(issues, errorStageIssues...)
 
 	return issues
 }
@@ -204,25 +204,42 @@ func NewPipeline(
 	}
 
 	for i, stageBean := range pipelineBean.Stages {
-		stageContext := &common.StageContextImpl{
-			StageConfig:       stageBean.Config,
-			Parameters:        resolvedParameters,
-			Metrics:           metricRegistry,
-			ErrorSink:         errorSink,
-			ErrorStage:        false,
-			ErrorRecordPolicy: pipelineConfigForParam.ErrorRecordPolicy,
+		var services map[string]api.Service
+		if stageBean.Services != nil && len(stageBean.Services) > 0 {
+			services = make(map[string]api.Service)
+			for _, serviceBean := range stageBean.Services {
+				services[serviceBean.Config.Service] = serviceBean.Service
+			}
+		}
+
+		stageContext, err := common.NewStageContext(
+			stageBean.Config,
+			resolvedParameters,
+			metricRegistry,
+			errorSink,
+			false,
+			pipelineConfigForParam.ErrorRecordPolicy,
+			services,
+		)
+		if err != nil {
+			return nil, err
 		}
 		stageRuntimeList[i] = NewStageRuntime(pipelineBean, stageBean, stageContext)
 		pipes[i] = NewStagePipe(stageRuntimeList[i], config)
 	}
 
 	log.Debug("Error Stage:", pipelineBean.ErrorStage.Config.InstanceName)
-	errorStageContext := &common.StageContextImpl{
-		StageConfig: pipelineBean.ErrorStage.Config,
-		Parameters:  resolvedParameters,
-		Metrics:     metricRegistry,
-		ErrorSink:   errorSink,
-		ErrorStage:  true,
+	errorStageContext, err := common.NewStageContext(
+		pipelineBean.ErrorStage.Config,
+		resolvedParameters,
+		metricRegistry,
+		errorSink,
+		true,
+		pipelineConfigForParam.ErrorRecordPolicy,
+		nil,
+	)
+	if err != nil {
+		return nil, err
 	}
 	errorStageRuntime = NewStageRuntime(pipelineBean, pipelineBean.ErrorStage, errorStageContext)
 

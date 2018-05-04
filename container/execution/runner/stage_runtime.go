@@ -30,7 +30,15 @@ type StageRuntime struct {
 }
 
 func (s *StageRuntime) Init() []validation.Issue {
-	return s.stageBean.Stage.Init(s.stageContext)
+	issues := make([]validation.Issue, 0)
+	if s.stageBean.Services != nil {
+		for _, serviceBean := range s.stageBean.Services {
+			serviceIssues := serviceBean.Service.Init(s.stageContext)
+			issues = append(issues, serviceIssues...)
+		}
+	}
+	stageIssues := s.stageBean.Stage.Init(s.stageContext)
+	return append(issues, stageIssues...)
 }
 
 func (s *StageRuntime) Execute(
@@ -52,6 +60,11 @@ func (s *StageRuntime) Execute(
 }
 
 func (s *StageRuntime) Destroy() {
+	if s.stageBean.Services != nil {
+		for _, serviceBean := range s.stageBean.Services {
+			serviceBean.Service.Destroy()
+		}
+	}
 	s.stageBean.Stage.Destroy()
 }
 

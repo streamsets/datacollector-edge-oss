@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"io"
@@ -36,8 +37,8 @@ type TextWriterFactoryImpl struct {
 func (t *TextWriterFactoryImpl) CreateWriter(
 	context api.StageContext,
 	writer io.Writer,
-) (recordio.RecordWriter, error) {
-	var recordWriter recordio.RecordWriter
+) (dataformats.RecordWriter, error) {
+	var recordWriter dataformats.RecordWriter
 	recordWriter = newRecordWriter(context, writer)
 	return recordWriter, nil
 }

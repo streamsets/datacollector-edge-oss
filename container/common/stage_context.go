@@ -17,6 +17,8 @@ package common
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
@@ -37,6 +39,7 @@ type StageContextImpl struct {
 	ErrorSink         *ErrorSink
 	ErrorStage        bool
 	ErrorRecordPolicy string
+	Services          map[string]api.Service
 }
 
 func (s *StageContextImpl) GetResolvedValue(configValue interface{}) (interface{}, error) {
@@ -161,6 +164,13 @@ func (s *StageContextImpl) CreateConfigIssue(error string, optional ...interface
 	return issue
 }
 
+func (s *StageContextImpl) GetService(serviceName string) (api.Service, error) {
+	if s.Services[serviceName] != nil {
+		return s.Services[serviceName], nil
+	}
+	return nil, errors.New(fmt.Sprintf("No Service instance found for service name: %s", serviceName))
+}
+
 func constructErrorRecord(instanceName string, err error, errorRecordPolicy string, record api.Record) api.Record {
 	var recordToBeSentToError api.Record
 	switch errorRecordPolicy {
@@ -179,4 +189,26 @@ func constructErrorRecord(instanceName string, err error, errorRecordPolicy stri
 	headerImplForRecord.SetErrorMessage(err.Error())
 	headerImplForRecord.SetErrorTimeStamp(util.ConvertTimeToLong(time.Now()))
 	return recordToBeSentToError
+}
+
+func NewStageContext(
+	stageConfig *StageConfiguration,
+	resolvedParameters map[string]interface{},
+	metricRegistry metrics.Registry,
+	errorSink *ErrorSink,
+	errorStage bool,
+	errorRecordPolicy string,
+	services map[string]api.Service,
+) (*StageContextImpl, error) {
+	stageContext := &StageContextImpl{
+		StageConfig:       stageConfig,
+		Parameters:        resolvedParameters,
+		Metrics:           metricRegistry,
+		ErrorSink:         errorSink,
+		ErrorStage:        errorStage,
+		ErrorRecordPolicy: errorRecordPolicy,
+		Services:          services,
+	}
+
+	return stageContext, nil
 }

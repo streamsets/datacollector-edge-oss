@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 StreamSets Inc.
+ * Copyright 2018 StreamSets Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,38 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package recordio
+
+package creation
 
 import (
 	"github.com/streamsets/datacollector-edge/api"
-	"github.com/streamsets/datacollector-edge/api/dataformats"
-	"io"
+	"github.com/streamsets/datacollector-edge/container/common"
 )
 
-type RecordReaderFactory interface {
-	CreateReader(context api.StageContext, reader io.Reader) (dataformats.RecordReader, error)
-}
-
-type RecordWriterFactory interface {
-	CreateWriter(context api.StageContext, writer io.Writer) (dataformats.RecordWriter, error)
-}
-
-type Flusher interface {
-	Flush() error
-}
-
-func Flush(v interface{}) error {
-	c, ok := v.(Flusher)
-	if ok {
-		return c.Flush()
-	}
-	return nil
-}
-
-func Close(v interface{}) error {
-	c, ok := v.(io.Closer)
-	if ok {
-		return c.Close()
-	}
-	return nil
+type ServiceBean struct {
+	Config  *common.ServiceConfiguration
+	Service api.Service
 }

@@ -18,6 +18,7 @@ package jsonrecord
 import (
 	"encoding/json"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"io"
 )
@@ -29,8 +30,8 @@ type JsonReaderFactoryImpl struct {
 func (j *JsonReaderFactoryImpl) CreateReader(
 	context api.StageContext,
 	reader io.Reader,
-) (recordio.RecordReader, error) {
-	var recordReader recordio.RecordReader
+) (dataformats.RecordReader, error) {
+	var recordReader dataformats.RecordReader
 	recordReader = newRecordReader(context, reader)
 	return recordReader, nil
 }

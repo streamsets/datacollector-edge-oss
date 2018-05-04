@@ -39,6 +39,7 @@ type StageBean struct {
 	Config        *common.StageConfiguration
 	Stage         api.Stage
 	SystemConfigs StageConfigBean
+	Services      []ServiceBean
 }
 
 func (s *StageBean) IsSource() bool {
@@ -73,12 +74,53 @@ func NewStageBean(
 	configMap := stageConfig.GetConfigurationMap()
 	reflectValue := reflect.ValueOf(stageInstance).Elem()
 	reflectType := reflect.TypeOf(stageInstance).Elem()
-	err = injectStageConfigs(reflectValue, reflectType, "", configMap, stageDefinition, runtimeParameters)
+	err = injectStageConfigs(
+		reflectValue,
+		reflectType,
+		"",
+		configMap,
+		stageDefinition.ConfigDefinitionsMap,
+		runtimeParameters,
+	)
 	if err != nil {
 		return stageBean, err
 	}
 
 	stageBean.SystemConfigs = NewStageConfigBean(stageConfig)
+
+	if stageConfig.Services != nil && len(stageConfig.Services) > 0 {
+		stageBean.Services = make([]ServiceBean, 0)
+
+		for _, serviceConfig := range stageConfig.Services {
+			serviceBean := ServiceBean{}
+
+			serviceInstance, serviceDefinition, err := stagelibrary.CreateServiceInstance(serviceConfig.Service)
+			if err != nil {
+				return stageBean, err
+			}
+
+			serviceBean.Config = serviceConfig
+			serviceBean.Service = serviceInstance
+
+			configMap := serviceConfig.GetConfigurationMap()
+			reflectValue := reflect.ValueOf(serviceInstance).Elem()
+			reflectType := reflect.TypeOf(serviceInstance).Elem()
+			err = injectStageConfigs(
+				reflectValue,
+				reflectType,
+				"",
+				configMap,
+				serviceDefinition.ConfigDefinitionsMap,
+				runtimeParameters,
+			)
+			if err != nil {
+				return stageBean, err
+			}
+
+			stageBean.Services = append(stageBean.Services, serviceBean)
+		}
+	}
+
 	return stageBean, err
 }
 
@@ -87,7 +129,7 @@ func injectStageConfigs(
 	reflectType reflect.Type,
 	configPrefix string,
 	configMap map[string]common.Config,
-	stageDefinition *common.StageDefinition,
+	configDefinitionsMap map[string]*common.ConfigDefinition,
 	runtimeParameters map[string]interface{},
 ) error {
 	for i := 0; i < reflectValue.NumField(); i++ {
@@ -97,7 +139,7 @@ func injectStageConfigs(
 		configDefTag := stageInstanceFieldType.Tag.Get(common.CONFIG_DEF_TAG_NAME)
 		if len(configDefTag) > 0 {
 			configName := configPrefix + util.LcFirst(stageInstanceFieldType.Name)
-			configDef := stageDefinition.ConfigDefinitionsMap[configName]
+			configDef := configDefinitionsMap[configName]
 			config := configMap[configName]
 			if configDef != nil {
 				resolvedValue, err := getResolvedValue(configDef, config.Value, runtimeParameters)
@@ -220,7 +262,7 @@ func injectStageConfigs(
 					stageInstanceFieldType.Type,
 					newConfigPrefix,
 					configMap,
-					stageDefinition,
+					configDefinitionsMap,
 					runtimeParameters,
 				)
 				if err != nil {

@@ -17,6 +17,7 @@ package common
 
 import (
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/api/validation"
 )
 
@@ -35,10 +36,18 @@ func (b *BaseStage) Init(stageContext api.StageContext) []validation.Issue {
 }
 
 func (b *BaseStage) Destroy() error {
-	//No OP Destroy
+	// No OP Destroy
 	return nil
 }
 
 func (b *BaseStage) GetStageConfig() *StageConfiguration {
 	return b.stageContext.(*StageContextImpl).StageConfig
+}
+
+func (b *BaseStage) GetDataParserService() (dataformats.DataFormatParserService, error) {
+	dataParserService, err := b.GetStageContext().GetService(dataformats.DataFormatParserServiceName)
+	if err != nil {
+		return nil, err
+	}
+	return dataParserService.(dataformats.DataFormatParserService), err
 }

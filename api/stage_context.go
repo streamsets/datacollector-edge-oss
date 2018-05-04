@@ -32,4 +32,5 @@ type StageContext interface {
 	Evaluate(value string, configName string, ctx context.Context) (interface{}, error)
 	IsErrorStage() bool
 	CreateConfigIssue(error string, optional ...interface{}) validation.Issue
+	GetService(serviceName string) (Service, error)
 }

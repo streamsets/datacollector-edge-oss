@@ -21,7 +21,6 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
-	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 )
 
@@ -34,10 +33,8 @@ var randomOffset = "random"
 
 type DevRawDataDSource struct {
 	*common.BaseStage
-	RawData             string                            `ConfigDef:"type=STRING,required=true"`
-	StopAfterFirstBatch bool                              `ConfigDef:"type=BOOLEAN,required=true"`
-	DataFormat          string                            `ConfigDef:"type=STRING,required=true"`
-	DataFormatConfig    dataparser.DataParserFormatConfig `ConfigDefBean:"dataFormatConfig"`
+	RawData             string `ConfigDef:"type=STRING,required=true"`
+	StopAfterFirstBatch bool   `ConfigDef:"type=BOOLEAN,required=true"`
 }
 
 func init() {
@@ -49,7 +46,6 @@ func init() {
 func (d *DevRawDataDSource) Init(stageContext api.StageContext) []validation.Issue {
 	issues := d.BaseStage.Init(stageContext)
 	log.Debug("DevRawDataDSource Init method")
-	d.DataFormatConfig.Init(d.DataFormat, stageContext, issues)
 	return issues
 }
 
@@ -58,14 +54,18 @@ func (d *DevRawDataDSource) Produce(
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
 ) (*string, error) {
-	var err error
-	recordReaderFactory := d.DataFormatConfig.RecordReaderFactory
-	recordBuffer := bytes.NewBufferString(d.RawData)
-	recordReader, err := recordReaderFactory.CreateReader(d.GetStageContext(), recordBuffer)
+
+	dataParserService, err := d.GetDataParserService()
+	if err != nil {
+		log.WithError(err).Error("Failed to get DataParserService")
+		return nil, err
+	}
+	recordReader, err := dataParserService.GetParser(bytes.NewBufferString(d.RawData))
 	if err != nil {
 		log.WithError(err).Error("Failed to create record reader")
 		return nil, err
 	}
+
 	defer recordReader.Close()
 	for {
 		record, err := recordReader.ReadRecord()

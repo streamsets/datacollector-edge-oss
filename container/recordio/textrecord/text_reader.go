@@ -18,6 +18,7 @@ package textrecord
 import (
 	"bufio"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"io"
 	"strings"
@@ -30,8 +31,8 @@ type TextReaderFactoryImpl struct {
 func (j *TextReaderFactoryImpl) CreateReader(
 	context api.StageContext,
 	reader io.Reader,
-) (recordio.RecordReader, error) {
-	var recordReader recordio.RecordReader
+) (dataformats.RecordReader, error) {
+	var recordReader dataformats.RecordReader
 	recordReader = newRecordReader(context, reader)
 	return recordReader, nil
 }

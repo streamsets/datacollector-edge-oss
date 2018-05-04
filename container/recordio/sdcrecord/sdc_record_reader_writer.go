@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"io"
 )
@@ -38,8 +39,8 @@ type SDCRecordReaderFactoryImpl struct {
 func (srrf *SDCRecordReaderFactoryImpl) CreateReader(
 	context api.StageContext,
 	reader io.Reader,
-) (recordio.RecordReader, error) {
-	var recordReader recordio.RecordReader
+) (dataformats.RecordReader, error) {
+	var recordReader dataformats.RecordReader
 	b := make([]byte, 1)
 	//Magic number read.
 	nb, err := reader.Read(b)
@@ -68,8 +69,8 @@ type SDCRecordWriterFactoryImpl struct {
 func (srwf *SDCRecordWriterFactoryImpl) CreateWriter(
 	context api.StageContext,
 	writer io.Writer,
-) (recordio.RecordWriter, error) {
-	var recordWriter recordio.RecordWriter
+) (dataformats.RecordWriter, error) {
+	var recordWriter dataformats.RecordWriter
 
 	//Magic Number for SDC record
 	_, err := writer.Write([]byte{SdcJsonMagicNumber})

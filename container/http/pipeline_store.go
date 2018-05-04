@@ -80,7 +80,7 @@ func (webServerTask *WebServerTask) savePipeline(w http.ResponseWriter, r *http.
 			// empty body
 		case err != nil:
 			// other error
-			fmt.Fprintf(w, "Failed to Start: %s", err)
+			serverErrorReq(w, fmt.Sprintf("Failed to save pipeline:  %s! ", err))
 			return
 		}
 	}
@@ -92,6 +92,6 @@ func (webServerTask *WebServerTask) savePipeline(w http.ResponseWriter, r *http.
 		encoder.SetIndent("", "\t")
 		encoder.Encode(pipelineConfig)
 	} else {
-		fmt.Fprintf(w, "Failed to create pipeline:  %s! ", err)
+		serverErrorReq(w, fmt.Sprintf("Failed to save pipeline:  %s! ", err))
 	}
 }

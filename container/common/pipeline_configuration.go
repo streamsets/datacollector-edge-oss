@@ -83,21 +83,29 @@ type Config struct {
 
 type ServiceConfiguration struct {
 	Service        string   `json:"service"`
-	ServiceVersion string   `json:"serviceVersion"`
+	ServiceVersion int      `json:"serviceVersion"`
 	Configuration  []Config `json:"configuration"`
 }
 
+func (s ServiceConfiguration) GetConfigurationMap() map[string]Config {
+	configurationMap := make(map[string]Config)
+	for _, config := range s.Configuration {
+		configurationMap[config.Name] = config
+	}
+	return configurationMap
+}
+
 type StageConfiguration struct {
-	InstanceName  string                 `json:"instanceName"`
-	Library       string                 `json:"library"`
-	StageName     string                 `json:"stageName"`
-	StageVersion  string                 `json:"stageVersion"`
-	Configuration []Config               `json:"configuration"`
-	Services      []ServiceConfiguration `json:"services"`
-	UiInfo        map[string]interface{} `json:"uiInfo"`
-	InputLanes    []string               `json:"inputLanes"`
-	OutputLanes   []string               `json:"outputLanes"`
-	EventLanes    []string               `json:"eventLanes"`
+	InstanceName  string                  `json:"instanceName"`
+	Library       string                  `json:"library"`
+	StageName     string                  `json:"stageName"`
+	StageVersion  string                  `json:"stageVersion"`
+	Configuration []Config                `json:"configuration"`
+	Services      []*ServiceConfiguration `json:"services"`
+	UiInfo        map[string]interface{}  `json:"uiInfo"`
+	InputLanes    []string                `json:"inputLanes"`
+	OutputLanes   []string                `json:"outputLanes"`
+	EventLanes    []string                `json:"eventLanes"`
 }
 
 func (s StageConfiguration) GetConfigurationMap() map[string]Config {
