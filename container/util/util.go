@@ -33,6 +33,14 @@ func ConvertTimeToLong(t time.Time) int64 {
 	return t.UnixNano() / int64(time.Millisecond) / int64(time.Nanosecond)
 }
 
+func ConvertNanoToSecondsInt(nano int64) int64 {
+	return nano / int64(time.Second) / int64(time.Nanosecond)
+}
+
+func ConvertNanoToSecondsFloat(nano float64) float64 {
+	return nano / float64(time.Second) / float64(time.Nanosecond)
+}
+
 func UcFirst(str string) string {
 	for i, v := range str {
 		return string(unicode.ToUpper(v)) + str[i+1:]

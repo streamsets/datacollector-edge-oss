@@ -17,7 +17,6 @@ package util
 
 import (
 	"github.com/rcrowley/go-metrics"
-	log "github.com/sirupsen/logrus"
 	"strings"
 )
 
@@ -77,7 +76,6 @@ func FormatMetricsRegistry(r metrics.Registry) MetricsJson {
 	timers := make(map[string]map[string]interface{})
 
 	r.Each(func(name string, i interface{}) {
-		log.Debug("Metrics:" + name)
 		values := make(map[string]interface{})
 		switch metric := i.(type) {
 		case metrics.Counter:
@@ -97,7 +95,7 @@ func FormatMetricsRegistry(r metrics.Registry) MetricsJson {
 			}
 		case metrics.Histogram:
 			h := metric.Snapshot()
-			ps := h.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})
+			ps := h.Percentiles([]float64{0.5, 0.75, 0.95, 0.98, 0.99, 0.999})
 			values["count"] = h.Count()
 			values["min"] = h.Min()
 			values["max"] = h.Max()
@@ -105,9 +103,10 @@ func FormatMetricsRegistry(r metrics.Registry) MetricsJson {
 			values["stddev"] = h.StdDev()
 			values["p50"] = ps[0]
 			values["p75"] = ps[1]
-			values["p98"] = ps[2]
-			values["p99"] = ps[3]
-			values["p999"] = ps[4]
+			values["p95"] = ps[2]
+			values["p98"] = ps[3]
+			values["p99"] = ps[4]
+			values["p999"] = ps[5]
 			histograms[name] = values
 		case metrics.Meter:
 			m := metric.Snapshot()
@@ -120,17 +119,18 @@ func FormatMetricsRegistry(r metrics.Registry) MetricsJson {
 			meters[name] = values
 		case metrics.Timer:
 			t := metric.Snapshot()
-			ps := t.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})
+			ps := t.Percentiles([]float64{0.5, 0.75, 0.95, 0.98, 0.99, 0.999})
 			values["count"] = t.Count()
-			values["min"] = t.Min()
-			values["max"] = t.Max()
-			values["mean"] = t.Mean()
-			values["stddev"] = t.StdDev()
-			values["p50"] = ps[0]
-			values["p75"] = ps[1]
-			values["p98"] = ps[2]
-			values["p99"] = ps[3]
-			values["p999"] = ps[4]
+			values["min"] = ConvertNanoToSecondsInt(t.Min())
+			values["max"] = ConvertNanoToSecondsInt(t.Max())
+			values["mean"] = ConvertNanoToSecondsFloat(t.Mean())
+			values["stddev"] = ConvertNanoToSecondsFloat(t.StdDev())
+			values["p50"] = ConvertNanoToSecondsFloat(ps[0])
+			values["p75"] = ConvertNanoToSecondsFloat(ps[1])
+			values["p95"] = ConvertNanoToSecondsFloat(ps[2])
+			values["p98"] = ConvertNanoToSecondsFloat(ps[3])
+			values["p99"] = ConvertNanoToSecondsFloat(ps[4])
+			values["p999"] = ConvertNanoToSecondsFloat(ps[5])
 			values["m1_rate"] = t.Rate1()
 			values["m5_rate"] = t.Rate5()
 			values["m15_rate"] = t.Rate15()
