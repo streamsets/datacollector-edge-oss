@@ -111,7 +111,8 @@ func (s *StageContextImpl) ToError(err error, record api.Record) {
 }
 
 func (s *StageContextImpl) ReportError(err error) {
-	s.ErrorSink.ReportError(s.StageConfig.InstanceName, err)
+	errorMessage := constructErrorMessage(err)
+	s.ErrorSink.ReportError(s.StageConfig.InstanceName, errorMessage)
 }
 
 func (s *StageContextImpl) GetOutputLanes() []string {
@@ -189,6 +190,17 @@ func constructErrorRecord(instanceName string, err error, errorRecordPolicy stri
 	headerImplForRecord.SetErrorMessage(err.Error())
 	headerImplForRecord.SetErrorTimeStamp(util.ConvertTimeToLong(time.Now()))
 	return recordToBeSentToError
+}
+
+func constructErrorMessage(err error) api.ErrorMessage {
+	errorMessage := api.ErrorMessage{}
+	errorMessage.LocalizableMessage = err.Error()
+	errorMessage.Timestamp = util.ConvertTimeToLong(time.Now())
+	return errorMessage
+}
+
+func CreateRecordId(prefix string, counter int) string {
+	return fmt.Sprintf("%s:%d", prefix, counter)
 }
 
 func NewStageContext(

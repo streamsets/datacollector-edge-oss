@@ -25,7 +25,7 @@ const (
 )
 
 type DataFormatParserService interface {
-	GetParser(reader io.Reader) (RecordReader, error)
+	GetParser(messageId string, reader io.Reader) (RecordReader, error)
 }
 
 type RecordReader interface {

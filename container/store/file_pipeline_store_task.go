@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/satori/go.uuid"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
 	pipelineStateStore "github.com/streamsets/datacollector-edge/container/execution/store"
@@ -160,6 +161,9 @@ func (store *FilePipelineStoreTask) Create(
 	}
 
 	err = pipelineStateStore.Edited(pipelineId, isRemote)
+
+	log.WithField("id", pipelineInfo.PipelineId).Info("Created pipeline")
+
 	return pipelineConfiguration, err
 }
 
@@ -205,6 +209,8 @@ func (store *FilePipelineStoreTask) Save(
 	}
 	err = ioutil.WriteFile(store.getPipelineFile(pipelineId), pipelineConfigurationJson, 0644)
 
+	log.WithField("id", pipelineInfo.PipelineId).Info("Updated pipeline")
+
 	return pipelineConfiguration, nil
 }
 
@@ -240,6 +246,7 @@ func (store *FilePipelineStoreTask) Delete(pipelineId string) error {
 		return err
 	}
 	err = os.RemoveAll(store.getPipelineRunInfoDir(pipelineId))
+	log.WithField("id", pipelineId).Info("Deleted pipeline")
 	return err
 }
 

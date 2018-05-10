@@ -18,6 +18,7 @@ package runner
 import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/execution"
 )
 
 type PipeBatch interface {
@@ -30,8 +31,8 @@ type PipeBatch interface {
 	CompleteStage(maker api.BatchMaker)
 	CompleteStagePipe(stage StagePipe)
 	GetLaneOutputRecords(pipelineLanes []string) map[string][]api.Record
-	OverrideStageOutput(pipe StagePipe, stageOutput StageOutput)
-	GetSnapshotsOfAllStagesOutput() []StageOutput
+	OverrideStageOutput(pipe StagePipe, stageOutput execution.StageOutput)
+	GetSnapshotsOfAllStagesOutput() []execution.StageOutput
 	GetErrorSink() *common.ErrorSink
 	GetEventSink() EventSink
 	MoveLane(inputLane string, outputLane string)
@@ -44,12 +45,13 @@ type PipeBatch interface {
 }
 
 type FullPipeBatch struct {
-	offsetTracker SourceOffsetTracker
-	batchSize     int
-	fullPayload   map[string][]api.Record
-	inputRecords  int64
-	outputRecords int64
-	errorSink     *common.ErrorSink
+	offsetTracker       execution.SourceOffsetTracker
+	batchSize           int
+	fullPayload         map[string][]api.Record
+	inputRecords        int64
+	outputRecords       int64
+	errorSink           *common.ErrorSink
+	StageOutputSnapshot []execution.StageOutput
 }
 
 func (b *FullPipeBatch) GetBatchSize() int {
@@ -81,13 +83,14 @@ func (b *FullPipeBatch) GetBatch(pipe StagePipe) *BatchImpl {
 }
 
 func (b *FullPipeBatch) StartStage(pipe StagePipe) *BatchMakerImpl {
-	return NewBatchMakerImpl(pipe)
+	return NewBatchMakerImpl(pipe, b.StageOutputSnapshot != nil)
 }
 
 func (b *FullPipeBatch) CompleteStage(batchMaker *BatchMakerImpl) {
+	stageInstanceName := batchMaker.stagePipe.Stage.config.InstanceName
 	if batchMaker.stagePipe.IsSource() {
 		b.inputRecords += batchMaker.GetSize() +
-			int64(len(b.errorSink.GetStageErrorRecords(batchMaker.stagePipe.Stage.config.InstanceName)))
+			int64(len(b.errorSink.GetStageErrorRecords(stageInstanceName)))
 	}
 	if !batchMaker.stagePipe.IsTarget() {
 		outputLanes := batchMaker.stagePipe.Stage.config.OutputLanes
@@ -95,6 +98,16 @@ func (b *FullPipeBatch) CompleteStage(batchMaker *BatchMakerImpl) {
 		for _, outputLane := range outputLanes {
 			b.fullPayload[outputLane] = batchMaker.GetStageOutput(outputLane)
 		}
+	}
+
+	if b.StageOutputSnapshot != nil {
+		stageOutput := execution.StageOutput{
+			InstanceName: stageInstanceName,
+			Output:       batchMaker.StageOutputSnapshot,
+			ErrorRecords: b.errorSink.GetStageErrorRecords(stageInstanceName),
+			StageErrors:  b.errorSink.GetStageErrorMessages(stageInstanceName),
+		}
+		b.StageOutputSnapshot = append(b.StageOutputSnapshot, stageOutput)
 	}
 }
 
@@ -118,10 +131,38 @@ func (b *FullPipeBatch) GetErrorMessages() int64 {
 	return b.errorSink.GetTotalErrorMessages()
 }
 
-func NewFullPipeBatch(tracker SourceOffsetTracker, batchSize int, errorSink *common.ErrorSink) *FullPipeBatch {
-	return &FullPipeBatch{
+func (b *FullPipeBatch) OverrideStageOutput(pipe Pipe, stageOutput *execution.StageOutput) {
+	b.fullPayload = make(map[string][]api.Record)
+	for _, outputLane := range pipe.GetOutputLanes() {
+		b.fullPayload[outputLane] = stageOutput.Output[outputLane]
+	}
+
+	if b.StageOutputSnapshot != nil {
+		stageOutput := execution.StageOutput{
+			InstanceName: stageOutput.InstanceName,
+			Output:       stageOutput.Output,
+			ErrorRecords: stageOutput.ErrorRecords,
+			StageErrors:  stageOutput.StageErrors,
+		}
+		b.StageOutputSnapshot = append(b.StageOutputSnapshot, stageOutput)
+	}
+}
+
+func NewFullPipeBatch(
+	tracker execution.SourceOffsetTracker,
+	batchSize int,
+	errorSink *common.ErrorSink,
+	snapshotStagesOutput bool,
+) *FullPipeBatch {
+	fullPipeBatch := &FullPipeBatch{
 		offsetTracker: tracker,
 		batchSize:     batchSize,
 		errorSink:     errorSink,
 	}
+
+	if snapshotStagesOutput {
+		fullPipeBatch.StageOutputSnapshot = make([]execution.StageOutput, 0)
+	}
+
+	return fullPipeBatch
 }

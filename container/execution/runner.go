@@ -13,14 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package runner
+package execution
 
-import "github.com/streamsets/datacollector-edge/container/common"
+import (
+	"github.com/rcrowley/go-metrics"
+	"github.com/streamsets/datacollector-edge/container/common"
+)
 
 type Runner interface {
 	GetPipelineConfig() common.PipelineConfiguration
 	GetStatus() (*common.PipelineState, error)
-	StartPipeline(pipelineId string) (*common.PipelineState, error)
-	StopPipeline(*common.PipelineState, error)
-	ResetOffset()
+	GetHistory() ([]*common.PipelineState, error)
+	GetMetrics() (metrics.Registry, error)
+	StartPipeline(runtimeParameters map[string]interface{}) (*common.PipelineState, error)
+	StopPipeline() (*common.PipelineState, error)
+	ResetOffset() error
+	CommitOffset(sourceOffset common.SourceOffset) error
+	GetOffset() (common.SourceOffset, error)
+	IsRemotePipeline() bool
 }

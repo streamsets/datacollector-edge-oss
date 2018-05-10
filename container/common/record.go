@@ -51,7 +51,7 @@ func (r *RecordImpl) Get(fieldPath ...string) (*api.Field, error) {
 }
 
 func (r *RecordImpl) GetFieldPaths() map[string]bool {
-	return r.gatherPaths("/", r.value) //TODO:SDCE-128 - Implement escaping in GetFieldPaths
+	return r.gatherPaths("/", r.value) // TODO:SDCE-128 - Implement escaping in GetFieldPaths
 }
 
 func (r *RecordImpl) gatherPaths(prefix string, currentField *api.Field) map[string]bool {
@@ -86,7 +86,10 @@ func (r *RecordImpl) gatherPaths(prefix string, currentField *api.Field) map[str
 
 func (r *RecordImpl) Clone() api.Record {
 	recordVal, _ := r.Get()
-	return &RecordImpl{header: ((r.GetHeader()).(*HeaderImpl)).clone(), value: recordVal.Clone()}
+	if recordVal != nil {
+		recordVal = recordVal.Clone()
+	}
+	return &RecordImpl{header: ((r.GetHeader()).(*HeaderImpl)).clone(), value: recordVal}
 }
 
 func (r *RecordImpl) parse(fieldPath string) ([]PathElement, error) {
@@ -322,6 +325,14 @@ func (h *HeaderImpl) SetTrackingId(trackingId string) {
 	h.TrackingId = trackingId
 }
 
+func (h *HeaderImpl) SetPreviousTrackingId(previousTrackingId string) {
+	h.PreviousTrackingId = previousTrackingId
+}
+
+func (h *HeaderImpl) SetStagesPath(stagesPath string) {
+	h.StagesPath = stagesPath
+}
+
 func (h *HeaderImpl) SetErrorTimeStamp(timeStamp int64) {
 	h.ErrorTimestamp = timeStamp
 }
@@ -351,13 +362,14 @@ func (h *HeaderImpl) clone() *HeaderImpl {
 	for k, v := range h.GetAttributes() {
 		clonedHeaderImpl.SetAttribute(k, v)
 	}
-	//Don't clone the source record
+	// Don't clone the source record
 	clonedHeaderImpl.SetSourceRecord(h.sourceRecord)
 
 	clonedHeaderImpl.SetSourceId(h.SourceId)
-	clonedHeaderImpl.SetTrackingId(h.TrackingId)
 	clonedHeaderImpl.SetStageCreator(h.StageCreator)
-	clonedHeaderImpl.PreviousTrackingId = h.PreviousTrackingId
+	clonedHeaderImpl.SetStagesPath(h.GetStagesPath())
+	clonedHeaderImpl.SetTrackingId(h.TrackingId)
+	clonedHeaderImpl.SetPreviousTrackingId(h.PreviousTrackingId)
 	return clonedHeaderImpl
 }
 
@@ -379,4 +391,21 @@ func createRecord(recordSourceId string, value interface{}) (api.Record, error) 
 	}
 	headerImpl.SetSourceId(recordSourceId)
 	return r, nil
+}
+
+func AddStageToStagePath(header *HeaderImpl, stageInstanceName string) {
+	currentPath := ""
+	if len(header.GetStagesPath()) > 0 {
+		currentPath = header.GetStagesPath() + ":"
+	}
+	header.SetStagesPath(currentPath + stageInstanceName)
+}
+
+func CreateTrackingId(header *HeaderImpl) {
+	currentTrackingID := header.GetTrackingId()
+	newTrackingID := header.GetSourceId() + "::" + header.GetStagesPath()
+	if len(currentTrackingID) > 0 {
+		header.SetPreviousTrackingId(currentTrackingID)
+	}
+	header.SetTrackingId(newTrackingID)
 }

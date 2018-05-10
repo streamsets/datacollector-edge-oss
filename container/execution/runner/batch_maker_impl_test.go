@@ -21,7 +21,7 @@ import (
 )
 
 func TestMultipleLanesClone(t *testing.T) {
-	batchMaker := NewBatchMakerImpl(StagePipe{})
+	batchMaker := NewBatchMakerImpl(StagePipe{}, false)
 
 	stageConfig := common.StageConfiguration{}
 	stageConfig.Library = "abc"
@@ -49,7 +49,7 @@ func TestMultipleLanesClone(t *testing.T) {
 		t.Errorf("Expected 1 record(s), actual : %d", len(output2LaneRecords))
 	}
 
-	//Basically the record interface contains a pointer to RecordImpl
+	// Basically the record interface contains a pointer to RecordImpl
 	output1LaneRecord := output1LaneRecords[0]
 	output2LaneRecord := output2LaneRecords[0]
 

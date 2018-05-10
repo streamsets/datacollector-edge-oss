@@ -39,6 +39,7 @@ type SDCRecordReaderFactoryImpl struct {
 func (srrf *SDCRecordReaderFactoryImpl) CreateReader(
 	context api.StageContext,
 	reader io.Reader,
+	messageId string,
 ) (dataformats.RecordReader, error) {
 	var recordReader dataformats.RecordReader
 	b := make([]byte, 1)

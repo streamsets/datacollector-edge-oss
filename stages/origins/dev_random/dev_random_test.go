@@ -86,7 +86,7 @@ func TestDevRandomOrigin(t *testing.T) {
 		t.Error(issues[0].Message)
 	}
 
-	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
 	_, err = stageInstance.(api.Origin).Produce(&randomOffset, 5, batchMaker)
 	if err != nil {
 		t.Error("Err :", err)
@@ -143,7 +143,7 @@ func TestDevRandom_Init_StringEL(t *testing.T) {
 		t.Error(issues[0].Message)
 	}
 
-	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
 	_, err = stageInstance.(api.Origin).Produce(&randomOffset, 1, batchMaker)
 	if err != nil {
 		t.Error("Err :", err)
@@ -190,7 +190,7 @@ func TestDevRandomOrigin_MaxRecordsToGenerate(t *testing.T) {
 		t.Error(issues[0].Message)
 	}
 
-	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{})
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
 	_, err = stageInstance.(api.Origin).Produce(&randomOffset, 5, batchMaker)
 	if err != nil {
 		t.Error("Err :", err)
@@ -201,7 +201,7 @@ func TestDevRandomOrigin_MaxRecordsToGenerate(t *testing.T) {
 		t.Error("Excepted 3 records but got - ", len(records))
 	}
 
-	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{})
+	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{}, false)
 	_, err = stageInstance.(api.Origin).Produce(&randomOffset, 5, batchMaker)
 	if err != nil {
 		t.Error("Err :", err)

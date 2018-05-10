@@ -16,22 +16,42 @@
 package manager
 
 import (
+	"errors"
+	"fmt"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/execution"
+	"github.com/streamsets/datacollector-edge/container/execution/preview"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
 	"github.com/streamsets/datacollector-edge/container/store"
 )
 
 type PipelineManager struct {
 	config            execution.Config
-	runnerMap         map[string]*runner.StandaloneRunner
+	runnerMap         map[string]execution.Runner
+	previewerMap      map[string]execution.Previewer
 	runtimeInfo       *common.RuntimeInfo
 	pipelineStoreTask store.PipelineStoreTask
 }
 
-func (p *PipelineManager) GetRunner(pipelineId string) *runner.StandaloneRunner {
+func (p *PipelineManager) CreatePreviewer(pipelineId string) (execution.Previewer, error) {
+	previewer, err := preview.NewAsyncPreviewer(pipelineId, p.config, p.pipelineStoreTask)
+	if err != nil {
+		return nil, err
+	}
+	p.previewerMap[previewer.GetId()] = previewer
+	return previewer, nil
+}
+
+func (p *PipelineManager) GetPreviewer(previewerId string) (execution.Previewer, error) {
+	if p.previewerMap[previewerId] == nil {
+		return nil, errors.New(fmt.Sprintf("Cannot find the previewer in cache for id: %s", previewerId))
+	}
+	return p.previewerMap[previewerId], nil
+}
+
+func (p *PipelineManager) GetRunner(pipelineId string) execution.Runner {
 	if p.runnerMap[pipelineId] == nil {
-		pRunner, err := runner.NewStandaloneRunner(pipelineId, p.config, p.runtimeInfo, p.pipelineStoreTask)
+		pRunner, err := runner.NewEdgeRunner(pipelineId, p.config, p.runtimeInfo, p.pipelineStoreTask)
 		if err != nil {
 			panic(err)
 		}
@@ -62,10 +82,10 @@ func NewManager(
 ) (Manager, error) {
 	pipelineManager := PipelineManager{
 		config:            config,
-		runnerMap:         make(map[string]*runner.StandaloneRunner),
+		runnerMap:         make(map[string]execution.Runner),
+		previewerMap:      make(map[string]execution.Previewer),
 		runtimeInfo:       runtimeInfo,
 		pipelineStoreTask: pipelineStoreTask,
 	}
-
 	return &pipelineManager, nil
 }

@@ -17,11 +17,13 @@ package manager
 
 import (
 	"github.com/streamsets/datacollector-edge/container/common"
-	"github.com/streamsets/datacollector-edge/container/execution/runner"
+	"github.com/streamsets/datacollector-edge/container/execution"
 )
 
 type Manager interface {
-	GetRunner(pipelineId string) *runner.StandaloneRunner
+	CreatePreviewer(pipelineId string) (execution.Previewer, error)
+	GetPreviewer(previewerId string) (execution.Previewer, error)
+	GetRunner(pipelineId string) execution.Runner
 	StartPipeline(
 		pipelineId string,
 		runtimeParameters map[string]interface{},

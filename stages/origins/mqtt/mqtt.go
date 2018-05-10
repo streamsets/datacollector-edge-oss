@@ -104,7 +104,7 @@ func (ms *MqttClientSource) Destroy() error {
 func (ms *MqttClientSource) MessageHandler(client MQTT.Client, msg MQTT.Message) {
 	recordReaderFactory := ms.SubscriberConf.DataFormatConfig.RecordReaderFactory
 	recordBuffer := bytes.NewBufferString(string(msg.Payload()))
-	recordReader, err := recordReaderFactory.CreateReader(ms.GetStageContext(), recordBuffer)
+	recordReader, err := recordReaderFactory.CreateReader(ms.GetStageContext(), recordBuffer, "mqtt")
 	if err != nil {
 		log.WithError(err).Error("Failed to create record reader")
 	}

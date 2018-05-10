@@ -45,9 +45,9 @@ func (d *DataParserServiceImpl) Init(stageContext api.StageContext) []validation
 	return issues
 }
 
-func (d *DataParserServiceImpl) GetParser(reader io.Reader) (dataformats.RecordReader, error) {
+func (d *DataParserServiceImpl) GetParser(messageId string, reader io.Reader) (dataformats.RecordReader, error) {
 	recordReaderFactory := d.DataFormatConfig.RecordReaderFactory
-	return recordReaderFactory.CreateReader(d.stageContext, reader)
+	return recordReaderFactory.CreateReader(d.stageContext, reader, messageId)
 }
 
 func (b *DataParserServiceImpl) Destroy() error {

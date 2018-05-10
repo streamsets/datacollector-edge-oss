@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/dataformats"
+	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"io"
 )
@@ -30,16 +31,19 @@ type JsonReaderFactoryImpl struct {
 func (j *JsonReaderFactoryImpl) CreateReader(
 	context api.StageContext,
 	reader io.Reader,
+	messageId string,
 ) (dataformats.RecordReader, error) {
 	var recordReader dataformats.RecordReader
-	recordReader = newRecordReader(context, reader)
+	recordReader = newRecordReader(context, reader, messageId)
 	return recordReader, nil
 }
 
 type JsonReaderImpl struct {
-	context api.StageContext
-	reader  io.Reader
-	decoder *json.Decoder
+	context   api.StageContext
+	reader    io.Reader
+	decoder   *json.Decoder
+	messageId string
+	counter   int
 }
 
 func (jsonReader *JsonReaderImpl) ReadRecord() (api.Record, error) {
@@ -51,17 +55,21 @@ func (jsonReader *JsonReaderImpl) ReadRecord() (api.Record, error) {
 		}
 		return nil, err
 	}
-	return jsonReader.context.CreateRecord("sourceId", f)
+	jsonReader.counter++
+	sourceId := common.CreateRecordId(jsonReader.messageId, jsonReader.counter)
+	return jsonReader.context.CreateRecord(sourceId, f)
 }
 
 func (jsonReader *JsonReaderImpl) Close() error {
 	return recordio.Close(jsonReader.reader)
 }
 
-func newRecordReader(context api.StageContext, reader io.Reader) *JsonReaderImpl {
+func newRecordReader(context api.StageContext, reader io.Reader, messageId string) *JsonReaderImpl {
 	return &JsonReaderImpl{
-		context: context,
-		reader:  reader,
-		decoder: json.NewDecoder(reader),
+		context:   context,
+		reader:    reader,
+		decoder:   json.NewDecoder(reader),
+		messageId: messageId,
+		counter:   0,
 	}
 }

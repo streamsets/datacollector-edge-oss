@@ -22,7 +22,7 @@ import (
 )
 
 type RecordReaderFactory interface {
-	CreateReader(context api.StageContext, reader io.Reader) (dataformats.RecordReader, error)
+	CreateReader(context api.StageContext, reader io.Reader, messageId string) (dataformats.RecordReader, error)
 }
 
 type RecordWriterFactory interface {

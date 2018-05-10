@@ -44,7 +44,7 @@ func TestReadMapRecord(t *testing.T) {
 
 	stageContext := CreateStageContext()
 	readerFactoryImpl := &JsonReaderFactoryImpl{}
-	recordReader, err := readerFactoryImpl.CreateReader(stageContext, bufferWriter)
+	recordReader, err := readerFactoryImpl.CreateReader(stageContext, bufferWriter, "m")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -98,7 +98,7 @@ func TestWriteAndReadStringRecord(t *testing.T) {
 	recordWriter.Close()
 
 	readerFactoryImpl := &JsonReaderFactoryImpl{}
-	recordReader, err := readerFactoryImpl.CreateReader(stageContext, bufferWriter)
+	recordReader, err := readerFactoryImpl.CreateReader(stageContext, bufferWriter, "m")
 	if err != nil {
 		t.Fatal(err.Error())
 	}

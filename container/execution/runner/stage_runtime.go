@@ -68,6 +68,10 @@ func (s *StageRuntime) Destroy() {
 	s.stageBean.Stage.Destroy()
 }
 
+func (s *StageRuntime) GetInstanceName() string {
+	return s.config.InstanceName
+}
+
 func NewStageRuntime(
 	pipelineBean creation.PipelineBean,
 	stageBean creation.StageBean,

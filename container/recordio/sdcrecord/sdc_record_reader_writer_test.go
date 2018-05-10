@@ -203,7 +203,7 @@ func TestReadRecord(t *testing.T) {
 
 	recordReaderFactory := &SDCRecordReaderFactoryImpl{}
 
-	reader, err := recordReaderFactory.CreateReader(st, strings.NewReader(JSON))
+	reader, err := recordReaderFactory.CreateReader(st, strings.NewReader(JSON), "m")
 
 	if err != nil {
 		t.Fatal(err.Error())
@@ -301,7 +301,7 @@ func TestReadAndWriteRecord(t *testing.T) {
 
 	recordReaderFactory := &SDCRecordReaderFactoryImpl{}
 
-	reader, err := recordReaderFactory.CreateReader(st, bytes.NewReader(bufferWriter.Bytes()))
+	reader, err := recordReaderFactory.CreateReader(st, bytes.NewReader(bufferWriter.Bytes()), "m")
 
 	if err != nil {
 		t.Fatal(err.Error())

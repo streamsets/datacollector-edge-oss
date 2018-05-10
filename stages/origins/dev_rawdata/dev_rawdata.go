@@ -60,7 +60,7 @@ func (d *DevRawDataDSource) Produce(
 		log.WithError(err).Error("Failed to get DataParserService")
 		return nil, err
 	}
-	recordReader, err := dataParserService.GetParser(bytes.NewBufferString(d.RawData))
+	recordReader, err := dataParserService.GetParser("rawData", bytes.NewBufferString(d.RawData))
 	if err != nil {
 		log.WithError(err).Error("Failed to create record reader")
 		return nil, err

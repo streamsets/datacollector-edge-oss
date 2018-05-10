@@ -18,6 +18,7 @@ package runner
 import (
 	"github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
+	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/execution"
 	"github.com/streamsets/datacollector-edge/container/util"
@@ -25,11 +26,11 @@ import (
 )
 
 const (
-	INPUT_RECORDS    = ".inputRecords"
-	OUTPUT_RECORDS   = ".outputRecords"
-	ERROR_RECORDS    = ".errorRecords"
-	STAGE_ERRORS     = ".stageErrors"
-	BATCH_PROCESSING = ".batchProcessing"
+	InputRecords    = ".inputRecords"
+	OutputRecords   = ".outputRecords"
+	ErrorRecords    = ".errorRecords"
+	StageErrors     = ".stageErrors"
+	BatchProcessing = ".batchProcessing"
 )
 
 type Pipe interface {
@@ -39,6 +40,9 @@ type Pipe interface {
 	IsSource() bool
 	IsProcessor() bool
 	IsTarget() bool
+	GetInstanceName() string
+	GetStageContext() api.StageContext
+	GetOutputLanes() []string
 }
 
 type StagePipe struct {
@@ -70,31 +74,31 @@ func (s *StagePipe) Init() []validation.Issue {
 		metricRegistry := s.Stage.stageContext.GetMetrics()
 		metricsKey := "stage." + s.Stage.config.InstanceName
 
-		s.inputRecordsCounter = util.CreateCounter(metricRegistry, metricsKey+INPUT_RECORDS)
-		s.outputRecordsCounter = util.CreateCounter(metricRegistry, metricsKey+OUTPUT_RECORDS)
-		s.errorRecordsCounter = util.CreateCounter(metricRegistry, metricsKey+ERROR_RECORDS)
-		s.stageErrorsCounter = util.CreateCounter(metricRegistry, metricsKey+STAGE_ERRORS)
+		s.inputRecordsCounter = util.CreateCounter(metricRegistry, metricsKey+InputRecords)
+		s.outputRecordsCounter = util.CreateCounter(metricRegistry, metricsKey+OutputRecords)
+		s.errorRecordsCounter = util.CreateCounter(metricRegistry, metricsKey+ErrorRecords)
+		s.stageErrorsCounter = util.CreateCounter(metricRegistry, metricsKey+StageErrors)
 
-		s.inputRecordsMeter = util.CreateMeter(metricRegistry, metricsKey+INPUT_RECORDS)
-		s.outputRecordsMeter = util.CreateMeter(metricRegistry, metricsKey+OUTPUT_RECORDS)
-		s.errorRecordsMeter = util.CreateMeter(metricRegistry, metricsKey+ERROR_RECORDS)
-		s.stageErrorsMeter = util.CreateMeter(metricRegistry, metricsKey+STAGE_ERRORS)
+		s.inputRecordsMeter = util.CreateMeter(metricRegistry, metricsKey+InputRecords)
+		s.outputRecordsMeter = util.CreateMeter(metricRegistry, metricsKey+OutputRecords)
+		s.errorRecordsMeter = util.CreateMeter(metricRegistry, metricsKey+ErrorRecords)
+		s.stageErrorsMeter = util.CreateMeter(metricRegistry, metricsKey+StageErrors)
 
-		s.inputRecordsHistogram = util.CreateHistogram5Min(metricRegistry, metricsKey+INPUT_RECORDS)
-		s.outputRecordsHistogram = util.CreateHistogram5Min(metricRegistry, metricsKey+OUTPUT_RECORDS)
-		s.errorRecordsHistogram = util.CreateHistogram5Min(metricRegistry, metricsKey+ERROR_RECORDS)
-		s.stageErrorsHistogram = util.CreateHistogram5Min(metricRegistry, metricsKey+STAGE_ERRORS)
+		s.inputRecordsHistogram = util.CreateHistogram5Min(metricRegistry, metricsKey+InputRecords)
+		s.outputRecordsHistogram = util.CreateHistogram5Min(metricRegistry, metricsKey+OutputRecords)
+		s.errorRecordsHistogram = util.CreateHistogram5Min(metricRegistry, metricsKey+ErrorRecords)
+		s.stageErrorsHistogram = util.CreateHistogram5Min(metricRegistry, metricsKey+StageErrors)
 
-		s.processingTimer = util.CreateTimer(metricRegistry, metricsKey+BATCH_PROCESSING)
+		s.processingTimer = util.CreateTimer(metricRegistry, metricsKey+BatchProcessing)
 
 		if len(s.Stage.config.OutputLanes) > 0 {
 			s.outputRecordsPerLaneCounter = make(map[string]metrics.Counter)
 			s.outputRecordsPerLaneMeter = make(map[string]metrics.Meter)
 			for _, lane := range s.Stage.config.OutputLanes {
 				s.outputRecordsPerLaneCounter[lane] =
-					util.CreateCounter(metricRegistry, metricsKey+":"+lane+OUTPUT_RECORDS)
+					util.CreateCounter(metricRegistry, metricsKey+":"+lane+OutputRecords)
 				s.outputRecordsPerLaneMeter[lane] =
-					util.CreateMeter(metricRegistry, metricsKey+":"+lane+OUTPUT_RECORDS)
+					util.CreateMeter(metricRegistry, metricsKey+":"+lane+OutputRecords)
 			}
 		}
 	}
@@ -107,7 +111,7 @@ func (s *StagePipe) Process(pipeBatch *FullPipeBatch) error {
 	start := time.Now()
 	batchMaker := pipeBatch.StartStage(*s)
 	batchImpl := pipeBatch.GetBatch(*s)
-	newOffset, err := s.Stage.Execute(pipeBatch.GetPreviousOffset(), s.config.MaxBatchSize, batchImpl, batchMaker)
+	newOffset, err := s.Stage.Execute(pipeBatch.GetPreviousOffset(), pipeBatch.batchSize, batchImpl, batchMaker)
 
 	if err != nil {
 		return err
@@ -176,6 +180,18 @@ func (s *StagePipe) IsProcessor() bool {
 
 func (s *StagePipe) IsTarget() bool {
 	return s.Stage.stageBean.IsTarget()
+}
+
+func (s *StagePipe) GetInstanceName() string {
+	return s.Stage.config.InstanceName
+}
+
+func (s *StagePipe) GetStageContext() api.StageContext {
+	return s.Stage.stageContext
+}
+
+func (s *StagePipe) GetOutputLanes() []string {
+	return s.OutputLanes
 }
 
 func NewStagePipe(stage StageRuntime, config execution.Config) Pipe {

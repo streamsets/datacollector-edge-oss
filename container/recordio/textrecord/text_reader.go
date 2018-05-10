@@ -19,6 +19,7 @@ import (
 	"bufio"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/dataformats"
+	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"io"
 	"strings"
@@ -31,15 +32,18 @@ type TextReaderFactoryImpl struct {
 func (j *TextReaderFactoryImpl) CreateReader(
 	context api.StageContext,
 	reader io.Reader,
+	messageId string,
 ) (dataformats.RecordReader, error) {
 	var recordReader dataformats.RecordReader
-	recordReader = newRecordReader(context, reader)
+	recordReader = newRecordReader(context, reader, messageId)
 	return recordReader, nil
 }
 
 type TextReaderImpl struct {
-	context api.StageContext
-	reader  *bufio.Reader
+	context   api.StageContext
+	reader    *bufio.Reader
+	messageId string
+	counter   int
 }
 
 func (textReader *TextReaderImpl) ReadRecord() (api.Record, error) {
@@ -50,7 +54,9 @@ func (textReader *TextReaderImpl) ReadRecord() (api.Record, error) {
 	}
 	if len(line) > 0 {
 		recordValue := map[string]interface{}{"text": strings.Replace(line, "\n", "", 1)}
-		return textReader.context.CreateRecord("sourceId", recordValue)
+		textReader.counter++
+		sourceId := common.CreateRecordId(textReader.messageId, textReader.counter)
+		return textReader.context.CreateRecord(sourceId, recordValue)
 	}
 	return nil, nil
 }
@@ -59,9 +65,11 @@ func (textReader *TextReaderImpl) Close() error {
 	return recordio.Close(textReader.reader)
 }
 
-func newRecordReader(context api.StageContext, reader io.Reader) *TextReaderImpl {
+func newRecordReader(context api.StageContext, reader io.Reader, messageId string) *TextReaderImpl {
 	return &TextReaderImpl{
-		context: context,
-		reader:  bufio.NewReader(reader),
+		context:   context,
+		reader:    bufio.NewReader(reader),
+		messageId: messageId,
+		counter:   0,
 	}
 }

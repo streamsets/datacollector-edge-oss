@@ -30,12 +30,11 @@ import (
 type Pipeline struct {
 	name              string
 	config            execution.Config
-	standaloneRunner  *StandaloneRunner
 	pipelineConf      common.PipelineConfiguration
 	pipelineBean      creation.PipelineBean
 	pipes             []Pipe
 	errorStageRuntime StageRuntime
-	offsetTracker     SourceOffsetTracker
+	offsetTracker     execution.SourceOffsetTracker
 	stop              bool
 	errorSink         *common.ErrorSink
 
@@ -58,18 +57,18 @@ type Pipeline struct {
 }
 
 const (
-	AT_MOST_ONCE                      = "AT_MOST_ONCE"
-	AT_LEAST_ONCE                     = "AT_LEAST_ONCE"
-	PIPELINE_BATCH_PROCESSING         = "pipeline.batchProcessing"
-	PIPELINE_BATCH_COUNT              = "pipeline.batchCount"
-	PIPELINE_BATCH_INPUT_RECORDS      = "pipeline.batchInputRecords"
-	PIPELINE_BATCH_OUTPUT_RECORDS     = "pipeline.batchOutputRecords"
-	PIPELINE_BATCH_ERROR_RECORDS      = "pipeline.batchErrorRecords"
-	PIPELINE_BATCH_ERROR_MESSAGES     = "pipeline.batchErrorMessages"
-	PIPELINE_INPUT_RECORDS_PER_BATCH  = "pipeline.inputRecordsPerBatch"
-	PIPELINE_OUTPUT_RECORDS_PER_BATCH = "pipeline.outputRecordsPerBatch"
-	PIPELINE_ERROR_RECORDS_PER_BATCH  = "pipeline.errorRecordsPerBatch"
-	PIPELINE_ERRORS_PER_BATCH         = "pipeline.errorsPerBatch"
+	AtMostOnce                    = "AT_MOST_ONCE"
+	AtLeastOnce                   = "AT_LEAST_ONCE"
+	PipelineBatchProcessing       = "pipeline.batchProcessing"
+	PipelineBatchCount            = "pipeline.batchCount"
+	PipelineBatchInputRecords     = "pipeline.batchInputRecords"
+	PipelineBatchOutputRecords    = "pipeline.batchOutputRecords"
+	PipelineBatchErrorRecords     = "pipeline.batchErrorRecords"
+	PipelineBatchErrorMessages    = "pipeline.batchErrorMessages"
+	PipelineInputRecordsPerBatch  = "pipeline.inputRecordsPerBatch"
+	PipelineOutputRecordsPerBatch = "pipeline.outputRecordsPerBatch"
+	PipelineErrorRecordsPerBatch  = "pipeline.errorRecordsPerBatch"
+	PipelineErrorsPerBatch        = "pipeline.errorsPerBatch"
 )
 
 func (p *Pipeline) Init() []validation.Issue {
@@ -106,10 +105,10 @@ func (p *Pipeline) runBatch() error {
 
 	previousOffset := p.offsetTracker.GetOffset()
 
-	pipeBatch := NewFullPipeBatch(p.offsetTracker, 1, p.errorSink)
+	pipeBatch := NewFullPipeBatch(p.offsetTracker, p.config.MaxBatchSize, p.errorSink, false)
 
 	for _, pipe := range p.pipes {
-		if p.pipelineBean.Config.DeliveryGuarantee == AT_MOST_ONCE &&
+		if p.pipelineBean.Config.DeliveryGuarantee == AtMostOnce &&
 			pipe.IsTarget() && // if destination
 			!committed {
 			if err := p.offsetTracker.CommitOffset(); err != nil {
@@ -139,7 +138,7 @@ func (p *Pipeline) runBatch() error {
 		}
 	}
 
-	if p.pipelineBean.Config.DeliveryGuarantee == AT_LEAST_ONCE {
+	if p.pipelineBean.Config.DeliveryGuarantee == AtLeastOnce {
 		p.offsetTracker.CommitOffset()
 	}
 
@@ -176,15 +175,15 @@ func (p *Pipeline) Stop() {
 
 func NewPipeline(
 	config execution.Config,
-	standaloneRunner *StandaloneRunner,
-	sourceOffsetTracker SourceOffsetTracker,
+	pipelineConfig common.PipelineConfiguration,
+	sourceOffsetTracker execution.SourceOffsetTracker,
 	runtimeParameters map[string]interface{},
 	metricRegistry metrics.Registry,
 ) (*Pipeline, error) {
 
-	pipelineConfigForParam := creation.NewPipelineConfigBean(standaloneRunner.GetPipelineConfig())
-	stageRuntimeList := make([]StageRuntime, len(standaloneRunner.pipelineConfig.Stages))
-	pipes := make([]Pipe, len(standaloneRunner.pipelineConfig.Stages))
+	pipelineConfigForParam := creation.NewPipelineConfigBean(pipelineConfig)
+	stageRuntimeList := make([]StageRuntime, len(pipelineConfig.Stages))
+	pipes := make([]Pipe, len(pipelineConfig.Stages))
 	errorSink := common.NewErrorSink()
 
 	var errorStageRuntime StageRuntime
@@ -198,7 +197,7 @@ func NewPipeline(
 		}
 	}
 
-	pipelineBean, err := creation.NewPipelineBean(standaloneRunner.GetPipelineConfig(), resolvedParameters)
+	pipelineBean, err := creation.NewPipelineBean(pipelineConfig, resolvedParameters)
 	if err != nil {
 		return nil, err
 	}
@@ -244,8 +243,7 @@ func NewPipeline(
 	errorStageRuntime = NewStageRuntime(pipelineBean, pipelineBean.ErrorStage, errorStageContext)
 
 	p := &Pipeline{
-		standaloneRunner:  standaloneRunner,
-		pipelineConf:      standaloneRunner.GetPipelineConfig(),
+		pipelineConf:      pipelineConfig,
 		pipelineBean:      pipelineBean,
 		pipes:             pipes,
 		errorStageRuntime: errorStageRuntime,
@@ -254,24 +252,24 @@ func NewPipeline(
 		MetricRegistry:    metricRegistry,
 	}
 
-	p.batchProcessingTimer = util.CreateTimer(metricRegistry, PIPELINE_BATCH_PROCESSING)
+	p.batchProcessingTimer = util.CreateTimer(metricRegistry, PipelineBatchProcessing)
 
-	p.batchCountCounter = util.CreateCounter(metricRegistry, PIPELINE_BATCH_COUNT)
-	p.batchInputRecordsCounter = util.CreateCounter(metricRegistry, PIPELINE_BATCH_INPUT_RECORDS)
-	p.batchOutputRecordsCounter = util.CreateCounter(metricRegistry, PIPELINE_BATCH_OUTPUT_RECORDS)
-	p.batchErrorRecordsCounter = util.CreateCounter(metricRegistry, PIPELINE_BATCH_ERROR_RECORDS)
-	p.batchErrorMessagesCounter = util.CreateCounter(metricRegistry, PIPELINE_BATCH_ERROR_MESSAGES)
+	p.batchCountCounter = util.CreateCounter(metricRegistry, PipelineBatchCount)
+	p.batchInputRecordsCounter = util.CreateCounter(metricRegistry, PipelineBatchInputRecords)
+	p.batchOutputRecordsCounter = util.CreateCounter(metricRegistry, PipelineBatchOutputRecords)
+	p.batchErrorRecordsCounter = util.CreateCounter(metricRegistry, PipelineBatchErrorRecords)
+	p.batchErrorMessagesCounter = util.CreateCounter(metricRegistry, PipelineBatchErrorMessages)
 
-	p.batchCountMeter = util.CreateMeter(metricRegistry, PIPELINE_BATCH_COUNT)
-	p.batchInputRecordsMeter = util.CreateMeter(metricRegistry, PIPELINE_BATCH_INPUT_RECORDS)
-	p.batchOutputRecordsMeter = util.CreateMeter(metricRegistry, PIPELINE_BATCH_OUTPUT_RECORDS)
-	p.batchErrorRecordsMeter = util.CreateMeter(metricRegistry, PIPELINE_BATCH_ERROR_RECORDS)
-	p.batchErrorMessagesMeter = util.CreateMeter(metricRegistry, PIPELINE_BATCH_ERROR_MESSAGES)
+	p.batchCountMeter = util.CreateMeter(metricRegistry, PipelineBatchCount)
+	p.batchInputRecordsMeter = util.CreateMeter(metricRegistry, PipelineBatchInputRecords)
+	p.batchOutputRecordsMeter = util.CreateMeter(metricRegistry, PipelineBatchOutputRecords)
+	p.batchErrorRecordsMeter = util.CreateMeter(metricRegistry, PipelineBatchErrorRecords)
+	p.batchErrorMessagesMeter = util.CreateMeter(metricRegistry, PipelineBatchErrorMessages)
 
-	p.batchInputRecordsHistogram = util.CreateHistogram5Min(metricRegistry, PIPELINE_INPUT_RECORDS_PER_BATCH)
-	p.batchOutputRecordsHistogram = util.CreateHistogram5Min(metricRegistry, PIPELINE_OUTPUT_RECORDS_PER_BATCH)
-	p.batchErrorRecordsHistogram = util.CreateHistogram5Min(metricRegistry, PIPELINE_ERROR_RECORDS_PER_BATCH)
-	p.batchErrorMessagesHistogram = util.CreateHistogram5Min(metricRegistry, PIPELINE_ERRORS_PER_BATCH)
+	p.batchInputRecordsHistogram = util.CreateHistogram5Min(metricRegistry, PipelineInputRecordsPerBatch)
+	p.batchOutputRecordsHistogram = util.CreateHistogram5Min(metricRegistry, PipelineOutputRecordsPerBatch)
+	p.batchErrorRecordsHistogram = util.CreateHistogram5Min(metricRegistry, PipelineErrorRecordsPerBatch)
+	p.batchErrorMessagesHistogram = util.CreateHistogram5Min(metricRegistry, PipelineErrorsPerBatch)
 
 	return p, nil
 }

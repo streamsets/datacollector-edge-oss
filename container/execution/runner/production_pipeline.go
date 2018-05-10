@@ -53,20 +53,22 @@ func (p *ProductionPipeline) Stop() {
 	p.Pipeline.Stop()
 }
 
-func (p *ProductionPipeline) WasStopped() bool {
-	return false
-}
-
 func NewProductionPipeline(
 	pipelineId string,
 	config execution.Config,
-	standaloneRunner *StandaloneRunner,
+	runner execution.Runner,
 	pipelineConfiguration common.PipelineConfiguration,
 	runtimeParameters map[string]interface{},
 ) (*ProductionPipeline, error) {
 	if sourceOffsetTracker, err := NewProductionSourceOffsetTracker(pipelineId); err == nil {
 		metricRegistry := metrics.NewRegistry()
-		pipeline, err := NewPipeline(config, standaloneRunner, sourceOffsetTracker, runtimeParameters, metricRegistry)
+		pipeline, err := NewPipeline(
+			config,
+			runner.GetPipelineConfig(),
+			sourceOffsetTracker,
+			runtimeParameters,
+			metricRegistry,
+		)
 		return &ProductionPipeline{
 			PipelineConfig: pipelineConfiguration,
 			Pipeline:       pipeline,

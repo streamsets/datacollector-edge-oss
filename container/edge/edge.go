@@ -116,8 +116,12 @@ func newDataCollectorEdge(
 
 	buildInfo, _ := common.NewBuildInfo()
 	fmt.Println("Version: ", buildInfo.Version)
-	log.Info("Base Dir: ", baseDir)
-	log.Info("Version: ", buildInfo.Version)
+	fmt.Println("Base Dir: ", baseDir)
+
+	if !logToConsoleFlag {
+		log.WithField("version", buildInfo.Version).Info()
+		log.WithField("baseDir", baseDir).Info()
+	}
 
 	runtimeInfo, _ := common.NewRuntimeInfo(httpUrl, baseDir)
 	pipelineStoreTask := store.NewFilePipelineStoreTask(*runtimeInfo)

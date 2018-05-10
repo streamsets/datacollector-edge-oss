@@ -153,7 +153,7 @@ func (f *FileTailOrigin) parseLine(
 	recordCount *float64,
 ) error {
 	recordBuffer := bytes.NewBufferString(lineText)
-	recordReader, err := recordReaderFactory.CreateReader(f.GetStageContext(), recordBuffer)
+	recordReader, err := recordReaderFactory.CreateReader(f.GetStageContext(), recordBuffer, "fileTail")
 	if err != nil {
 		log.WithError(err).Error("Failed to create record reader")
 		return err

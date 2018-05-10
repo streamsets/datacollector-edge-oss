@@ -68,6 +68,12 @@ func (webServerTask *WebServerTask) Init() error {
 	router.PUT("/rest/v1/pipeline/:pipelineTitle", webServerTask.createPipeline)
 	router.POST("/rest/v1/pipeline/:pipelineId", webServerTask.savePipeline)
 
+	// Pipeline Preview APIs
+	router.GET("/rest/v1/pipeline/:pipelineId/validate", webServerTask.validateConfigs)
+	router.POST("/rest/v1/pipeline/:pipelineId/preview", webServerTask.preview)
+	router.GET("/rest/v1/pipeline/:pipelineId/preview/:previewerId/status", webServerTask.getPreviewStatus)
+	router.GET("/rest/v1/pipeline/:pipelineId/preview/:previewerId", webServerTask.getPreviewData)
+
 	// Register pprof handlers
 	router.HandlerFunc("GET", "/debug/pprof/", pprof.Index)
 	router.Handler("GET", "/debug/pprof/heap", pprof.Handler("heap"))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 StreamSets Inc.
+ * Copyright 2018 StreamSets Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package runner
+package execution
 
-type StageOutput struct {
+type Previewer interface {
+	GetId() string
+	ValidateConfigs(timeoutMillis int64) error
+	Start(
+		batches int,
+		batchSize int,
+		skipTargets bool,
+		stopStage string,
+		stagesOverride []StageOutputJson,
+		timeoutMillis int64,
+	) error
+	Stop() error
+	GetStatus() string
+	GetOutput() PreviewOutput
 }

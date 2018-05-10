@@ -36,7 +36,7 @@ func TestReadTextRecord(t *testing.T) {
 
 	stageContext := CreateStageContext()
 	readerFactoryImpl := &TextReaderFactoryImpl{}
-	recordReader, err := readerFactoryImpl.CreateReader(stageContext, sampleTextData)
+	recordReader, err := readerFactoryImpl.CreateReader(stageContext, sampleTextData, "m")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
