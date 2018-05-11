@@ -247,6 +247,7 @@ func NewPipeline(
 		errorSink:         errorSink,
 		offsetTracker:     sourceOffsetTracker,
 		MetricRegistry:    metricRegistry,
+		config:            config,
 	}
 
 	p.batchProcessingTimer = util.CreateTimer(metricRegistry, PipelineBatchProcessing)
