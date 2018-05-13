@@ -1,452 +1,569 @@
 {
-  "schemaVersion" : 4,
-  "version" : 7,
-  "pipelineId" : "httpServerToTrash",
-  "title" : "httpServerToTrash",
-  "description" : "",
-  "uuid" : "bb10c291-c6f2-432a-9ec1-9a676d025f2b",
-  "configuration" : [ {
-    "name" : "executionMode",
-    "value" : "EDGE"
-  }, {
-    "name" : "deliveryGuarantee",
-    "value" : "AT_LEAST_ONCE"
-  }, {
-    "name" : "shouldRetry",
-    "value" : true
-  }, {
-    "name" : "retryAttempts",
-    "value" : -1
-  }, {
-    "name" : "memoryLimit",
-    "value" : "${jvm:maxMemoryMB() * 0.65}"
-  }, {
-    "name" : "memoryLimitExceeded",
-    "value" : "STOP_PIPELINE"
-  }, {
-    "name" : "notifyOnStates",
-    "value" : [ "RUN_ERROR", "STOPPED", "FINISHED" ]
-  }, {
-    "name" : "emailIDs",
-    "value" : [ ]
-  }, {
-    "name" : "constants",
-    "value" : [ {
-      "key" : "httpPort",
-      "value" : "8888"
-    }, {
-      "key" : "sdeAppId",
-      "value" : "sde"
-    } ]
-  }, {
-    "name" : "badRecordsHandling",
-    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
-  }, {
-    "name" : "clusterSlaveMemory",
-    "value" : 1024
-  }, {
-    "name" : "clusterSlaveJavaOpts",
-    "value" : "-XX:+UseConcMarkSweepGC -XX:+UseParNewGC -Dlog4j.debug"
-  }, {
-    "name" : "clusterLauncherEnv",
-    "value" : [ ]
-  }, {
-    "name" : "mesosDispatcherURL",
-    "value" : null
-  }, {
-    "name" : "hdfsS3ConfDir",
-    "value" : null
-  }, {
-    "name" : "rateLimit",
-    "value" : 0
-  }, {
-    "name" : "maxRunners",
-    "value" : 0
-  }, {
-    "name" : "webhookConfigs",
-    "value" : [ ]
-  }, {
-    "name" : "statsAggregatorStage",
-    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget::1"
-  }, {
-    "name" : "workerCount",
-    "value" : 0
-  }, {
-    "name" : "startEventStage",
-    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
-  }, {
-    "name" : "stopEventStage",
-    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
-  }, {
-    "name" : "errorRecordPolicy",
-    "value" : "ORIGINAL_RECORD"
-  }, {
-    "name" : "sparkConfigs",
-    "value" : [ ]
-  } ],
-  "uiInfo" : {
-    "previewConfig" : {
-      "previewSource" : "CONFIGURED_SOURCE",
-      "batchSize" : 10,
-      "timeout" : 10000,
-      "writeToDestinations" : false,
-      "showHeader" : false,
-      "showFieldType" : true,
-      "rememberMe" : false
+  "schemaVersion": 5,
+  "version": 9,
+  "pipelineId": "httpServerToTrash",
+  "title": "HTTP Server To Trash",
+  "description": "",
+  "uuid": "4fec25c1-be27-4b0d-b0f2-f4cd82b70cc2",
+  "configuration": [
+    {
+      "name": "executionMode",
+      "value": "EDGE"
+    },
+    {
+      "name": "deliveryGuarantee",
+      "value": "AT_LEAST_ONCE"
+    },
+    {
+      "name": "shouldRetry",
+      "value": true
+    },
+    {
+      "name": "retryAttempts",
+      "value": -1
+    },
+    {
+      "name": "memoryLimit",
+      "value": "${jvm:maxMemoryMB() * 0.65}"
+    },
+    {
+      "name": "memoryLimitExceeded",
+      "value": "STOP_PIPELINE"
+    },
+    {
+      "name": "notifyOnStates",
+      "value": [
+        "RUN_ERROR",
+        "STOPPED",
+        "FINISHED"
+      ]
+    },
+    {
+      "name": "emailIDs",
+      "value": []
+    },
+    {
+      "name": "constants",
+      "value": [
+        {
+          "key": "httpPort",
+          "value": "8888"
+        },
+        {
+          "key": "sdeAppId",
+          "value": "sde"
+        }
+      ]
+    },
+    {
+      "name": "badRecordsHandling",
+      "value": "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+    },
+    {
+      "name": "clusterSlaveMemory",
+      "value": 1024
+    },
+    {
+      "name": "clusterSlaveJavaOpts",
+      "value": "-XX:+UseConcMarkSweepGC -XX:+UseParNewGC -Dlog4j.debug"
+    },
+    {
+      "name": "clusterLauncherEnv",
+      "value": []
+    },
+    {
+      "name": "mesosDispatcherURL",
+      "value": null
+    },
+    {
+      "name": "hdfsS3ConfDir",
+      "value": null
+    },
+    {
+      "name": "rateLimit",
+      "value": 0
+    },
+    {
+      "name": "maxRunners",
+      "value": 0
+    },
+    {
+      "name": "webhookConfigs",
+      "value": []
+    },
+    {
+      "name": "statsAggregatorStage",
+      "value": "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget::1"
+    },
+    {
+      "name": "workerCount",
+      "value": 0
+    },
+    {
+      "name": "startEventStage",
+      "value": "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+    },
+    {
+      "name": "stopEventStage",
+      "value": "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+    },
+    {
+      "name": "errorRecordPolicy",
+      "value": "ORIGINAL_RECORD"
+    },
+    {
+      "name": "sparkConfigs",
+      "value": []
+    },
+    {
+      "name": "edgeHttpUrl",
+      "value": "http://localhost:18633"
+    },
+    {
+      "name": "shouldCreateFailureSnapshot",
+      "value": true
+    },
+    {
+      "name": "runnerIdleTIme",
+      "value": 60
+    }
+  ],
+  "uiInfo": {
+    "previewConfig": {
+      "batchSize": 10,
+      "previewSource": "CONFIGURED_SOURCE",
+      "rememberMe": false,
+      "showFieldType": true,
+      "showHeader": false,
+      "timeout": 10000,
+      "writeToDestinations": false
     }
   },
-  "stages" : [ {
-    "instanceName" : "HTTPServer_01",
-    "library" : "streamsets-datacollector-basic-lib",
-    "stageName" : "com_streamsets_pipeline_stage_origin_httpserver_HttpServerDPushSource",
-    "stageVersion" : "10",
-    "configuration" : [ {
-      "name" : "httpConfigs.tlsConfigBean.tlsEnabled",
-      "value" : false
-    }, {
-      "name" : "httpConfigs.tlsConfigBean.keyStoreFilePath",
-      "value" : null
-    }, {
-      "name" : "httpConfigs.tlsConfigBean.keyStoreType",
-      "value" : "JKS"
-    }, {
-      "name" : "httpConfigs.tlsConfigBean.keyStorePassword",
-      "value" : null
-    }, {
-      "name" : "httpConfigs.tlsConfigBean.keyStoreAlgorithm",
-      "value" : "SunX509"
-    }, {
-      "name" : "httpConfigs.tlsConfigBean.useDefaultProtocols",
-      "value" : true
-    }, {
-      "name" : "httpConfigs.tlsConfigBean.protocols",
-      "value" : [ ]
-    }, {
-      "name" : "httpConfigs.tlsConfigBean.useDefaultCiperSuites",
-      "value" : true
-    }, {
-      "name" : "httpConfigs.tlsConfigBean.cipherSuites",
-      "value" : [ ]
-    }, {
-      "name" : "httpConfigs.port",
-      "value" : "${httpPort}"
-    }, {
-      "name" : "httpConfigs.maxConcurrentRequests",
-      "value" : 10
-    }, {
-      "name" : "httpConfigs.appId",
-      "value" : "$[sdeAppId]"
-    }, {
-      "name" : "httpConfigs.appIdViaQueryParamAllowed",
-      "value" : false
-    }, {
-      "name" : "maxRequestSizeMB",
-      "value" : 100
-    }, {
-      "name" : "dataFormat",
-      "value" : "JSON"
-    }, {
-      "name" : "dataFormatConfig.compression",
-      "value" : "NONE"
-    }, {
-      "name" : "dataFormatConfig.filePatternInArchive",
-      "value" : "*"
-    }, {
-      "name" : "dataFormatConfig.charset",
-      "value" : "UTF-8"
-    }, {
-      "name" : "dataFormatConfig.removeCtrlChars",
-      "value" : false
-    }, {
-      "name" : "dataFormatConfig.textMaxLineLen",
-      "value" : 1024
-    }, {
-      "name" : "dataFormatConfig.useCustomDelimiter",
-      "value" : false
-    }, {
-      "name" : "dataFormatConfig.customDelimiter",
-      "value" : "\\r\\n"
-    }, {
-      "name" : "dataFormatConfig.includeCustomDelimiterInTheText",
-      "value" : false
-    }, {
-      "name" : "dataFormatConfig.jsonContent",
-      "value" : "MULTIPLE_OBJECTS"
-    }, {
-      "name" : "dataFormatConfig.jsonMaxObjectLen",
-      "value" : 4096
-    }, {
-      "name" : "dataFormatConfig.csvFileFormat",
-      "value" : "CSV"
-    }, {
-      "name" : "dataFormatConfig.csvHeader",
-      "value" : "NO_HEADER"
-    }, {
-      "name" : "dataFormatConfig.csvMaxObjectLen",
-      "value" : 1024
-    }, {
-      "name" : "dataFormatConfig.csvAllowExtraColumns",
-      "value" : false
-    }, {
-      "name" : "dataFormatConfig.csvExtraColumnPrefix",
-      "value" : "_extra_"
-    }, {
-      "name" : "dataFormatConfig.csvCustomDelimiter",
-      "value" : "|"
-    }, {
-      "name" : "dataFormatConfig.csvCustomEscape",
-      "value" : "\\"
-    }, {
-      "name" : "dataFormatConfig.csvCustomQuote",
-      "value" : "\""
-    }, {
-      "name" : "dataFormatConfig.csvEnableComments",
-      "value" : false
-    }, {
-      "name" : "dataFormatConfig.csvCommentMarker",
-      "value" : "#"
-    }, {
-      "name" : "dataFormatConfig.csvIgnoreEmptyLines",
-      "value" : true
-    }, {
-      "name" : "dataFormatConfig.csvRecordType",
-      "value" : "LIST_MAP"
-    }, {
-      "name" : "dataFormatConfig.csvSkipStartLines",
-      "value" : 0
-    }, {
-      "name" : "dataFormatConfig.parseNull",
-      "value" : false
-    }, {
-      "name" : "dataFormatConfig.nullConstant",
-      "value" : "\\\\N"
-    }, {
-      "name" : "dataFormatConfig.xmlRecordElement",
-      "value" : null
-    }, {
-      "name" : "dataFormatConfig.includeFieldXpathAttributes",
-      "value" : false
-    }, {
-      "name" : "dataFormatConfig.xPathNamespaceContext",
-      "value" : [ ]
-    }, {
-      "name" : "dataFormatConfig.outputFieldAttributes",
-      "value" : false
-    }, {
-      "name" : "dataFormatConfig.xmlMaxObjectLen",
-      "value" : 4096
-    }, {
-      "name" : "dataFormatConfig.logMode",
-      "value" : "COMMON_LOG_FORMAT"
-    }, {
-      "name" : "dataFormatConfig.logMaxObjectLen",
-      "value" : 1024
-    }, {
-      "name" : "dataFormatConfig.retainOriginalLine",
-      "value" : false
-    }, {
-      "name" : "dataFormatConfig.customLogFormat",
-      "value" : "%h %l %u %t \"%r\" %>s %b"
-    }, {
-      "name" : "dataFormatConfig.regex",
-      "value" : "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(\\S+) (\\S+) (\\S+)\" (\\d{3}) (\\d+)"
-    }, {
-      "name" : "dataFormatConfig.fieldPathsToGroupName",
-      "value" : [ {
-        "fieldPath" : "/",
-        "group" : 1
-      } ]
-    }, {
-      "name" : "dataFormatConfig.grokPatternDefinition",
-      "value" : null
-    }, {
-      "name" : "dataFormatConfig.grokPattern",
-      "value" : "%{COMMONAPACHELOG}"
-    }, {
-      "name" : "dataFormatConfig.onParseError",
-      "value" : "ERROR"
-    }, {
-      "name" : "dataFormatConfig.maxStackTraceLines",
-      "value" : 50
-    }, {
-      "name" : "dataFormatConfig.enableLog4jCustomLogFormat",
-      "value" : false
-    }, {
-      "name" : "dataFormatConfig.log4jCustomLogFormat",
-      "value" : "%r [%t] %-5p %c %x - %m%n"
-    }, {
-      "name" : "dataFormatConfig.avroSchema",
-      "value" : null
-    }, {
-      "name" : "dataFormatConfig.schemaRegistryUrls",
-      "value" : [ ]
-    }, {
-      "name" : "dataFormatConfig.schemaLookupMode",
-      "value" : "SUBJECT"
-    }, {
-      "name" : "dataFormatConfig.subject",
-      "value" : null
-    }, {
-      "name" : "dataFormatConfig.schemaId",
-      "value" : null
-    }, {
-      "name" : "dataFormatConfig.protoDescriptorFile",
-      "value" : null
-    }, {
-      "name" : "dataFormatConfig.messageType",
-      "value" : null
-    }, {
-      "name" : "dataFormatConfig.isDelimited",
-      "value" : true
-    }, {
-      "name" : "dataFormatConfig.binaryMaxObjectLen",
-      "value" : 1024
-    }, {
-      "name" : "dataFormatConfig.datagramMode",
-      "value" : "SYSLOG"
-    }, {
-      "name" : "dataFormatConfig.typesDbPath",
-      "value" : null
-    }, {
-      "name" : "dataFormatConfig.convertTime",
-      "value" : false
-    }, {
-      "name" : "dataFormatConfig.excludeInterval",
-      "value" : true
-    }, {
-      "name" : "dataFormatConfig.authFilePath",
-      "value" : null
-    }, {
-      "name" : "dataFormatConfig.wholeFileMaxObjectLen",
-      "value" : 8192
-    }, {
-      "name" : "dataFormatConfig.rateLimit",
-      "value" : "-1"
-    }, {
-      "name" : "stageOnRecordError",
-      "value" : "TO_ERROR"
-    } ],
-    "uiInfo" : {
-      "description" : "",
-      "label" : "HTTP Server 1",
-      "xPos" : 83,
-      "yPos" : 55,
-      "stageType" : "SOURCE"
+  "stages": [
+    {
+      "instanceName": "HTTPServer_01",
+      "library": "streamsets-datacollector-basic-lib",
+      "stageName": "com_streamsets_pipeline_stage_origin_httpserver_HttpServerDPushSource",
+      "stageVersion": "10",
+      "configuration": [
+        {
+          "name": "httpConfigs.tlsConfigBean.tlsEnabled",
+          "value": false
+        },
+        {
+          "name": "httpConfigs.tlsConfigBean.keyStoreFilePath",
+          "value": null
+        },
+        {
+          "name": "httpConfigs.tlsConfigBean.keyStoreType",
+          "value": "JKS"
+        },
+        {
+          "name": "httpConfigs.tlsConfigBean.keyStorePassword",
+          "value": null
+        },
+        {
+          "name": "httpConfigs.tlsConfigBean.keyStoreAlgorithm",
+          "value": "SunX509"
+        },
+        {
+          "name": "httpConfigs.tlsConfigBean.useDefaultProtocols",
+          "value": true
+        },
+        {
+          "name": "httpConfigs.tlsConfigBean.protocols",
+          "value": []
+        },
+        {
+          "name": "httpConfigs.tlsConfigBean.useDefaultCiperSuites",
+          "value": true
+        },
+        {
+          "name": "httpConfigs.tlsConfigBean.cipherSuites",
+          "value": []
+        },
+        {
+          "name": "httpConfigs.port",
+          "value": "${httpPort}"
+        },
+        {
+          "name": "httpConfigs.maxConcurrentRequests",
+          "value": 10
+        },
+        {
+          "name": "httpConfigs.appId",
+          "value": "$[sdeAppId]"
+        },
+        {
+          "name": "httpConfigs.appIdViaQueryParamAllowed",
+          "value": false
+        },
+        {
+          "name": "maxRequestSizeMB",
+          "value": 100
+        },
+        {
+          "name": "dataFormat",
+          "value": "JSON"
+        },
+        {
+          "name": "dataFormatConfig.compression",
+          "value": "NONE"
+        },
+        {
+          "name": "dataFormatConfig.filePatternInArchive",
+          "value": "*"
+        },
+        {
+          "name": "dataFormatConfig.charset",
+          "value": "UTF-8"
+        },
+        {
+          "name": "dataFormatConfig.removeCtrlChars",
+          "value": false
+        },
+        {
+          "name": "dataFormatConfig.textMaxLineLen",
+          "value": 1024
+        },
+        {
+          "name": "dataFormatConfig.useCustomDelimiter",
+          "value": false
+        },
+        {
+          "name": "dataFormatConfig.customDelimiter",
+          "value": "\\r\\n"
+        },
+        {
+          "name": "dataFormatConfig.includeCustomDelimiterInTheText",
+          "value": false
+        },
+        {
+          "name": "dataFormatConfig.jsonContent",
+          "value": "MULTIPLE_OBJECTS"
+        },
+        {
+          "name": "dataFormatConfig.jsonMaxObjectLen",
+          "value": 4096
+        },
+        {
+          "name": "dataFormatConfig.csvFileFormat",
+          "value": "CSV"
+        },
+        {
+          "name": "dataFormatConfig.csvHeader",
+          "value": "NO_HEADER"
+        },
+        {
+          "name": "dataFormatConfig.csvMaxObjectLen",
+          "value": 1024
+        },
+        {
+          "name": "dataFormatConfig.csvAllowExtraColumns",
+          "value": false
+        },
+        {
+          "name": "dataFormatConfig.csvExtraColumnPrefix",
+          "value": "_extra_"
+        },
+        {
+          "name": "dataFormatConfig.csvCustomDelimiter",
+          "value": "|"
+        },
+        {
+          "name": "dataFormatConfig.csvCustomEscape",
+          "value": "\\"
+        },
+        {
+          "name": "dataFormatConfig.csvCustomQuote",
+          "value": "\""
+        },
+        {
+          "name": "dataFormatConfig.csvEnableComments",
+          "value": false
+        },
+        {
+          "name": "dataFormatConfig.csvCommentMarker",
+          "value": "#"
+        },
+        {
+          "name": "dataFormatConfig.csvIgnoreEmptyLines",
+          "value": true
+        },
+        {
+          "name": "dataFormatConfig.csvRecordType",
+          "value": "LIST_MAP"
+        },
+        {
+          "name": "dataFormatConfig.csvSkipStartLines",
+          "value": 0
+        },
+        {
+          "name": "dataFormatConfig.parseNull",
+          "value": false
+        },
+        {
+          "name": "dataFormatConfig.nullConstant",
+          "value": "\\\\N"
+        },
+        {
+          "name": "dataFormatConfig.xmlRecordElement",
+          "value": null
+        },
+        {
+          "name": "dataFormatConfig.includeFieldXpathAttributes",
+          "value": false
+        },
+        {
+          "name": "dataFormatConfig.xPathNamespaceContext",
+          "value": []
+        },
+        {
+          "name": "dataFormatConfig.outputFieldAttributes",
+          "value": false
+        },
+        {
+          "name": "dataFormatConfig.xmlMaxObjectLen",
+          "value": 4096
+        },
+        {
+          "name": "dataFormatConfig.logMode",
+          "value": "COMMON_LOG_FORMAT"
+        },
+        {
+          "name": "dataFormatConfig.logMaxObjectLen",
+          "value": 1024
+        },
+        {
+          "name": "dataFormatConfig.retainOriginalLine",
+          "value": false
+        },
+        {
+          "name": "dataFormatConfig.customLogFormat",
+          "value": "%h %l %u %t \"%r\" %\u003es %b"
+        },
+        {
+          "name": "dataFormatConfig.regex",
+          "value": "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(\\S+) (\\S+) (\\S+)\" (\\d{3}) (\\d+)"
+        },
+        {
+          "name": "dataFormatConfig.fieldPathsToGroupName",
+          "value": [
+            {
+              "fieldPath": "/",
+              "group": 1
+            }
+          ]
+        },
+        {
+          "name": "dataFormatConfig.grokPatternDefinition",
+          "value": null
+        },
+        {
+          "name": "dataFormatConfig.grokPattern",
+          "value": "%{COMMONAPACHELOG}"
+        },
+        {
+          "name": "dataFormatConfig.onParseError",
+          "value": "ERROR"
+        },
+        {
+          "name": "dataFormatConfig.maxStackTraceLines",
+          "value": 50
+        },
+        {
+          "name": "dataFormatConfig.enableLog4jCustomLogFormat",
+          "value": false
+        },
+        {
+          "name": "dataFormatConfig.log4jCustomLogFormat",
+          "value": "%r [%t] %-5p %c %x - %m%n"
+        },
+        {
+          "name": "dataFormatConfig.avroSchema",
+          "value": null
+        },
+        {
+          "name": "dataFormatConfig.schemaRegistryUrls",
+          "value": []
+        },
+        {
+          "name": "dataFormatConfig.schemaLookupMode",
+          "value": "SUBJECT"
+        },
+        {
+          "name": "dataFormatConfig.subject",
+          "value": null
+        },
+        {
+          "name": "dataFormatConfig.schemaId",
+          "value": null
+        },
+        {
+          "name": "dataFormatConfig.protoDescriptorFile",
+          "value": null
+        },
+        {
+          "name": "dataFormatConfig.messageType",
+          "value": null
+        },
+        {
+          "name": "dataFormatConfig.isDelimited",
+          "value": true
+        },
+        {
+          "name": "dataFormatConfig.binaryMaxObjectLen",
+          "value": 1024
+        },
+        {
+          "name": "dataFormatConfig.datagramMode",
+          "value": "SYSLOG"
+        },
+        {
+          "name": "dataFormatConfig.typesDbPath",
+          "value": null
+        },
+        {
+          "name": "dataFormatConfig.convertTime",
+          "value": false
+        },
+        {
+          "name": "dataFormatConfig.excludeInterval",
+          "value": true
+        },
+        {
+          "name": "dataFormatConfig.authFilePath",
+          "value": null
+        },
+        {
+          "name": "dataFormatConfig.wholeFileMaxObjectLen",
+          "value": 8192
+        },
+        {
+          "name": "dataFormatConfig.rateLimit",
+          "value": "-1"
+        },
+        {
+          "name": "stageOnRecordError",
+          "value": "TO_ERROR"
+        },
+        {
+          "name": "dataFormatConfig.netflowOutputValuesMode",
+          "value": "RAW_AND_INTERPRETED"
+        },
+        {
+          "name": "dataFormatConfig.maxTemplateCacheSize",
+          "value": -1
+        },
+        {
+          "name": "dataFormatConfig.templateCacheTimeoutMs",
+          "value": -1
+        },
+        {
+          "name": "dataFormatConfig.netflowOutputValuesModeDatagram",
+          "value": "RAW_AND_INTERPRETED"
+        },
+        {
+          "name": "dataFormatConfig.maxTemplateCacheSizeDatagram",
+          "value": -1
+        },
+        {
+          "name": "dataFormatConfig.templateCacheTimeoutMsDatagram",
+          "value": -1
+        }
+      ],
+      "services": [],
+      "uiInfo": {
+        "description": "",
+        "label": "HTTP Server 1",
+        "stageType": "SOURCE",
+        "xPos": 83,
+        "yPos": 55
+      },
+      "inputLanes": [],
+      "outputLanes": [
+        "HTTPServer_01OutputLane15025531125250"
+      ],
+      "eventLanes": []
     },
-    "inputLanes" : [ ],
-    "outputLanes" : [ "HTTPServer_01OutputLane15025531125250" ],
-    "eventLanes" : [ ]
-  }, {
-    "instanceName" : "Trash_01",
-    "library" : "streamsets-datacollector-basic-lib",
-    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_NullDTarget",
-    "stageVersion" : "1",
-    "configuration" : [ ],
-    "uiInfo" : {
-      "description" : "",
-      "label" : "Trash 1",
-      "xPos" : 324,
-      "yPos" : 55,
-      "stageType" : "TARGET"
+    {
+      "instanceName": "Trash_01",
+      "library": "streamsets-datacollector-basic-lib",
+      "stageName": "com_streamsets_pipeline_stage_destination_devnull_NullDTarget",
+      "stageVersion": "1",
+      "configuration": [],
+      "services": [],
+      "uiInfo": {
+        "description": "",
+        "label": "Trash 1",
+        "stageType": "TARGET",
+        "xPos": 324,
+        "yPos": 55
+      },
+      "inputLanes": [
+        "HTTPServer_01OutputLane15025531125250"
+      ],
+      "outputLanes": [],
+      "eventLanes": []
+    }
+  ],
+  "errorStage": {
+    "instanceName": "Discard_ErrorStage",
+    "library": "streamsets-datacollector-basic-lib",
+    "stageName": "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
+    "stageVersion": "1",
+    "configuration": [],
+    "services": [],
+    "uiInfo": {
+      "description": "",
+      "label": "Error Records - Discard",
+      "stageType": "TARGET",
+      "xPos": 720,
+      "yPos": 50
     },
-    "inputLanes" : [ "HTTPServer_01OutputLane15025531125250" ],
-    "outputLanes" : [ ],
-    "eventLanes" : [ ]
-  } ],
-  "errorStage" : {
-    "instanceName" : "Discard_ErrorStage",
-    "library" : "streamsets-datacollector-basic-lib",
-    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
-    "stageVersion" : "1",
-    "configuration" : [ ],
-    "uiInfo" : {
-      "description" : "",
-      "label" : "Error Records - Discard",
-      "xPos" : 720,
-      "yPos" : 50,
-      "stageType" : "TARGET"
-    },
-    "inputLanes" : [ ],
-    "outputLanes" : [ ],
-    "eventLanes" : [ ]
+    "inputLanes": [],
+    "outputLanes": [],
+    "eventLanes": []
   },
-  "info" : {
-    "pipelineId" : "httpServerToTrash",
-    "title" : "httpServerToTrash",
-    "description" : "",
-    "created" : 1502552944257,
-    "lastModified" : 1502553159131,
-    "creator" : "admin",
-    "lastModifier" : "admin",
-    "lastRev" : "0",
-    "uuid" : "bb10c291-c6f2-432a-9ec1-9a676d025f2b",
-    "valid" : true,
-    "metadata" : {
-      "labels" : [ ]
+  "statsAggregatorStage": {
+    "instanceName": "WritetoDPMdirectly_StatsAggregatorStage",
+    "library": "streamsets-datacollector-basic-lib",
+    "stageName": "com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget",
+    "stageVersion": "1",
+    "configuration": [],
+    "services": [],
+    "uiInfo": {
+      "description": "",
+      "label": "Stats Aggregator - Write to DPM directly",
+      "stageType": "TARGET",
+      "xPos": 544,
+      "yPos": 50
     },
-    "name" : "httpServerToTrash",
-    "sdcVersion" : "2.7.0.0",
-    "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
+    "inputLanes": [],
+    "outputLanes": [],
+    "eventLanes": []
   },
-  "metadata" : {
-    "labels" : [ ]
-  },
-  "statsAggregatorStage" : {
-    "instanceName" : "WritetoDPMdirectly_StatsAggregatorStage",
-    "library" : "streamsets-datacollector-basic-lib",
-    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_StatsDpmDirectlyDTarget",
-    "stageVersion" : "1",
-    "configuration" : [ ],
-    "uiInfo" : {
-      "description" : "",
-      "label" : "Stats Aggregator - Write to DPM directly",
-      "xPos" : 544,
-      "yPos" : 50,
-      "stageType" : "TARGET"
+  "previewable": false,
+  "info": {
+    "pipelineId": "httpServerToTrash",
+    "title": "HTTP Server To Trash",
+    "description": "",
+    "created": 1526188042664,
+    "lastModified": 1526188664,
+    "creator": "admin",
+    "lastModifier": "admin",
+    "lastRev": "0",
+    "uuid": "4fec25c1-be27-4b0d-b0f2-f4cd82b70cc2",
+    "valid": true,
+    "metadata": {
+      "labels": []
     },
-    "inputLanes" : [ ],
-    "outputLanes" : [ ],
-    "eventLanes" : [ ]
+    "name": "httpServerToTrash",
+    "sdcVersion": "3.4.0-SNAPSHOT",
+    "sdcId": "d67e5ea5-553a-11e8-afdc-27d45acea1fe"
   },
-  "startEventStages" : [ {
-    "instanceName" : "Discard_StartEventStage",
-    "library" : "streamsets-datacollector-basic-lib",
-    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
-    "stageVersion" : "1",
-    "configuration" : [ ],
-    "uiInfo" : {
-      "description" : "",
-      "label" : "Start Event - Discard",
-      "xPos" : 544,
-      "yPos" : 50,
-      "stageType" : "TARGET"
-    },
-    "inputLanes" : [ ],
-    "outputLanes" : [ ],
-    "eventLanes" : [ ]
-  } ],
-  "stopEventStages" : [ {
-    "instanceName" : "Discard_StopEventStage",
-    "library" : "streamsets-datacollector-basic-lib",
-    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
-    "stageVersion" : "1",
-    "configuration" : [ ],
-    "uiInfo" : {
-      "description" : "",
-      "label" : "Stop Event - Discard",
-      "xPos" : 544,
-      "yPos" : 50,
-      "stageType" : "TARGET"
-    },
-    "inputLanes" : [ ],
-    "outputLanes" : [ ],
-    "eventLanes" : [ ]
-  } ],
-  "issues" : {
-    "pipelineIssues" : [ ],
-    "stageIssues" : { },
-    "issueCount" : 0
+  "metadata": {
+    "labels": []
   },
-  "previewable" : true,
-  "valid" : true
+  "fragments": []
 }

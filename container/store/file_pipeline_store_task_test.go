@@ -107,14 +107,6 @@ func TestFilePipelineStoreTask_Save(t *testing.T) {
 		t.Error("Excepted pipelineId 'testPipelineChangeTitle' but got : ", pipelineConfig.Title)
 	}
 
-	// Test Optimistic Locking
-	updatedPipelineConfig, err = pipelineStoreTask.Save("testPipeline", pipelineConfig)
-	if err == nil {
-		t.Error("Excepted error related to optimistic locking")
-	}
-
-	fmt.Println(err)
-
 	// Save invalid pipelineId
 	updatedPipelineConfig, err = pipelineStoreTask.Save("invalidPipeline", pipelineConfig)
 	if err == nil {

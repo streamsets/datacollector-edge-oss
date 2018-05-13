@@ -1,18 +1,18 @@
 {
-  "pipelineId" : "windowsEventToHttp",
-  "title" : "WindowsEventToHttp",
-  "description" : "",
-  "created" : 1503891274510,
-  "lastModified" : 1503891533556,
-  "creator" : "admin",
-  "lastModifier" : "admin",
-  "lastRev" : "0",
-  "uuid" : "d6ea1a0d-7e6c-477e-90d3-e32446367f73",
-  "valid" : true,
-  "metadata" : {
-    "labels" : [ ]
+  "pipelineId": "windowsEventToHttp",
+  "title": "Windows Event Log To HTTP",
+  "description": "",
+  "created": 1526188043469,
+  "lastModified": 1526188664,
+  "creator": "admin",
+  "lastModifier": "admin",
+  "lastRev": "0",
+  "uuid": "07c000fe-2ce5-4ae8-a286-7f0af49c42b2",
+  "valid": true,
+  "metadata": {
+    "labels": []
   },
-  "name" : "windowsEventToHttp",
-  "sdcVersion" : "2.8.0.0-SNAPSHOT",
-  "sdcId" : "9245e911-8ba1-11e7-9022-9fbbbbee2c62"
+  "name": "windowsEventToHttp",
+  "sdcVersion": "3.4.0-SNAPSHOT",
+  "sdcId": "d67e5ea5-553a-11e8-afdc-27d45acea1fe"
 }

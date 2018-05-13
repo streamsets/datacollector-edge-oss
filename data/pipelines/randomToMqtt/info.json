@@ -1,18 +1,18 @@
 {
-  "pipelineId" : "randomToMqtt",
-  "title" : "randomToMqtt",
-  "description" : "",
-  "created" : 1502554254671,
-  "lastModified" : 1502554330094,
-  "creator" : "admin",
-  "lastModifier" : "admin",
-  "lastRev" : "0",
-  "uuid" : "7c6222b0-098c-4ff8-b4da-d3fec5869601",
-  "valid" : true,
-  "metadata" : {
-    "labels" : [ ]
+  "pipelineId": "randomToMqtt",
+  "title": "Random To MQTT",
+  "description": "",
+  "created": 1526188043140,
+  "lastModified": 1526188664,
+  "creator": "admin",
+  "lastModifier": "admin",
+  "lastRev": "0",
+  "uuid": "9fd62fea-fddb-44df-a4a0-ec0618b7cbc6",
+  "valid": true,
+  "metadata": {
+    "labels": []
   },
-  "name" : "randomToMqtt",
-  "sdcVersion" : "2.7.0.0",
-  "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
+  "name": "randomToMqtt",
+  "sdcVersion": "3.4.0-SNAPSHOT",
+  "sdcId": "d67e5ea5-553a-11e8-afdc-27d45acea1fe"
 }

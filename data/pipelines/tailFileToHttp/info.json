@@ -1,18 +1,18 @@
 {
-  "pipelineId" : "tailFileToHttp",
-  "title" : "tailFileToHttp",
-  "description" : "",
-  "created" : 1502554558673,
-  "lastModified" : 1502554611635,
-  "creator" : "admin",
-  "lastModifier" : "admin",
-  "lastRev" : "0",
-  "uuid" : "8eca1159-b9a8-4d41-a8bb-a13635f152bf",
-  "valid" : true,
-  "metadata" : {
-    "labels" : [ ]
+  "pipelineId": "tailFileToHttp",
+  "title": "Tail File To HTTP",
+  "description": "",
+  "created": 1526188043402,
+  "lastModified": 1526188664,
+  "creator": "admin",
+  "lastModifier": "admin",
+  "lastRev": "0",
+  "uuid": "2ea77ccc-17b5-430e-993b-d889bd1a4e95",
+  "valid": true,
+  "metadata": {
+    "labels": []
   },
-  "name" : "tailFileToHttp",
-  "sdcVersion" : "2.7.0.0",
-  "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
+  "name": "tailFileToHttp",
+  "sdcVersion": "3.4.0-SNAPSHOT",
+  "sdcId": "d67e5ea5-553a-11e8-afdc-27d45acea1fe"
 }

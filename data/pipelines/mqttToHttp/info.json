@@ -1,18 +1,18 @@
 {
-  "pipelineId" : "mqttToHttp",
-  "title" : "mqttToHttp",
-  "description" : "",
-  "created" : 1502553284233,
-  "lastModified" : 1502553721734,
-  "creator" : "admin",
-  "lastModifier" : "admin",
-  "lastRev" : "0",
-  "uuid" : "f920ce5f-f066-45fe-bcf9-0129db95aef7",
-  "valid" : true,
-  "metadata" : {
-    "labels" : [ ]
+  "pipelineId": "mqttToHttp",
+  "title": "MQTT To HTTP",
+  "description": "",
+  "created": 1526188042743,
+  "lastModified": 1526188664,
+  "creator": "admin",
+  "lastModifier": "admin",
+  "lastRev": "0",
+  "uuid": "85ba8762-28c6-4b96-8302-a6c394af119d",
+  "valid": true,
+  "metadata": {
+    "labels": []
   },
-  "name" : "mqttToHttp",
-  "sdcVersion" : "2.7.0.0",
-  "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
+  "name": "mqttToHttp",
+  "sdcVersion": "3.4.0-SNAPSHOT",
+  "sdcId": "d67e5ea5-553a-11e8-afdc-27d45acea1fe"
 }

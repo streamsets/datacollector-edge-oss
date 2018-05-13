@@ -1,311 +1,403 @@
 {
-  "schemaVersion" : 4,
-  "version" : 7,
-  "pipelineId" : "randomToCoap",
-  "title" : "randomToCoap",
-  "description" : "",
-  "uuid" : "77676d7a-e380-4e72-9816-d0670e105986",
-  "configuration" : [ {
-    "name" : "executionMode",
-    "value" : "EDGE"
-  }, {
-    "name" : "deliveryGuarantee",
-    "value" : "AT_LEAST_ONCE"
-  }, {
-    "name" : "shouldRetry",
-    "value" : true
-  }, {
-    "name" : "retryAttempts",
-    "value" : -1
-  }, {
-    "name" : "memoryLimit",
-    "value" : "${jvm:maxMemoryMB() * 0.65}"
-  }, {
-    "name" : "memoryLimitExceeded",
-    "value" : "STOP_PIPELINE"
-  }, {
-    "name" : "notifyOnStates",
-    "value" : [ "RUN_ERROR", "STOPPED", "FINISHED" ]
-  }, {
-    "name" : "emailIDs",
-    "value" : [ ]
-  }, {
-    "name" : "constants",
-    "value" : [ ]
-  }, {
-    "name" : "badRecordsHandling",
-    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
-  }, {
-    "name" : "clusterSlaveMemory",
-    "value" : 1024
-  }, {
-    "name" : "clusterSlaveJavaOpts",
-    "value" : "-XX:+UseConcMarkSweepGC -XX:+UseParNewGC -Dlog4j.debug"
-  }, {
-    "name" : "clusterLauncherEnv",
-    "value" : [ ]
-  }, {
-    "name" : "mesosDispatcherURL",
-    "value" : null
-  }, {
-    "name" : "hdfsS3ConfDir",
-    "value" : null
-  }, {
-    "name" : "rateLimit",
-    "value" : 0
-  }, {
-    "name" : "maxRunners",
-    "value" : 0
-  }, {
-    "name" : "webhookConfigs",
-    "value" : [ ]
-  }, {
-    "name" : "statsAggregatorStage",
-    "value" : ""
-  }, {
-    "name" : "workerCount",
-    "value" : 0
-  }, {
-    "name" : "startEventStage",
-    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
-  }, {
-    "name" : "stopEventStage",
-    "value" : "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
-  }, {
-    "name" : "errorRecordPolicy",
-    "value" : "ORIGINAL_RECORD"
-  }, {
-    "name" : "sparkConfigs",
-    "value" : [ ]
-  } ],
-  "uiInfo" : {
-    "previewConfig" : {
-      "previewSource" : "CONFIGURED_SOURCE",
-      "batchSize" : 10,
-      "timeout" : 10000,
-      "writeToDestinations" : false,
-      "showHeader" : false,
-      "showFieldType" : true,
-      "rememberMe" : false
+  "schemaVersion": 5,
+  "version": 9,
+  "pipelineId": "randomToCoap",
+  "title": "Random To CoAP",
+  "description": "",
+  "uuid": "cde48ab3-a231-4e70-a029-d66a7e3ace50",
+  "configuration": [
+    {
+      "name": "executionMode",
+      "value": "EDGE"
+    },
+    {
+      "name": "deliveryGuarantee",
+      "value": "AT_LEAST_ONCE"
+    },
+    {
+      "name": "shouldRetry",
+      "value": true
+    },
+    {
+      "name": "retryAttempts",
+      "value": -1
+    },
+    {
+      "name": "memoryLimit",
+      "value": "${jvm:maxMemoryMB() * 0.65}"
+    },
+    {
+      "name": "memoryLimitExceeded",
+      "value": "STOP_PIPELINE"
+    },
+    {
+      "name": "notifyOnStates",
+      "value": [
+        "RUN_ERROR",
+        "STOPPED",
+        "FINISHED"
+      ]
+    },
+    {
+      "name": "emailIDs",
+      "value": []
+    },
+    {
+      "name": "constants",
+      "value": []
+    },
+    {
+      "name": "badRecordsHandling",
+      "value": "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+    },
+    {
+      "name": "clusterSlaveMemory",
+      "value": 1024
+    },
+    {
+      "name": "clusterSlaveJavaOpts",
+      "value": "-XX:+UseConcMarkSweepGC -XX:+UseParNewGC -Dlog4j.debug"
+    },
+    {
+      "name": "clusterLauncherEnv",
+      "value": []
+    },
+    {
+      "name": "mesosDispatcherURL",
+      "value": null
+    },
+    {
+      "name": "hdfsS3ConfDir",
+      "value": null
+    },
+    {
+      "name": "rateLimit",
+      "value": 0
+    },
+    {
+      "name": "maxRunners",
+      "value": 0
+    },
+    {
+      "name": "webhookConfigs",
+      "value": []
+    },
+    {
+      "name": "statsAggregatorStage",
+      "value": ""
+    },
+    {
+      "name": "workerCount",
+      "value": 0
+    },
+    {
+      "name": "startEventStage",
+      "value": "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+    },
+    {
+      "name": "stopEventStage",
+      "value": "streamsets-datacollector-basic-lib::com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget::1"
+    },
+    {
+      "name": "errorRecordPolicy",
+      "value": "ORIGINAL_RECORD"
+    },
+    {
+      "name": "sparkConfigs",
+      "value": []
+    },
+    {
+      "name": "edgeHttpUrl",
+      "value": "http://localhost:18633"
+    },
+    {
+      "name": "shouldCreateFailureSnapshot",
+      "value": true
+    },
+    {
+      "name": "runnerIdleTIme",
+      "value": 60
+    }
+  ],
+  "uiInfo": {
+    "previewConfig": {
+      "batchSize": 10,
+      "previewSource": "CONFIGURED_SOURCE",
+      "rememberMe": false,
+      "showFieldType": true,
+      "showHeader": false,
+      "timeout": 10000,
+      "writeToDestinations": false
     }
   },
-  "stages" : [ {
-    "instanceName" : "DevRandomRecordSource_01",
-    "library" : "streamsets-datacollector-dev-lib",
-    "stageName" : "com_streamsets_pipeline_stage_devtest_RandomSource",
-    "stageVersion" : "1",
-    "configuration" : [ {
-      "name" : "fields",
-      "value" : "a,b,c"
-    }, {
-      "name" : "delay",
-      "value" : 1000
-    }, {
-      "name" : "maxRecordsToGenerate",
-      "value" : 922337203685
-    }, {
-      "name" : "stageOnRecordError",
-      "value" : "TO_ERROR"
-    } ],
-    "uiInfo" : {
-      "description" : "",
-      "label" : "Dev Random Record Source 1",
-      "xPos" : 60,
-      "yPos" : 50,
-      "stageType" : "SOURCE"
+  "stages": [
+    {
+      "instanceName": "DevRandomRecordSource_01",
+      "library": "streamsets-datacollector-dev-lib",
+      "stageName": "com_streamsets_pipeline_stage_devtest_RandomSource",
+      "stageVersion": "1",
+      "configuration": [
+        {
+          "name": "fields",
+          "value": "a,b,c"
+        },
+        {
+          "name": "delay",
+          "value": 1000
+        },
+        {
+          "name": "maxRecordsToGenerate",
+          "value": 922337203685
+        },
+        {
+          "name": "stageOnRecordError",
+          "value": "TO_ERROR"
+        }
+      ],
+      "services": [],
+      "uiInfo": {
+        "description": "",
+        "label": "Dev Random Record Source 1",
+        "stageType": "SOURCE",
+        "xPos": 60,
+        "yPos": 50
+      },
+      "inputLanes": [],
+      "outputLanes": [
+        "DevRandomRecordSource_01OutputLane14926644565340"
+      ],
+      "eventLanes": []
     },
-    "inputLanes" : [ ],
-    "outputLanes" : [ "DevRandomRecordSource_01OutputLane14926644565340" ],
-    "eventLanes" : [ ]
-  }, {
-    "instanceName" : "CoAPClient_01",
-    "library" : "streamsets-datacollector-basic-lib",
-    "stageName" : "com_streamsets_pipeline_stage_destination_coap_CoapClientDTarget",
-    "stageVersion" : "1",
-    "configuration" : [ {
-      "name" : "conf.dataGeneratorFormatConfig.charset",
-      "value" : "UTF-8"
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.csvFileFormat",
-      "value" : "CSV"
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.csvHeader",
-      "value" : "NO_HEADER"
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.csvReplaceNewLines",
-      "value" : true
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.csvReplaceNewLinesString",
-      "value" : " "
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.csvCustomDelimiter",
-      "value" : "|"
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.csvCustomEscape",
-      "value" : "\\"
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.csvCustomQuote",
-      "value" : "\""
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.jsonMode",
-      "value" : "MULTIPLE_OBJECTS"
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.textFieldPath",
-      "value" : "/text"
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.textRecordSeparator",
-      "value" : "\\n"
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.textEmptyLineIfNull",
-      "value" : false
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.avroSchemaSource",
-      "value" : null
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.avroSchema",
-      "value" : null
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.registerSchema",
-      "value" : false
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.schemaRegistryUrlsForRegistration",
-      "value" : [ ]
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.schemaRegistryUrls",
-      "value" : [ ]
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.schemaLookupMode",
-      "value" : "SUBJECT"
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.subject",
-      "value" : null
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.subjectToRegister",
-      "value" : null
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.schemaId",
-      "value" : null
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.includeSchema",
-      "value" : true
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.avroCompression",
-      "value" : "NULL"
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.binaryFieldPath",
-      "value" : "/"
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.protoDescriptorFile",
-      "value" : null
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.messageType",
-      "value" : null
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.fileNameEL",
-      "value" : null
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.wholeFileExistsAction",
-      "value" : "TO_ERROR"
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.includeChecksumInTheEvents",
-      "value" : false
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.checksumAlgorithm",
-      "value" : "MD5"
-    }, {
-      "name" : "conf.dataFormat",
-      "value" : "JSON"
-    }, {
-      "name" : "conf.resourceUrl",
-      "value" : "coap://localhost:5683/sdc"
-    }, {
-      "name" : "conf.coapMethod",
-      "value" : "POST"
-    }, {
-      "name" : "conf.requestType",
-      "value" : "CONFIRMABLE"
-    }, {
-      "name" : "conf.connectTimeoutMillis",
-      "value" : 2000
-    }, {
-      "name" : "stageOnRecordError",
-      "value" : "TO_ERROR"
-    }, {
-      "name" : "stageRequiredFields",
-      "value" : [ ]
-    }, {
-      "name" : "stageRecordPreconditions",
-      "value" : [ ]
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.textFieldMissingAction",
-      "value" : "ERROR"
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.xmlPrettyPrint",
-      "value" : true
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.xmlValidateSchema",
-      "value" : false
-    }, {
-      "name" : "conf.dataGeneratorFormatConfig.xmlSchema",
-      "value" : null
-    } ],
-    "uiInfo" : {
-      "description" : "",
-      "label" : "CoAP Client 1",
-      "xPos" : 280,
-      "yPos" : 50,
-      "stageType" : "TARGET"
+    {
+      "instanceName": "CoAPClient_01",
+      "library": "streamsets-datacollector-basic-lib",
+      "stageName": "com_streamsets_pipeline_stage_destination_coap_CoapClientDTarget",
+      "stageVersion": "1",
+      "configuration": [
+        {
+          "name": "conf.dataGeneratorFormatConfig.charset",
+          "value": "UTF-8"
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.csvFileFormat",
+          "value": "CSV"
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.csvHeader",
+          "value": "NO_HEADER"
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.csvReplaceNewLines",
+          "value": true
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.csvReplaceNewLinesString",
+          "value": " "
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.csvCustomDelimiter",
+          "value": "|"
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.csvCustomEscape",
+          "value": "\\"
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.csvCustomQuote",
+          "value": "\""
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.jsonMode",
+          "value": "MULTIPLE_OBJECTS"
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.textFieldPath",
+          "value": "/text"
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.textRecordSeparator",
+          "value": "\\n"
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.textEmptyLineIfNull",
+          "value": false
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.avroSchemaSource",
+          "value": null
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.avroSchema",
+          "value": null
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.registerSchema",
+          "value": false
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.schemaRegistryUrlsForRegistration",
+          "value": []
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.schemaRegistryUrls",
+          "value": []
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.schemaLookupMode",
+          "value": "SUBJECT"
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.subject",
+          "value": null
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.subjectToRegister",
+          "value": null
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.schemaId",
+          "value": null
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.includeSchema",
+          "value": true
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.avroCompression",
+          "value": "NULL"
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.binaryFieldPath",
+          "value": "/"
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.protoDescriptorFile",
+          "value": null
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.messageType",
+          "value": null
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.fileNameEL",
+          "value": null
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.wholeFileExistsAction",
+          "value": "TO_ERROR"
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.includeChecksumInTheEvents",
+          "value": false
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.checksumAlgorithm",
+          "value": "MD5"
+        },
+        {
+          "name": "conf.dataFormat",
+          "value": "JSON"
+        },
+        {
+          "name": "conf.resourceUrl",
+          "value": "coap://localhost:5683/sdc"
+        },
+        {
+          "name": "conf.coapMethod",
+          "value": "POST"
+        },
+        {
+          "name": "conf.requestType",
+          "value": "CONFIRMABLE"
+        },
+        {
+          "name": "conf.connectTimeoutMillis",
+          "value": 2000
+        },
+        {
+          "name": "stageOnRecordError",
+          "value": "TO_ERROR"
+        },
+        {
+          "name": "stageRequiredFields",
+          "value": []
+        },
+        {
+          "name": "stageRecordPreconditions",
+          "value": []
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.textFieldMissingAction",
+          "value": "ERROR"
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.xmlPrettyPrint",
+          "value": true
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.xmlValidateSchema",
+          "value": false
+        },
+        {
+          "name": "conf.dataGeneratorFormatConfig.xmlSchema",
+          "value": null
+        }
+      ],
+      "services": [],
+      "uiInfo": {
+        "description": "",
+        "label": "CoAP Client 1",
+        "stageType": "TARGET",
+        "xPos": 280,
+        "yPos": 50
+      },
+      "inputLanes": [
+        "DevRandomRecordSource_01OutputLane14926644565340"
+      ],
+      "outputLanes": [],
+      "eventLanes": []
+    }
+  ],
+  "errorStage": {
+    "instanceName": "Discard_ErrorStage",
+    "library": "streamsets-datacollector-basic-lib",
+    "stageName": "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
+    "stageVersion": "1",
+    "configuration": [],
+    "services": [],
+    "uiInfo": {
+      "description": "",
+      "label": "Error Records - Discard",
+      "stageType": "TARGET",
+      "xPos": 500,
+      "yPos": 50
     },
-    "inputLanes" : [ "DevRandomRecordSource_01OutputLane14926644565340" ],
-    "outputLanes" : [ ],
-    "eventLanes" : [ ]
-  } ],
-  "errorStage" : {
-    "instanceName" : "Discard_ErrorStage",
-    "library" : "streamsets-datacollector-basic-lib",
-    "stageName" : "com_streamsets_pipeline_stage_destination_devnull_ToErrorNullDTarget",
-    "stageVersion" : "1",
-    "configuration" : [ ],
-    "uiInfo" : {
-      "description" : "",
-      "label" : "Error Records - Discard",
-      "xPos" : 500,
-      "yPos" : 50,
-      "stageType" : "TARGET"
+    "inputLanes": [],
+    "outputLanes": [],
+    "eventLanes": []
+  },
+  "statsAggregatorStage": null,
+  "previewable": false,
+  "info": {
+    "pipelineId": "randomToCoap",
+    "title": "Random To CoAP",
+    "description": "",
+    "created": 1526188042812,
+    "lastModified": 1526188664,
+    "creator": "admin",
+    "lastModifier": "admin",
+    "lastRev": "0",
+    "uuid": "cde48ab3-a231-4e70-a029-d66a7e3ace50",
+    "valid": true,
+    "metadata": {
+      "labels": []
     },
-    "inputLanes" : [ ],
-    "outputLanes" : [ ],
-    "eventLanes" : [ ]
+    "name": "randomToCoap",
+    "sdcVersion": "3.4.0-SNAPSHOT",
+    "sdcId": "d67e5ea5-553a-11e8-afdc-27d45acea1fe"
   },
-  "info" : {
-    "pipelineId" : "randomToCoap",
-    "title" : "randomToCoap",
-    "description" : "",
-    "created" : 1502553919358,
-    "lastModified" : 1502553919406,
-    "creator" : "admin",
-    "lastModifier" : "admin",
-    "lastRev" : "0",
-    "uuid" : "77676d7a-e380-4e72-9816-d0670e105986",
-    "valid" : true,
-    "metadata" : {
-      "labels" : [ ]
-    },
-    "name" : "randomToCoap",
-    "sdcVersion" : "2.7.0.0",
-    "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
+  "metadata": {
+    "labels": []
   },
-  "metadata" : {
-    "labels" : [ ]
-  },
-  "statsAggregatorStage" : null,
-  "startEventStages" : [ ],
-  "stopEventStages" : [ ],
-  "issues" : {
-    "pipelineIssues" : [ ],
-    "stageIssues" : { },
-    "issueCount" : 0
-  },
-  "previewable" : true,
-  "valid" : true
+  "fragments": []
 }

@@ -1,18 +1,18 @@
 {
-  "pipelineId" : "directoryToHttp",
-  "title" : "directoryToHttp",
-  "description" : "",
-  "created" : 1502552565099,
-  "lastModified" : 1502552578212,
-  "creator" : "admin",
-  "lastModifier" : "admin",
-  "lastRev" : "0",
-  "uuid" : "97119b01-f7a3-4050-b661-0fc7d423bc3a",
-  "valid" : true,
-  "metadata" : {
-    "labels" : [ ]
+  "pipelineId": "directoryToHttp",
+  "title": "Directory To HTTP",
+  "description": "",
+  "created": 1526188042592,
+  "lastModified": 1526188664,
+  "creator": "admin",
+  "lastModifier": "admin",
+  "lastRev": "0",
+  "uuid": "a95cf310-fd0c-4230-a611-f4ac20c7e0b0",
+  "valid": true,
+  "metadata": {
+    "labels": []
   },
-  "name" : "directoryToHttpf6fe6f9e-05aa-49b2-9eae-f545d60c1ca5",
-  "sdcVersion" : "2.7.0.0",
-  "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
+  "name": "directoryToHttp",
+  "sdcVersion": "3.4.0-SNAPSHOT",
+  "sdcId": "d67e5ea5-553a-11e8-afdc-27d45acea1fe"
 }

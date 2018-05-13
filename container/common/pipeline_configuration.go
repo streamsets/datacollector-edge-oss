@@ -71,6 +71,9 @@ type PipelineInfo struct {
 	UUID         string                 `json:"uuid"`
 	Valid        bool                   `json:"valid"`
 	Metadata     map[string]interface{} `json:"metadata"`
+	Name         string                 `json:"name"`
+	SdcVersion   string                 `json:"sdcVersion"`
+	SdcId        string                 `json:"sdcId"`
 }
 
 type Config struct {

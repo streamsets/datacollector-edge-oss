@@ -1,18 +1,18 @@
 {
-  "pipelineId" : "randomToFieldFilterToHttp",
-  "title" : "randomToFieldFilterToHttp",
-  "description" : "",
-  "created" : 1506965449940,
-  "lastModified" : 1506968838464,
-  "creator" : "admin",
-  "lastModifier" : "admin",
-  "lastRev" : "0",
-  "uuid" : "93630ab8-106b-4e95-a2ea-2aa68385a8d1",
-  "valid" : true,
-  "metadata" : {
-    "labels" : [ ]
+  "pipelineId": "randomToFieldFilterToHttp",
+  "title": "Random To Field Remover To HTTP",
+  "description": "",
+  "created": 1526188042951,
+  "lastModified": 1526188664,
+  "creator": "admin",
+  "lastModifier": "admin",
+  "lastRev": "0",
+  "uuid": "30cba5c7-5fc4-4647-9a6d-97656e50049d",
+  "valid": true,
+  "metadata": {
+    "labels": []
   },
-  "name" : "randomToFieldFilterToHttp",
-  "sdcVersion" : "2.7.0.0",
-  "sdcId" : "00681c14-9ca1-11e7-9bc2-595845b0cd84"
+  "name": "randomToFieldFilterToHttp",
+  "sdcVersion": "3.4.0-SNAPSHOT",
+  "sdcId": "d67e5ea5-553a-11e8-afdc-27d45acea1fe"
 }

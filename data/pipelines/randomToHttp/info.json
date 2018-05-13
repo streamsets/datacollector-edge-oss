@@ -1,18 +1,18 @@
 {
-  "pipelineId" : "randomToHttp",
-  "title" : "randomToHttp",
-  "description" : "",
-  "created" : 1502554011993,
-  "lastModified" : 1502554052034,
-  "creator" : "admin",
-  "lastModifier" : "admin",
-  "lastRev" : "0",
-  "uuid" : "2fc9e936-60fa-4147-913c-5b30ef6a3b71",
-  "valid" : true,
-  "metadata" : {
-    "labels" : [ ]
+  "pipelineId": "randomToHttp",
+  "title": "Random To HTTP",
+  "description": "",
+  "created": 1526188043018,
+  "lastModified": 1526188664,
+  "creator": "admin",
+  "lastModifier": "admin",
+  "lastRev": "0",
+  "uuid": "e7ff93df-5b4c-4218-9195-7ee7c17d328a",
+  "valid": true,
+  "metadata": {
+    "labels": []
   },
-  "name" : "randomToHttp",
-  "sdcVersion" : "2.7.0.0",
-  "sdcId" : "8a12d6ca-7e3b-11e7-a048-91430e5997d6"
+  "name": "randomToHttp",
+  "sdcVersion": "3.4.0-SNAPSHOT",
+  "sdcId": "d67e5ea5-553a-11e8-afdc-27d45acea1fe"
 }

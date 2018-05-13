@@ -172,15 +172,6 @@ func (store *FilePipelineStoreTask) Save(
 		return common.PipelineConfiguration{}, errors.New("Pipeline '" + pipelineId + " does not exist")
 	}
 
-	savedInfo, err := store.GetInfo(pipelineId)
-	if err != nil {
-		return pipelineConfiguration, err
-	}
-
-	if savedInfo.UUID != pipelineConfiguration.UUID {
-		return pipelineConfiguration, errors.New("The pipeline '" + pipelineId + "' has been changed.")
-	}
-
 	currentTime := time.Now().Unix()
 	pipelineUuid := uuid.NewV4().String()
 	pipelineInfo := pipelineConfiguration.Info
