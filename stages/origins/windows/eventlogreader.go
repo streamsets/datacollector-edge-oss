@@ -31,8 +31,10 @@ import (
 )
 
 const (
-	bufferSize uint32 = 10240
-	eventSize         = uint32(unsafe.Sizeof(w32.EVENTLOGRECORD{}))
+	//https://msdn.microsoft.com/en-us/library/windows/desktop/aa363674(v=vs.85).aspx
+	// -> Max buffer size allowed 0x7ffff (which is equal to 524287)
+	BufferSize uint32 = 524287
+	EventSize = uint32(unsafe.Sizeof(w32.EVENTLOGRECORD{}))
 )
 
 type EventLogReaderMode string
@@ -171,9 +173,9 @@ func (elreader *EventLogReader) determineFirstEventToRead() error {
 // we don't return EOF, we just return an empty slice
 func (elreader *EventLogReader) read(flags uint32, offset uint32, maxRecords int) ([]EventLogRecord, error) {
 	events := make([]EventLogRecord, 0, maxRecords)
-	buffer := make([]byte, bufferSize)
+	buffer := make([]byte, BufferSize)
 	var read, needs uint32
-	if w32.ReadEventLog(elreader.handle, flags, offset, buffer, bufferSize, &read, &needs) {
+	if w32.ReadEventLog(elreader.handle, flags, offset, buffer, BufferSize, &read, &needs) {
 		if read == 0 {
 			return events, nil
 		}
@@ -191,7 +193,7 @@ func (elreader *EventLogReader) read(flags uint32, offset uint32, maxRecords int
 			} else if err != nil {
 				return nil, err
 			}
-			bytesLeft := event.Length - eventSize
+			bytesLeft := event.Length - EventSize
 			eventData := make([]byte, bytesLeft, bytesLeft)
 			_, err = io.ReadFull(reader, eventData)
 			if err != nil {
@@ -203,7 +205,7 @@ func (elreader *EventLogReader) read(flags uint32, offset uint32, maxRecords int
 			event.ComputerName = strs[1]
 			// extract message strings
 			if event.NumStrings > 0 {
-				strOffset := event.StringOffset - eventSize
+				strOffset := event.StringOffset - EventSize
 				eventData := eventData[strOffset:]
 				event.MsgStrings = extractStrings(eventData, uint16(event.NumStrings))
 			}
