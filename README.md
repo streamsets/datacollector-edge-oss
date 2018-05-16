@@ -14,6 +14,9 @@
 
 ![Data Collector Edge Splash Image](sdcEdgeSplash.png)
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/streamsets/datacollector-edge)](https://goreportcard.com/report/github.com/streamsets/datacollector-edge)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fstreamsets%2Fdatacollector-edge.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fstreamsets%2Fdatacollector-edge?ref=badge_shield)
+
 # What is StreamSets Data Collector Edge?
 
 The StreamSets Data Collector Edge (SDC Edge) enables at-scale data ingestion and analytics for edge systems.
@@ -26,8 +29,6 @@ To learn more, check out [https://streamsets.com/products/streamsets-data-collec
 
 StreamSets Data Collector Edge is built on open source technologies, our code is licensed with the
 [Apache License 2.0](LICENSE.txt).
-
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fstreamsets%2Fdatacollector-edge.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fstreamsets%2Fdatacollector-edge?ref=badge_shield)
 
 ## Getting Help
 
