@@ -4,6 +4,7 @@
 
 * Go 1.9
 * Gradle 4.2
+* Java 8u101 (for supporting Let's Encrypt SSL Certificates as used by gopkg.in)
 * Docker 18.03-ce with experimental features enabled (add “experimental”: “enabled” to your `~/.docker/config.json`)
 
 ## Clone Repository
