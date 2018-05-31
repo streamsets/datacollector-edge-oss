@@ -27,6 +27,7 @@ const (
 	EmailIds             = "emailIDs"
 	Constants            = "constants"
 	BadRecordsHandling   = "badRecordsHandling"
+	TestOriginStage      = "testOriginStage"
 	RateLimit            = "rateLimit"
 	MaxRunners           = "maxRunners"
 	StatsAggregatorStage = "statsAggregatorStage"
@@ -52,6 +53,7 @@ type PipelineConfigBean struct {
 	EmailIDs             []interface{}
 	Constants            map[string]interface{}
 	BadRecordsHandling   string
+	TestOriginStage      string
 	ErrorRecordPolicy    string
 	StatsAggregatorStage string
 	RateLimit            float64
@@ -94,6 +96,8 @@ func NewPipelineConfigBean(pipelineConfig common.PipelineConfiguration) Pipeline
 			pipelineConfigBean.ErrorRecordPolicy = config.Value.(string)
 		case BadRecordsHandling:
 			pipelineConfigBean.BadRecordsHandling = config.Value.(string)
+		case TestOriginStage:
+			pipelineConfigBean.TestOriginStage = config.Value.(string)
 		case StatsAggregatorStage:
 			pipelineConfigBean.StatsAggregatorStage = config.Value.(string)
 		case RateLimit:

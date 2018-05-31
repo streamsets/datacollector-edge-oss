@@ -34,6 +34,7 @@ func (webServerTask *WebServerTask) preview(w http.ResponseWriter, r *http.Reque
 	batchSize := 10
 	skipTargets := true
 	timeout := int64(30000)
+	testOrigin := false
 
 	pipelineId := ps.ByName("pipelineId")
 	if i, err := strconv.Atoi(r.URL.Query().Get("batches")); err == nil {
@@ -47,6 +48,9 @@ func (webServerTask *WebServerTask) preview(w http.ResponseWriter, r *http.Reque
 	}
 	if i, err := strconv.ParseInt(r.URL.Query().Get("timeout"), 10, 64); err == nil {
 		timeout = i
+	}
+	if b, err := strconv.ParseBool(r.URL.Query().Get("testOrigin")); err == nil {
+		testOrigin = b
 	}
 	endStage := r.URL.Query().Get("endStage")
 
@@ -71,7 +75,7 @@ func (webServerTask *WebServerTask) preview(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = previewer.Start(batches, batchSize, skipTargets, endStage, stageOutputsToOverride, timeout)
+	err = previewer.Start(batches, batchSize, skipTargets, endStage, stageOutputsToOverride, timeout, testOrigin)
 	if err != nil {
 		serverErrorReq(w, err.Error())
 		return

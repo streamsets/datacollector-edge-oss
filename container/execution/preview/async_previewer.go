@@ -37,8 +37,9 @@ func (p *AsyncPreviewer) Start(
 	stopStage string,
 	stagesOverride []execution.StageOutputJson,
 	timeoutMillis int64,
+	testOrigin bool,
 ) error {
-	go p.syncPreviewer.Start(batches, batchSize, skipTargets, stopStage, stagesOverride, timeoutMillis)
+	go p.syncPreviewer.Start(batches, batchSize, skipTargets, stopStage, stagesOverride, timeoutMillis, testOrigin)
 	return nil
 }
 

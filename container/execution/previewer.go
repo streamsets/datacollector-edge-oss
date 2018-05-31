@@ -22,6 +22,7 @@ type Previewer interface {
 		stopStage string,
 		stagesOverride []StageOutputJson,
 		timeoutMillis int64,
+		testOrigin bool,
 	) error
 	Stop() error
 	GetStatus() string

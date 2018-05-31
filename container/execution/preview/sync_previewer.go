@@ -89,6 +89,7 @@ func (p *SyncPreviewer) Start(
 	stopStage string,
 	stagesOverride []execution.StageOutputJson,
 	timeoutMillis int64,
+	testOrigin bool,
 ) error {
 	p.previewOutput.PreviewStatus = Starting
 	var err error
@@ -96,6 +97,10 @@ func (p *SyncPreviewer) Start(
 	if err != nil {
 		p.previewOutput.Message = err.Error()
 		return err
+	}
+
+	if testOrigin && p.pipelineConfig.TestOriginStage != nil {
+		p.pipelineConfig.Stages[0] = p.pipelineConfig.TestOriginStage
 	}
 
 	previewPipeline, err := NewPreviewPipeline(p.config, p.pipelineConfig)

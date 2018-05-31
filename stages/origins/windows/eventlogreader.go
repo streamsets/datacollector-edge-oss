@@ -31,7 +31,7 @@ const (
 	//https://msdn.microsoft.com/en-us/library/windows/desktop/aa363674(v=vs.85).aspx
 	// -> Max buffer size allowed 0x7ffff (which is equal to 524287)
 	BufferSize uint32 = 524287
-	EventSize = uint32(unsafe.Sizeof(w32.EVENTLOGRECORD{}))
+	EventSize         = uint32(unsafe.Sizeof(w32.EVENTLOGRECORD{}))
 )
 
 type EventLogReaderMode string

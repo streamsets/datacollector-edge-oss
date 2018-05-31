@@ -13,8 +13,8 @@
 package common
 
 const (
-	PipelineConfigSchemaVersion = 5
-	PipelineConfigVersion       = 9
+	PipelineConfigSchemaVersion = 6
+	PipelineConfigVersion       = 10
 	ErrorRecordPolicyOriginal   = "ORIGINAL_RECORD"
 	ErrorRecordPolicyStage      = "STAGE_RECORD"
 	FragmentSourceStageName     = "com_streamsets_pipeline_stage_origin_fragment_FragmentSource"
@@ -35,6 +35,7 @@ type PipelineConfiguration struct {
 	UiInfo               map[string]interface{}           `json:"uiInfo"`
 	Stages               []*StageConfiguration            `json:"stages"`
 	ErrorStage           *StageConfiguration              `json:"errorStage"`
+	TestOriginStage      *StageConfiguration              `json:"testOriginStage"`
 	StatsAggregatorStage *StageConfiguration              `json:"statsAggregatorStage"`
 	Previewable          bool                             `json:"previewable"`
 	Info                 PipelineInfo                     `json:"info"`
@@ -53,6 +54,7 @@ type PipelineFragmentConfiguration struct {
 	Configuration      []Config                         `json:"configuration"`
 	UiInfo             map[string]interface{}           `json:"uiInfo"`
 	Stages             []*StageConfiguration            `json:"stages"`
+	TestOriginStage    *StageConfiguration              `json:"testOriginStage"`
 	Previewable        bool                             `json:"previewable"`
 	Info               PipelineInfo                     `json:"info"`
 	Metadata           map[string]interface{}           `json:"metadata"`
