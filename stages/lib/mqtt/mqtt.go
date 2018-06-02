@@ -27,6 +27,9 @@ type MqttClientConfigBean struct {
 	BrokerUrl string `ConfigDef:"type=STRING,required=true"`
 	ClientId  string `ConfigDef:"type=STRING,required=true"`
 	Qos       string `ConfigDef:"type=STRING,required=true"`
+	UseAuth   bool   `ConfigDef:"type=BOOLEAN,required=true"`
+	Username  string `ConfigDef:"type=STRING,required=true"`
+	Password  string `ConfigDef:"type=STRING,required=true"`
 }
 
 type MqttConnector struct {
@@ -40,6 +43,12 @@ func (m *MqttConnector) InitializeClient(commonConf MqttClientConfigBean) error 
 		return err
 	}
 	opts := MQTT.NewClientOptions().AddBroker(commonConf.BrokerUrl).SetClientID(commonConf.ClientId)
+
+	if commonConf.UseAuth {
+		opts.SetUsername(commonConf.Username)
+		opts.SetPassword(commonConf.Password)
+	}
+
 	m.Client = MQTT.NewClient(opts)
 	if token := m.Client.Connect(); token.Wait() && token.Error() != nil {
 		return token.Error()
