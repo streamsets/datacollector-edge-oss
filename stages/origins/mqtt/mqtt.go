@@ -85,7 +85,9 @@ func (ms *MqttClientSource) Produce(
 ) (*string, error) {
 	log.Debug("MqttClientSource - Produce method")
 	record := <-ms.incomingRecords
-	batchMaker.AddRecord(record)
+	if record != nil {
+		batchMaker.AddRecord(record)
+	}
 	return &stringOffset, nil
 }
 
