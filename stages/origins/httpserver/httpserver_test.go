@@ -42,7 +42,7 @@ func TestHttpServerOrigin_Init(t *testing.T) {
 	appId := "edge"
 
 	stageContext := getStageContext(portNumber, appId, nil)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}

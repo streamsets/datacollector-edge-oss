@@ -66,7 +66,7 @@ func getStageContext(
 
 func TestInvalidFilePath(t *testing.T) {
 	stageContext := getStageContext("/no/such/file", 2, 1000, "TEXT")
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 		return
@@ -101,7 +101,7 @@ func TestValidFilePath(t *testing.T) {
 	}
 
 	stageContext := getStageContext(filePath, 2, 4, "TEXT")
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -192,7 +192,7 @@ func TestFileTailOrigin_Produce_JSON(t *testing.T) {
 	}
 
 	stageContext := getStageContext(filePath, 2, 4, "JSON")
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -239,7 +239,7 @@ func _TestChannelDeadlockIssue(t *testing.T) {
 	filePath1 := "/Users/test/dpm.log"
 
 	stageContext := getStageContext(filePath1, 2, 1000, "TEXT")
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -285,7 +285,7 @@ func TestFileTailOrigin_offsetIssue(t *testing.T) {
 	}
 
 	stageContext := getStageContext(filePath, 2, 10, "JSON")
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}

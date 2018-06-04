@@ -37,6 +37,7 @@ type StageContextImpl struct {
 	ErrorStage        bool
 	ErrorRecordPolicy string
 	Services          map[string]api.Service
+	ElContext         context.Context
 }
 
 func (s *StageContextImpl) GetResolvedValue(configValue interface{}) (interface{}, error) {
@@ -67,7 +68,7 @@ func (s *StageContextImpl) GetResolvedValue(configValue interface{}) (interface{
 
 func (s *StageContextImpl) resolveIfImplicitEL(configValue string) (interface{}, error) {
 	if el.IsElString(configValue) {
-		return el.Evaluate(configValue, "configName", s.Parameters)
+		return el.Evaluate(configValue, "configName", s.Parameters, nil)
 	} else {
 		return configValue, nil
 	}
@@ -130,6 +131,7 @@ func (s *StageContextImpl) Evaluate(
 				&el.MathEL{},
 				&el.RecordEL{Context: ctx},
 				&el.MapListEL{},
+				&el.PipelineEL{Context: s.ElContext},
 			},
 		)
 		return evaluator.Evaluate(value)
@@ -208,6 +210,7 @@ func NewStageContext(
 	errorStage bool,
 	errorRecordPolicy string,
 	services map[string]api.Service,
+	elContext context.Context,
 ) (*StageContextImpl, error) {
 	stageContext := &StageContextImpl{
 		StageConfig:       stageConfig,
@@ -217,6 +220,7 @@ func NewStageContext(
 		ErrorStage:        errorStage,
 		ErrorRecordPolicy: errorRecordPolicy,
 		Services:          services,
+		ElContext:         elContext,
 	}
 
 	return stageContext, nil

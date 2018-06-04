@@ -121,7 +121,7 @@ func createFileAndWriteContents(t *testing.T, filePath string, data string) {
 }
 
 func createSpooler(t *testing.T, stageContext *common.StageContextImpl) api.Stage {
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}

@@ -44,7 +44,7 @@ func createStageContext(logName string) *common.StageContextImpl {
 }
 
 func testWindowsEventLogRead(t *testing.T, logName string, maxBatchSize int) {
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}

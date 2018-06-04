@@ -54,7 +54,7 @@ func getStageContext() *common.StageContextImpl {
 
 func TestHttpServerOrigin_Init(t *testing.T) {
 	stageContext := getStageContext()
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -85,7 +85,7 @@ func TestHttpServerOrigin_Init(t *testing.T) {
 
 func TestSelectorProcessor(t *testing.T) {
 	stageContext := getStageContext()
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}

@@ -44,7 +44,7 @@ func TestFieldRemoverProcessor_Init(t *testing.T) {
 	fields := []interface{}{"/a", "/b", "/c"}
 	filterOperation := REMOVE
 	stageContext := getStageContext(fields, filterOperation, nil)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -59,7 +59,7 @@ func TestFieldRemoverProcessor_InitUnsupported(t *testing.T) {
 	fields := []interface{}{"/a", "/b", "/c"}
 	filterOperation := "SOMEFILTER"
 	stageContext := getStageContext(fields, filterOperation, nil)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -74,7 +74,7 @@ func TestFieldRemoverProcessor_InitUnexpected(t *testing.T) {
 	fields := []interface{}{"/a", 11, "/c"}
 	filterOperation := "KEEP"
 	stageContext := getStageContext(fields, filterOperation, nil)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -90,7 +90,7 @@ func TestFieldRemoverProcessorRemove(t *testing.T) {
 	filterOperation := REMOVE
 	stageContext := getStageContext(fields, filterOperation, nil)
 
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -143,7 +143,7 @@ func TestFieldRemoverProcessorKeep(t *testing.T) {
 	filterOperation := KEEP
 	stageContext := getStageContext(fields, filterOperation, nil)
 
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -177,7 +177,7 @@ func TestFieldRemoverProcessorRemoveNull(t *testing.T) {
 	filterOperation := REMOVE_NULL
 	stageContext := getStageContext(fields, filterOperation, nil)
 
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}

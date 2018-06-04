@@ -258,7 +258,7 @@ func TestRecordEL(test *testing.T) {
 	}
 
 	record := &MockRecord{}
-	recordContext := context.WithValue(context.Background(), RECORD_CONTEXT_VAR, record)
+	recordContext := context.WithValue(context.Background(), RecordContextVar, record)
 	RunEvaluationTests(evaluationTests, []Definitions{&RecordEL{Context: recordContext}}, test)
 }
 

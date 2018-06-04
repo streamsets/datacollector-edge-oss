@@ -53,7 +53,7 @@ func getStageContext(
 func TestDevRandom_Init(t *testing.T) {
 	fields := "a,b,c"
 	stageContext := getStageContext(fields, 10, 922337203685, nil)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -72,7 +72,7 @@ func TestDevRandomOrigin(t *testing.T) {
 	fields := "a,b,c"
 	stageContext := getStageContext(fields, 10, 922337203685, nil)
 
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -118,7 +118,7 @@ func TestDevRandomOrigin(t *testing.T) {
 func TestDevRandom_Init_Parameter(t *testing.T) {
 	fields := "${fields}"
 	stageContext := getStageContext(fields, 10, 922337203685, nil)
-	_, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	_, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err == nil || !strings.Contains(err.Error(), "No parameter 'fields' found") {
 		t.Error("Excepted error - No parameter 'fields' found")
 	}
@@ -130,7 +130,7 @@ func TestDevRandom_Init_StringEL(t *testing.T) {
 		"FIELDS_PARAM": "x,y,z  ",
 	}
 	stageContext := getStageContext(fields, 10, 922337203685, parameters)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -176,7 +176,7 @@ func TestDevRandomOrigin_MaxRecordsToGenerate(t *testing.T) {
 	fields := "a,b,c"
 	stageContext := getStageContext(fields, 10, 3, nil)
 
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}

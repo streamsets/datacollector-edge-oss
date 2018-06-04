@@ -65,7 +65,7 @@ func TestMqttClientSource_Init(t *testing.T) {
 	dataFormat := "JSON"
 
 	stageContext := getStageContext(brokerUrl, clientId, qos, topicFilters, dataFormat, nil)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 		return

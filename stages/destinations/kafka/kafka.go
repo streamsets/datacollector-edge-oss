@@ -175,7 +175,7 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 	// SDCE-176 - Support sending single message per batch in Kafka destination
 
 	for _, record := range batch.GetRecords() {
-		recordContext := context.WithValue(context.Background(), el.RECORD_CONTEXT_VAR, record)
+		recordContext := context.WithValue(context.Background(), el.RecordContextVar, record)
 
 		recordBuffer := bytes.NewBuffer([]byte{})
 		recordWriter, err := recordWriterFactory.CreateWriter(dest.GetStageContext(), recordBuffer)

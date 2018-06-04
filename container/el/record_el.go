@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	RECORD_CONTEXT_VAR = "record"
+	RecordContextVar = "record"
 )
 
 type RecordEL struct {
@@ -170,7 +170,7 @@ func (r *RecordEL) Exists(args ...interface{}) (interface{}, error) {
 
 func (r *RecordEL) getRecordInContext() (api.Record, error) {
 	if r.Context != nil {
-		record := r.Context.Value(RECORD_CONTEXT_VAR).(api.Record)
+		record := r.Context.Value(RecordContextVar).(api.Record)
 		if record != nil {
 			return record, nil
 		}

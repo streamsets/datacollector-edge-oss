@@ -46,7 +46,7 @@ func getStageContext(resourceUrl string, coapMethod string, messageType string) 
 
 func TestConfirmableMessage(t *testing.T) {
 	stageContext := getStageContext("coap://localhost:56831/sdc", POST, CONFIRMABLE)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -77,7 +77,7 @@ func TestConfirmableMessage(t *testing.T) {
 
 func TestNonConfirmableMessage(t *testing.T) {
 	stageContext := getStageContext("coap://localhost:45/sdc", POST, NONCONFIRMABLE)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}

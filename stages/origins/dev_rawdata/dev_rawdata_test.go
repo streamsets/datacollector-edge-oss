@@ -62,7 +62,7 @@ func getStageContext(
 func TestDevRawDataDSource_Init(t *testing.T) {
 	rawData := "text1\n text2"
 	stageContext := getStageContext(rawData, "TEXT", nil)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -77,7 +77,7 @@ func TestDevRandomOrigin_TextFormat(t *testing.T) {
 	rawData := "text1\n text2"
 	stageContext := getStageContext(rawData, "TEXT", nil)
 
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -124,7 +124,7 @@ func TestDevRandomOrigin_JsonFormat(t *testing.T) {
 	rawData := "{\n  \"f1\": \"abc\"\n}\n{\n  \"f1\": \"xyz\"\n}"
 	stageContext := getStageContext(rawData, "JSON", nil)
 
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}

@@ -55,7 +55,7 @@ func TestHttpClientDestination_Init(t *testing.T) {
 	}
 
 	stageContext := getStageContext(resourceUrl, headers, nil)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 		return

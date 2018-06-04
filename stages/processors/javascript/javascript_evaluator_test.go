@@ -85,7 +85,7 @@ func TestJavaScriptProcessor_Success(t *testing.T) {
 	`
 	destroyScript := `state.counter = -1;`
 	stageContext, errSink := getStageContext(BATCH_PROCESSING_MODE, initScript, script, destroyScript)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,7 +179,7 @@ func TestJavaScriptProcessor_Failure(t *testing.T) {
 	`
 	destroyScript := `state.counter = -1;`
 	stageContext, errSink := getStageContext(BATCH_PROCESSING_MODE, initScript, script, destroyScript)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -253,7 +253,7 @@ func TestJavaScriptProcessor_TypedNullObject(t *testing.T) {
 	`
 	destroyScript := `state.counter = -1;`
 	stageContext, _ := getStageContext(BATCH_PROCESSING_MODE, initScript, script, destroyScript)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

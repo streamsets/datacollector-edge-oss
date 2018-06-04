@@ -66,7 +66,7 @@ func (f *ExpressionProcessor) Init(stageContext api.StageContext) []validation.I
 
 func (f *ExpressionProcessor) Process(batch api.Batch, batchMaker api.BatchMaker) error {
 	for _, record := range batch.GetRecords() {
-		recordContext := context.WithValue(context.Background(), el.RECORD_CONTEXT_VAR, record)
+		recordContext := context.WithValue(context.Background(), el.RecordContextVar, record)
 		var err error
 		var evaluatedRes interface{}
 		for _, exprProcessorConfig := range f.ExpressionProcessorConfigs {

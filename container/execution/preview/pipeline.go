@@ -168,6 +168,7 @@ func NewPreviewPipeline(
 			false,
 			pipelineConfigForParam.ErrorRecordPolicy,
 			services,
+			pipelineBean.ElContext,
 		)
 		if err != nil {
 			return nil, err
@@ -185,6 +186,7 @@ func NewPreviewPipeline(
 		true,
 		pipelineConfigForParam.ErrorRecordPolicy,
 		nil,
+		pipelineBean.ElContext,
 	)
 	if err != nil {
 		return nil, err

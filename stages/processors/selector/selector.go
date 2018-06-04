@@ -78,7 +78,7 @@ func (s *SelectorProcessor) parsePredicateLanes() error {
 
 func (s *SelectorProcessor) Process(batch api.Batch, batchMaker api.BatchMaker) error {
 	for _, record := range batch.GetRecords() {
-		recordContext := context.WithValue(context.Background(), el.RECORD_CONTEXT_VAR, record)
+		recordContext := context.WithValue(context.Background(), el.RecordContextVar, record)
 		matchedAtLeastOnePredicate := false
 		for _, predicateLaneMap := range s.LanePredicates {
 			if predicateLaneMap[OUTPUT_LANE] != s.defaultLane {

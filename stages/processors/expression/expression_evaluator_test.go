@@ -74,7 +74,7 @@ func getStageContext() (*common.StageContextImpl, *common.ErrorSink) {
 
 func TestExpressionProcessor_Success(t *testing.T) {
 	stageContext, errSink := getStageContext()
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -146,7 +146,7 @@ func TestExpressionProcessor_Error(t *testing.T) {
 			EXPRESSION:       "${unsupport:unsupported()}",
 		}},
 	}
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	stageInstance := stageBean.Stage.(*ExpressionProcessor)
 	if stageInstance == nil {
 		t.Fatal("Failed to create stage instance")
@@ -186,7 +186,7 @@ func TestExpressionProcessor_DefaultConfig(t *testing.T) {
 	})
 	stageContext.StageConfig.Configuration[0].Value = fieldValueConfigs
 
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

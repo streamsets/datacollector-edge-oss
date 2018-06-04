@@ -12,7 +12,10 @@
 // limitations under the License.
 package el
 
-import "strings"
+import (
+	"context"
+	"strings"
+)
 
 const (
 	NAMESPACE_FN_SEPARATOR = ":"
@@ -23,12 +26,20 @@ func IsElString(configValue string) bool {
 		strings.HasSuffix(configValue, PARAMETER_SUFFIX)
 }
 
-func Evaluate(value string, configName string, parameters map[string]interface{}) (interface{}, error) {
+func Evaluate(
+	value string,
+	configName string,
+	parameters map[string]interface{},
+	elContext context.Context,
+) (interface{}, error) {
 	evaluator, _ := NewEvaluator(
 		configName,
 		parameters,
 		[]Definitions{
 			&StringEL{},
+			&MathEL{},
+			&MapListEL{},
+			&PipelineEL{Context: elContext},
 		},
 	)
 	return evaluator.Evaluate(value)

@@ -13,6 +13,7 @@
 package creation
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
@@ -57,6 +58,7 @@ func (s *StageBean) IsTarget() bool {
 func NewStageBean(
 	stageConfig *common.StageConfiguration,
 	runtimeParameters map[string]interface{},
+	elContext context.Context,
 ) (StageBean, error) {
 	stageBean := StageBean{}
 
@@ -78,6 +80,7 @@ func NewStageBean(
 		configMap,
 		stageDefinition.ConfigDefinitionsMap,
 		runtimeParameters,
+		elContext,
 	)
 	if err != nil {
 		return stageBean, err
@@ -109,6 +112,7 @@ func NewStageBean(
 				configMap,
 				serviceDefinition.ConfigDefinitionsMap,
 				runtimeParameters,
+				elContext,
 			)
 			if err != nil {
 				return stageBean, err
@@ -128,6 +132,7 @@ func injectStageConfigs(
 	configMap map[string]common.Config,
 	configDefinitionsMap map[string]*common.ConfigDefinition,
 	runtimeParameters map[string]interface{},
+	elContext context.Context,
 ) error {
 	for i := 0; i < reflectValue.NumField(); i++ {
 		stageInstanceField := reflectValue.Field(i)
@@ -139,7 +144,7 @@ func injectStageConfigs(
 			configDef := configDefinitionsMap[configName]
 			config := configMap[configName]
 			if configDef != nil {
-				resolvedValue, err := getResolvedValue(configDef, config.Value, runtimeParameters)
+				resolvedValue, err := getResolvedValue(configDef, config.Value, runtimeParameters, elContext)
 				if err != nil {
 					return err
 				}
@@ -212,6 +217,7 @@ func injectStageConfigs(
 											listBeanValue.(map[string]interface{}),
 											configDef.Model.ConfigDefinitionsMap,
 											runtimeParameters,
+											elContext,
 										)
 										if err != nil {
 											return err
@@ -261,6 +267,7 @@ func injectStageConfigs(
 					configMap,
 					configDefinitionsMap,
 					runtimeParameters,
+					elContext,
 				)
 				if err != nil {
 					return err
@@ -278,6 +285,7 @@ func injectListBeanStageConfigs(
 	configMap map[string]interface{},
 	configDefinitionsMap map[string]*common.ConfigDefinition,
 	runtimeParameters map[string]interface{},
+	elContext context.Context,
 ) error {
 	for i := 0; i < reflectValue.NumField(); i++ {
 		stageInstanceField := reflectValue.Field(i)
@@ -289,7 +297,7 @@ func injectListBeanStageConfigs(
 			configDef := configDefinitionsMap[configName]
 			configValue := configMap[configName]
 			if configDef != nil {
-				resolvedValue, err := getResolvedValue(configDef, configValue, runtimeParameters)
+				resolvedValue, err := getResolvedValue(configDef, configValue, runtimeParameters, elContext)
 				if err != nil {
 					return err
 				}
@@ -340,6 +348,7 @@ func getResolvedValue(
 	configDef *common.ConfigDefinition,
 	configValue interface{},
 	runtimeParameters map[string]interface{},
+	elContext context.Context,
 ) (interface{}, error) {
 	var err error
 	if configDef.Evaluation == common.EVALUATION_EXPLICIT {
@@ -347,10 +356,10 @@ func getResolvedValue(
 	}
 	switch t := configValue.(type) {
 	case string:
-		return resolveIfImplicitEL(configValue.(string), runtimeParameters)
+		return resolveIfImplicitEL(configValue.(string), runtimeParameters, elContext)
 	case []interface{}:
 		for i, val := range t {
-			t[i], err = getResolvedValue(configDef, val, runtimeParameters)
+			t[i], err = getResolvedValue(configDef, val, runtimeParameters, elContext)
 			if err != nil {
 				return nil, err
 			}
@@ -358,7 +367,7 @@ func getResolvedValue(
 		return configValue, nil
 	case map[string]interface{}:
 		for k, v := range t {
-			t[k], err = getResolvedValue(configDef, v, runtimeParameters)
+			t[k], err = getResolvedValue(configDef, v, runtimeParameters, elContext)
 			if err != nil {
 				return nil, err
 			}
@@ -369,9 +378,13 @@ func getResolvedValue(
 	}
 }
 
-func resolveIfImplicitEL(configValue string, runtimeParameters map[string]interface{}) (interface{}, error) {
+func resolveIfImplicitEL(
+	configValue string,
+	runtimeParameters map[string]interface{},
+	elContext context.Context,
+) (interface{}, error) {
 	if el.IsElString(configValue) {
-		return el.Evaluate(configValue, "configName", runtimeParameters)
+		return el.Evaluate(configValue, "configName", runtimeParameters, elContext)
 	} else {
 		return configValue, nil
 	}

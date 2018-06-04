@@ -13,7 +13,9 @@
 package creation
 
 import (
+	"context"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/el"
 )
 
 type PipelineBean struct {
@@ -21,6 +23,7 @@ type PipelineBean struct {
 	Stages               []StageBean
 	ErrorStage           StageBean
 	StatsAggregatorStage StageBean
+	ElContext            context.Context
 }
 
 func NewPipelineBean(
@@ -32,9 +35,14 @@ func NewPipelineBean(
 
 	pipelineBean.Config = NewPipelineConfigBean(pipelineConfig)
 
+	elContext := context.WithValue(context.Background(), el.PipelineIdContextVar, pipelineConfig.PipelineId)
+	elContext = context.WithValue(elContext, el.PipelineTitleContextVar, pipelineConfig.Title)
+	elContext = context.WithValue(elContext, el.PipelineUserContextVar, pipelineConfig.Info.LastModifier)
+	pipelineBean.ElContext = elContext
+
 	stageBeans := make([]StageBean, len(pipelineConfig.Stages))
 	for i, stageConfig := range pipelineConfig.Stages {
-		stageBeans[i], err = NewStageBean(stageConfig, runtimeParameters)
+		stageBeans[i], err = NewStageBean(stageConfig, runtimeParameters, elContext)
 		if err != nil {
 			return pipelineBean, err
 		}
@@ -42,14 +50,15 @@ func NewPipelineBean(
 	pipelineBean.Stages = stageBeans
 
 	if pipelineConfig.ErrorStage.InstanceName != "" {
-		pipelineBean.ErrorStage, err = NewStageBean(pipelineConfig.ErrorStage, runtimeParameters)
+		pipelineBean.ErrorStage, err = NewStageBean(pipelineConfig.ErrorStage, runtimeParameters, elContext)
 		if err != nil {
 			return pipelineBean, err
 		}
 	}
 
 	if pipelineConfig.StatsAggregatorStage != nil && pipelineConfig.StatsAggregatorStage.InstanceName != "" {
-		pipelineBean.StatsAggregatorStage, err = NewStageBean(pipelineConfig.StatsAggregatorStage, runtimeParameters)
+		pipelineBean.StatsAggregatorStage, err =
+			NewStageBean(pipelineConfig.StatsAggregatorStage, runtimeParameters, elContext)
 		if err != nil {
 			return pipelineBean, err
 		}

@@ -39,7 +39,7 @@ func getStageContext(delay float64) *common.StageContextImpl {
 func TestDelayProcessor(t *testing.T) {
 	delay := float64(100)
 	stageContext := getStageContext(delay)
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}

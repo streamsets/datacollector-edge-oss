@@ -33,7 +33,7 @@ func getStageContext() *common.StageContextImpl {
 
 func TestIdentityProcessor(t *testing.T) {
 	stageContext := getStageContext()
-	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
