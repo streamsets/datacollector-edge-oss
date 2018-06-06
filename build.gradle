@@ -40,7 +40,7 @@ dependencies {
     }
 }
 
-def getLdFlags() {
+def getLdFlags(additionalFlag) {
     final buildDate=new Date().format("yyyy-MM-dd'T'HHmmss'Z'")
     final buildRepoSha = new ByteArrayOutputStream().withStream { gitShaCmdStream ->
            def result =  exec {
@@ -52,10 +52,11 @@ def getLdFlags() {
 
     final X_CONTAINER_COMMON_PATH = " -X ${gitPath}/container/common"
 
+
     "\"" + X_CONTAINER_COMMON_PATH + ".Version=${version}" +
         X_CONTAINER_COMMON_PATH + ".BuiltBy=" + System.properties['user.name'] +
         X_CONTAINER_COMMON_PATH + ".BuiltDate=" + buildDate +
-        X_CONTAINER_COMMON_PATH + ".BuiltRepoSha=" + buildRepoSha + "\""
+        X_CONTAINER_COMMON_PATH + ".BuiltRepoSha=" + buildRepoSha + additionalFlag + "\""
 }
 
 def doActionAllPlatforms(action) {
@@ -80,8 +81,6 @@ def getTagsParameter() {
     ""
 }
 
-final ldFlags = getLdFlags()
-
 final tagsParameter = getTagsParameter()
 
 clean {
@@ -90,7 +89,7 @@ clean {
 
 //By default builds for machine's target platforms
 build {
-    go "build ${tagsParameter} -ldflags ${ldFlags} -o dist/bin/${binaryName}\${GOEXE} ${gitPath}"
+    go "build ${tagsParameter} -ldflags ${getLdFlags("")} -o dist/bin/${binaryName}\${GOEXE} ${gitPath}"
 
     copy {
         doFirst{
@@ -137,7 +136,7 @@ task buildAll {
                 environment.GOEXE='.exe'
             }
 
-            go "build ${tagsParameter} -ldflags ${ldFlags} -o ${baseTarDir}/bin/${binaryName}\${GOEXE} ${gitPath}"
+            go "build ${tagsParameter} -ldflags ${getLdFlags(" -s -w")} -o ${baseTarDir}/bin/${binaryName}\${GOEXE} ${gitPath}"
         }
 
         def archiveName = "${appName}-" + "${version}" + '-' + goOs + '-' + goArch
