@@ -23,6 +23,7 @@ import (
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
+	"github.com/streamsets/datacollector-edge/stages/lib/httpcommon"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io/ioutil"
 	"net/http"
@@ -42,19 +43,9 @@ type HttpClientTargetConfig struct {
 	ResourceUrl               string                                  `ConfigDef:"type=STRING,required=true"`
 	Headers                   map[string]string                       `ConfigDef:"type=MAP,required=true"`
 	SingleRequestPerBatch     bool                                    `ConfigDef:"type=BOOLEAN,required=true"`
-	Client                    ClientConfigBean                        `ConfigDefBean:"client"`
+	Client                    httpcommon.ClientConfigBean             `ConfigDefBean:"client"`
 	DataFormat                string                                  `ConfigDef:"type=STRING,required=true"`
 	DataGeneratorFormatConfig datagenerator.DataGeneratorFormatConfig `ConfigDefBean:"dataGeneratorFormatConfig"`
-}
-
-type ClientConfigBean struct {
-	HttpCompression string        `ConfigDef:"type=STRING,required=true"`
-	TlsConfig       TlsConfigBean `ConfigDefBean:"tlsConfig"`
-}
-
-type TlsConfigBean struct {
-	TlsEnabled         bool   `ConfigDef:"type=BOOLEAN,required=true"`
-	TrustStoreFilePath string `ConfigDef:"type=STRING,required=true"`
 }
 
 func init() {

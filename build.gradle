@@ -37,6 +37,8 @@ dependencies {
         build name: 'github.com/satori/go.uuid', commit:'879c5887cd475cd7864858769793b2ceb0d44feb'
         build name: 'periph.io/x/periph', commit: '687bb43ba5ad417371dc0d1a1f7189119aafcede'
         build name: 'github.com/robertkrimen/otto', commit: '6c383dd335ef8dcccef05e651ce1eccfe4d0f011'
+        build name: 'github.com/mrjones/oauth', commit: '78d64468d6ec7b74e4b0d47cf61b4f4e288b944b'
+        build name: 'github.com/xinsnake/go-http-digest-auth-client', commit: '9da83de55d71220f00cbffb736dba373e6e683b1'
     }
 }
 
