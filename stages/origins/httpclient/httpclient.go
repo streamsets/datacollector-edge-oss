@@ -197,7 +197,7 @@ func (h *HttpClientOrigin) streamingModeProduce(
 
 	log.WithField("status", resp.Status).Debug("Response status")
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		bodyBytes, _ := ioutil.ReadAll(resp.Body)
 		bodyString := string(bodyBytes)
 		return &httpOffset, fmt.Errorf(HTTP03ErrorCode, resp.Status, bodyString)

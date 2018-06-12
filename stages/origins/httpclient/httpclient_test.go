@@ -37,7 +37,7 @@ func getStageContext(
 	return &common.StageContextImpl{
 		StageConfig: &stageConfig,
 		Parameters:  parameters,
-		ErrorSink:errorSink,
+		ErrorSink:   errorSink,
 	}
 }
 
@@ -288,7 +288,6 @@ func TestHttpClientOrigin_Produce_Polling_TEXT(t *testing.T) {
 	stageInstance.Destroy()
 }
 
-
 func TestHttpClientOrigin_Produce_STREAMING_JSON(t *testing.T) {
 	// create test server to return JSON data
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -297,7 +296,7 @@ func TestHttpClientOrigin_Produce_STREAMING_JSON(t *testing.T) {
 				"status": "success"
 			}
 		`
-		for i :=0; i< 30 ; i++  {
+		for i := 0; i < 30; i++ {
 			fmt.Fprint(w, sampleJSON)
 		}
 	}))
@@ -365,7 +364,6 @@ func TestHttpClientOrigin_Produce_STREAMING_JSON(t *testing.T) {
 	stageInstance.Destroy()
 }
 
-
 func TestHttpClientOrigin_Error_Response(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Sample Server Error", 500)
@@ -429,10 +427,8 @@ func TestHttpClientOrigin_Error_Response(t *testing.T) {
 		return
 	}
 
-
 	stageInstance.Destroy()
 }
-
 
 func TestHttpClientOrigin_Invalid_Data(t *testing.T) {
 	// create test server to return JSON data

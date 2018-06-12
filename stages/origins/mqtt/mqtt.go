@@ -25,34 +25,34 @@ import (
 )
 
 const (
-	LIBRARY           = "streamsets-datacollector-basic-lib"
-	STAGE_NAME        = "com_streamsets_pipeline_stage_origin_mqtt_MqttClientDSource"
-	TOPIC_HEADER_NAME = "topic"
+	Library         = "streamsets-datacollector-basic-lib"
+	StageName       = "com_streamsets_pipeline_stage_origin_mqtt_MqttClientDSource"
+	TopicHeaderName = "topic"
 )
 
-var stringOffset string = "mqtt-subscriber-offset"
+var defaultOffset = "mqtt-subscriber-offset"
 
-type MqttClientSource struct {
+type Origin struct {
 	*common.BaseStage
 	*mqttlib.MqttConnector
 	CommonConf      mqttlib.MqttClientConfigBean `ConfigDefBean:"commonConf"`
-	SubscriberConf  MqttClientSourceConfigBean   `ConfigDefBean:"subscriberConf"`
+	SubscriberConf  SubscriberConfigBean         `ConfigDefBean:"subscriberConf"`
 	incomingRecords chan api.Record
 }
 
-type MqttClientSourceConfigBean struct {
+type SubscriberConfigBean struct {
 	TopicFilters     []string                          `ConfigDef:"type=LIST,required=true"`
 	DataFormat       string                            `ConfigDef:"type=STRING,required=true"`
 	DataFormatConfig dataparser.DataParserFormatConfig `ConfigDefBean:"dataFormatConfig"`
 }
 
 func init() {
-	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
-		return &MqttClientSource{BaseStage: &common.BaseStage{}, MqttConnector: &mqttlib.MqttConnector{}}
+	stagelibrary.SetCreator(Library, StageName, func() api.Stage {
+		return &Origin{BaseStage: &common.BaseStage{}, MqttConnector: &mqttlib.MqttConnector{}}
 	})
 }
 
-func (ms *MqttClientSource) getTopicFilterAndQosMap() map[string]byte {
+func (ms *Origin) getTopicFilterAndQosMap() map[string]byte {
 	topicFilters := make(map[string]byte, len(ms.SubscriberConf.TopicFilters))
 	for _, topicFilter := range ms.SubscriberConf.TopicFilters {
 		topicFilters[topicFilter] = byte(ms.Qos)
@@ -60,39 +60,47 @@ func (ms *MqttClientSource) getTopicFilterAndQosMap() map[string]byte {
 	return topicFilters
 }
 
-func (ms *MqttClientSource) Init(stageContext api.StageContext) []validation.Issue {
-	log.Debug("MqttClientSource Init method")
+func (ms *Origin) Init(stageContext api.StageContext) []validation.Issue {
+	log.Debug("MQTT Subscriber Init method")
 	issues := ms.BaseStage.Init(stageContext)
 
 	ms.incomingRecords = make(chan api.Record)
 
-	err := ms.InitializeClient(ms.CommonConf)
-	if err == nil {
-		if token := ms.Client.SubscribeMultiple(
-			ms.getTopicFilterAndQosMap(),
-			ms.MessageHandler,
-		); token.Wait() && token.Error() != nil {
-			err = token.Error()
-		}
+	if err := ms.InitializeClient(ms.CommonConf); err != nil {
+		issues = append(issues, stageContext.CreateConfigIssue(err.Error()))
+		return issues
 	}
-	return ms.SubscriberConf.DataFormatConfig.Init(ms.SubscriberConf.DataFormat, stageContext, issues)
+
+	issues = ms.SubscriberConf.DataFormatConfig.Init(ms.SubscriberConf.DataFormat, stageContext, issues)
+	if len(issues) > 0 {
+		return issues
+	}
+
+	if token := ms.Client.SubscribeMultiple(
+		ms.getTopicFilterAndQosMap(),
+		ms.MessageHandler,
+	); token.Wait() && token.Error() != nil {
+		issues = append(issues, stageContext.CreateConfigIssue(token.Error().Error()))
+		return issues
+	}
+	return issues
 }
 
-func (ms *MqttClientSource) Produce(
+func (ms *Origin) Produce(
 	lastSourceOffset *string,
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
 ) (*string, error) {
-	log.Debug("MqttClientSource - Produce method")
+	log.Debug("MQTT Subscriber - Produce method")
 	record := <-ms.incomingRecords
 	if record != nil {
 		batchMaker.AddRecord(record)
 	}
-	return &stringOffset, nil
+	return &defaultOffset, nil
 }
 
-func (ms *MqttClientSource) Destroy() error {
-	log.Debug("MqttClientSource - Destroy method")
+func (ms *Origin) Destroy() error {
+	log.Debug("MQTT Subscriber - Destroy method")
 	ms.Client.Unsubscribe(ms.SubscriberConf.TopicFilters...).Wait()
 	ms.Client.Disconnect(250)
 	// Close channel after unsubscribe and disconnect
@@ -100,7 +108,7 @@ func (ms *MqttClientSource) Destroy() error {
 	return nil
 }
 
-func (ms *MqttClientSource) MessageHandler(client MQTT.Client, msg MQTT.Message) {
+func (ms *Origin) MessageHandler(client MQTT.Client, msg MQTT.Message) {
 	recordReaderFactory := ms.SubscriberConf.DataFormatConfig.RecordReaderFactory
 	recordBuffer := bytes.NewBufferString(string(msg.Payload()))
 	recordReader, err := recordReaderFactory.CreateReader(ms.GetStageContext(), recordBuffer, "mqtt")
@@ -118,7 +126,7 @@ func (ms *MqttClientSource) MessageHandler(client MQTT.Client, msg MQTT.Message)
 		if record == nil {
 			break
 		}
-		record.GetHeader().SetAttribute(TOPIC_HEADER_NAME, msg.Topic())
+		record.GetHeader().SetAttribute(TopicHeaderName, msg.Topic())
 		ms.incomingRecords <- record
 	}
 }

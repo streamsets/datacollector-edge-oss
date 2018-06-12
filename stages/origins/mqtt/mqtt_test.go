@@ -27,8 +27,8 @@ func getStageContext(
 	parameters map[string]interface{},
 ) *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
-	stageConfig.Library = LIBRARY
-	stageConfig.StageName = STAGE_NAME
+	stageConfig.Library = Library
+	stageConfig.StageName = StageName
 	stageConfig.Configuration = []common.Config{
 		{
 			Name:  "commonConf.brokerUrl",
@@ -76,29 +76,29 @@ func TestMqttClientSource_Init(t *testing.T) {
 		t.Error("Failed to create stage instance")
 	}
 
-	if stageInstance.(*MqttClientSource).CommonConf.BrokerUrl != brokerUrl {
+	if stageInstance.(*Origin).CommonConf.BrokerUrl != brokerUrl {
 		t.Error("Failed to inject config value for brokerUrl")
 	}
 
-	if stageInstance.(*MqttClientSource).CommonConf.ClientId != clientId {
+	if stageInstance.(*Origin).CommonConf.ClientId != clientId {
 		t.Error("Failed to inject config value for clientId")
 	}
 
-	if stageInstance.(*MqttClientSource).CommonConf.Qos != qos {
+	if stageInstance.(*Origin).CommonConf.Qos != qos {
 		t.Error("Failed to inject config value for qos")
 	}
 
-	if len(stageInstance.(*MqttClientSource).SubscriberConf.TopicFilters) != len(topicFilters) {
+	if len(stageInstance.(*Origin).SubscriberConf.TopicFilters) != len(topicFilters) {
 		t.Error("Failed to inject config value for topicFilters")
 		return
 	}
 
-	if stageInstance.(*MqttClientSource).SubscriberConf.TopicFilters[0] != topicFilters[0] {
+	if stageInstance.(*Origin).SubscriberConf.TopicFilters[0] != topicFilters[0] {
 		t.Error("Failed to inject config value for topicFilters")
 		return
 	}
 
-	if stageInstance.(*MqttClientSource).SubscriberConf.DataFormat != dataFormat {
+	if stageInstance.(*Origin).SubscriberConf.DataFormat != dataFormat {
 		t.Error("Failed to inject config value for dataFormat")
 	}
 }
