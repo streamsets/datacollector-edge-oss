@@ -15,10 +15,12 @@ package httpcommon
 import (
 	"crypto/tls"
 	"crypto/x509"
-	oauth1 "github.com/mrjones/oauth"
-	dac "github.com/xinsnake/go-http-digest-auth-client"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/hashicorp/go-cleanhttp"
+	oauth1 "github.com/mrjones/oauth"
+	dac "github.com/xinsnake/go-http-digest-auth-client"
 )
 
 const (
@@ -30,9 +32,8 @@ const (
 )
 
 type HttpCommon struct {
-	HttpClient      *http.Client
-	clientConfig    *ClientConfigBean
-	digestTransport dac.DigestTransport
+	HttpClient   *http.Client
+	clientConfig *ClientConfigBean
 }
 
 type ClientConfigBean struct {
@@ -60,71 +61,79 @@ type PasswordAuthConfigBean struct {
 	Password string `ConfigDef:"type=STRING,required=true"`
 }
 
+// InitializeClient configures an http.Client from a config bean
 func (h *HttpCommon) InitializeClient(clientConfig ClientConfigBean) error {
+	h.clientConfig = &clientConfig
+
 	var err error
-	if clientConfig.TlsConfig.TlsEnabled {
+	var caCertPool *x509.CertPool // nil CertPool will use system CA certs
+
+	// If the user specified a custom certs file, try to load it
+	if clientConfig.TlsConfig.TrustStoreFilePath != "" {
 		caCert, err := ioutil.ReadFile(clientConfig.TlsConfig.TrustStoreFilePath)
 		if err != nil {
 			return err
 		}
-		caCertPool := x509.NewCertPool()
+
+		// appending to the system cert pool rather than replacing it
+		caCertPool, err := x509.SystemCertPool()
+		if err != nil {
+			return err
+		}
 		caCertPool.AppendCertsFromPEM(caCert)
-
-		h.HttpClient = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					RootCAs:            caCertPool,
-					InsecureSkipVerify: true,
-				},
-			},
-		}
-	} else {
-		h.HttpClient = &http.Client{}
-	}
-	h.clientConfig = &clientConfig
-
-	if h.clientConfig.AuthType == OAuth {
-		c := oauth1.NewConsumer(
-			clientConfig.Oauth.ConsumerKey,
-			clientConfig.Oauth.ConsumerSecret,
-			oauth1.ServiceProvider{},
-		)
-		c.Debug(true)
-
-		t := oauth1.AccessToken{
-			Token:  clientConfig.Oauth.Token,
-			Secret: clientConfig.Oauth.TokenSecret,
-		}
-		h.HttpClient, err = c.MakeHttpClient(&t)
 	}
 
+	// creates a clean transport using sane defaults, but one
+	// that won't be shared with multiple client instances
+	httpTransport := cleanhttp.DefaultTransport()
+
+	// set our own TLS client configuration
+	httpTransport.TLSClientConfig = &tls.Config{
+		RootCAs: caCertPool,
+	}
+
+	// Our customized default client
+	h.HttpClient = &http.Client{
+		Transport: httpTransport,
+	}
+
+	// TODO: The transport is replaced by the digest auth library
+	// provided transport. This means our custom TLS settings will
+	// be lost. It doesn't appear this library allows us to chain
+	// transports or provide an http client. This will likely
+	// need to be revisited in the future with our own implementation
 	switch h.clientConfig.AuthType {
 	case Digest:
-		h.digestTransport = dac.NewTransport(h.clientConfig.BasicAuth.Username, h.clientConfig.BasicAuth.Password)
+		// Use digest library's transport
+		digestTransport := dac.NewTransport(h.clientConfig.BasicAuth.Username, h.clientConfig.BasicAuth.Password)
+		h.HttpClient.Transport = &digestTransport
 	case OAuth:
-		c := oauth1.NewConsumer(
+		consumer := oauth1.NewCustomHttpClientConsumer(
 			h.clientConfig.Oauth.ConsumerKey,
 			h.clientConfig.Oauth.ConsumerSecret,
 			oauth1.ServiceProvider{},
+			h.HttpClient,
 		)
-		t := oauth1.AccessToken{
+		token := oauth1.AccessToken{
 			Token:  h.clientConfig.Oauth.Token,
 			Secret: h.clientConfig.Oauth.TokenSecret,
 		}
-		h.HttpClient, err = c.MakeHttpClient(&t)
+		// Use OAuth library's transport
+		t, _ := consumer.MakeRoundTripper(&token)
+		h.HttpClient.Transport = t
 	}
 
 	return err
 }
 
-func (h *HttpCommon) Execute(req *http.Request) (resp *http.Response, err error) {
+func (h *HttpCommon) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	switch h.clientConfig.AuthType {
 	case Basic:
 		fallthrough
 	case Universal:
 		req.SetBasicAuth(h.clientConfig.BasicAuth.Username, h.clientConfig.BasicAuth.Password)
 	case Digest:
-		return h.digestTransport.RoundTrip(req)
+		// NO OP
 	}
 	return h.HttpClient.Do(req)
 }

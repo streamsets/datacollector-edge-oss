@@ -15,9 +15,9 @@ package http
 import (
 	"bytes"
 	"compress/gzip"
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
+	"net/http"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
@@ -25,8 +25,6 @@ import (
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	"github.com/streamsets/datacollector-edge/stages/lib/httpcommon"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
-	"io/ioutil"
-	"net/http"
 )
 
 const (
@@ -36,6 +34,7 @@ const (
 
 type HttpClientDestination struct {
 	*common.BaseStage
+	*httpcommon.HttpCommon
 	Conf HttpClientTargetConfig `ConfigDefBean:"conf"`
 }
 
@@ -56,7 +55,10 @@ func init() {
 
 func (h *HttpClientDestination) Init(stageContext api.StageContext) []validation.Issue {
 	issues := h.BaseStage.Init(stageContext)
-	log.Debug("HttpClientDestination Init method")
+	if err := h.InitializeClient(h.Conf.Client); err != nil {
+		issues = append(issues, stageContext.CreateConfigIssue(err.Error()))
+		return issues
+	}
 	return h.Conf.DataGeneratorFormatConfig.Init(h.Conf.DataFormat, stageContext, issues)
 }
 
@@ -136,29 +138,7 @@ func (h *HttpClientDestination) sendToSDC(jsonValue []byte) error {
 		req.Header.Set("Content-Encoding", "gzip")
 	}
 
-	var client *http.Client
-
-	if h.Conf.Client.TlsConfig.TlsEnabled {
-		caCert, err := ioutil.ReadFile(h.Conf.Client.TlsConfig.TrustStoreFilePath)
-		if err != nil {
-			return err
-		}
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
-
-		client = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					RootCAs:            caCertPool,
-					InsecureSkipVerify: true,
-				},
-			},
-		}
-	} else {
-		client = &http.Client{}
-	}
-
-	resp, err := client.Do(req)
+	resp, err := h.RoundTrip(req)
 	if err != nil {
 		return err
 	}
