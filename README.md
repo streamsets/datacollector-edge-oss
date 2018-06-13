@@ -60,6 +60,7 @@ If you need help with production systems, you can check out the variety of suppo
 * [Random Data To Http](data/pipelines/randomToHttp)
 * [HTTP Server To Trash](data/pipelines/httpServerToTrash)
 * [Random Data To Identity Processor To Trash](data/pipelines/randomToIdentityToTrash)
+* [Stream Ripple Ledger Information](data/pipelines/websocketClientToTrash)
 
 ## Contributing code
 

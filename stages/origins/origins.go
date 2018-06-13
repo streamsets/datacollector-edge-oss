@@ -21,5 +21,6 @@ import (
 	_ "github.com/streamsets/datacollector-edge/stages/origins/mqtt"
 	_ "github.com/streamsets/datacollector-edge/stages/origins/sensor_reader"
 	_ "github.com/streamsets/datacollector-edge/stages/origins/spooler"
+	_ "github.com/streamsets/datacollector-edge/stages/origins/websocketclient"
 	_ "github.com/streamsets/datacollector-edge/stages/origins/windows"
 )

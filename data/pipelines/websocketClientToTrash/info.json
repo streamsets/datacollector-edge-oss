@@ -1,0 +1,18 @@
+{
+  "pipelineId" : "websocketClientToTrash",
+  "title" : "Stream Ripple ledger information",
+  "description" : "The ledger events should be streamed per ledger close.",
+  "created" : 1528829995027,
+  "lastModified" : 1528831183633,
+  "creator" : "admin",
+  "lastModifier" : "admin",
+  "lastRev" : "0",
+  "uuid" : "c0ddfbfa-f27e-4a07-8841-710db7b88632",
+  "valid" : true,
+  "metadata" : {
+    "labels" : [ ]
+  },
+  "name" : "websocketClientToTrash",
+  "sdcVersion" : "3.4.0-SNAPSHOT",
+  "sdcId" : "d5363f2f-6e6e-11e8-9213-b7d9f0a1dc6b"
+}
