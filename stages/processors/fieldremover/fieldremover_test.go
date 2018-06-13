@@ -13,12 +13,14 @@
 package fieldremover
 
 import (
+	"reflect"
+	"strings"
+	"testing"
+
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
-	"strings"
-	"testing"
 )
 
 func getStageContext(fields []interface{}, filterOperation string, parameters map[string]interface{}) *common.StageContextImpl {
@@ -113,7 +115,7 @@ func TestFieldRemoverProcessorRemove(t *testing.T) {
 
 	err = stageInstance.(api.Processor).Process(batch, batchMaker)
 	if err != nil {
-		t.Error("Error in Identity Processor")
+		t.Error("Error in Field Remover Processor")
 	}
 
 	record := batchMaker.GetStageOutput()[0]
@@ -133,6 +135,47 @@ func TestFieldRemoverProcessorRemove(t *testing.T) {
 	record = batchMaker.GetStageOutput()[2]
 	if len(record.GetFieldPaths()) != 4 {
 		t.Error("Fields not removed properly")
+	}
+
+	stageInstance.Destroy()
+}
+
+func TestFieldRemoverProcessorRegexRemove(t *testing.T) {
+	fields := []interface{}{"^/(a.*)|(g)$"}
+	filterOperation := REMOVE
+	stageContext := getStageContext(fields, filterOperation, nil)
+
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		t.Error(err)
+	}
+	stageInstance := stageBean.Stage
+
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
+	}
+
+	records := make([]api.Record, 1)
+	records[0], _ = stageContext.CreateRecord(
+		"0",
+		map[string]interface{}{"a": 123, "ab": 456, "abc": 78, "def": map[string]interface{}{"az": 1, "g": 2}},
+	)
+
+	batch := runner.NewBatchImpl("fieldRemover", records, nil)
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+
+	err = stageInstance.(api.Processor).Process(batch, batchMaker)
+	if err != nil {
+		t.Error("error removing fields")
+	}
+
+	record := batchMaker.GetStageOutput()[0]
+	paths := record.GetFieldPaths()
+	expected := map[string]bool{"": true, "/def": true, "/def/az": true}
+
+	if !reflect.DeepEqual(paths, expected) {
+		t.Errorf("expected %v but got %v", expected, paths)
 	}
 
 	stageInstance.Destroy()
@@ -161,7 +204,7 @@ func TestFieldRemoverProcessorKeep(t *testing.T) {
 
 	err = stageInstance.(api.Processor).Process(batch, batchMaker)
 	if err != nil {
-		t.Error("Error in Identity Processor")
+		t.Error("Error in Field Remover Processor")
 	}
 
 	field, _ := batchMaker.GetStageOutput()[0].Get()
@@ -199,7 +242,7 @@ func TestFieldRemoverProcessorRemoveNull(t *testing.T) {
 
 	err = stageInstance.(api.Processor).Process(batch, batchMaker)
 	if err != nil {
-		t.Error("Error in Identity Processor")
+		t.Error("Error in Field Remover Processor")
 	}
 
 	record := batchMaker.GetStageOutput()[0]
@@ -212,4 +255,59 @@ func TestFieldRemoverProcessorRemoveNull(t *testing.T) {
 	}
 
 	stageInstance.Destroy()
+}
+
+func BenchmarkFieldRemover(b *testing.B) {
+	fields := []interface{}{"/a", "/b", "/c", "/e/f"}
+	filterOperation := REMOVE
+	stageContext := getStageContext(fields, filterOperation, nil)
+
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		b.Error(err)
+	}
+	stageInstance := stageBean.Stage
+
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		b.Error(issues[0].Message)
+	}
+	defer stageInstance.Destroy()
+
+	records := generateRecords(stageContext)
+	batch := runner.NewBatchImpl("fieldRemover", records, nil)
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+
+	for n := 0; n < b.N; n++ {
+		stageInstance.(api.Processor).Process(batch, batchMaker)
+	}
+}
+
+func generateRecords(context api.StageContext) []api.Record {
+	fields := []string{
+		"a",
+		"b",
+		"c",
+		"aa",
+		"ab",
+		"ac",
+		"abc",
+		"abcd",
+		"abcdef",
+		"def",
+		"xyz",
+	}
+
+	var records = make([]api.Record, 1000)
+	for count := 0; count < 1000; count++ {
+		var recordValue = make(map[string]interface{})
+		for _, field := range fields {
+			recordValue[field] = ""
+		}
+		recordID := common.CreateRecordId("dev-random", count)
+		record, _ := context.CreateRecord(recordID, recordValue)
+		records[count] = record
+	}
+
+	return records
 }

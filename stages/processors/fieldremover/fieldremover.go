@@ -13,8 +13,9 @@
 package fieldremover
 
 import (
-	"errors"
 	"fmt"
+	"regexp"
+
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
@@ -36,7 +37,7 @@ type FieldRemoverProcessor struct {
 	*common.BaseStage
 	Fields          []interface{} `ConfigDef:"type=LIST,required=true"`
 	FilterOperation string        `ConfigDef:"type=STRING,required=true"`
-	fieldList       []string
+	fieldList       []*regexp.Regexp
 }
 
 func init() {
@@ -48,14 +49,19 @@ func init() {
 func (f *FieldRemoverProcessor) Init(stageContext api.StageContext) []validation.Issue {
 	issues := f.BaseStage.Init(stageContext)
 
-	f.fieldList = make([]string, len(f.Fields))
+	f.fieldList = make([]*regexp.Regexp, len(f.Fields))
 	for i, field := range f.Fields {
 		fieldPath, ok := field.(string)
 		if !ok {
 			issues = append(issues, stageContext.CreateConfigIssue("Unexpected field list value"))
 			return issues
 		}
-		f.fieldList[i] = fieldPath
+
+		if re, err := regexp.Compile(fieldPath); err != nil {
+			issues = append(issues, stageContext.CreateConfigIssue("Field path %s cannot be compiled to a regular expression: %s", fieldPath, err.Error()))
+		} else {
+			f.fieldList[i] = re
+		}
 	}
 
 	if f.FilterOperation != KEEP && f.FilterOperation != REMOVE && f.FilterOperation != REMOVE_NULL {
@@ -68,49 +74,53 @@ func (f *FieldRemoverProcessor) Init(stageContext api.StageContext) []validation
 	return issues
 }
 
-func (f *FieldRemoverProcessor) Process(batch api.Batch, batchMaker api.BatchMaker) error {
-	for _, record := range batch.GetRecords() {
-		recordFieldPaths := record.GetFieldPaths()
-		fieldsPathsToRemove := []string{}
-		var err error
-		switch f.FilterOperation {
-		case REMOVE:
-			fallthrough
-		case REMOVE_NULL:
-			for _, fieldToRemove := range f.fieldList {
-				_, ok := recordFieldPaths[fieldToRemove]
-				if ok {
-					var recordField *api.Field
-					recordField, err = record.Get(fieldToRemove)
-					if err == nil {
-						if f.FilterOperation == REMOVE || (f.FilterOperation == REMOVE_NULL && recordField.Value == "") {
-							fieldsPathsToRemove = append(fieldsPathsToRemove, fieldToRemove)
-						}
-					}
-				}
-			}
-		case KEEP:
-			for _, fieldToKeep := range f.fieldList {
-				delete(recordFieldPaths, fieldToKeep)
-				for _, parentFieldPath := range f.getParentFields(fieldToKeep) {
-					delete(recordFieldPaths, parentFieldPath)
-				}
-			}
-			for fieldPathToRemove := range recordFieldPaths {
-				fieldsPathsToRemove = append(fieldsPathsToRemove, fieldPathToRemove)
+func filterPaths(paths map[string]bool, patterns []*regexp.Regexp) map[string]bool {
+	filtered := make(map[string]bool)
+
+OUTER:
+	for path := range paths {
+		// ignore the empty string path
+		if path == "" {
+			continue
+		}
+		for _, pattern := range patterns {
+			if pattern.MatchString(path) {
+				filtered[path] = true
+				continue OUTER
 			}
 		}
+	}
 
-		if err == nil {
-			for _, fieldPathToRemove := range fieldsPathsToRemove {
-				_, err = record.Delete(fieldPathToRemove)
+	return filtered
+}
+
+func (f *FieldRemoverProcessor) Process(batch api.Batch, batchMaker api.BatchMaker) error {
+	for _, record := range batch.GetRecords() {
+		recordPaths := record.GetFieldPaths()
+		filteredPaths := filterPaths(recordPaths, f.fieldList)
+		var err error
+
+		for path := range recordPaths {
+			if path == "" { // ignore the empty field path
+				continue
+			}
+			if _, ok := filteredPaths[path]; ok != (f.FilterOperation == KEEP) {
+				var skip bool
+				if f.FilterOperation == REMOVE_NULL {
+					if field, err := record.Get(path); err == nil {
+						skip = field.Value != "" // check value for "null"
+					}
+				}
+				if !skip {
+					_, err = record.Delete(path)
+				}
 				if err != nil {
-					err = errors.New(
-						fmt.Sprintf("Error removing field : %s. Reason : %s", fieldPathToRemove, err.Error()))
+					err = fmt.Errorf("Error removing field : %s. Reason : %s", path, err.Error())
 					break
 				}
 			}
 		}
+
 		if err == nil {
 			batchMaker.AddRecord(record)
 		} else {
