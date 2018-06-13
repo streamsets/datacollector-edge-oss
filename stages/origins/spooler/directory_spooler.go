@@ -114,7 +114,7 @@ func (d *DirectorySpooler) addPathToQueueIfEligible(
 }
 
 func (d *DirectorySpooler) walkDirectoryPath(currentFileInfo *AtomicFileInformation) error {
-	log.Info("Spooler Starting")
+	log.Debug("Spooler Starting")
 	if d.processSubDirs {
 		return filepath.Walk(d.dirPath, func(path string, info os.FileInfo, err error) error {
 			if err == nil && path != d.dirPath {
