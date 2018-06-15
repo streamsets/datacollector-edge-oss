@@ -91,6 +91,10 @@ func CreateField(value interface{}) (*Field, error) {
 		return CreateStringField(value.(string))
 	case []string:
 		return CreateStringListField(value.([]string))
+	case []float64:
+		return CreateFloatListField(value.([]float64))
+	case []map[string]interface{}:
+		return CreateMapListField(value.([]map[string]interface{}))
 	case []interface{}:
 		return CreateListField(value.([]interface{}))
 	case map[string]interface{}:
@@ -174,6 +178,19 @@ func CreateStringListField(listStringValue []string) (*Field, error) {
 	return &listField, nil
 }
 
+func CreateFloatListField(listFloatValue []float64) (*Field, error) {
+	listFieldValue := []*Field{}
+	for _, value := range listFloatValue {
+		valField, err := CreateField(value)
+		if err != nil {
+			return nil, err
+		}
+		listFieldValue = append(listFieldValue, valField)
+	}
+	listField := Field{Type: fieldtype.LIST, Value: listFieldValue}
+	return &listField, nil
+}
+
 func CreateMapField(mapValue map[string]interface{}) (*Field, error) {
 	mapFieldValue := make(map[string](*Field))
 	for key, value := range mapValue {
@@ -185,6 +202,19 @@ func CreateMapField(mapValue map[string]interface{}) (*Field, error) {
 	}
 	mapField := Field{Type: fieldtype.MAP, Value: mapFieldValue}
 	return &mapField, nil
+}
+
+func CreateMapListField(listValue []map[string]interface{}) (*Field, error) {
+	listFieldValue := make([]*Field, 0)
+	for _, value := range listValue {
+		valField, err := CreateField(value)
+		if err != nil {
+			return nil, err
+		}
+		listFieldValue = append(listFieldValue, valField)
+	}
+	listField := Field{Type: fieldtype.LIST, Value: listFieldValue}
+	return &listField, nil
 }
 
 func CreateListField(listValue []interface{}) (*Field, error) {

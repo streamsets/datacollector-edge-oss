@@ -107,7 +107,7 @@ func (o *Origin) Destroy() error {
 func (o *Origin) messageHandler() {
 	for {
 		select {
-		case <- o.destroyed:
+		case <-o.destroyed:
 			log.Debug("WebSocket Client Origin destroyed channel called")
 			return
 		default:
