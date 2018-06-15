@@ -1,5 +1,4 @@
-#  Server Metrics to HTTP
-Send system-level CPU usage, memory, disk IO, and network IO statistics from Linux, Windows and Mac hosts to HTTP End Point.
+#  System level CPU usage, memory, disk IO, and network IO statistics from Linux, Windows and Mac hosts to HTTP End Point.
 
 # Supported Architectures
     Linux i386/amd64/arm(raspberry pi)

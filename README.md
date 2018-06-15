@@ -48,7 +48,7 @@ If you need help with production systems, you can check out the variety of suppo
 * [StreamSets Data Collector Edge Documentation](https://streamsets.com/documentation/datacollector/latest/help/index.html#Edge_Mode/EdgePipelines_title.html%23concept_fyf_gkq_4bb)
 
 ## Sample Pipelines
-
+* [System Metrics to HTTP](data/pipelines/systemMetricsToHttp)
 * [Windows Event To Http](data/pipelines/windowsEventToHttp)
 * [Tail File To Http](data/pipelines/tailFileToHttp)
 * [Directory Spooler to Http](data/pipelines/directoryToHttp)
