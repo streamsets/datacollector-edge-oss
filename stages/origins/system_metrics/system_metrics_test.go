@@ -62,12 +62,58 @@ func TestOrigin_Init(t *testing.T) {
 	}
 }
 
-func TestOrigin_Produce_Fetch_CPU(t *testing.T) {
+func TestOrigin_Produce_Fetch_HostInfo(t *testing.T) {
 	configuration := []common.Config{
 		{
-			Name:  "conf.delay",
-			Value: float64(2000),
+			Name:  "conf.fetchHostInfo",
+			Value: true,
 		},
+	}
+
+	stageContext := getStageContext(configuration, nil)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	stageInstance := stageBean.Stage
+	if stageInstance == nil {
+		t.Error("Failed to create stage instance")
+	}
+
+	issues := stageInstance.Init(stageContext)
+	if len(issues) > 0 {
+		t.Error(issues)
+	}
+
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+	_, err = stageInstance.(api.Origin).Produce(&defaultOffset, 1, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+		return
+	}
+
+	records := batchMaker.GetStageOutput()
+	if len(records) != 1 {
+		t.Error("Expected 1 records but got - ", len(records))
+		return
+	}
+
+	rootField, _ := records[0].Get()
+	mapFieldValue := rootField.Value.(map[string]*api.Field)
+	if mapFieldValue["timestamp"] == nil {
+		t.Error("Failed to inject timestamp value")
+	}
+	if mapFieldValue["hostInfo"] == nil || mapFieldValue["hostInfo"].Type != fieldtype.MAP {
+		t.Error("Failed to fetch Host Informatinon")
+	}
+
+	stageInstance.Destroy()
+}
+
+func TestOrigin_Produce_Fetch_CPU(t *testing.T) {
+	configuration := []common.Config{
 		{
 			Name:  "conf.fetchCpuStats",
 			Value: true,
@@ -119,10 +165,6 @@ func TestOrigin_Produce_Fetch_CPU(t *testing.T) {
 func TestOrigin_Produce_Fetch_Memory(t *testing.T) {
 	configuration := []common.Config{
 		{
-			Name:  "conf.delay",
-			Value: float64(2000),
-		},
-		{
 			Name:  "conf.fetchMemStats",
 			Value: true,
 		},
@@ -173,10 +215,6 @@ func TestOrigin_Produce_Fetch_Memory(t *testing.T) {
 func TestOrigin_Produce_Fetch_Disk(t *testing.T) {
 	configuration := []common.Config{
 		{
-			Name:  "conf.delay",
-			Value: float64(2000),
-		},
-		{
 			Name:  "conf.fetchDiskStats",
 			Value: true,
 		},
@@ -226,10 +264,6 @@ func TestOrigin_Produce_Fetch_Disk(t *testing.T) {
 
 func TestOrigin_Produce_Fetch_Network(t *testing.T) {
 	configuration := []common.Config{
-		{
-			Name:  "conf.delay",
-			Value: float64(2000),
-		},
 		{
 			Name:  "conf.fetchNetStats",
 			Value: true,

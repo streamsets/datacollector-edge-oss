@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
+	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/net"
 	"github.com/streamsets/datacollector-edge/api"
@@ -40,6 +41,7 @@ type Origin struct {
 
 type OriginClientConfig struct {
 	Delay          float64 `ConfigDef:"type=NUMBER,required=true"`
+	FetchHostInfo  bool    `ConfigDef:"type=BOOLEAN,required=true"`
 	FetchCpuStats  bool    `ConfigDef:"type=BOOLEAN,required=true"`
 	FetchMemStats  bool    `ConfigDef:"type=BOOLEAN,required=true"`
 	FetchDiskStats bool    `ConfigDef:"type=BOOLEAN,required=true"`
@@ -61,7 +63,15 @@ func (o *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 	time.Sleep(time.Duration(o.Conf.Delay) * time.Millisecond)
 
 	recordValue := make(map[string]interface{})
-	recordValue["timestamp"] = util.ConvertTimeToLong(time.Now())
+
+	if o.Conf.FetchHostInfo {
+		if hostInfoValue, err := o.getHostInfo(); err == nil {
+			recordValue["hostInfo"] = hostInfoValue
+		} else {
+			o.GetStageContext().ReportError(err)
+			return &defaultOffset, nil
+		}
+	}
 
 	if o.Conf.FetchCpuStats {
 		if cpuStatsValue, err := o.getCpuStats(); err == nil {
@@ -100,11 +110,23 @@ func (o *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 	}
 
 	if record, err := o.GetStageContext().CreateRecord(defaultOffset, recordValue); err == nil {
+		timeStampField, _ := api.CreateDateTimeField(util.ConvertTimeToLong(time.Now()))
+		record.SetField("/timestamp", timeStampField)
 		batchMaker.AddRecord(record)
 	} else {
 		o.GetStageContext().ReportError(err)
 	}
 	return &defaultOffset, nil
+}
+
+func (o *Origin) getHostInfo() (map[string]interface{}, error) {
+	hostInfoValue := make(map[string]interface{})
+	if hostInfoStat, err := host.Info(); err == nil {
+		json.Unmarshal([]byte(hostInfoStat.String()), &hostInfoValue)
+		return hostInfoValue, nil
+	} else {
+		return nil, err
+	}
 }
 
 func (o *Origin) getCpuStats() (map[string]interface{}, error) {

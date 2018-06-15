@@ -43,6 +43,7 @@ dependencies {
         build name: 'github.com/shirou/gopsutil', commit: 'c23bcca55e77b8389d84b09db8c5ac2b472070ef'
         build name: 'github.com/StackExchange/wmi', commit: 'cdffdb33acae0e14efff2628f9bae377b597840e'
         build name: 'github.com/go-ole/go-ole', commit: 'a1ec82a652ebc7e784d7df887cfb31061aeabbcc'
+        build name: 'github.com/shirou/w32', commit: 'bb4de0191aa41b5507caa14b0650cdbddcd9280b'
     }
 }
 

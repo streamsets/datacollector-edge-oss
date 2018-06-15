@@ -28,6 +28,9 @@
 
     <SDC Edge_home>/bin/edge -logDir=/var/sdce/log
 
+## StreamSets DataCollector UI 
+   Use Data Collector UI or Control Hub Pipeline designer for designing, publishing, validating, previewing, starting, monitoring with metrics and stopping edge pipelines.
+
 ## SDC Edge commands via REST API
 
 ### List all pipelines

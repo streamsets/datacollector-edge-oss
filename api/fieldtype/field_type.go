@@ -21,6 +21,7 @@ const (
 	INTEGER    = "INTEGER"
 	LONG       = "LONG"
 	FLOAT      = "FLOAT"
+	DATETIME   = "DATETIME"
 	DOUBLE     = "DOUBLE"
 	DECIMAL    = "DECIMAL"
 	STRING     = "STRING"

@@ -1,0 +1,18 @@
+{
+  "pipelineId": "systemMetricsToHttp",
+  "title": "System Metrics to HTTP",
+  "description": "",
+  "created": 1529093787673,
+  "lastModified": 1529097096,
+  "creator": "admin",
+  "lastModifier": "admin",
+  "lastRev": "0",
+  "uuid": "10b33f73-946a-4e4e-9f75-97d50cb35d9e",
+  "valid": true,
+  "metadata": {
+    "labels": []
+  },
+  "name": "systemMetricsToHttp",
+  "sdcVersion": "3.4.0-SNAPSHOT",
+  "sdcId": "e2921741-70b0-11e8-96e4-af1265462b0e"
+}

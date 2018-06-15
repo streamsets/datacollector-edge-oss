@@ -53,6 +53,7 @@ If you need help with production systems, you can check out the variety of suppo
 * [Tail File To Http](data/pipelines/tailFileToHttp)
 * [Directory Spooler to Http](data/pipelines/directoryToHttp)
 * [Bosch BME280 Humidity, Barometric Pressure, Temperature Sensor data to HTTP](data/pipelines/sensorBME280ToHttp)
+* [Stream Ripple Ledger Information](data/pipelines/websocketClientToTrash)
 * [MQTT To HTTP](data/pipelines/mqttToHttp)
 * [Dev Raw Data To Expression Evaluator to Kafka](data/pipelines/devRawDataToExpressionToKafka)
 * [Random Data to MQTT](data/pipelines/randomToMqtt)
@@ -60,7 +61,7 @@ If you need help with production systems, you can check out the variety of suppo
 * [Random Data To Http](data/pipelines/randomToHttp)
 * [HTTP Server To Trash](data/pipelines/httpServerToTrash)
 * [Random Data To Identity Processor To Trash](data/pipelines/randomToIdentityToTrash)
-* [Stream Ripple Ledger Information](data/pipelines/websocketClientToTrash)
+
 
 ## Contributing code
 

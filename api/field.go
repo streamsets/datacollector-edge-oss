@@ -117,6 +117,10 @@ func CreateByteField(value byte) (*Field, error) {
 	return &Field{Type: fieldtype.BYTE, Value: value}, nil
 }
 
+func CreateDateTimeField(value int64) (*Field, error) {
+	return &Field{Type: fieldtype.DATETIME, Value: value}, nil
+}
+
 func CreateShortField(value int8) (*Field, error) {
 	return &Field{Type: fieldtype.SHORT, Value: value}, nil
 }
