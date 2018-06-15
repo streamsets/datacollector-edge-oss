@@ -106,6 +106,10 @@ func (b *FullPipeBatch) CompleteStage(batchMaker *BatchMakerImpl) {
 		}
 		b.StageOutputSnapshot = append(b.StageOutputSnapshot, stageOutput)
 	}
+
+	if batchMaker.stagePipe.IsTarget() {
+		b.outputRecords -= int64(len(b.errorSink.GetStageErrorRecords(stageInstanceName)))
+	}
 }
 
 func (b *FullPipeBatch) GetErrorSink() *common.ErrorSink {

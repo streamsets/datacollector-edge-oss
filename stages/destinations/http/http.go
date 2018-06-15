@@ -49,7 +49,7 @@ type HttpClientTargetConfig struct {
 
 func init() {
 	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
-		return &HttpClientDestination{BaseStage: &common.BaseStage{}}
+		return &HttpClientDestination{BaseStage: &common.BaseStage{}, HttpCommon: &httpcommon.HttpCommon{}}
 	})
 }
 
@@ -63,7 +63,6 @@ func (h *HttpClientDestination) Init(stageContext api.StageContext) []validation
 }
 
 func (h *HttpClientDestination) Write(batch api.Batch) error {
-	log.Debug("HttpClientDestination write method")
 	if h.Conf.SingleRequestPerBatch && len(batch.GetRecords()) > 0 {
 		return h.writeSingleRequestPerBatch(batch)
 	} else {
@@ -77,40 +76,56 @@ func (h *HttpClientDestination) writeSingleRequestPerBatch(batch api.Batch) erro
 	batchBuffer := bytes.NewBuffer([]byte{})
 	recordWriter, err := recordWriterFactory.CreateWriter(h.GetStageContext(), batchBuffer)
 	if err != nil {
-		return err
+		log.Error(err.Error())
+		h.GetStageContext().ReportError(err)
+		return nil
 	}
 	for _, record := range batch.GetRecords() {
 		err = recordWriter.WriteRecord(record)
 		if err != nil {
-			return err
+			log.Error(err.Error())
+			h.GetStageContext().ToError(err, record)
 		}
 	}
 	recordWriter.Flush()
 	recordWriter.Close()
-	return h.sendToSDC(batchBuffer.Bytes())
+	err = h.sendToSDC(batchBuffer.Bytes())
+
+	if err != nil {
+		log.Error(err.Error())
+		for _, record := range batch.GetRecords() {
+			h.GetStageContext().ToError(err, record)
+		}
+	}
+
+	return nil
 }
 
 func (h *HttpClientDestination) writeSingleRequestPerRecord(batch api.Batch) error {
-	var err error
 	recordWriterFactory := h.Conf.DataGeneratorFormatConfig.RecordWriterFactory
 	for _, record := range batch.GetRecords() {
 		recordBuffer := bytes.NewBuffer([]byte{})
 		recordWriter, err := recordWriterFactory.CreateWriter(h.GetStageContext(), recordBuffer)
 		if err != nil {
-			return err
+			log.Error(err.Error())
+			h.GetStageContext().ReportError(err)
+			continue
 		}
 		err = recordWriter.WriteRecord(record)
 		if err != nil {
-			return err
+			log.Error(err.Error())
+			h.GetStageContext().ReportError(err)
+			continue
 		}
 		recordWriter.Flush()
 		recordWriter.Close()
 		err = h.sendToSDC(recordBuffer.Bytes())
 		if err != nil {
-			return err
+			log.Error(err.Error())
+			h.GetStageContext().ToError(err, record)
 		}
 	}
-	return err
+	return nil
 }
 
 func (h *HttpClientDestination) sendToSDC(jsonValue []byte) error {
