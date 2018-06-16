@@ -19,6 +19,7 @@ import (
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/net"
+	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
@@ -68,8 +69,8 @@ func (o *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 		if hostInfoValue, err := o.getHostInfo(); err == nil {
 			recordValue["hostInfo"] = hostInfoValue
 		} else {
+			log.WithError(err).Error("Error during fetching Host Info")
 			o.GetStageContext().ReportError(err)
-			return &defaultOffset, nil
 		}
 	}
 
@@ -77,8 +78,8 @@ func (o *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 		if cpuStatsValue, err := o.getCpuStats(); err == nil {
 			recordValue["cpu"] = cpuStatsValue
 		} else {
+			log.WithError(err).Error("Error during fetching CPU Stats")
 			o.GetStageContext().ReportError(err)
-			return &defaultOffset, nil
 		}
 	}
 
@@ -86,8 +87,8 @@ func (o *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 		if memStatsValue, err := o.getMemoryStats(); err == nil {
 			recordValue["memory"] = memStatsValue
 		} else {
+			log.WithError(err).Error("Error during fetching Memory Stats")
 			o.GetStageContext().ReportError(err)
-			return &defaultOffset, nil
 		}
 	}
 
@@ -95,8 +96,8 @@ func (o *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 		if diskStatsValue, err := o.getDiskStats("/"); err == nil {
 			recordValue["disk"] = diskStatsValue
 		} else {
+			log.WithError(err).Error("Error during fetching Disk Stats")
 			o.GetStageContext().ReportError(err)
-			return &defaultOffset, nil
 		}
 	}
 
@@ -104,8 +105,8 @@ func (o *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 		if netStatsValue, err := o.getNetworkStats(); err == nil {
 			recordValue["network"] = netStatsValue
 		} else {
+			log.WithError(err).Error("Error during fetching Network Stats")
 			o.GetStageContext().ReportError(err)
-			return &defaultOffset, nil
 		}
 	}
 

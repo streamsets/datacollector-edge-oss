@@ -16,10 +16,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"time"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
@@ -27,6 +23,9 @@ import (
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"github.com/streamsets/datacollector-edge/stages/lib/httpcommon"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
+	"io/ioutil"
+	"net/http"
+	"time"
 )
 
 const (
