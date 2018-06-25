@@ -30,6 +30,7 @@ const (
 	STATUS_PIPELINE                   = 2000
 	SDC_INFO_EVENT                    = 2001
 	STATUS_MULTIPLE_PIPELINES         = 2002
+	SDC_PROCESS_METRICS_EVENT         = 2003
 	ACK_EVENT                         = 5000
 
 	ACK_EVENT_SUCCESS = "SUCCESS"
@@ -70,6 +71,14 @@ type SDCInfoEvent struct {
 	EdgeBuildInfo *common.BuildInfo `json:"sdcBuildInfo"`
 	Labels        []string          `json:"labels"`
 	Edge          bool              `json:"edge"`
+	TotalMemory   uint64            `json:"totalMemory"`
+}
+
+type SDCProcessMetricsEvent struct {
+	Timestamp  int64   `json:"timestamp"`
+	SdcId      string  `json:"sdcId"`
+	CpuLoad    float64 `json:"cpuLoad"`
+	UsedMemory uint64  `json:"usedMemory"`
 }
 
 type PipelineBaseEvent struct {

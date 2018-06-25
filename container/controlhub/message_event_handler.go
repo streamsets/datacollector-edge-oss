@@ -18,12 +18,15 @@ import (
 	"errors"
 	"fmt"
 	"github.com/satori/go.uuid"
+	"github.com/shirou/gopsutil/process"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/execution/manager"
 	"github.com/streamsets/datacollector-edge/container/store"
+	"github.com/streamsets/datacollector-edge/container/util"
 	"io"
 	"net/http"
+	"os"
 	"runtime"
 	"time"
 )
@@ -133,6 +136,37 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 			Payload:      string(pipelineStatusEventListJson),
 		}
 		clientEventList = append(clientEventList, pipelineStatusEvent)
+
+		// add Edge metrics event
+		metricsEvent := &SDCProcessMetricsEvent{
+			Timestamp: util.ConvertTimeToLong(time.Now()),
+			SdcId:     m.runtimeInfo.ID,
+		}
+
+		currentProcess := process.Process{
+			Pid: int32(os.Getpid()),
+		}
+		cpuPercent, err := currentProcess.CPUPercent()
+		if err != nil {
+			log.WithError(err).Error("Error during fetching CPU Percentage")
+		} else {
+			metricsEvent.CpuLoad = cpuPercent
+		}
+
+		var memStats runtime.MemStats
+		runtime.ReadMemStats(&memStats)
+		metricsEvent.UsedMemory = memStats.HeapAlloc
+
+		metricsEventJson, _ := json.Marshal(metricsEvent)
+		metricsClientEvent := &ClientEvent{
+			EventId:      uuid.NewV4().String(),
+			Destinations: m.schConfig.ProcessEventsRecipient,
+			RequiresAck:  false,
+			IsAckEvent:   false,
+			EventTypeId:  SDC_PROCESS_METRICS_EVENT,
+			Payload:      string(metricsEventJson),
+		}
+		clientEventList = append(clientEventList, metricsClientEvent)
 
 		m.sendingPipelineStatusElapsedTime = time.Now()
 	}
