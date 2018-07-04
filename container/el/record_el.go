@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"github.com/madhukard/govaluate"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/container/util"
 )
 
 const (
@@ -69,7 +70,10 @@ func (r *RecordEL) GetValue(args ...interface{}) (interface{}, error) {
 		return nil, err
 	}
 
-	return field.Value, nil
+	// govaluate library only officially deals with four types; float64, bool, string, and arrays.
+	// https://github.com/Knetic/govaluate/blob/master/MANUAL.md
+	// so cast all numeric values to float64
+	return util.CastToFloat64(field.Value), nil
 }
 
 func (r *RecordEL) GetValueOrDefault(args ...interface{}) (interface{}, error) {

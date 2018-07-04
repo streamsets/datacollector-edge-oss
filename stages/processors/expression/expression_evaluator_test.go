@@ -233,3 +233,61 @@ func TestExpressionProcessor_DefaultConfig(t *testing.T) {
 		t.Fatal("There should be no error records in error sink")
 	}
 }
+
+func TestExpressionProcessor_NumberComparison(t *testing.T) {
+	stageContext, errSink := getStageContext()
+
+	fieldValueConfigs := []interface{}{}
+	fieldValueConfigs = append(fieldValueConfigs, map[string]interface{}{
+		FIELD_TO_SET: "/isValueGreater",
+		EXPRESSION:   "${record:value('/a') > record:value('/b')}",
+	})
+	stageContext.StageConfig.Configuration[0].Value = fieldValueConfigs
+
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stageInstance := stageBean.Stage.(*ExpressionProcessor)
+	if stageInstance == nil {
+		t.Fatal("Failed to create stage instance")
+	}
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
+	}
+	defer stageInstance.Destroy()
+
+	records := make([]api.Record, 1)
+	records[0], _ = stageContext.CreateRecord(
+		"abc",
+		map[string]interface{}{"a": 2431074399724039541, "b": 2431074399724039541, "c": "random"},
+	)
+	batch := runner.NewBatchImpl("random", records, nil)
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+
+	err = stageInstance.Process(batch, batchMaker)
+
+	if err != nil {
+		t.Fatal("Error when processing batch " + err.Error())
+	}
+
+	records = batchMaker.GetStageOutput()
+
+	record := records[0]
+
+	dValue, err := record.Get("/isValueGreater")
+
+	if err != nil {
+		t.Error("Error when getting value of /isValueGreater " + err.Error())
+	}
+
+	if dValue.Value.(bool) != false {
+		t.Errorf("Error in expression processor when evaluating /isValueGreater, Expected : false. Actual:%d", dValue.Value)
+	}
+
+	if errSink.GetTotalErrorRecords() != 0 {
+		t.Fatal("There should be no error records in error sink")
+	}
+}
