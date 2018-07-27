@@ -16,6 +16,8 @@ import (
 	"runtime"
 	"strings"
 	"syscall"
+	"net/http"
+	"crypto/tls"
 )
 
 func main() {
@@ -24,6 +26,11 @@ func main() {
 	startFlag := flag.String("start", "", "Start Pipeline ID")
 	runtimeParametersArg := flag.String("runtimeParameters", "", "Runtime Parameters")
 	logDirArg := flag.String("logDir", "", "SDC Edge log directory")
+	insecureSkipVerifyArg := flag.Bool(
+		"insecureSkipVerify",
+		false,
+		"InsecureSkipVerify controls whether a client verifies the server's certificate chain and host name",
+		)
 	flag.Parse()
 
 	ex, err := os.Executable()
@@ -36,6 +43,16 @@ func main() {
 
 	fmt.Println("StreamSets Data Collector Edge (SDC Edge): ")
 	fmt.Printf("OS: %s\nArchitecture: %s\n", runtime.GOOS, runtime.GOARCH)
+
+
+	if *insecureSkipVerifyArg {
+		tr := http.DefaultTransport.(*http.Transport)
+		tr.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+		log.Warn("TLS accepts any certificate presented by the server and any host name in that certificate. " +
+			"In this mode, TLS is susceptible to man-in-the-middle attacks. This should be used only for testing")
+	}
 
 	dataCollectorEdge, _ := edge.DoMain(
 		baseDir,
