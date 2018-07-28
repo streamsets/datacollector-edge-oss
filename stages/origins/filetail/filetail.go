@@ -14,6 +14,7 @@ package filetail
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/hpcloud/tail"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
@@ -24,10 +25,9 @@ import (
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io"
+	"os"
 	"strconv"
 	"time"
-	"os"
-	"fmt"
 )
 
 const (

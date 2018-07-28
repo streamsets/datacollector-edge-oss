@@ -22,8 +22,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"testing"
 	"strings"
+	"testing"
 )
 
 func getStageContext(

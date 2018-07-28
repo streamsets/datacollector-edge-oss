@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	log "github.com/sirupsen/logrus"
@@ -10,14 +11,13 @@ import (
 	_ "github.com/streamsets/datacollector-edge/stages/origins"
 	_ "github.com/streamsets/datacollector-edge/stages/processors"
 	_ "github.com/streamsets/datacollector-edge/stages/services"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
-	"net/http"
-	"crypto/tls"
 )
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 		"insecureSkipVerify",
 		false,
 		"InsecureSkipVerify controls whether a client verifies the server's certificate chain and host name",
-		)
+	)
 	flag.Parse()
 
 	ex, err := os.Executable()
@@ -43,7 +43,6 @@ func main() {
 
 	fmt.Println("StreamSets Data Collector Edge (SDC Edge): ")
 	fmt.Printf("OS: %s\nArchitecture: %s\n", runtime.GOOS, runtime.GOARCH)
-
 
 	if *insecureSkipVerifyArg {
 		tr := http.DefaultTransport.(*http.Transport)

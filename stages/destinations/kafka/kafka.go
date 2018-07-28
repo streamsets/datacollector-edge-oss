@@ -25,14 +25,17 @@ import (
 	"github.com/streamsets/datacollector-edge/container/el"
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
+	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
 	APACHE_KAFKA_0_10_LIBRARY = "streamsets-datacollector-apache-kafka_0_10-lib"
 	APACHE_KAFKA_0_11_LIBRARY = "streamsets-datacollector-apache-kafka_0_11-lib"
 	APACHE_KAFKA_1_0_LIBRARY  = "streamsets-datacollector-apache-kafka_1_0-lib"
+	APACHE_KAFKA_1_1_LIBRARY  = "streamsets-datacollector-apache-kafka_1_1-lib"
 
 	CDH_KAFKA_2_0_LIBRARY = "streamsets-datacollector-cdh_kafka_2_0-lib"
 	CDH_KAFKA_2_1_LIBRARY = "streamsets-datacollector-cdh_kafka_2_1-lib"
@@ -42,7 +45,30 @@ const (
 	HDP_KAFKA_2_5_LIBRARY = "streamsets-datacollector-hdp_2_5-lib"
 	HDP_KAFKA_2_6_LIBRARY = "streamsets-datacollector-hdp_2_6-lib"
 
-	STAGE_NAME = "com_streamsets_pipeline_stage_destination_kafka_KafkaDTarget"
+	StageName = "com_streamsets_pipeline_stage_destination_kafka_KafkaDTarget"
+
+	SocketTimeoutMS                    = "socket.timeout.ms"
+	SslEndpointIdentificationAlgorithm = "ssl.endpoint.identification.algorithm"
+	SecurityProtocol                   = "security.protocol"
+	SASLJaasConfig                     = "sasl.jaas.config"
+	MessageMaxBytes                    = "message.max.bytes"
+	RequestRequiredACKs                = "request.required.acks"
+	RequestTimeoutMS                   = "request.timeout.ms"
+	CompressionCodec                   = "compression.codec"
+	QueueBufferingMaxMS                = "queue.buffering.max.ms"
+	QueueBufferingMaxMessages          = "queue.buffering.max.messages"
+	MessageSendMaxRetries              = "message.send.max.retries"
+	RetryBackoffMS                     = "retry.backoff.ms"
+
+	ClientId               = "SDCEdge"
+	HTTPS                  = "https"
+	SASLPlainText          = "SASL_PLAINTEXT"
+	SASLSSL                = "SASL_SSL"
+	SSSLJaasConfigRegex    = `.*username="(.*)".*password="(.*)"`
+	CompressionCodecNone   = "none"
+	CompressionCodecGzip   = "gzip"
+	CompressionCodecSnappy = "snappy"
+	CompressionCodecLz4    = "lz4"
 )
 
 type KafkaDestination struct {
@@ -68,33 +94,36 @@ type KafkaTargetConfig struct {
 }
 
 func init() {
-	stagelibrary.SetCreator(APACHE_KAFKA_0_10_LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(APACHE_KAFKA_0_10_LIBRARY, StageName, func() api.Stage {
 		return &KafkaDestination{BaseStage: &common.BaseStage{}}
 	})
-	stagelibrary.SetCreator(APACHE_KAFKA_0_11_LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(APACHE_KAFKA_0_11_LIBRARY, StageName, func() api.Stage {
 		return &KafkaDestination{BaseStage: &common.BaseStage{}}
 	})
-	stagelibrary.SetCreator(APACHE_KAFKA_1_0_LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(APACHE_KAFKA_1_0_LIBRARY, StageName, func() api.Stage {
 		return &KafkaDestination{BaseStage: &common.BaseStage{}}
 	})
-
-	stagelibrary.SetCreator(CDH_KAFKA_2_0_LIBRARY, STAGE_NAME, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
-	})
-	stagelibrary.SetCreator(CDH_KAFKA_2_1_LIBRARY, STAGE_NAME, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
-	})
-	stagelibrary.SetCreator(CDH_KAFKA_3_0_LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(APACHE_KAFKA_1_1_LIBRARY, StageName, func() api.Stage {
 		return &KafkaDestination{BaseStage: &common.BaseStage{}}
 	})
 
-	stagelibrary.SetCreator(HDP_KAFKA_2_4_LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(CDH_KAFKA_2_0_LIBRARY, StageName, func() api.Stage {
 		return &KafkaDestination{BaseStage: &common.BaseStage{}}
 	})
-	stagelibrary.SetCreator(HDP_KAFKA_2_5_LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(CDH_KAFKA_2_1_LIBRARY, StageName, func() api.Stage {
 		return &KafkaDestination{BaseStage: &common.BaseStage{}}
 	})
-	stagelibrary.SetCreator(HDP_KAFKA_2_6_LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(CDH_KAFKA_3_0_LIBRARY, StageName, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+	})
+
+	stagelibrary.SetCreator(HDP_KAFKA_2_4_LIBRARY, StageName, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+	})
+	stagelibrary.SetCreator(HDP_KAFKA_2_5_LIBRARY, StageName, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+	})
+	stagelibrary.SetCreator(HDP_KAFKA_2_6_LIBRARY, StageName, func() api.Stage {
 		return &KafkaDestination{BaseStage: &common.BaseStage{}}
 	})
 }
@@ -104,12 +133,9 @@ func (dest *KafkaDestination) Init(context api.StageContext) []validation.Issue 
 	issues = dest.Conf.DataGeneratorFormatConfig.Init(dest.Conf.DataFormat, context, issues)
 
 	var err error
-	dest.kafkaClientConf = sarama.NewConfig()
-	dest.kafkaClientConf.ClientID = "SDCEdge"
-	dest.kafkaClientConf.Producer.RequiredAcks = sarama.WaitForAll
-	dest.kafkaClientConf.Producer.Retry.Max = 0
-	dest.kafkaClientConf.Producer.Return.Successes = true
-	// TODO: Map KafkaProducerConfigs to sarama producer config
+
+	err = dest.mapJVMConfigsToSaramaConfig()
+
 	dest.kafkaClientConf.Producer.Partitioner, err = getPartitionerConstructor(dest.Conf.PartitionStrategy)
 	if err != nil {
 		issues = append(issues, context.CreateConfigIssue(err.Error()))
@@ -124,9 +150,6 @@ func (dest *KafkaDestination) Init(context api.StageContext) []validation.Issue 
 	}
 
 	dest.keyCounter = 0
-
-	// sarama.Logger = log.StandardLogger()
-
 	return issues
 }
 
@@ -222,7 +245,94 @@ func (dest *KafkaDestination) Destroy() error {
 	return nil
 }
 
-func resolveTopic(stageContext api.StageContext, recordContext context.Context, config *KafkaTargetConfig) (*string, error) {
+func (dest *KafkaDestination) mapJVMConfigsToSaramaConfig() error {
+	config := sarama.NewConfig()
+	config.ClientID = ClientId
+
+	for name, value := range dest.Conf.KafkaProducerConfigs {
+		switch name {
+		// NET Config
+		case SocketTimeoutMS:
+			if i, err := strconv.Atoi(value); err == nil {
+				config.Net.DialTimeout = time.Duration(i) * time.Millisecond
+				config.Net.ReadTimeout = time.Duration(i) * time.Millisecond
+				config.Net.WriteTimeout = time.Duration(i) * time.Millisecond
+			}
+		case SslEndpointIdentificationAlgorithm:
+			if value == HTTPS {
+				config.Net.TLS.Enable = true
+			}
+		case SecurityProtocol:
+			if value == SASLPlainText || value == SASLSSL {
+				config.Net.SASL.Enable = true
+			}
+		case SASLJaasConfig:
+			re := regexp.MustCompile(SSSLJaasConfigRegex)
+			match := re.FindStringSubmatch(value)
+			if len(match) > 2 {
+				config.Net.SASL.User = match[1]
+				config.Net.SASL.Password = match[2]
+			}
+
+		// Producer Config
+		case MessageMaxBytes:
+			if i, err := strconv.Atoi(value); err == nil {
+				config.Producer.MaxMessageBytes = i
+			}
+		case RequestRequiredACKs:
+			if i, err := strconv.Atoi(value); err == nil {
+				switch i {
+				case 0:
+					config.Producer.RequiredAcks = sarama.NoResponse
+				case 1:
+					config.Producer.RequiredAcks = sarama.WaitForLocal
+				case -1:
+					config.Producer.RequiredAcks = sarama.WaitForAll
+				}
+			}
+		case RequestTimeoutMS:
+			if i, err := strconv.Atoi(value); err == nil {
+				config.Producer.Timeout = time.Duration(i) * time.Millisecond
+			}
+		case CompressionCodec:
+			switch value {
+			case CompressionCodecNone:
+				config.Producer.Compression = sarama.CompressionNone
+			case CompressionCodecGzip:
+				config.Producer.Compression = sarama.CompressionGZIP
+			case CompressionCodecSnappy:
+				config.Producer.Compression = sarama.CompressionSnappy
+			case CompressionCodecLz4:
+				config.Producer.Compression = sarama.CompressionLZ4
+			}
+		case QueueBufferingMaxMS:
+			if i, err := strconv.Atoi(value); err == nil {
+				config.Producer.Flush.Frequency = time.Duration(i) * time.Millisecond
+			}
+		case QueueBufferingMaxMessages:
+			if i, err := strconv.Atoi(value); err == nil {
+				config.Producer.Flush.MaxMessages = i
+			}
+		case MessageSendMaxRetries:
+			if i, err := strconv.Atoi(value); err == nil {
+				config.Producer.Retry.Max = i
+			}
+		case RetryBackoffMS:
+			if i, err := strconv.Atoi(value); err == nil {
+				config.Producer.Retry.Backoff = time.Duration(i) * time.Millisecond
+			}
+		}
+	}
+
+	dest.kafkaClientConf = config
+	return dest.kafkaClientConf.Validate()
+}
+
+func resolveTopic(
+	stageContext api.StageContext,
+	recordContext context.Context,
+	config *KafkaTargetConfig,
+) (*string, error) {
 	if !config.RuntimeTopicResolution {
 		return &config.Topic, nil
 	}
