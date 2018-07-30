@@ -29,6 +29,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"github.com/streamsets/datacollector-edge/api/dataformats"
 )
 
 const (
@@ -194,41 +195,68 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 		}
 	}()
 
-	// TODO: Support sending single message per batch -
-	// SDCE-176 - Support sending single message per batch in Kafka destination
+	if dest.Conf.SingleMessagePerBatch {
 
-	for _, record := range batch.GetRecords() {
-		recordContext := context.WithValue(context.Background(), el.RecordContextVar, record)
+		topicToRecordsMap := make(map[*string][]api.Record)
 
-		recordBuffer := bytes.NewBuffer([]byte{})
-		recordWriter, err := recordWriterFactory.CreateWriter(dest.GetStageContext(), recordBuffer)
+		for _, record := range batch.GetRecords() {
+			recordContext := context.WithValue(context.Background(), el.RecordContextVar, record)
+			topic, err := resolveTopic(dest.GetStageContext(), recordContext, &dest.Conf)
+			if err != nil {
+				return err
+			}
 
-		err = recordWriter.WriteRecord(record)
-		if err != nil {
-			return err
+			if topicToRecordsMap[topic] == nil {
+				topicToRecordsMap[topic] = make([]api.Record, 0)
+			}
+			topicToRecordsMap[topic] = append(topicToRecordsMap[topic], record)
 		}
 
-		err = recordWriter.Flush()
-		if err != nil {
-			log.WithError(err).Error("Error flushing record writer")
+		for topicName, records := range topicToRecordsMap {
+			recordBuffer := bytes.NewBuffer([]byte{})
+			recordWriter, err := recordWriterFactory.CreateWriter(dest.GetStageContext(), recordBuffer)
+
+			for _, record := range records {
+				err = recordWriter.WriteRecord(record)
+				if err != nil {
+					return err
+				}
+			}
+
+			flushAndCloseWriter(recordWriter)
+
+			dest.keyCounter++
+			kafkaProducer.Input() <- &sarama.ProducerMessage{
+				Key:   sarama.StringEncoder(dest.Conf.Topic + strconv.Itoa(dest.keyCounter)),
+				Topic: *topicName,
+				Value: sarama.ByteEncoder(recordBuffer.Bytes()),
+			}
 		}
 
-		err = recordWriter.Close()
-		if err != nil {
-			log.WithError(err).Error("Error closing record writer")
-		}
+	} else {
+		for _, record := range batch.GetRecords() {
+			recordContext := context.WithValue(context.Background(), el.RecordContextVar, record)
+			topic, err := resolveTopic(dest.GetStageContext(), recordContext, &dest.Conf)
+			if err != nil {
+				return err
+			}
 
-		topic, err := resolveTopic(dest.GetStageContext(), recordContext, &dest.Conf)
-		if err != nil {
-			return err
-		}
+			recordBuffer := bytes.NewBuffer([]byte{})
+			recordWriter, err := recordWriterFactory.CreateWriter(dest.GetStageContext(), recordBuffer)
 
-		log.Debug("Sending message")
-		dest.keyCounter++
-		kafkaProducer.Input() <- &sarama.ProducerMessage{
-			Key:   sarama.StringEncoder(dest.Conf.Topic + strconv.Itoa(dest.keyCounter)),
-			Topic: *topic,
-			Value: sarama.ByteEncoder(recordBuffer.Bytes()),
+			err = recordWriter.WriteRecord(record)
+			if err != nil {
+				return err
+			}
+
+			flushAndCloseWriter(recordWriter)
+
+			dest.keyCounter++
+			kafkaProducer.Input() <- &sarama.ProducerMessage{
+				Key:   sarama.StringEncoder(dest.Conf.Topic + strconv.Itoa(dest.keyCounter)),
+				Topic: *topic,
+				Value: sarama.ByteEncoder(recordBuffer.Bytes()),
+			}
 		}
 	}
 
@@ -344,4 +372,17 @@ func resolveTopic(
 
 	topic := result.(string)
 	return &topic, nil
+}
+
+
+func flushAndCloseWriter(recordWriter dataformats.RecordWriter) {
+	err := recordWriter.Flush()
+	if err != nil {
+		log.WithError(err).Error("Error flushing record writer")
+	}
+
+	err = recordWriter.Close()
+	if err != nil {
+		log.WithError(err).Error("Error closing record writer")
+	}
 }
