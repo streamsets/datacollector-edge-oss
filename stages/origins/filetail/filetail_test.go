@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"testing"
+	"strings"
 )
 
 func getStageContext(
@@ -73,17 +74,14 @@ func TestInvalidFilePath(t *testing.T) {
 	}
 	stageInstance := stageBean.Stage
 	issues := stageInstance.Init(stageContext)
-	if len(issues) != 0 {
-		t.Error(issues[0].Message)
+	if len(issues) == 0 {
+		t.Error("Expected File path doesn't exist error")
+		return
 	}
 
-	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
-	_, err = stageInstance.(api.Origin).Produce(nil, 1000, batchMaker)
-	if err == nil {
-		t.Error("Excepted error message for invalid URL")
+	if !strings.Contains(issues[0].Message, "File path doesn't exist") {
+		t.Errorf("Expected 'File path doesn't exist', but got: %s", issues[0].Message)
 	}
-	log.Println("err - ", err)
-	stageInstance.Destroy()
 }
 
 func TestValidFilePath(t *testing.T) {

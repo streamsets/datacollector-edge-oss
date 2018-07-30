@@ -26,6 +26,8 @@ import (
 	"io"
 	"strconv"
 	"time"
+	"os"
+	"fmt"
 )
 
 const (
@@ -37,6 +39,7 @@ const (
 	ConfBatchSize       = "conf.batchSize"
 	ConfDataFormat      = "conf.dataFormat"
 	ErrorTail20         = "File path cannot be null or empty"
+	ErrorTail02         = "File path doesn't exist: %s"
 )
 
 type FileTailOrigin struct {
@@ -69,6 +72,15 @@ func (f *FileTailOrigin) Init(stageContext api.StageContext) []validation.Issue 
 	// validate file path
 	if len(f.Conf.FileInfos) == 0 || f.Conf.FileInfos[0].FileFullPath == "" {
 		issues = append(issues, stageContext.CreateConfigIssue(ErrorTail20, ConfGroupFiles, ConfFileInfos))
+		return issues
+	}
+
+	if _, err := os.Stat(f.Conf.FileInfos[0].FileFullPath); os.IsNotExist(err) {
+		issues = append(issues, stageContext.CreateConfigIssue(
+			fmt.Sprintf(ErrorTail02, f.Conf.FileInfos[0].FileFullPath),
+			ConfGroupFiles,
+			ConfFileInfos,
+		))
 		return issues
 	}
 	log.WithField("file", f.Conf.FileInfos[0].FileFullPath).Debug("Reading file")
