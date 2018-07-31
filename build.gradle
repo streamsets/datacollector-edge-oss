@@ -83,7 +83,7 @@ def copyAssetSpec = copySpec {
 
 def getTagsParameter() {
     if (project.hasProperty("includeStage")) {
-        return " -tags ${includeStage} "
+        return " -tags '${includeStage}' "
     }
     ""
 }

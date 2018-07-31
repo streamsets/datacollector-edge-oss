@@ -314,7 +314,27 @@ func injectListBeanStageConfigs(
 							switch resolvedValue.(type) {
 							case []interface{}:
 								if len(resolvedValue.([]interface{})) > 0 {
-									stageInstanceField.Set(reflect.ValueOf(resolvedValue))
+									if stageInstanceField.Type() == reflect.TypeOf([]string{}) {
+										newValue := make([]string, len(resolvedValue.([]interface{})))
+										for i, val := range resolvedValue.([]interface{}) {
+											newValue[i] = val.(string)
+										}
+										stageInstanceField.Set(reflect.ValueOf(newValue))
+									} else if stageInstanceField.Type() == reflect.TypeOf([]float64{}) {
+										newValue := make([]float64, len(resolvedValue.([]interface{})))
+										for i, val := range resolvedValue.([]interface{}) {
+											newValue[i], err = strconv.ParseFloat(val.(string), 64)
+											if err != nil {
+												return errors.New(fmt.Sprintf(
+													"Error when processing value '%v' as NUMBER",
+													resolvedValue,
+												))
+											}
+										}
+										stageInstanceField.Set(reflect.ValueOf(newValue))
+									} else {
+										stageInstanceField.Set(reflect.ValueOf(resolvedValue))
+									}
 								}
 							case []string:
 								if len(resolvedValue.([]string)) > 0 {

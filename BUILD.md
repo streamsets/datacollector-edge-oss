@@ -58,6 +58,13 @@
 
     bin/edge -debug -start=tailFileToHttp
 
+
+### To include TensorFlow Processor in the Edge binary
+
+* Install TensorFlow for Go - https://www.tensorflow.org/install/install_go
+* Build Edge using - 'gradle build -PincludeStage="kafka javascript tensorflow" '
+
+
 ## REST API
 
     curl -X GET http://localhost:18633/rest/v1/pipeline/:pipelineId/status

@@ -10,14 +10,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package processors
 
-import (
-	_ "github.com/streamsets/datacollector-edge/stages/processors/delay"
-	_ "github.com/streamsets/datacollector-edge/stages/processors/expression"
-	_ "github.com/streamsets/datacollector-edge/stages/processors/fieldremover"
-	_ "github.com/streamsets/datacollector-edge/stages/processors/identity"
-	_ "github.com/streamsets/datacollector-edge/stages/processors/javascript"
-	_ "github.com/streamsets/datacollector-edge/stages/processors/selector"
-	_ "github.com/streamsets/datacollector-edge/stages/processors/tensorflow"
-)
+package tensorflow
+
+// Place holder so as not to fail builds when tensorflow tag is not passed (-PincludeStage=tensorflow)

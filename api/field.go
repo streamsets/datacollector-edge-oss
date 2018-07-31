@@ -18,6 +18,7 @@ import (
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"math/big"
 	"reflect"
+	"strconv"
 )
 
 type Field struct {
@@ -51,6 +52,29 @@ func (f *Field) Clone() *Field {
 	default:
 		return &Field{Type: f.Type, Value: f.Value}
 	}
+}
+
+func (f *Field) GetValueAsFloat() (float32, error) {
+	switch f.Type {
+	case fieldtype.FLOAT:
+		return f.Value.(float32), nil
+	case fieldtype.STRING:
+		strVal := f.Value.(string)
+		float64Val, err := strconv.ParseFloat(strVal, 32)
+		if err != nil {
+			return 0, err
+		}
+		return float32(float64Val), nil
+	case fieldtype.DOUBLE:
+		return float32(f.Value.(float64)), nil
+	case fieldtype.INTEGER:
+		return float32(f.Value.(int32)), nil
+	case fieldtype.LONG:
+		return float32(f.Value.(int64)), nil
+	case fieldtype.SHORT:
+		return float32(f.Value.(int8)), nil
+	}
+	return 0, errors.New("cannot convert field value to float")
 }
 
 func CreateField(value interface{}) (*Field, error) {
