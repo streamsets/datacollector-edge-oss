@@ -158,9 +158,11 @@ func (wel *WindowsEventLogSource) createRecordAndAddToBatch(event EventLogRecord
 }
 
 func (wel *WindowsEventLogSource) Destroy() error {
-	err := wel.eventLogReader.Close()
-	if err != nil {
-		log.WithError(err).Error("Error closing event reader")
+	if wel.eventLogReader != nil {
+		err := wel.eventLogReader.Close()
+		if err != nil {
+			log.WithError(err).Error("Error closing event reader")
+		}
 	}
 	ReleaseResourceLibraries()
 	return nil
