@@ -25,6 +25,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/util"
 	"net/http"
 	"net/http/pprof"
+	"os"
 )
 
 const (
@@ -42,6 +43,12 @@ type WebServerTask struct {
 }
 
 func (webServerTask *WebServerTask) Init() error {
+	if !webServerTask.config.Enabled {
+		fmt.Println("Web Server is disabled")
+		log.Info("Web Server is disabled")
+		return nil
+	}
+
 	fmt.Println("Running on URI : http://localhost" + webServerTask.config.BindAddress)
 	log.Info("Running on URI : http://localhost" + webServerTask.config.BindAddress)
 
@@ -94,13 +101,22 @@ func (webServerTask *WebServerTask) homeHandler(w http.ResponseWriter, r *http.R
 }
 
 func (webServerTask *WebServerTask) Run() {
-	fmt.Println(webServerTask.httpServer.ListenAndServe())
+	if webServerTask.config.Enabled {
+		fmt.Println(webServerTask.httpServer.ListenAndServe())
+	} else {
+		// Block forever to run Edge process in background
+		select{ }
+	}
 }
 
 func (webServerTask *WebServerTask) Shutdown() {
-	err := webServerTask.httpServer.Shutdown(context.Background())
-	if err != nil {
-		log.WithError(err).Error("Error happened when shutting down web server")
+	if webServerTask.config.Enabled {
+		err := webServerTask.httpServer.Shutdown(context.Background())
+		if err != nil {
+			log.WithError(err).Error("Error happened when shutting down web server")
+		}
+	} else {
+		os.Exit(0)
 	}
 }
 

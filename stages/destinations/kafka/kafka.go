@@ -20,6 +20,7 @@ import (
 	"github.com/Shopify/sarama"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/el"
@@ -29,7 +30,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"github.com/streamsets/datacollector-edge/api/dataformats"
 )
 
 const (
@@ -373,7 +373,6 @@ func resolveTopic(
 	topic := result.(string)
 	return &topic, nil
 }
-
 
 func flushAndCloseWriter(recordWriter dataformats.RecordWriter) {
 	err := recordWriter.Flush()
