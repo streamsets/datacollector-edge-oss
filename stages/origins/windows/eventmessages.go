@@ -31,6 +31,7 @@ const (
 	APPLICATION = "Application"
 	SYSTEM      = "System"
 	SECURITY    = "Security"
+	Custom      = "Custom"
 )
 
 var (
@@ -78,14 +79,7 @@ func loadResourceLibrary(libname string) (handle syscall.Handle, err error) {
 }
 
 func findLibNames(logName, appName string) (libs map[string]string, err error) {
-	var key string
-	if logName == APPLICATION {
-		key = `SYSTEM\CurrentControlSet\Services\Eventlog\Application\` + appName
-	} else if logName == SYSTEM {
-		key = `SYSTEM\CurrentControlSet\Services\Eventlog\System\` + appName
-	} else if logName == SECURITY {
-		key = `SYSTEM\CurrentControlSet\Services\Eventlog\Security\` + appName
-	}
+	key := `SYSTEM\CurrentControlSet\Services\Eventlog\` + logName + `\` + appName
 	if entries, err := ReadFromRegistryKey(key, registryEntries); err == nil {
 		return entries, nil
 	} else {

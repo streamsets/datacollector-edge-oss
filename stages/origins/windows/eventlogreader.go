@@ -64,7 +64,7 @@ func NewReader(logName string, mode EventLogReaderMode, initialOffset uint32, kn
 }
 
 func (elreader *EventLogReader) Open() error {
-	log.Debug("EventLogReader[%s] - Opening\n", elreader.log)
+	log.Debugf("EventLogReader[%s] - Opening\n", elreader.log)
 	w32Handle := w32.OpenEventLog(`\\localhost`, elreader.log)
 	if w32Handle == 0 {
 		return fmt.Errorf("Could not open event log reader for '%s'", elreader.log)

@@ -25,8 +25,8 @@ import (
 
 func createStageContext(logName string) *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
-	stageConfig.Library = LIBRARY
-	stageConfig.StageName = STAGE_NAME
+	stageConfig.Library = Library
+	stageConfig.StageName = StageName
 	stageConfig.Configuration = make([]common.Config, 2)
 
 	stageConfig.Configuration[0] = common.Config{
@@ -44,17 +44,17 @@ func createStageContext(logName string) *common.StageContextImpl {
 }
 
 func testWindowsEventLogRead(t *testing.T, logName string, maxBatchSize int) {
+	stageContext := createStageContext(logName)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
 	}
 	stageInstance := stageBean.Stage
 
-	stageContext := createStageContext(logName)
-	err = stageInstance.Init(stageContext)
+	issues := stageInstance.Init(stageContext)
 
-	if err != nil {
-		t.Fatalf("Error when Initializing stage %s", err.Error())
+	if len(issues) > 0 {
+		t.Fatalf("Error when Initializing stage %s", issues[0].Message)
 	}
 
 	defer stageInstance.Destroy()
@@ -72,8 +72,9 @@ func testWindowsEventLogRead(t *testing.T, logName string, maxBatchSize int) {
 		t.Fatalf("Did not read any records")
 	} else {
 		for _, event := range records {
-			rootField := event.Get().Value.(map[string](*api.Field))
-			actualLogName := rootField["LogName"].Value
+			rootField, _ := event.Get()
+			rootFieldValue := rootField.Value.(map[string](*api.Field))
+			actualLogName := rootFieldValue["LogName"].Value
 			if actualLogName != logName {
 				t.Fatalf("Wrong Log Name. Expected : %s, Actual : %s", logName, actualLogName)
 			}

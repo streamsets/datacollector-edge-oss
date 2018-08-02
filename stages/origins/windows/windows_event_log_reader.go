@@ -26,56 +26,50 @@ import (
 )
 
 const (
-	LIBRARY          = "streamsets-datacollector-windows-lib"
-	STAGE_NAME       = "com_streamsets_pipeline_stage_origin_windows_WindowsEventLogDSource"
-	WINDOWS          = "windows"
-	LOG_NAME_CONFIG  = "logName"
-	READ_MODE_CONFIG = "readMode"
+	Library   = "streamsets-datacollector-windows-lib"
+	StageName = "com_streamsets_pipeline_stage_origin_windows_WindowsEventLogDSource"
+	Windows   = "windows"
 )
 
 type WindowsEventLogSource struct {
 	*common.BaseStage
-	logName        string
-	readMode       EventLogReaderMode
-	eventLogReader *EventLogReader
+	LogName            string `ConfigDef:"type=STRING,required=true"`
+	ReadMode           string `ConfigDef:"type=STRING,required=true"`
+	CustomLogName      string `ConfigDef:"type=STRING,required=true"`
+	resolvedLogName    string
+	eventLogReaderMode EventLogReaderMode
+	eventLogReader     *EventLogReader
 }
 
 func init() {
-	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(Library, StageName, func() api.Stage {
 		return &WindowsEventLogSource{BaseStage: &common.BaseStage{}}
 	})
 }
 
 func (wel *WindowsEventLogSource) Init(stageContext api.StageContext) []validation.Issue {
 	issues := wel.BaseStage.Init(stageContext)
-	stageConfig := wel.GetStageConfig()
 
-	if runtime.GOOS != WINDOWS {
+	if runtime.GOOS != Windows {
 		issues = append(issues, stageContext.CreateConfigIssue(
 			"Windows Event Log Source should be run on Windows OS",
 		))
 		return issues
 	}
 
-	for _, config := range stageConfig.Configuration {
-		value, err := wel.GetStageContext().GetResolvedValue(config.Value)
-		if err != nil {
-			issues = append(issues, stageContext.CreateConfigIssue(err.Error()))
-			return issues
-		}
-		switch config.Name {
-		case LOG_NAME_CONFIG:
-			logName := value.(string)
-			if !(logName == SYSTEM || logName == APPLICATION || logName == SECURITY) {
-				issues = append(issues, stageContext.CreateConfigIssue("Unsupported Log Name :"+logName))
-				return issues
-
-			}
-			wel.logName = logName
-		case READ_MODE_CONFIG:
-			wel.readMode = EventLogReaderMode(value.(string))
-		}
+	if !(wel.LogName == SYSTEM || wel.LogName == APPLICATION || wel.LogName == SECURITY || wel.LogName == Custom) {
+		issues = append(issues, stageContext.CreateConfigIssue("Unsupported Log Name :"+wel.LogName))
+		return issues
 	}
+
+	if wel.LogName == Custom {
+		wel.resolvedLogName = wel.CustomLogName
+	} else {
+		wel.resolvedLogName = wel.LogName
+	}
+
+	wel.eventLogReaderMode = EventLogReaderMode(wel.ReadMode)
+
 	return issues
 }
 
@@ -86,7 +80,7 @@ func (wel *WindowsEventLogSource) Produce(
 ) (*string, error) {
 	if wel.eventLogReader == nil {
 		if lastSourceOffset == nil || *lastSourceOffset == "" {
-			wel.eventLogReader = NewReader(wel.logName, wel.readMode, 0, false)
+			wel.eventLogReader = NewReader(wel.resolvedLogName, wel.eventLogReaderMode, 0, false)
 		} else {
 			off, err := strconv.ParseUint(*lastSourceOffset, 10, 32)
 			if err != nil {
@@ -94,7 +88,7 @@ func (wel *WindowsEventLogSource) Produce(
 				log.WithError(err).WithField("offset", lastSourceOffset).Error("Error while parsing offset")
 				return lastSourceOffset, err
 			}
-			wel.eventLogReader = NewReader(wel.logName, wel.readMode, uint32(off), true)
+			wel.eventLogReader = NewReader(wel.resolvedLogName, wel.eventLogReaderMode, uint32(off), true)
 		}
 		if err := wel.eventLogReader.Open(); err != nil {
 			wel.GetStageContext().ReportError(err)
@@ -126,7 +120,7 @@ func (wel *WindowsEventLogSource) Produce(
 }
 
 func (wel *WindowsEventLogSource) createRecordAndAddToBatch(event EventLogRecord, batchMaker api.BatchMaker) error {
-	recordId := event.ComputerName + "::" + wel.logName + "::" + string(event.EventID)
+	recordId := event.ComputerName + "::" + wel.resolvedLogName + "::" + string(event.EventID)
 	recordVal := map[string]interface{}{
 		"ComputerName":  event.ComputerName,
 		"RecordNumber":  event.RecordNumber,
@@ -136,7 +130,7 @@ func (wel *WindowsEventLogSource) createRecordAndAddToBatch(event EventLogRecord
 		"EventId":       event.EventID,
 		"EventType":     event.EventType,
 		"SourceName":    event.SourceName,
-		"LogName":       wel.logName,
+		"LogName":       wel.resolvedLogName,
 		"StringOffset":  event.StringOffset,
 		"Reserved":      event.Reserved,
 		"TimeGenerated": event.TimeGenerated,
