@@ -13,6 +13,7 @@
 package origins
 
 import (
+	_ "github.com/streamsets/datacollector-edge/stages/origins/dev_data_generator"
 	_ "github.com/streamsets/datacollector-edge/stages/origins/dev_random"
 	_ "github.com/streamsets/datacollector-edge/stages/origins/dev_rawdata"
 	_ "github.com/streamsets/datacollector-edge/stages/origins/filetail"
