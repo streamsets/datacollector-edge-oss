@@ -58,3 +58,9 @@ type Header interface {
 
 	SetAttribute(name string, value string)
 }
+
+const (
+	EventRecordHeaderType              = "sdc.event.type"
+	EventRecordHeaderVersion           = "sdc.event.version"
+	EventRecordHeaderCreationTimestamp = "sdc.event.creation_timestamp"
+)

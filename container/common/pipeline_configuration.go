@@ -118,6 +118,13 @@ func (s StageConfiguration) GetConfigurationMap() map[string]Config {
 	return configurationMap
 }
 
+func (s StageConfiguration) GetOutputAndEventLanes() []string {
+	outputAndEventLanes := make([]string, len(s.OutputLanes)+len(s.EventLanes))
+	outputAndEventLanes = append(outputAndEventLanes, s.OutputLanes...)
+	outputAndEventLanes = append(outputAndEventLanes, s.EventLanes...)
+	return outputAndEventLanes
+}
+
 type PipelineEnvelope struct {
 	PipelineConfig     PipelineConfiguration  `json:"pipelineConfig"`
 	PipelineRules      map[string]interface{} `json:"pipelineRules"`
@@ -177,7 +184,7 @@ func sortStageInstances(stageInstances []*StageConfiguration) []*StageConfigurat
 				}
 				if len(alreadyProduced) == len(stageInstance.InputLanes) {
 					producedOutputs = append(producedOutputs, stageInstance.OutputLanes...)
-
+					producedOutputs = append(producedOutputs, stageInstance.EventLanes...)
 					removedMap[stageInstance.InstanceName] = true
 					sorted = append(sorted, stageInstance)
 				}

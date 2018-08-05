@@ -34,6 +34,7 @@ type Pipeline struct {
 	offsetTracker     execution.SourceOffsetTracker
 	stop              bool
 	errorSink         *common.ErrorSink
+	eventSink         *common.EventSink
 
 	MetricRegistry              metrics.Registry
 	batchProcessingTimer        metrics.Timer
@@ -99,10 +100,11 @@ func (p *Pipeline) runBatch() error {
 	start := time.Now()
 
 	p.errorSink.ClearErrorRecordsAndMesssages()
+	p.eventSink.ClearEventRecords()
 
 	previousOffset := p.offsetTracker.GetOffset()
 
-	pipeBatch := NewFullPipeBatch(p.offsetTracker, p.config.MaxBatchSize, p.errorSink, false)
+	pipeBatch := NewFullPipeBatch(p.offsetTracker, p.config.MaxBatchSize, p.errorSink, p.eventSink, false)
 
 	for _, pipe := range p.pipes {
 		if p.pipelineBean.Config.DeliveryGuarantee == AtMostOnce &&
@@ -182,6 +184,7 @@ func NewPipeline(
 	stageRuntimeList := make([]StageRuntime, len(pipelineConfig.Stages))
 	pipes := make([]Pipe, len(pipelineConfig.Stages))
 	errorSink := common.NewErrorSink()
+	eventSink := common.NewEventSink()
 
 	var errorStageRuntime StageRuntime
 
@@ -217,6 +220,7 @@ func NewPipeline(
 			pipelineConfigForParam.ErrorRecordPolicy,
 			services,
 			pipelineBean.ElContext,
+			eventSink,
 		)
 		if err != nil {
 			return nil, err
@@ -235,6 +239,7 @@ func NewPipeline(
 		pipelineConfigForParam.ErrorRecordPolicy,
 		nil,
 		pipelineBean.ElContext,
+		eventSink,
 	)
 	if err != nil {
 		return nil, err
@@ -247,6 +252,7 @@ func NewPipeline(
 		pipes:             pipes,
 		errorStageRuntime: errorStageRuntime,
 		errorSink:         errorSink,
+		eventSink:         eventSink,
 		offsetTracker:     sourceOffsetTracker,
 		MetricRegistry:    metricRegistry,
 		config:            config,

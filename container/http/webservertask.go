@@ -105,7 +105,7 @@ func (webServerTask *WebServerTask) Run() {
 		fmt.Println(webServerTask.httpServer.ListenAndServe())
 	} else {
 		// Block forever to run Edge process in background
-		select{ }
+		select {}
 	}
 }
 

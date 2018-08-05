@@ -39,17 +39,26 @@ func NewStageOutputJson(stageOutput StageOutput) (*StageOutputJson, error) {
 		StageErrors:  stageOutput.StageErrors,
 		Output:       make(map[string][]sdcrecord.SDCRecord),
 		ErrorRecords: make([]sdcrecord.SDCRecord, len(stageOutput.ErrorRecords)),
+		EventRecords: make([]sdcrecord.SDCRecord, len(stageOutput.EventRecords)),
 	}
 
-	for stageInstanceName, records := range stageOutput.Output {
-		stageOutputJson.Output[stageInstanceName] = make([]sdcrecord.SDCRecord, len(records))
+	for outpuLane, records := range stageOutput.Output {
+		stageOutputJson.Output[outpuLane] = make([]sdcrecord.SDCRecord, len(records))
 		for i, record := range records {
 			sdcRecord, err := sdcrecord.NewSdcRecordFromRecord(record)
 			if err != nil {
 				return nil, err
 			}
-			stageOutputJson.Output[stageInstanceName][i] = *sdcRecord
+			stageOutputJson.Output[outpuLane][i] = *sdcRecord
 		}
+	}
+
+	for i, record := range stageOutput.EventRecords {
+		sdcRecord, err := sdcrecord.NewSdcRecordFromRecord(record)
+		if err != nil {
+			return nil, err
+		}
+		stageOutputJson.EventRecords[i] = *sdcRecord
 	}
 
 	for i, record := range stageOutput.ErrorRecords {
@@ -80,6 +89,14 @@ func NewStageOutput(stageContext api.StageContext, stageOutputJson StageOutputJs
 			}
 			stageOutput.Output[stageInstanceName][i] = sdcRecord
 		}
+	}
+
+	for i, record := range stageOutput.EventRecords {
+		sdcRecord, err := sdcrecord.NewSdcRecordFromRecord(record)
+		if err != nil {
+			return nil, err
+		}
+		stageOutputJson.EventRecords[i] = *sdcRecord
 	}
 
 	for i, record := range stageOutput.ErrorRecords {

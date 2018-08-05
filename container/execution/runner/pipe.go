@@ -32,7 +32,7 @@ const (
 
 type Pipe interface {
 	Init() []validation.Issue
-	Process(pipeBatch *FullPipeBatch) error
+	Process(pipeBatch PipeBatch) error
 	Destroy()
 	IsSource() bool
 	IsProcessor() bool
@@ -40,6 +40,7 @@ type Pipe interface {
 	GetInstanceName() string
 	GetStageContext() api.StageContext
 	GetOutputLanes() []string
+	GetEventLanes() []string
 }
 
 type StagePipe struct {
@@ -88,10 +89,11 @@ func (s *StagePipe) Init() []validation.Issue {
 
 		s.processingTimer = util.CreateTimer(metricRegistry, metricsKey+BatchProcessing)
 
-		if len(s.Stage.config.OutputLanes) > 0 {
+		outputAndEventLanes := s.Stage.config.GetOutputAndEventLanes()
+		if len(outputAndEventLanes) > 0 {
 			s.outputRecordsPerLaneCounter = make(map[string]metrics.Counter)
 			s.outputRecordsPerLaneMeter = make(map[string]metrics.Meter)
-			for _, lane := range s.Stage.config.OutputLanes {
+			for _, lane := range outputAndEventLanes {
 				s.outputRecordsPerLaneCounter[lane] =
 					util.CreateCounter(metricRegistry, metricsKey+":"+lane+OutputRecords)
 				s.outputRecordsPerLaneMeter[lane] =
@@ -103,12 +105,12 @@ func (s *StagePipe) Init() []validation.Issue {
 	return issues
 }
 
-func (s *StagePipe) Process(pipeBatch *FullPipeBatch) error {
+func (s *StagePipe) Process(pipeBatch PipeBatch) error {
 	log.WithField("stage", s.Stage.config.InstanceName).Debug("Processing Stage")
 	start := time.Now()
 	batchMaker := pipeBatch.StartStage(*s)
 	batchImpl := pipeBatch.GetBatch(*s)
-	newOffset, err := s.Stage.Execute(pipeBatch.GetPreviousOffset(), pipeBatch.batchSize, batchImpl, batchMaker)
+	newOffset, err := s.Stage.Execute(pipeBatch.GetPreviousOffset(), pipeBatch.GetBatchSize(), batchImpl, batchMaker)
 
 	if err != nil {
 		return err
@@ -124,6 +126,7 @@ func (s *StagePipe) Process(pipeBatch *FullPipeBatch) error {
 
 	instanceName := s.Stage.config.InstanceName
 	errorSink := pipeBatch.GetErrorSink()
+	eventSink := pipeBatch.GetEventSink()
 
 	stageErrorRecordsCount := int64(len(errorSink.GetStageErrorRecords(instanceName)))
 	stageErrorMessagesCount := int64(len(errorSink.GetStageErrorMessages(instanceName)))
@@ -160,6 +163,13 @@ func (s *StagePipe) Process(pipeBatch *FullPipeBatch) error {
 		}
 	}
 
+	if len(s.Stage.config.EventLanes) > 0 {
+		eventLane := s.Stage.config.EventLanes[0]
+		laneCount := int64(len(eventSink.GetStageEvents(instanceName)))
+		s.outputRecordsPerLaneCounter[eventLane].Inc(laneCount)
+		s.outputRecordsPerLaneMeter[eventLane].Mark(laneCount)
+	}
+
 	return nil
 }
 
@@ -189,6 +199,10 @@ func (s *StagePipe) GetStageContext() api.StageContext {
 
 func (s *StagePipe) GetOutputLanes() []string {
 	return s.OutputLanes
+}
+
+func (s *StagePipe) GetEventLanes() []string {
+	return s.EventLanes
 }
 
 func NewStagePipe(stage StageRuntime, config execution.Config) Pipe {

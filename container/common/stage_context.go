@@ -34,6 +34,7 @@ type StageContextImpl struct {
 	Parameters        map[string]interface{}
 	Metrics           metrics.Registry
 	ErrorSink         *ErrorSink
+	EventSink         *EventSink
 	ErrorStage        bool
 	ErrorRecordPolicy string
 	Services          map[string]api.Service
@@ -103,9 +104,40 @@ func (s *StageContextImpl) CreateRecord(recordSourceId string, value interface{}
 	return record, err
 }
 
+func (s *StageContextImpl) CreateEventRecord(
+	recordSourceId string,
+	value interface{},
+	eventType string,
+	eventVersion int,
+) (api.Record, error) {
+	record, err := createRecord(recordSourceId, value)
+	if err != nil {
+		return nil, err
+	}
+	headerImplForRecord := record.GetHeader().(*HeaderImpl)
+	headerImplForRecord.SetStageCreator(s.StageConfig.InstanceName)
+	if s.ErrorRecordPolicy == ErrorRecordPolicyOriginal {
+		// Clone the current record to the header for error record handling
+		headerImplForRecord.SetSourceRecord(record.Clone())
+	}
+	AddStageToStagePath(headerImplForRecord, s.StageConfig.InstanceName)
+	CreateTrackingId(headerImplForRecord)
+	headerImplForRecord.SetAttribute(api.EventRecordHeaderType, eventType)
+	headerImplForRecord.SetAttribute(api.EventRecordHeaderVersion, strconv.Itoa(eventVersion))
+	headerImplForRecord.SetAttribute(
+		api.EventRecordHeaderCreationTimestamp,
+		strconv.FormatInt(util.ConvertTimeToLong(time.Now()), 10),
+	)
+	return record, err
+}
+
 func (s *StageContextImpl) ToError(err error, record api.Record) {
 	errorRecord := constructErrorRecord(s.StageConfig.InstanceName, err, s.ErrorRecordPolicy, record)
 	s.ErrorSink.ToError(s.StageConfig.InstanceName, errorRecord)
+}
+
+func (s *StageContextImpl) ToEvent(record api.Record) {
+	s.EventSink.AddEvent(s.StageConfig.InstanceName, record)
 }
 
 func (s *StageContextImpl) ReportError(err error) {
@@ -211,12 +243,14 @@ func NewStageContext(
 	errorRecordPolicy string,
 	services map[string]api.Service,
 	elContext context.Context,
+	eventSink *EventSink,
 ) (*StageContextImpl, error) {
 	stageContext := &StageContextImpl{
 		StageConfig:       stageConfig,
 		Parameters:        resolvedParameters,
 		Metrics:           metricRegistry,
 		ErrorSink:         errorSink,
+		EventSink:         eventSink,
 		ErrorStage:        errorStage,
 		ErrorRecordPolicy: errorRecordPolicy,
 		Services:          services,

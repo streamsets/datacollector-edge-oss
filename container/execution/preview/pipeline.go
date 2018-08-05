@@ -33,6 +33,7 @@ type Pipeline struct {
 	errorStageRuntime runner.StageRuntime
 	stop              bool
 	errorSink         *common.ErrorSink
+	eventSink         *common.EventSink
 	BatchesOutput     [][]execution.StageOutput
 	stagesToSkip      map[string]execution.StageOutputJson
 }
@@ -86,7 +87,7 @@ func (p *Pipeline) Run(
 func (p *Pipeline) runBatch(batchCount int, batchSize int, skipTargets bool) error {
 	p.errorSink.ClearErrorRecordsAndMesssages()
 	previousOffset := p.offsetTracker.GetOffset()
-	pipeBatch := runner.NewFullPipeBatch(p.offsetTracker, batchSize, p.errorSink, true)
+	pipeBatch := runner.NewFullPipeBatch(p.offsetTracker, batchSize, p.errorSink, p.eventSink, true)
 
 	for _, pipe := range p.pipes {
 		if !(skipTargets && pipe.IsTarget()) {
@@ -117,7 +118,7 @@ func (p *Pipeline) runBatch(batchCount int, batchSize int, skipTargets bool) err
 		}
 	}
 
-	p.BatchesOutput[batchCount] = pipeBatch.StageOutputSnapshot
+	p.BatchesOutput[batchCount] = pipeBatch.GetSnapshotsOfAllStagesOutput()
 
 	return nil
 }
@@ -141,6 +142,7 @@ func NewPreviewPipeline(
 	stageRuntimeList := make([]runner.StageRuntime, len(pipelineConfig.Stages))
 	pipes := make([]runner.Pipe, len(pipelineConfig.Stages))
 	errorSink := common.NewErrorSink()
+	eventSink := common.NewEventSink()
 
 	var errorStageRuntime runner.StageRuntime
 
@@ -169,6 +171,7 @@ func NewPreviewPipeline(
 			pipelineConfigForParam.ErrorRecordPolicy,
 			services,
 			pipelineBean.ElContext,
+			eventSink,
 		)
 		if err != nil {
 			return nil, err
@@ -187,6 +190,7 @@ func NewPreviewPipeline(
 		pipelineConfigForParam.ErrorRecordPolicy,
 		nil,
 		pipelineBean.ElContext,
+		eventSink,
 	)
 	if err != nil {
 		return nil, err
@@ -199,6 +203,7 @@ func NewPreviewPipeline(
 		pipes:             pipes,
 		errorStageRuntime: errorStageRuntime,
 		errorSink:         errorSink,
+		eventSink:         eventSink,
 		offsetTracker:     sourceOffsetTracker,
 	}
 
