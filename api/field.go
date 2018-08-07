@@ -19,6 +19,7 @@ import (
 	"math/big"
 	"reflect"
 	"strconv"
+	"time"
 )
 
 type Field struct {
@@ -123,6 +124,8 @@ func CreateField(value interface{}) (*Field, error) {
 		return CreateListField(value.([]interface{}))
 	case map[string]interface{}:
 		return CreateMapField(value.(map[string]interface{}))
+	case time.Time:
+		return CreateDateTimeField(value.(time.Time))
 	default:
 		err = errors.New(fmt.Sprintf("Unsupported Field Type %s", reflect.TypeOf(value)))
 	}
@@ -141,7 +144,7 @@ func CreateByteField(value byte) (*Field, error) {
 	return &Field{Type: fieldtype.BYTE, Value: value}, nil
 }
 
-func CreateDateTimeField(value int64) (*Field, error) {
+func CreateDateTimeField(value time.Time) (*Field, error) {
 	return &Field{Type: fieldtype.DATETIME, Value: value}, nil
 }
 
@@ -276,6 +279,9 @@ func CreateFieldFromSDCField(value interface{}) (*Field, error) {
 		return CreateListFieldWithListOfFields(value.([]*Field)), nil
 	case map[string]*Field:
 		return CreateMapFieldWithMapOfFields(value.(map[string]*Field)), nil
+	case *Field:
+		f := value.(*Field)
+		return &Field{Type: f.Type, Value: f.Value}, nil
 	default:
 		return CreateField(value)
 	}

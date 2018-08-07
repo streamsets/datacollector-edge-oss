@@ -17,7 +17,6 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
-	"github.com/streamsets/datacollector-edge/container/util"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"math/big"
 	"math/rand"
@@ -149,7 +148,7 @@ func (d *Origin) createField(r *rand.Rand, delta int64, min int64) (*api.Field, 
 			fallthrough
 		case DATETIME:
 			sec := r.Int63n(delta) + min
-			rootField[config.Field], _ = api.CreateDateTimeField(util.ConvertTimeToLong(time.Unix(sec, 0)))
+			rootField[config.Field], _ = api.CreateDateTimeField((time.Unix(sec, 0)))
 		case DOUBLE:
 			rootField[config.Field], _ = api.CreateDoubleField(r.Float64())
 		case FLOAT:

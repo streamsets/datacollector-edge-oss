@@ -23,7 +23,6 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
-	"github.com/streamsets/datacollector-edge/container/util"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"time"
 )
@@ -111,7 +110,7 @@ func (o *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 	}
 
 	if record, err := o.GetStageContext().CreateRecord(defaultOffset, recordValue); err == nil {
-		timeStampField, _ := api.CreateDateTimeField(util.ConvertTimeToLong(time.Now()))
+		timeStampField, _ := api.CreateDateTimeField(time.Now())
 		record.SetField("/timestamp", timeStampField)
 		batchMaker.AddRecord(record)
 	} else {

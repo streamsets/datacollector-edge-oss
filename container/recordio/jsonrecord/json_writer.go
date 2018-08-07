@@ -18,7 +18,9 @@ import (
 	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"github.com/streamsets/datacollector-edge/container/recordio"
+	"github.com/streamsets/datacollector-edge/container/util"
 	"io"
+	"time"
 )
 
 const (
@@ -111,6 +113,8 @@ func writeFieldToJsonObject(field *api.Field) (interface{}, error) {
 			}
 		}
 		return jsonObject, err
+	case fieldtype.DATETIME:
+		return util.ConvertTimeToLong(field.Value.(time.Time)), nil
 	default:
 		return field.Value, nil
 	}

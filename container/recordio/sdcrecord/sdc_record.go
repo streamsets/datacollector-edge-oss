@@ -19,8 +19,10 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/util"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -59,6 +61,8 @@ func marshalField(prefix string, f *api.Field) map[string]interface{} {
 		fallthrough
 	case fieldtype.BOOLEAN:
 		sdcFieldJsonValue = f.Value
+	case fieldtype.DATETIME:
+		sdcFieldJsonValue = fmt.Sprintf("%v", util.ConvertTimeToLong(f.Value.(time.Time)))
 	default:
 		//Serialize as string
 		sdcFieldJsonValue = fmt.Sprintf("%v", f.Value)
@@ -147,6 +151,12 @@ func unmarshalField(sdcRecordFieldJson map[string]interface{}) (*api.Field, erro
 		var doubleVal float64
 		if doubleVal, err = strconv.ParseFloat(stringVal, 64); err == nil {
 			f, err = api.CreateDoubleField(doubleVal)
+		}
+	case fieldtype.DATETIME:
+		stringVal = value.(string)
+		var longVal int64
+		if longVal, err = strconv.ParseInt(stringVal, 10, 64); err == nil {
+			f, err = api.CreateDateTimeField(time.Unix(0, longVal*int64(time.Millisecond)))
 		}
 	}
 	return f, err
