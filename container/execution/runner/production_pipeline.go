@@ -56,10 +56,10 @@ func NewProductionPipeline(
 	runner execution.Runner,
 	pipelineConfiguration common.PipelineConfiguration,
 	runtimeParameters map[string]interface{},
-) (*ProductionPipeline, error) {
+) (*ProductionPipeline, []validation.Issue) {
 	if sourceOffsetTracker, err := NewProductionSourceOffsetTracker(pipelineId); err == nil {
 		metricRegistry := metrics.NewRegistry()
-		pipeline, err := NewPipeline(
+		pipeline, issues := NewPipeline(
 			config,
 			runner.GetPipelineConfig(),
 			sourceOffsetTracker,
@@ -70,8 +70,13 @@ func NewProductionPipeline(
 			PipelineConfig: pipelineConfiguration,
 			Pipeline:       pipeline,
 			MetricRegistry: metricRegistry,
-		}, err
+		}, issues
 	} else {
-		return nil, err
+		issues := make([]validation.Issue, 0)
+		issues = append(issues, validation.Issue{
+			Count:   1,
+			Message: err.Error(),
+		})
+		return nil, issues
 	}
 }

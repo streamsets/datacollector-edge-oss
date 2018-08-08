@@ -107,7 +107,8 @@ func (edgeRunner *EdgeRunner) StartPipeline(
 		return nil, err
 	}
 
-	if edgeRunner.prodPipeline, err = NewProductionPipeline(
+	var issues []validation.Issue
+	if edgeRunner.prodPipeline, issues = NewProductionPipeline(
 		edgeRunner.pipelineId,
 		edgeRunner.config,
 		edgeRunner,
@@ -117,17 +118,14 @@ func (edgeRunner *EdgeRunner) StartPipeline(
 		return nil, err
 	}
 
-	issues := edgeRunner.prodPipeline.Init()
+	if len(issues) != 0 {
+		return edgeRunner.setStateToStartError(issues)
+	}
+
+	issues = edgeRunner.prodPipeline.Init()
 
 	if len(issues) != 0 {
-		edgeRunner.pipelineState.Status = common.START_ERROR
-		edgeRunner.pipelineState.TimeStamp = util.ConvertTimeToLong(time.Now())
-		edgeRunner.pipelineState.Message = issues[0].Message
-		edgeRunner.pipelineState.Attributes[store.ISSUES] = validation.NewIssues(issues)
-		if err = store.SaveState(edgeRunner.pipelineId, edgeRunner.pipelineState); err != nil {
-			return nil, err
-		}
-		return edgeRunner.pipelineState, nil
+		return edgeRunner.setStateToStartError(issues)
 	}
 
 	go edgeRunner.prodPipeline.Run()
@@ -151,7 +149,17 @@ func (edgeRunner *EdgeRunner) StartPipeline(
 	}
 
 	return edgeRunner.pipelineState, nil
+}
 
+func (edgeRunner *EdgeRunner) setStateToStartError(issues []validation.Issue) (*common.PipelineState, error) {
+	edgeRunner.pipelineState.Status = common.START_ERROR
+	edgeRunner.pipelineState.TimeStamp = util.ConvertTimeToLong(time.Now())
+	edgeRunner.pipelineState.Message = issues[0].Message
+	edgeRunner.pipelineState.Attributes[store.ISSUES] = validation.NewIssues(issues)
+	if err := store.SaveState(edgeRunner.pipelineId, edgeRunner.pipelineState); err != nil {
+		return nil, err
+	}
+	return edgeRunner.pipelineState, nil
 }
 
 func (edgeRunner *EdgeRunner) StopPipeline() (*common.PipelineState, error) {

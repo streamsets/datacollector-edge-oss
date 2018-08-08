@@ -14,6 +14,7 @@ package creation
 
 import (
 	"context"
+	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/el"
 )
@@ -29,7 +30,8 @@ type PipelineBean struct {
 func NewPipelineBean(
 	pipelineConfig common.PipelineConfiguration,
 	runtimeParameters map[string]interface{},
-) (PipelineBean, error) {
+) (PipelineBean, []validation.Issue) {
+	issues := make([]validation.Issue, 0)
 	var pipelineBean PipelineBean
 	var err error
 
@@ -44,7 +46,13 @@ func NewPipelineBean(
 	for i, stageConfig := range pipelineConfig.Stages {
 		stageBeans[i], err = NewStageBean(stageConfig, runtimeParameters, elContext)
 		if err != nil {
-			return pipelineBean, err
+			issues = append(issues, validation.Issue{
+				InstanceName: stageConfig.InstanceName,
+				Level:        common.StageConfig,
+				Count:        1,
+				Message:      err.Error(),
+			})
+			return pipelineBean, issues
 		}
 	}
 	pipelineBean.Stages = stageBeans
@@ -52,7 +60,13 @@ func NewPipelineBean(
 	if pipelineConfig.ErrorStage.InstanceName != "" {
 		pipelineBean.ErrorStage, err = NewStageBean(pipelineConfig.ErrorStage, runtimeParameters, elContext)
 		if err != nil {
-			return pipelineBean, err
+			issues = append(issues, validation.Issue{
+				InstanceName: pipelineConfig.ErrorStage.InstanceName,
+				Level:        common.StageConfig,
+				Count:        1,
+				Message:      err.Error(),
+			})
+			return pipelineBean, issues
 		}
 	}
 
@@ -60,9 +74,15 @@ func NewPipelineBean(
 		pipelineBean.StatsAggregatorStage, err =
 			NewStageBean(pipelineConfig.StatsAggregatorStage, runtimeParameters, elContext)
 		if err != nil {
-			return pipelineBean, err
+			issues = append(issues, validation.Issue{
+				InstanceName: pipelineConfig.StatsAggregatorStage.InstanceName,
+				Level:        common.StageConfig,
+				Count:        1,
+				Message:      err.Error(),
+			})
+			return pipelineBean, issues
 		}
 	}
 
-	return pipelineBean, err
+	return pipelineBean, issues
 }

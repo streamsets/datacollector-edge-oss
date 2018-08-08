@@ -178,8 +178,8 @@ func NewPipeline(
 	sourceOffsetTracker execution.SourceOffsetTracker,
 	runtimeParameters map[string]interface{},
 	metricRegistry metrics.Registry,
-) (*Pipeline, error) {
-
+) (*Pipeline, []validation.Issue) {
+	issues := make([]validation.Issue, 0)
 	pipelineConfigForParam := creation.NewPipelineConfigBean(pipelineConfig)
 	stageRuntimeList := make([]StageRuntime, len(pipelineConfig.Stages))
 	pipes := make([]Pipe, len(pipelineConfig.Stages))
@@ -197,9 +197,9 @@ func NewPipeline(
 		}
 	}
 
-	pipelineBean, err := creation.NewPipelineBean(pipelineConfig, resolvedParameters)
-	if err != nil {
-		return nil, err
+	pipelineBean, issues := creation.NewPipelineBean(pipelineConfig, resolvedParameters)
+	if len(issues) > 0 {
+		return nil, issues
 	}
 
 	for i, stageBean := range pipelineBean.Stages {
@@ -223,7 +223,13 @@ func NewPipeline(
 			eventSink,
 		)
 		if err != nil {
-			return nil, err
+			issues = append(issues, validation.Issue{
+				InstanceName: stageBean.Config.InstanceName,
+				Level:        common.StageConfig,
+				Count:        1,
+				Message:      err.Error(),
+			})
+			return nil, issues
 		}
 		stageRuntimeList[i] = NewStageRuntime(pipelineBean, stageBean, stageContext)
 		pipes[i] = NewStagePipe(stageRuntimeList[i], config)
@@ -242,7 +248,13 @@ func NewPipeline(
 		eventSink,
 	)
 	if err != nil {
-		return nil, err
+		issues = append(issues, validation.Issue{
+			InstanceName: pipelineBean.ErrorStage.Config.InstanceName,
+			Level:        common.StageConfig,
+			Count:        1,
+			Message:      err.Error(),
+		})
+		return nil, issues
 	}
 	errorStageRuntime = NewStageRuntime(pipelineBean, pipelineBean.ErrorStage, errorStageContext)
 
@@ -277,5 +289,5 @@ func NewPipeline(
 	p.batchErrorRecordsHistogram = util.CreateHistogram5Min(metricRegistry, PipelineErrorRecordsPerBatch)
 	p.batchErrorMessagesHistogram = util.CreateHistogram5Min(metricRegistry, PipelineErrorsPerBatch)
 
-	return p, nil
+	return p, issues
 }

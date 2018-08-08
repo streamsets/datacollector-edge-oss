@@ -64,14 +64,14 @@ func (p *SyncPreviewer) ValidateConfigs(timeoutMillis int64) error {
 		return err
 	}
 
-	previewPipeline, err := NewPreviewPipeline(p.config, p.pipelineConfig)
-	if err != nil {
+	previewPipeline, issues := NewPreviewPipeline(p.config, p.pipelineConfig)
+	if len(issues) > 0 {
 		p.previewOutput.PreviewStatus = ValidationError
-		p.previewOutput.Message = err.Error()
+		p.previewOutput.Issues = validation.NewIssues(issues)
 		return err
 	}
 
-	issues := previewPipeline.ValidateConfigs()
+	issues = previewPipeline.ValidateConfigs()
 	p.previewOutput.Issues = validation.NewIssues(issues)
 	if len(issues) > 0 {
 		p.previewOutput.PreviewStatus = InValid
@@ -103,14 +103,14 @@ func (p *SyncPreviewer) Start(
 		p.pipelineConfig.Stages[0] = p.pipelineConfig.TestOriginStage
 	}
 
-	previewPipeline, err := NewPreviewPipeline(p.config, p.pipelineConfig)
-	if err != nil {
+	previewPipeline, issues := NewPreviewPipeline(p.config, p.pipelineConfig)
+	if len(issues) > 0 {
 		p.previewOutput.PreviewStatus = StartError
-		p.previewOutput.Message = err.Error()
+		p.previewOutput.Issues = validation.NewIssues(issues)
 		return err
 	}
 
-	issues := previewPipeline.Init()
+	issues = previewPipeline.Init()
 	if len(issues) > 0 {
 		p.previewOutput.PreviewStatus = InValid
 		p.previewOutput.Issues = validation.NewIssues(issues)

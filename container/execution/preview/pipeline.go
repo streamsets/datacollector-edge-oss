@@ -135,7 +135,8 @@ func (p *Pipeline) Stop() {
 func NewPreviewPipeline(
 	config execution.Config,
 	pipelineConfig common.PipelineConfiguration,
-) (*Pipeline, error) {
+) (*Pipeline, []validation.Issue) {
+	issues := make([]validation.Issue, 0)
 	metricRegistry := metrics.NewRegistry()
 	sourceOffsetTracker := NewPreviewSourceOffsetTracker(pipelineConfig.PipelineId)
 	pipelineConfigForParam := creation.NewPipelineConfigBean(pipelineConfig)
@@ -148,9 +149,9 @@ func NewPreviewPipeline(
 
 	var resolvedParameters = pipelineConfigForParam.Constants
 
-	pipelineBean, err := creation.NewPipelineBean(pipelineConfig, resolvedParameters)
-	if err != nil {
-		return nil, err
+	pipelineBean, issues := creation.NewPipelineBean(pipelineConfig, resolvedParameters)
+	if len(issues) > 0 {
+		return nil, issues
 	}
 
 	for i, stageBean := range pipelineBean.Stages {
@@ -174,7 +175,13 @@ func NewPreviewPipeline(
 			eventSink,
 		)
 		if err != nil {
-			return nil, err
+			issues = append(issues, validation.Issue{
+				InstanceName: stageBean.Config.InstanceName,
+				Level:        common.StageConfig,
+				Count:        1,
+				Message:      err.Error(),
+			})
+			return nil, issues
 		}
 		stageRuntimeList[i] = runner.NewStageRuntime(pipelineBean, stageBean, stageContext)
 		pipes[i] = runner.NewStagePipe(stageRuntimeList[i], config)
@@ -193,7 +200,13 @@ func NewPreviewPipeline(
 		eventSink,
 	)
 	if err != nil {
-		return nil, err
+		issues = append(issues, validation.Issue{
+			InstanceName: pipelineBean.ErrorStage.Config.InstanceName,
+			Level:        common.StageConfig,
+			Count:        1,
+			Message:      err.Error(),
+		})
+		return nil, issues
 	}
 	errorStageRuntime = runner.NewStageRuntime(pipelineBean, pipelineBean.ErrorStage, errorStageContext)
 
@@ -207,5 +220,5 @@ func NewPreviewPipeline(
 		offsetTracker:     sourceOffsetTracker,
 	}
 
-	return p, nil
+	return p, issues
 }
