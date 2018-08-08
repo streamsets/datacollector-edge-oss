@@ -109,12 +109,12 @@ func (p *Processor) processRecordByRecord(batch api.Batch, batchMaker api.BatchM
 
 		for i, inputConfig := range p.Conf.InputConfigs {
 			var tensor *tf.Tensor
-			tensor, err = ConvertFieldToTensor(record, inputConfig)
+			inputTfOp := p.tfSavedModel.Graph.Operation(inputConfig.Operation)
+			tensor, err = ConvertFieldToTensor(record, inputConfig, inputTfOp)
 			if err != nil {
 				log.WithError(err).Error("Failed to create new tensor")
 				break
 			}
-
 			feeds[p.feedsOutputList[i]] = tensor
 		}
 
@@ -126,7 +126,8 @@ func (p *Processor) processRecordByRecord(batch api.Batch, batchMaker api.BatchM
 		result, err := p.tfSavedModel.Session.Run(feeds, p.fetches, nil)
 		if err != nil {
 			fmt.Printf("Error running the session with input, err: %s\n", err.Error())
-			return err
+			p.GetStageContext().ToError(err, record)
+			break
 		}
 
 		outputTensorFieldMap := make(map[string]*api.Field)

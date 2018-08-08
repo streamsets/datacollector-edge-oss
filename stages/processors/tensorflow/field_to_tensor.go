@@ -23,22 +23,22 @@ import (
 	tf "github.com/tensorflow/tensorflow/tensorflow/go"
 )
 
-func ConvertFieldToTensor(record api.Record, inputConfig TensorInputConfig) (*tf.Tensor, error) {
+func ConvertFieldToTensor(record api.Record, inputConfig TensorInputConfig, op *tf.Operation) (*tf.Tensor, error) {
 	switch inputConfig.TensorDataType {
 	case "FLOAT":
-		return CreateFloatTensor(record, inputConfig)
+		return CreateFloatTensor(record, inputConfig, op)
 	case "DOUBLE":
-		return CreateDoubleTensor(record, inputConfig)
+		return CreateDoubleTensor(record, inputConfig, op)
 	case "INT32":
-		return CreateInt32Tensor(record, inputConfig)
+		return CreateInt32Tensor(record, inputConfig, op)
 	case "UINT8":
-		return CreateUint8Tensor(record, inputConfig)
+		return CreateUint8Tensor(record, inputConfig, op)
 	case "STRING":
-		return CreateStringTensor(record, inputConfig)
+		return CreateStringTensor(record, inputConfig, op)
 	case "INT64":
-		return CreateInt64Tensor(record, inputConfig)
+		return CreateInt64Tensor(record, inputConfig, op)
 	case "BOOL":
-		return CreateBoolTensor(record, inputConfig)
+		return CreateBoolTensor(record, inputConfig, op)
 	}
 
 	return nil, errors.New(fmt.Sprintf(
@@ -47,7 +47,7 @@ func ConvertFieldToTensor(record api.Record, inputConfig TensorInputConfig) (*tf
 	))
 }
 
-func CreateFloatTensor(record api.Record, inputConfig TensorInputConfig) (*tf.Tensor, error) {
+func CreateFloatTensor(record api.Record, inputConfig TensorInputConfig, op *tf.Operation) (*tf.Tensor, error) {
 	var err error
 	fieldValues := make([]float32, len(inputConfig.Fields))
 	for i, fieldPath := range inputConfig.Fields {
@@ -70,10 +70,16 @@ func CreateFloatTensor(record api.Record, inputConfig TensorInputConfig) (*tf.Te
 		}
 		fieldValues[i] = float32(floatVal)
 	}
-	return tf.NewTensor(fieldValues)
+
+	if op.NumInputs() == 1 {
+		// 2D Tensor
+		return tf.NewTensor([][]float32{fieldValues})
+	} else {
+		return tf.NewTensor(fieldValues)
+	}
 }
 
-func CreateDoubleTensor(record api.Record, inputConfig TensorInputConfig) (*tf.Tensor, error) {
+func CreateDoubleTensor(record api.Record, inputConfig TensorInputConfig, op *tf.Operation) (*tf.Tensor, error) {
 	var err error
 	fieldValues := make([]float64, len(inputConfig.Fields))
 	for i, fieldPath := range inputConfig.Fields {
@@ -91,10 +97,15 @@ func CreateDoubleTensor(record api.Record, inputConfig TensorInputConfig) (*tf.T
 		}
 		fieldValues[i] = field.Value.(float64)
 	}
-	return tf.NewTensor(fieldValues)
+	if op.NumInputs() == 1 {
+		// 2D Tensor
+		return tf.NewTensor([][]float64{fieldValues})
+	} else {
+		return tf.NewTensor(fieldValues)
+	}
 }
 
-func CreateInt32Tensor(record api.Record, inputConfig TensorInputConfig) (*tf.Tensor, error) {
+func CreateInt32Tensor(record api.Record, inputConfig TensorInputConfig, op *tf.Operation) (*tf.Tensor, error) {
 	var err error
 	fieldValues := make([]int32, len(inputConfig.Fields))
 	for i, fieldPath := range inputConfig.Fields {
@@ -112,10 +123,15 @@ func CreateInt32Tensor(record api.Record, inputConfig TensorInputConfig) (*tf.Te
 		}
 		fieldValues[i] = field.Value.(int32)
 	}
-	return tf.NewTensor(fieldValues)
+	if op.NumInputs() == 1 {
+		// 2D Tensor
+		return tf.NewTensor([][]int32{fieldValues})
+	} else {
+		return tf.NewTensor(fieldValues)
+	}
 }
 
-func CreateUint8Tensor(record api.Record, inputConfig TensorInputConfig) (*tf.Tensor, error) {
+func CreateUint8Tensor(record api.Record, inputConfig TensorInputConfig, op *tf.Operation) (*tf.Tensor, error) {
 	var err error
 	fieldValues := make([]uint8, len(inputConfig.Fields))
 	for i, fieldPath := range inputConfig.Fields {
@@ -133,10 +149,15 @@ func CreateUint8Tensor(record api.Record, inputConfig TensorInputConfig) (*tf.Te
 		}
 		fieldValues[i] = field.Value.(uint8)
 	}
-	return tf.NewTensor(fieldValues)
+	if op.NumInputs() == 1 {
+		// 2D Tensor
+		return tf.NewTensor([][]uint8{fieldValues})
+	} else {
+		return tf.NewTensor(fieldValues)
+	}
 }
 
-func CreateStringTensor(record api.Record, inputConfig TensorInputConfig) (*tf.Tensor, error) {
+func CreateStringTensor(record api.Record, inputConfig TensorInputConfig, op *tf.Operation) (*tf.Tensor, error) {
 	var err error
 	fieldValues := make([]string, len(inputConfig.Fields))
 	for i, fieldPath := range inputConfig.Fields {
@@ -154,10 +175,15 @@ func CreateStringTensor(record api.Record, inputConfig TensorInputConfig) (*tf.T
 		}
 		fieldValues[i] = field.Value.(string)
 	}
-	return tf.NewTensor(fieldValues)
+	if op.NumInputs() == 1 {
+		// 2D Tensor
+		return tf.NewTensor([][]string{fieldValues})
+	} else {
+		return tf.NewTensor(fieldValues)
+	}
 }
 
-func CreateInt64Tensor(record api.Record, inputConfig TensorInputConfig) (*tf.Tensor, error) {
+func CreateInt64Tensor(record api.Record, inputConfig TensorInputConfig, op *tf.Operation) (*tf.Tensor, error) {
 	var err error
 	fieldValues := make([]int64, len(inputConfig.Fields))
 	for i, fieldPath := range inputConfig.Fields {
@@ -175,10 +201,15 @@ func CreateInt64Tensor(record api.Record, inputConfig TensorInputConfig) (*tf.Te
 		}
 		fieldValues[i] = field.Value.(int64)
 	}
-	return tf.NewTensor(fieldValues)
+	if op.NumInputs() == 1 {
+		// 2D Tensor
+		return tf.NewTensor([][]int64{fieldValues})
+	} else {
+		return tf.NewTensor(fieldValues)
+	}
 }
 
-func CreateBoolTensor(record api.Record, inputConfig TensorInputConfig) (*tf.Tensor, error) {
+func CreateBoolTensor(record api.Record, inputConfig TensorInputConfig, op *tf.Operation) (*tf.Tensor, error) {
 	var err error
 	fieldValues := make([]bool, len(inputConfig.Fields))
 	for i, fieldPath := range inputConfig.Fields {
@@ -196,5 +227,10 @@ func CreateBoolTensor(record api.Record, inputConfig TensorInputConfig) (*tf.Ten
 		}
 		fieldValues[i] = field.Value.(bool)
 	}
-	return tf.NewTensor(fieldValues)
+	if op.NumInputs() == 1 {
+		// 2D Tensor
+		return tf.NewTensor([][]bool{fieldValues})
+	} else {
+		return tf.NewTensor(fieldValues)
+	}
 }

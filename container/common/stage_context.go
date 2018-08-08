@@ -205,21 +205,26 @@ func (s *StageContextImpl) GetService(serviceName string) (api.Service, error) {
 
 func constructErrorRecord(instanceName string, err error, errorRecordPolicy string, record api.Record) api.Record {
 	var recordToBeSentToError api.Record
+	headerForRecord := record.GetHeader().(*HeaderImpl)
 	switch errorRecordPolicy {
 	case ErrorRecordPolicyStage:
 		recordToBeSentToError = record
 	case ErrorRecordPolicyOriginal:
-		headerForRecord := record.GetHeader().(*HeaderImpl)
 		recordToBeSentToError = headerForRecord.GetSourceRecord()
 	default:
 		log.Errorf("Unsupported Error Record Policy: %s, Using the original record from source", errorRecordPolicy)
-		headerForRecord := record.GetHeader().(*HeaderImpl)
 		recordToBeSentToError = headerForRecord.GetSourceRecord()
 	}
 	headerImplForRecord := recordToBeSentToError.GetHeader().(*HeaderImpl)
 	headerImplForRecord.SetErrorStageInstance(instanceName)
 	headerImplForRecord.SetErrorMessage(err.Error())
 	headerImplForRecord.SetErrorTimeStamp(util.ConvertTimeToLong(time.Now()))
+
+	if len(headerImplForRecord.StagesPath) == 0 {
+		headerImplForRecord.SetStagesPath(headerForRecord.StagesPath)
+		headerImplForRecord.SetTrackingId(headerForRecord.TrackingId)
+	}
+
 	return recordToBeSentToError
 }
 

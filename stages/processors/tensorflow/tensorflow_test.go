@@ -67,7 +67,7 @@ func TestProcessor_Init(t *testing.T) {
 	}
 }
 
-func TestProcessor_Process(t *testing.T) {
+func TestProcessor_Process_IrisModel(t *testing.T) {
 	stageContext := getStageContext(GetIrisModelConfig(), nil)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
@@ -98,9 +98,22 @@ func TestProcessor_Process(t *testing.T) {
 		t.Error("Error in TensorFlow Processor procss method", err)
 	}
 
+	lane1OutputRecords := batchMaker.GetStageOutput()
+	if len(lane1OutputRecords) != 1 {
+		t.Error("Excepted 1 records but got - ", len(lane1OutputRecords))
+		return
+	}
+
+	outputFieldValue, err := lane1OutputRecords[0].Get("/output")
+	if outputFieldValue.Value == nil {
+		t.Error("Excepted value for output field ")
+	}
+
+	// Run second batch
+	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{}, false)
 	err = stageInstance.(api.Processor).Process(batch, batchMaker)
 	if err != nil {
-		t.Error("Error in TensorFlow Processor procss method", err)
+		t.Error("Error in TensorFlow Processor process method", err)
 	}
 
 	err = stageInstance.Destroy()
@@ -164,6 +177,110 @@ func GetIrisModelConfig() []common.Config {
 		{
 			Name:  "conf.modelPath",
 			Value: "test_data/iris_saved_model",
+		},
+		{
+			Name:  "conf.modelTags",
+			Value: []string{"serve"},
+		},
+		{
+			Name:  "conf.inputConfigs",
+			Value: inputConfigs,
+		},
+		{
+			Name:  "conf.outputConfigs",
+			Value: outputConfigs,
+		},
+		{
+			Name:  "conf.useEntireBatch",
+			Value: false,
+		},
+		{
+			Name:  "conf.outputField",
+			Value: "/output",
+		},
+	}
+}
+
+func TestProcessor_ProcessTimeseriesModel(t *testing.T) {
+	stageContext := getStageContext(GetLSTMModelConfig(), nil)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	stageInstance := stageBean.Stage
+	issues := stageInstance.Init(stageContext)
+
+	if len(issues) > 0 {
+		t.Error(issues)
+	}
+
+	records := make([]api.Record, 1)
+	testData := map[string]interface{}{
+		"inputSeries": []float64{0.0, 0.0527, 0.10498, 0.1561, 0.2056, 0.253, 0.2978, 0.3395},
+	}
+
+	records[0], _ = stageContext.CreateRecord("1", testData)
+	batch := runner.NewBatchImpl("random", records, nil)
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+
+	err = stageInstance.(api.Processor).Process(batch, batchMaker)
+	if err != nil {
+		t.Error("Error in TensorFlow Processor procss method", err)
+	}
+
+	lane1OutputRecords := batchMaker.GetStageOutput()
+	if len(lane1OutputRecords) != 1 {
+		t.Error("Excepted 1 records but got - ", len(lane1OutputRecords))
+		return
+	}
+
+	outputFieldValue, err := lane1OutputRecords[0].Get("/output")
+	if outputFieldValue.Value == nil {
+		t.Error("Excepted value for output field ")
+	}
+
+	err = stageInstance.Destroy()
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func GetLSTMModelConfig() []common.Config {
+	petalLength := make(map[string]interface{})
+	petalLength["operation"] = "timeseries"
+	petalLength["index"] = float64(0)
+	petalLength["fields"] = []string{
+		"/inputSeries[0]",
+		"/inputSeries[1]",
+		"/inputSeries[2]",
+		"/inputSeries[3]",
+		"/inputSeries[4]",
+		"/inputSeries[5]",
+		"/inputSeries[6]",
+		"/inputSeries[7]",
+	}
+	petalLength["shape"] = []float64{8}
+	petalLength["tensorDataType"] = "FLOAT"
+
+	inputConfigs := []interface{}{
+		petalLength,
+	}
+
+	outputConfig1 := make(map[string]interface{})
+	outputConfig1["operation"] = "add"
+	outputConfig1["index"] = float64(0)
+	outputConfig1["tensorDataType"] = "FLOAT"
+
+	outputConfigs := []interface{}{
+		outputConfig1,
+	}
+
+	return []common.Config{
+		{
+			Name:  "conf.modelPath",
+			Value: "test_data/lstm_saved_model",
 		},
 		{
 			Name:  "conf.modelTags",
