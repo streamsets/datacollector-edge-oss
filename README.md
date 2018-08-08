@@ -45,7 +45,7 @@ If you need help with production systems, you can check out the variety of suppo
 * [Nightly Builds](http://nightly.streamsets.com/latest/tarball/SDCe)
 * [Quickstart](QUICKSTART.md)
 * [Building StreamSets Data Collector Edge](BUILD.md)
-* [StreamSets Data Collector Edge Documentation](https://streamsets.com/documentation/datacollector/latest/help/index.html#Edge_Mode/EdgePipelines_title.html%23concept_fyf_gkq_4bb)
+* [StreamSets Data Collector Edge Documentation](https://streamsets.com/documentation/datacollector/latest/help/datacollector/UserGuide/Edge_Mode/EdgePipelines_Overview.html#concept_d4h_kkq_4bb)
 
 ## Sample Pipelines
 * [System Metrics to HTTP](data/pipelines/systemMetricsToHttp)
