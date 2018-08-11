@@ -30,7 +30,7 @@ dependencies {
         build name: 'github.com/dustin/go-coap', commit:'ddcc80675fa42611359d91a6dfa5aa57fb90e72b'
         build name: 'github.com/eclipse/paho.mqtt.golang', commit:'aff15770515e3c57fc6109da73d42b0d46f7f483'
         build name: 'github.com/gorilla/websocket', commit:'ea4d1f681babbce9545c9c5f3d5194a789c89f5b'
-        build name: 'github.com/hpcloud/tail', commit:'a30252cb686a21eb2d0b98132633053ec2f7f1e5'
+        build name: 'github.com/hpcloud/tail', commit:'a1dbeea552b7c8df4b542c66073e393de198a800'
         build name: 'github.com/julienschmidt/httprouter', commit:'8c199fb6259ffc1af525cc3ad52ee60ba8359669'
         build name: 'github.com/madhukard/govaluate', commit:'0646b701eef558ce8c2a058beac03dab78b81cc7'
         build name: 'github.com/rcrowley/go-metrics', commit:'1f30fe9094a513ce4c700b9a54458bbb0c96996c'

@@ -311,3 +311,43 @@ func TestFileTailOrigin_offsetIssue(t *testing.T) {
 
 	stageInstance.Destroy()
 }
+
+// Run below command to create test data before running benchmark tests
+// for ((i=1;i<=200000;i++)) ; do echo "Hello World" + $i >> /tmp/testforloop.txt ;  done
+// Run Benchmark Tests
+//    go test -run=^$ -bench=. -memprofile=mem0.out -cpuprofile=cpu0.out
+// Profile CPU
+// 	  go tool pprof bench.test cpu0.out
+// Profile Memory
+// 	  go tool pprof --alloc_space bench.test mem0.out
+func BenchmarkFileTailOrigin_Produce(b *testing.B) {
+	filePath1 := "/tmp/testforloop.txt"
+
+	stageContext := getStageContext(filePath1, 2, 1000, "TEXT")
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		panic(err)
+	}
+	stageInstance := stageBean.Stage
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		panic(issues[0].Message)
+	}
+
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+	lastSourceOffset, err := stageInstance.(api.Origin).Produce(nil, 1000, batchMaker)
+	log.Println("offset - " + *lastSourceOffset)
+
+	lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 1000, batchMaker)
+	log.Println("offset - " + *lastSourceOffset)
+
+	lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 1000, batchMaker)
+	log.Println("offset - " + *lastSourceOffset)
+
+	for i := 0; i < 200; i++ {
+		lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 1000, batchMaker)
+		log.Println("offset - " + *lastSourceOffset)
+	}
+
+	stageInstance.Destroy()
+}

@@ -114,6 +114,8 @@ func (f *FileTailOrigin) Produce(
 
 	var currentOffset int64
 	recordCount := float64(0)
+	timeout := time.NewTimer(time.Duration(f.Conf.MaxWaitTimeSecs) * time.Second)
+	defer timeout.Stop()
 	end := false
 	for !end {
 		select {
@@ -138,7 +140,7 @@ func (f *FileTailOrigin) Produce(
 					}
 				}
 			}
-		case <-time.After(time.Duration(f.Conf.MaxWaitTimeSecs) * time.Second):
+		case <-timeout.C:
 			currentOffset, err = tailObj.Tell()
 			if err != nil {
 				log.WithError(err).Error("Failed to get file offset information")
