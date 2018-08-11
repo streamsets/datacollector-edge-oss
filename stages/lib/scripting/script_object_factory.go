@@ -19,6 +19,7 @@ import (
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"math/big"
 	"strconv"
+	"time"
 )
 
 type ScriptObjectFactory struct {
@@ -74,13 +75,13 @@ func (s *ScriptObjectFactory) fieldToScript(field *api.Field) (interface{}, erro
 
 			case fieldtype.LIST:
 				fieldArray := scriptObject.([]*api.Field)
-				scripArrayElements := make([]interface{}, 1)
-				for _, field := range fieldArray {
+				scripArrayElements := make([]interface{}, len(fieldArray))
+				for i, field := range fieldArray {
 					v, err := s.fieldToScript(field)
 					if err != nil {
 						return nil, err
 					}
-					scripArrayElements = append(scripArrayElements, v)
+					scripArrayElements[i] = v
 				}
 				scriptObject = scripArrayElements
 
@@ -112,156 +113,156 @@ func (s *ScriptObjectFactory) scriptToField(
 			return &api.Field{Type: fieldtype.MAP, Value: fieldMap}, nil
 		case []bool:
 			scriptList := scriptObjectValue.([]bool)
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case []int8:
 			scriptList := scriptObjectValue.([]int8)
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case []int32:
 			scriptList := scriptObjectValue.([]int32)
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case []int:
 			scriptList := scriptObjectValue.([]int)
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case []int64:
 			scriptList := scriptObjectValue.([]int64)
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case []uint16:
 			scriptList := scriptObjectValue.([]uint16)
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case []uint32:
 			scriptList := scriptObjectValue.([]uint32)
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case []uint64:
 			scriptList := scriptObjectValue.([]uint64)
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case []float32:
 			scriptList := scriptObjectValue.([]float32)
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case []float64:
 			scriptList := scriptObjectValue.([]float64)
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case []big.Int:
 			scriptList := scriptObjectValue.([]big.Int)
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case []big.Float:
 			scriptList := scriptObjectValue.([]big.Float)
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case []string:
 			scriptList := scriptObjectValue.([]string)
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case []interface{}:
 			scriptList := scriptObjectValue.([]interface{})
-			listFieldValue := make([]*api.Field, 0)
+			listFieldValue := make([]*api.Field, len(scriptList))
 			for index, value := range scriptList {
 				valField, err := s.scriptToField(value, record, composeArrayPath(path, index))
 				if err != nil {
 					return nil, err
 				}
-				listFieldValue = append(listFieldValue, valField)
+				listFieldValue[index] = valField
 			}
 			return &api.Field{Type: fieldtype.LIST, Value: listFieldValue}, nil
 		case otto.Value:
@@ -325,6 +326,8 @@ func convertPrimitiveObject(scriptObjectValue interface{}) (*api.Field, error) {
 		return api.CreateBigFloatField(scriptObjectValue.(big.Float))
 	case string:
 		return api.CreateStringField(scriptObjectValue.(string))
+	case time.Time:
+		return api.CreateDateTimeField(scriptObjectValue.(time.Time))
 	default:
 		return GetTypedNullFieldFromScript(scriptObjectValue)
 	}

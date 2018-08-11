@@ -188,12 +188,14 @@ func (o *Out) Write(call otto.FunctionCall) otto.Value {
 	if err != nil {
 		log.Error(fmt.Sprintf("Failed to read object from write: %s", err.Error()))
 		o.stageContext.ReportError(err)
+		return otto.Value{}
 	}
 	scriptRecord := val.(map[string]interface{})
 	outputRecord, err := o.scriptObjectFactory.GetRecord(scriptRecord)
 	if err != nil {
 		log.Error(fmt.Sprintf("Failed to get record from script record: %s", err.Error()))
 		o.stageContext.ReportError(err)
+		return otto.Value{}
 	}
 	o.batchMaker.AddRecord(outputRecord)
 	return otto.Value{}
@@ -209,12 +211,14 @@ func (e *Err) Write(call otto.FunctionCall) otto.Value {
 	if err != nil {
 		log.Error(fmt.Sprintf("Failed to read object from write: %s", err.Error()))
 		e.stageContext.ReportError(err)
+		return otto.Value{}
 	}
 	scriptRecord := val.(map[string]interface{})
 	errorRecord, err := e.scriptObjectFactory.GetRecord(scriptRecord)
 	if err != nil {
 		log.Error(fmt.Sprintf("Failed to get record from script record: %s", err.Error()))
 		e.stageContext.ReportError(err)
+		return otto.Value{}
 	}
 
 	errorMessage := call.Argument(1).String()
