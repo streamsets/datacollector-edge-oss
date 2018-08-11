@@ -27,6 +27,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -163,26 +164,39 @@ func (f *FileTailOrigin) parseLine(
 	batchMaker api.BatchMaker,
 	recordCount *float64,
 ) error {
-	recordBuffer := bytes.NewBufferString(lineText)
-	recordReader, err := recordReaderFactory.CreateReader(f.GetStageContext(), recordBuffer, "fileTail")
-	if err != nil {
-		log.WithError(err).Error("Failed to create record reader")
-		return err
-	}
-	defer recordReader.Close()
-
-	for {
-		record, err := recordReader.ReadRecord()
+	if f.Conf.DataFormat == "TEXT" {
+		// file tail library already giving line by line, no need to use parse directory
+		recordValue := map[string]interface{}{"text": strings.Replace(lineText, "\n", "", 1)}
+		sourceId := common.CreateRecordId("fileTail", int(*recordCount))
+		record, err := f.GetStageContext().CreateRecord(sourceId, recordValue)
 		if err != nil {
-			log.WithError(err).Error("Failed to parse raw data")
+			log.WithError(err).Error("Failed to create data")
 			return err
-		}
-
-		if record == nil {
-			break
 		}
 		batchMaker.AddRecord(record)
 		*recordCount++
+	} else {
+		recordBuffer := bytes.NewBufferString(lineText)
+		recordReader, err := recordReaderFactory.CreateReader(f.GetStageContext(), recordBuffer, "fileTail")
+		if err != nil {
+			log.WithError(err).Error("Failed to create record reader")
+			return err
+		}
+		defer recordReader.Close()
+
+		for {
+			record, err := recordReader.ReadRecord()
+			if err != nil {
+				log.WithError(err).Error("Failed to parse raw data")
+				return err
+			}
+
+			if record == nil {
+				break
+			}
+			batchMaker.AddRecord(record)
+			*recordCount++
+		}
 	}
 	return nil
 }
