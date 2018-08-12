@@ -40,7 +40,7 @@ dependencies {
         build name: 'github.com/mrjones/oauth', commit: '78d64468d6ec7b74e4b0d47cf61b4f4e288b944b'
         build name: 'github.com/xinsnake/go-http-digest-auth-client', commit: '9da83de55d71220f00cbffb736dba373e6e683b1'
         build name: 'github.com/hashicorp/go-cleanhttp', commit: 'd5fe4b57a186c716b0e00b8c301cbd9b4182694d'
-        build name: 'github.com/shirou/gopsutil', commit: 'c23bcca55e77b8389d84b09db8c5ac2b472070ef'
+        build name: 'github.com/shirou/gopsutil', commit: '68ff0e299699630e174f9afaebb4b8c99d0520dc'
         build name: 'github.com/StackExchange/wmi', commit: 'cdffdb33acae0e14efff2628f9bae377b597840e'
         build name: 'github.com/go-ole/go-ole', commit: 'a1ec82a652ebc7e784d7df887cfb31061aeabbcc'
         build name: 'github.com/shirou/w32', commit: 'bb4de0191aa41b5507caa14b0650cdbddcd9280b'

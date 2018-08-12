@@ -19,11 +19,13 @@ import (
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/net"
+	"github.com/shirou/gopsutil/process"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
+	"regexp"
 	"time"
 )
 
@@ -36,16 +38,25 @@ var defaultOffset = "systemMetrics"
 
 type Origin struct {
 	*common.BaseStage
-	Conf OriginClientConfig `ConfigDefBean:"conf"`
+	Conf          OriginClientConfig `ConfigDefBean:"conf"`
+	processRegexp *regexp.Regexp
+	userRegexp    *regexp.Regexp
 }
 
 type OriginClientConfig struct {
-	Delay          float64 `ConfigDef:"type=NUMBER,required=true"`
-	FetchHostInfo  bool    `ConfigDef:"type=BOOLEAN,required=true"`
-	FetchCpuStats  bool    `ConfigDef:"type=BOOLEAN,required=true"`
-	FetchMemStats  bool    `ConfigDef:"type=BOOLEAN,required=true"`
-	FetchDiskStats bool    `ConfigDef:"type=BOOLEAN,required=true"`
-	FetchNetStats  bool    `ConfigDef:"type=BOOLEAN,required=true"`
+	Delay             float64           `ConfigDef:"type=NUMBER,required=true"`
+	FetchHostInfo     bool              `ConfigDef:"type=BOOLEAN,required=true"`
+	FetchCpuStats     bool              `ConfigDef:"type=BOOLEAN,required=true"`
+	FetchMemStats     bool              `ConfigDef:"type=BOOLEAN,required=true"`
+	FetchDiskStats    bool              `ConfigDef:"type=BOOLEAN,required=true"`
+	FetchNetStats     bool              `ConfigDef:"type=BOOLEAN,required=true"`
+	FetchProcessStats bool              `ConfigDef:"type=BOOLEAN,required=true"`
+	ProcessConf       ProcessConfigBean `ConfigDefBean:"name=processConf"`
+}
+
+type ProcessConfigBean struct {
+	ProcessRegexStr string `ConfigDef:"type=STRING,required=true"`
+	UserRegexStr    string `ConfigDef:"type=STRING,required=true"`
 }
 
 func init() {
@@ -55,12 +66,21 @@ func init() {
 }
 
 func (o *Origin) Init(stageContext api.StageContext) []validation.Issue {
+	var err error
 	issues := o.BaseStage.Init(stageContext)
+	o.processRegexp, err = regexp.Compile(o.Conf.ProcessConf.ProcessRegexStr)
+	o.userRegexp, err = regexp.Compile(o.Conf.ProcessConf.UserRegexStr)
+	if err != nil {
+		issues = append(issues, stageContext.CreateConfigIssue(err.Error()))
+	}
 	return issues
 }
 
 func (o *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker api.BatchMaker) (*string, error) {
-	time.Sleep(time.Duration(o.Conf.Delay) * time.Millisecond)
+	if lastSourceOffset != nil {
+		// Don't sleep in first batch or for preview mode
+		time.Sleep(time.Duration(o.Conf.Delay) * time.Millisecond)
+	}
 
 	recordValue := make(map[string]interface{})
 
@@ -105,6 +125,15 @@ func (o *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 			recordValue["network"] = netStatsValue
 		} else {
 			log.WithError(err).Error("Error during fetching Network Stats")
+			o.GetStageContext().ReportError(err)
+		}
+	}
+
+	if o.Conf.FetchProcessStats {
+		if processStatsValue, err := o.getProcessStats(); err == nil {
+			recordValue["process"] = processStatsValue
+		} else {
+			log.WithError(err).Error("Error during fetching process Stats")
 			o.GetStageContext().ReportError(err)
 		}
 	}
@@ -253,4 +282,103 @@ func (o *Origin) getNetworkStats() (map[string]interface{}, error) {
 	}
 
 	return netStatsValue, nil
+}
+
+func (o *Origin) getProcessStats() ([]map[string]interface{}, error) {
+	if pids, err := process.Pids(); err == nil {
+		processStatsValue := make([]map[string]interface{}, 0)
+		for _, pid := range pids {
+			p := &process.Process{Pid: pid}
+
+			var processName string
+			if name, err := p.Name(); err == nil {
+				processName = name
+			} else {
+				log.WithField("field", "name").Error(err)
+			}
+
+			if len(processName) == 0 {
+				continue
+			}
+
+			var processCommandLine string
+			if cmdLine, err := p.Cmdline(); err == nil {
+				processCommandLine = cmdLine
+			} else {
+				log.WithField("field", "cmdline").Error(err)
+			}
+
+			var userName string
+			if user, err := p.Username(); err == nil {
+				userName = user
+			}
+
+			if ((len(processName) > 0 && o.processRegexp.MatchString(processName)) ||
+				(len(processCommandLine) > 0 && o.processRegexp.MatchString(processCommandLine))) &&
+				(o.userRegexp.MatchString(userName)) {
+				pStats := make(map[string]interface{})
+				pStats["pid"] = p.Pid
+				pStats["name"] = processName
+				pStats["cmdline"] = processCommandLine
+				pStats["userName"] = userName
+
+				if exe, err := p.Exe(); err == nil {
+					pStats["exe"] = exe
+				}
+
+				if createTime, err := p.CreateTime(); err == nil {
+					pStats["createTime"] = createTime
+				}
+
+				if cwd, err := p.Cwd(); err == nil {
+					pStats["cwd"] = cwd
+				}
+
+				if status, err := p.Status(); err == nil {
+					pStats["status"] = status
+				}
+
+				if terminal, err := p.Terminal(); err == nil {
+					pStats["terminal"] = terminal
+				}
+
+				if cpuPercent, err := p.CPUPercent(); err == nil {
+					pStats["cpuPercent"] = cpuPercent
+				}
+
+				if memoryPercent, err := p.MemoryPercent(); err == nil {
+					pStats["memoryPercent"] = memoryPercent
+				}
+
+				if numFDs, err := p.NumFDs(); err == nil {
+					pStats["numFDs"] = numFDs
+				}
+
+				if numThreads, err := p.NumThreads(); err == nil {
+					pStats["numThreads"] = numThreads
+				}
+
+				if memoryInfoStat, err := p.MemoryInfo(); err == nil {
+					memoryInfoStatValue := make(map[string]interface{})
+					json.Unmarshal([]byte(memoryInfoStat.String()), &memoryInfoStatValue)
+					pStats["memoryInfo"] = memoryInfoStatValue
+				}
+
+				if rlimitStatList, err := p.Rlimit(); err == nil {
+					rlimitStatListValue := make([]map[string]interface{}, len(rlimitStatList))
+					for i, infoStat := range rlimitStatList {
+						infoStatValue := make(map[string]interface{})
+						json.Unmarshal([]byte(infoStat.String()), &infoStatValue)
+						rlimitStatListValue[i] = infoStatValue
+					}
+					pStats["rlimit"] = rlimitStatListValue
+				}
+
+				processStatsValue = append(processStatsValue, pStats)
+			}
+		}
+		return processStatsValue, nil
+	} else {
+		return nil, err
+	}
 }
