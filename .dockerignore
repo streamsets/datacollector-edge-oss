@@ -1,0 +1,9 @@
+.gogradle
+.gradle
+.idea
+.scannerwork
+.settings
+.vscode
+build
+dist
+*.iml
