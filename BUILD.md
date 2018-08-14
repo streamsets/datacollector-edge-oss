@@ -2,10 +2,7 @@
 
 ## Minimum Requirements
 
-* Go 1.9
-* Gradle 4.2
-* Java 8u101 (for supporting Let's Encrypt SSL Certificates as used by gopkg.in)
-* Docker 18.03-ce with experimental features enabled (add “experimental”: “enabled” to your `~/.docker/config.json`)
+* Java >= 8u101 (for supporting Let's Encrypt SSL Certificates as used by gopkg.in)
 
 ## Clone Repository
 
@@ -13,21 +10,59 @@
 * Clone this repository in directory $GOPATH/src/github.com/streamsets
 * Reference - https://golang.org/doc/code.html#Organization
 
-## Building
+## Building a distribution archive for a specific platform
 
-    ./gradlew clean build
+    ./gradlew <platform>DistTar | <platform>DistZip
 
-## Building for all platforms
+Where platform is one of:
 
-    ./gradlew clean buildAll
+* darwinAmd64
+* linuxAmd64
+* linuxArm
+* windowsAmd64
+
+The zip variant is used for Windows targets, and tar for all other targets.
+
+e.g. `./gradlew darwinAmd64DistTar`
+
+## Building distribution archives for all platforms
+
+    ./gradlew clean dist
+
+## Install an unarchived distribution into the dist folder
+
+    ./gradlew install<platform>
+
+Where platform is one of:
+
+* DarwinAmd64
+* LinuxAmd64
+* LinuxArm
+* WindowsAmd64
+
+e.g. `./gradlew installDarwinAmd64`
 
 ## Publishing Binaries to Maven Repo for all platforms
 
     ./gradlew publish
 
-## Building DockerImage
+## Building Docker image
 
-    ./gradlew buildDockerImage
+    docker build -t streamsets/datacollector-edge .
+
+## Building Docker image for alternate platform
+
+    docker build --build-arg base=<target image> --build-arg platform=<platform>
+
+Where platform is one of:
+
+* DarwinAmd64
+* LinuxAmd64
+* LinuxArm
+* WindowsAmd64
+
+e.g.
+`docker build --build-arg base=arm32v6/alpine --build-arg platform=LinuxArm`
 
 ## Run tests
 
@@ -89,7 +124,7 @@ Getting inside the container
 
 ## Release
 
-    ./gradlew release
+    ./gradlew publish -Prelease
 
 
 ## CPU & Heap Profile

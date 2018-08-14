@@ -1,273 +1,217 @@
 plugins {
-    id 'com.github.blindpirate.gogradle' version '0.8.0'
-    id 'com.bmuschko.docker-remote-api'  version '3.2.0'
+  id 'com.github.blindpirate.gogradle' version '0.10'
+  id 'com.palantir.git-version' version '0.12.0-rc2'
+  id 'maven-publish'
+  id 'com.dorongold.task-tree' version '1.3'
 }
 
-import groovy.json.JsonSlurper
-import com.bmuschko.gradle.docker.tasks.image.Dockerfile
-
-apply plugin : 'maven-publish'
-
 repositories {
-    mavenCentral()
-    mavenLocal()
-    golang {
-        root { it.startsWith('periph.io') }
-        url "https://github.com/google/periph"
-    }
+  jcenter()
+  mavenCentral()
+  mavenLocal()
+  golang {
+    root { it.startsWith('periph.io') }
+    url "https://github.com/google/periph"
+  }
 }
 
 golang {
-    packagePath = "${gitPath}"
+  packagePath = "${gitPath}"
 }
 
 dependencies {
-    golang {
-        build name: 'github.com/Shopify/sarama', commit: 'c5b44e38e1ca1b27bcaa35d908f161b690ea72e0'
-        build name: 'github.com/sirupsen/logrus', tag:'v1.0.3'
-        build name: 'github.com/AllenDang/w32', commit:'9a4ee0f7d224efbff75947fa7060daadccc4741c'
-        build name: 'github.com/BurntSushi/toml', commit:'b26d9c308763d68093482582cea63d69be07a0f0'
-        build name: 'github.com/dustin/go-coap', commit:'ddcc80675fa42611359d91a6dfa5aa57fb90e72b'
-        build name: 'github.com/eclipse/paho.mqtt.golang', commit:'aff15770515e3c57fc6109da73d42b0d46f7f483'
-        build name: 'github.com/gorilla/websocket', commit:'ea4d1f681babbce9545c9c5f3d5194a789c89f5b'
-        build name: 'github.com/hpcloud/tail', commit:'a1dbeea552b7c8df4b542c66073e393de198a800'
-        build name: 'github.com/julienschmidt/httprouter', commit:'8c199fb6259ffc1af525cc3ad52ee60ba8359669'
-        build name: 'github.com/madhukard/govaluate', commit:'0646b701eef558ce8c2a058beac03dab78b81cc7'
-        build name: 'github.com/rcrowley/go-metrics', commit:'1f30fe9094a513ce4c700b9a54458bbb0c96996c'
-        build name: 'github.com/satori/go.uuid', commit:'879c5887cd475cd7864858769793b2ceb0d44feb'
-        build name: 'periph.io/x/periph', commit: '687bb43ba5ad417371dc0d1a1f7189119aafcede'
-        build name: 'github.com/robertkrimen/otto', commit: '6c383dd335ef8dcccef05e651ce1eccfe4d0f011'
-        build name: 'github.com/mrjones/oauth', commit: '78d64468d6ec7b74e4b0d47cf61b4f4e288b944b'
-        build name: 'github.com/xinsnake/go-http-digest-auth-client', commit: '9da83de55d71220f00cbffb736dba373e6e683b1'
-        build name: 'github.com/hashicorp/go-cleanhttp', commit: 'd5fe4b57a186c716b0e00b8c301cbd9b4182694d'
-        build name: 'github.com/shirou/gopsutil', commit: '68ff0e299699630e174f9afaebb4b8c99d0520dc'
-        build name: 'github.com/StackExchange/wmi', commit: 'cdffdb33acae0e14efff2628f9bae377b597840e'
-        build name: 'github.com/go-ole/go-ole', commit: 'a1ec82a652ebc7e784d7df887cfb31061aeabbcc'
-        build name: 'github.com/shirou/w32', commit: 'bb4de0191aa41b5507caa14b0650cdbddcd9280b'
-        build name: 'github.com/icrowley/fake', commit: '4178557ae428460c3780a381c824a1f3aceb6325'
-    }
+  golang {
+    build name: 'github.com/Shopify/sarama', commit: 'c5b44e38e1ca1b27bcaa35d908f161b690ea72e0'
+    build name: 'github.com/sirupsen/logrus', tag: 'v1.0.3'
+    build name: 'github.com/AllenDang/w32', commit: '9a4ee0f7d224efbff75947fa7060daadccc4741c'
+    build name: 'github.com/BurntSushi/toml', commit: 'b26d9c308763d68093482582cea63d69be07a0f0'
+    build name: 'github.com/dustin/go-coap', commit: 'ddcc80675fa42611359d91a6dfa5aa57fb90e72b'
+    build name: 'github.com/eclipse/paho.mqtt.golang', commit: 'aff15770515e3c57fc6109da73d42b0d46f7f483'
+    build name: 'github.com/gorilla/websocket', commit: 'ea4d1f681babbce9545c9c5f3d5194a789c89f5b'
+    build name: 'github.com/hpcloud/tail', commit: 'a1dbeea552b7c8df4b542c66073e393de198a800'
+    build name: 'github.com/julienschmidt/httprouter', commit: '8c199fb6259ffc1af525cc3ad52ee60ba8359669'
+    build name: 'github.com/madhukard/govaluate', commit: '0646b701eef558ce8c2a058beac03dab78b81cc7'
+    build name: 'github.com/rcrowley/go-metrics', commit: '1f30fe9094a513ce4c700b9a54458bbb0c96996c'
+    build name: 'github.com/satori/go.uuid', commit: '879c5887cd475cd7864858769793b2ceb0d44feb'
+    build name: 'periph.io/x/periph', commit: '687bb43ba5ad417371dc0d1a1f7189119aafcede'
+    build name: 'github.com/robertkrimen/otto', commit: '6c383dd335ef8dcccef05e651ce1eccfe4d0f011'
+    build name: 'github.com/mrjones/oauth', commit: '78d64468d6ec7b74e4b0d47cf61b4f4e288b944b'
+    build name: 'github.com/xinsnake/go-http-digest-auth-client', commit: '9da83de55d71220f00cbffb736dba373e6e683b1'
+    build name: 'github.com/hashicorp/go-cleanhttp', commit: 'd5fe4b57a186c716b0e00b8c301cbd9b4182694d'
+    build name: 'github.com/shirou/gopsutil', commit: '68ff0e299699630e174f9afaebb4b8c99d0520dc'
+    build name: 'github.com/StackExchange/wmi', commit: 'cdffdb33acae0e14efff2628f9bae377b597840e'
+    build name: 'github.com/go-ole/go-ole', commit: 'a1ec82a652ebc7e784d7df887cfb31061aeabbcc'
+    build name: 'github.com/shirou/w32', commit: 'bb4de0191aa41b5507caa14b0650cdbddcd9280b'
+    build name: 'github.com/icrowley/fake', commit: '4178557ae428460c3780a381c824a1f3aceb6325'
+  }
 }
 
-def getLdFlags(additionalFlag) {
-    final buildDate=new Date().format("yyyy-MM-dd'T'HHmmss'Z'")
-    final buildRepoSha = new ByteArrayOutputStream().withStream { gitShaCmdStream ->
-           def result =  exec {
-               commandLine 'git', 'rev-parse', 'HEAD'
-               standardOutput = gitShaCmdStream
-           }
-       return gitShaCmdStream.toString().trim()
-    }
+def getLdFlags() {
+  def additionalFlag = ''
+  if (project.hasProperty('release')) {
+    additionalFlag = ' -s -w'
+  }
+  final buildDate = new Date().format("yyyy-MM-dd'T'HHmmss'Z'")
+  final X_CONTAINER_COMMON_PATH = " -X ${gitPath}/container/common"
 
-    final X_CONTAINER_COMMON_PATH = " -X ${gitPath}/container/common"
-
-
-    "\"" + X_CONTAINER_COMMON_PATH + ".Version=${version}" +
-        X_CONTAINER_COMMON_PATH + ".BuiltBy=" + System.properties['user.name'] +
-        X_CONTAINER_COMMON_PATH + ".BuiltDate=" + buildDate +
-        X_CONTAINER_COMMON_PATH + ".BuiltRepoSha=" + buildRepoSha + additionalFlag + "\""
-}
-
-def doActionAllPlatforms(action) {
-   final targetPlatforms = "${platforms}".split(',')
-   targetPlatforms.each{targetPlatform ->
-       def (goOs, goArch) = targetPlatform.split('-')
-       action(new Tuple2(goOs, goArch))
-   }
-}
-
-def copyAssetSpec = copySpec {
-     from fileTree('.') {
-        include('etc/', 'data/', 'QUICKSTART.md')
-        exclude('data/**/*.png', 'data/**/*.md')
-     }
+  "\"" + X_CONTAINER_COMMON_PATH + ".Version=${version}" +
+      X_CONTAINER_COMMON_PATH + ".BuiltBy=" + System.properties['user.name'] +
+      X_CONTAINER_COMMON_PATH + ".BuiltDate=" + buildDate +
+      X_CONTAINER_COMMON_PATH + ".BuiltRepoSha=" + gitVersion() + additionalFlag + "\""
 }
 
 def getTagsParameter() {
-    if (project.hasProperty("includeStage")) {
-        return " -tags '${includeStage}' "
-    }
-    ""
+  return project.hasProperty("includeStage") ? " -tags '${includeStage}' " : ""
 }
 
 final tagsParameter = getTagsParameter()
-
-clean {
-    delete file('dist')
+/**
+ * Helper to convert platforms to camel case
+ * @param text
+ * @return
+ */
+static String toCamelCase(String text) {
+  return text.replaceAll("(-)([A-Za-z0-9])", { Object[] it -> it[2].toUpperCase() })
 }
 
-//By default builds for machine's target platforms
+def targetPlatforms = platforms.split(',') as List
 build {
-    go "build ${tagsParameter} -ldflags ${getLdFlags("")} -o dist/bin/${binaryName}\${GOEXE} ${gitPath}"
-
-    copy {
-        doFirst{
-           mkdir 'dist/log'
-        }
-        with copyAssetSpec
-        into 'dist'
-    }
+  targetPlatform = targetPlatforms
+  go "build ${tagsParameter} -ldflags ${getLdFlags()} -o " + 'build/bin/${GOOS}-${GOARCH}/edge\${GOEXE}' + " ${gitPath}"
 }
 
 vet {
-    continueWhenFail = true
+  continueOnFailure = true
 }
 
-//Custom tasks
-task buildAll {
-    dependsOn build, check
-    description = 'Builds Edge Binaries for all platforms'
+// add extra path to delete since we use a custom output directory
+clean {
+  delete 'dist'
+}
 
-    def baseDir = temporaryDir.getAbsolutePath() + '/gobuild'
-
-    //Delete temporary build directory after all builds are done
-    doLast{
-        delete baseDir
+CopySpec standardDistribution(String platform) {
+  copySpec {
+    from(projectDir) {
+      includeEmptyDirs = true
+      include('etc/', 'data/', 'log/', 'QUICKSTART.md')
+      exclude('data/**/*.png', 'data/**/*.md', '**/.keep')
     }
-
-    def buildAndTar = {
-        def (goOs, goArch) = it
-        def targetPlatform = goOs + '-' + goArch
-        def basePlatformDir = baseDir + '/' + goOs + '/' + goArch
-        def baseTarDir = basePlatformDir + '/' + appName
-        def buildTaskName = 'build-'+ targetPlatform
-        def tarTaskName = 'tar-'+ targetPlatform
-
-        //Create Build Task for each platform
-        task(buildTaskName, type: com.github.blindpirate.gogradle.Go) {
-            dependsOn build
-            description = 'Builds Edge Binaries for ' + targetPlatform
-
-            environment.GOOS=goOs
-            environment.GOARCH=goArch
-
-            if (goOs.startsWith('windows')) {
-                environment.GOEXE='.exe'
-            }
-
-            go "build ${tagsParameter} -ldflags ${getLdFlags(" -s -w")} -o ${baseTarDir}/bin/${binaryName}\${GOEXE} ${gitPath}"
-        }
-
-        def archiveName = "${appName}-" + "${version}" + '-' + goOs + '-' + goArch
-
-        //Create Tar Task for each platform
-        task(tarTaskName, type: Tar) {
-            description = 'Packages Edge Binaries for ' + targetPlatform
-
-            //Tar depends on build task for each platform
-            dependsOn buildTaskName
-
-            copy {
-                doFirst{
-                    mkdir baseTarDir + '/log'
-                }
-                with copyAssetSpec
-                into baseTarDir
-            }
-            baseName = archiveName
-            from file(basePlatformDir)
-            destinationDir = file('dist')
-            extension = 'tgz'
-            compression = Compression.GZIP
-        }
-
-        //Main buildAll task depends on all of the platform tar tasks
-        dependsOn tarTaskName
+    into('bin') {
+      from "$buildDir/bin/${platform}"
+      fileMode 0755
     }
-    doActionAllPlatforms(buildAndTar)
+  }
+}
+
+// Creates distribution tasks for each target platform
+targetPlatforms.findAll { !it.contains('windows') }.each { platform ->
+  def camelPlatform = toCamelCase(platform)
+  def distTask = task "${camelPlatform}DistTar"(type: Tar) {
+    group 'Distribution'
+    description "Creates a distribution tarball for $platform"
+    baseName project.name
+    classifier platform
+    extension 'tgz'
+    destinationDir file('dist')
+    compression Compression.GZIP
+    into('streamsets-datacollector-edge') {
+      with standardDistribution(platform)
+    }
+    dependsOn "build${camelPlatform.capitalize()}"
+  }
+
+  publishing {
+    publications {
+      maven(MavenPublication) {
+        artifact(distTask) {
+          groupId "com.streamsets"
+          artifactId appName
+        }
+      }
+    }
+  }
+}
+
+targetPlatforms.findAll { it.contains('windows') }.each { platform ->
+  def camelPlatform = toCamelCase(platform)
+  def distTask = task "${camelPlatform}DistZip"(type: Zip) {
+    group 'Distribution'
+    description "Creates a distribution zip for $platform"
+    baseName project.name
+    classifier platform
+    extension 'zip'
+    destinationDir file('dist')
+    into('streamsets-datacollector-edge') {
+      with standardDistribution(platform)
+    }
+    dependsOn "build${camelPlatform.capitalize()}"
+  }
+
+  publishing {
+    publications {
+      maven(MavenPublication) {
+        artifact(distTask) {
+          groupId "com.streamsets"
+          artifactId appName
+        }
+      }
+    }
+  }
+}
+
+// Creates tasks for creating an unarchived distribution in dist (preserving existing behavior)
+// Will overwrite existing binaries if present, this could be changed to install into platform-specific
+// output directories.
+targetPlatforms.each { platform ->
+  def camelPlatform = toCamelCase(platform).capitalize()
+  task "install${camelPlatform}"(type: Copy) {
+    group 'Distribution'
+    description 'Installs a distribution into the dist directory as-is'
+    destinationDir file("$projectDir/dist")
+    with standardDistribution(platform)
+    dependsOn "build${camelPlatform}"
+  }
+}
+
+// aggregates all tar distributions into a task
+task distTar {
+  group 'Distribution'
+  description 'Builds all tarball distributions'
+  dependsOn tasks.withType(Tar)
+}
+
+// aggregates all zip distributions into a task
+task distZip {
+  group 'Distribution'
+  description 'Builds all zip distributions'
+  dependsOn tasks.withType(Zip)
+}
+
+// aggregates all distribution tasks (in case zip is added)
+task dist {
+  group 'Distribution'
+  description 'Builds all distributions'
+  dependsOn distTar, distZip
 }
 
 publishing {
-    publications {
-        maven(MavenPublication) {
-            def publishArtifact = {
-              def (goOs, goArch) = it
-              def tarName =  "${appName}-" + "${version}" + '-' + goOs + '-' + goArch  + '.tgz'
-              artifact('dist/' + tarName) {
-                groupId "com.streamsets"
-                artifactId "${appName}"
-                extension 'tgz'
-                classifier goOs + '-' + goArch
-              }
-            }
-            doActionAllPlatforms(publishArtifact)
+  // Configure Publishing repository
+  // Need the following env variables MAVEN_REPO, MAVEN_USER, MAVEN_PASSWORD
+  def repoUrl = System.env['MAVEN_REPO']
+  if (repoUrl != null) {
+    repositories {
+      maven {
+        url repoUrl
+        credentials {
+          username = System.env['MAVEN_USER']
+          password = System.env['MAVEN_PASSWORD']
         }
-    }
-    //Configure Publishing repository
-    //Need the following env variables MAVEN_REPO, MAVEN_USER, MAVEN_PASSWORD
-    def repoUrl = System.env['MAVEN_REPO']
-    if (repoUrl != null) {
-      repositories {
-          maven {
-            url repoUrl
-            credentials {
-                username = System.env['MAVEN_USER']
-                password = System.env['MAVEN_PASSWORD']
-            }
-          }
       }
     }
+  }
 }
 
-docker {
-    def dockerCertPath = System.env.DOCKER_CERT_PATH
-    if (dockerCertPath != null) {
-          url = System.env.DOCKER_HOST
-          certPath = new File(dockerCertPath)
-    }
-}
-
-def architectures = ["amd64", "arm"]
-
-architectures.each { def arch ->
-    tasks.create(name: "createDockerfile-${arch}", type: Dockerfile) {
-      description = 'Creates Docker File for Edge'
-      dependsOn "tar-linux-${arch}"
-
-      destFile = project.file("dist/Dockerfile-${arch}")
-
-      def manifests
-      new ByteArrayOutputStream().withStream { os ->
-        def result = exec {
-          standardOutput = os
-          commandLine 'docker', 'manifest', 'inspect', 'alpine'
-        }
-        manifests = new JsonSlurper().parseText(os.toString()).manifests
-      }
-      def digest = manifests.find { manifest ->
-          manifest.platform.architecture == "${arch}"
-      }.digest
-      println("Using digest: ${digest}")
-      from "alpine@${digest}"
-      maintainer 'Madhu "madhu@streamsets.com"'
-      if (arch.equals("amd64")) {
-          runCommand('apk --no-cache update')
-          runCommand 'apk --no-cache add libc6-compat'
-          runCommand('apk --no-cache add file')
-      }
-      addFile "${appName}*-linux-${arch}.tgz", '/'
-      defaultCommand '/streamsets-datacollector-edge/bin/edge'
-      exposePort 18633
-    }
-
-    tasks.create(name: "buildDockerImage-${arch}", type: Exec) {
-      description = 'Builds Docker Image for Edge'
-      dependsOn "createDockerfile-${arch}"
-      workingDir = "dist"
-      commandLine 'docker', 'build', '--no-cache', '-f', "Dockerfile-${arch}", '-t', "${dockerImageName}:${version}-${arch}" ,'.'
-    }
-
-    tasks.create(name: "pushDockerImage-${arch}", type: Exec) {
-      dependsOn "buildDockerImage-${arch}"
-      commandLine 'docker', 'push', "${dockerImageName}:${version}-${arch}"
-    }
-}
-
-publishToMavenLocal.dependsOn(buildAll)
-publish.dependsOn(publishToMavenLocal)
-
+// Kept for backward compatibility
 task release {
-  description = 'Release task'
-  dependsOn buildAll
-  dependsOn architectures.collect { def arch -> "buildDockerImage-${arch}" }
   dependsOn publish
 }
