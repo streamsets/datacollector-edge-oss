@@ -56,4 +56,15 @@
 
 
 
+### Running StreamSets Data Collector Edge as service
+####( Currently supports Windows XP+, Linux/(systemd | Upstart | SysV), and OSX/Launchd.)
 
+    Service Name - datacollector-edge
+
+| Command                            | Description                               |
+|------------------------------------|---------------------------                |
+| `edge -service install`            | Install Data Collector Edge as a service  |
+| `edge -service uninstall`          | Uninstall the Data Collector Edge service |
+| `edge -service start`              | Start the Data Collector Edge service     |
+| `edge -service stop`               | Stop the Data Collector Edge service      |
+| `edge -service restart`            | Restart the Data Collector Edge service   |
