@@ -18,11 +18,19 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/src/datacollector-edge/dist /opt/datacollector-edge/
 
 EXPOSE 18633
-ENTRYPOINT ["/opt/datacollector-edge/bin/edge"]
+CMD ["/opt/datacollector-edge/bin/edge"]
 
 # Metadata
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION
+LABEL Name="Data Collector Edge"
+LABEL Version="${VERSION}"
 LABEL org.label-schema.vendor="StreamSets" \
   org.label-schema.url="https://streamsets.com" \
   org.label-schema.name="Data Collector Edge" \
-  org.label-schema.version="${version}" \
+  org.label-schema.vcs-ref="${VCS_REF}" \
+  org.label-schema.vcs-url="https://github.com/streamsets/datacollector-edge" \
+  org.label-schema.version="${VERSION}" \
+  org.label-schema.build-date="${BUILD_DATE}" \
   org.label-schema.docker.schema-version="1.0"
