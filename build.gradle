@@ -81,10 +81,6 @@ build {
   go "build ${tagsParameter} -ldflags ${getLdFlags()} -o " + 'build/bin/${GOOS}-${GOARCH}/edge\${GOEXE}' + " ${gitPath}"
 }
 
-vet {
-  continueOnFailure = true
-}
-
 // add extra path to delete since we use a custom output directory
 clean {
   delete 'dist'
@@ -118,7 +114,7 @@ targetPlatforms.findAll { !it.contains('windows') }.each { platform ->
     into('streamsets-datacollector-edge') {
       with standardDistribution(platform)
     }
-    dependsOn "build${camelPlatform.capitalize()}"
+    dependsOn "build${camelPlatform.capitalize()}", check
   }
 
   publishing {
@@ -145,7 +141,7 @@ targetPlatforms.findAll { it.contains('windows') }.each { platform ->
     into('streamsets-datacollector-edge') {
       with standardDistribution(platform)
     }
-    dependsOn "build${camelPlatform.capitalize()}"
+    dependsOn "build${camelPlatform.capitalize()}", check
   }
 
   publishing {

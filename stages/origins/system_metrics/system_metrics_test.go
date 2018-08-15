@@ -13,12 +13,13 @@
 package system_metrics
 
 import (
+	"testing"
+
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
-	"testing"
 )
 
 func getStageContext(
@@ -404,7 +405,6 @@ func BenchmarkOrigin_Produce(b *testing.B) {
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		panic(err)
-		return
 	}
 
 	stageInstance := stageBean.Stage
@@ -421,7 +421,6 @@ func BenchmarkOrigin_Produce(b *testing.B) {
 	_, err = stageInstance.(api.Origin).Produce(&defaultOffset, 1, batchMaker)
 	if err != nil {
 		panic(err)
-		return
 	}
 
 	stageInstance.Destroy()
