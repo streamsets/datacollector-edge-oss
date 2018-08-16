@@ -221,7 +221,7 @@ task buildMSI {
   doLast {
     exec {
       workingDir 'dist'
-      commandLine 'cmd', '/c', 'go-msi make --path ../resources/dev-support/windows/wix.json --src ../resources/dev-support/windows/templates --msi ./${appName}.msi --version ${project.version}'
+      commandLine 'cmd', '/c', 'go-msi make --path ../resources/windows/wix.json --src ../resources/windows/templates --msi ./${appName}.msi --version ${project.version}'
     }
   }
 }
