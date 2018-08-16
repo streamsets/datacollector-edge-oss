@@ -26,8 +26,10 @@ import (
 )
 
 const (
-	Library   = "streamsets-datacollector-tensorflow-lib"
-	StageName = "com_streamsets_pipeline_stage_processor_tensorflow_TensorFlowDProcessor"
+	Library             = "streamsets-datacollector-tensorflow-lib"
+	StageName           = "com_streamsets_pipeline_stage_processor_tensorflow_TensorFlowDProcessor"
+	ConfGroupTensorFlow = "TENSOR_FLOW"
+	ConfModelPath       = "conf.modelPath"
 )
 
 type Processor struct {
@@ -73,10 +75,11 @@ func (p *Processor) Init(stageContext api.StageContext) []validation.Issue {
 	p.tfSavedModel, err = tf.LoadSavedModel(p.Conf.ModelPath, p.Conf.ModelTags, nil)
 	if err != nil {
 		log.WithError(err).Error("Error loading saved model")
-		issues = append(
-			issues,
-			stageContext.CreateConfigIssue(fmt.Sprintf("Error loading saved model: %s", err.Error())),
-		)
+		issues = append(issues, stageContext.CreateConfigIssue(
+			fmt.Sprintf("Error loading saved model: %s", err.Error()),
+			ConfGroupTensorFlow,
+			ConfModelPath,
+		))
 		return issues
 	}
 
@@ -162,10 +165,12 @@ func (p *Processor) processEntireBatch(batch api.Batch, batchMaker api.BatchMake
 }
 
 func (p *Processor) Destroy() error {
-	err := p.tfSavedModel.Session.Close()
-	if err != nil {
-		log.WithError(err).Error("Failed to close TensorFlow Session")
-		return err
+	if p.tfSavedModel != nil {
+		err := p.tfSavedModel.Session.Close()
+		if err != nil {
+			log.WithError(err).Error("Failed to close TensorFlow Session")
+			return err
+		}
 	}
 	return p.BaseStage.Destroy()
 }
