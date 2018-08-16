@@ -1,0 +1,44 @@
+{
+  "product": "StreamSets Data Collector Edge",
+  "company": "StreamSets",
+  "license": "../LICENSE.txt",
+  "upgrade-code": "a1b96067-6f9f-4387-b8bf-80f7e052e082",
+  "files": {
+    "guid": "78a8cb08-d328-495a-a89e-9fa9c7a63464",
+    "items": [
+      "QUICKSTART.md"
+    ]
+  },
+  "directories": [
+    "bin",
+    "data",
+    "etc",
+    "log"
+  ],
+  "env": {
+    "guid": "02b501f5-9a41-4f30-bcbd-c85f3c3fdbf2",
+    "vars": [
+      {
+        "name": "PATH",
+        "value": "[INSTALLDIR]",
+        "permanent": "no",
+        "system": "no",
+        "action": "set",
+        "part": "last"
+      }
+    ]
+  },
+  "shortcuts": {
+    "guid": "7eb51963-3a13-4012-b4d8-841b659a73c1",
+    "items": [
+      {
+        "name": "StreamSets Data Collector Edge",
+        "description": "Enables at-scale data ingestion and analytics for edge systems.",
+        "target": "[INSTALLDIR]\\edge.exe",
+        "wdir": "INSTALLDIR",
+        "arguments": "",
+        "icon": ""
+      }
+    ]
+  }
+}

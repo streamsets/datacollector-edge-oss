@@ -92,7 +92,7 @@ CopySpec standardDistribution(String platform) {
     from(projectDir) {
       includeEmptyDirs = true
       include('etc/', 'data/', 'log/', 'QUICKSTART.md')
-      exclude('data/**/*.png', 'data/**/*.md', '**/.keep')
+      exclude('data/**/*.png', 'data/**/*.md')
     }
     into('bin') {
       from "$buildDir/bin/${platform}"
@@ -212,4 +212,16 @@ publishing {
 // Kept for backward compatibility
 task release {
   dependsOn publish
+}
+
+// Requirements to run this task - A windows machine, go-msi and wix tools
+// Setup Steps - https://mh-cbon.github.io/go-msi/
+task buildMSI {
+  dependsOn installWindowsAmd64
+  doLast {
+    exec {
+      workingDir 'dist'
+      commandLine 'cmd', '/c', 'go-msi make --path ../dev-support/windows/wix.json --src ../dev-support/windows/templates --msi ./${appName}.msi --version ${project.version}'
+    }
+  }
 }
