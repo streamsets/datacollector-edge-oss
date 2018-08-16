@@ -12,7 +12,7 @@
   limitations under the License. See accompanying LICENSE file.
 --->
 
-![Data Collector Edge Splash Image](sdcEdgeSplash.png)
+![Data Collector Edge Splash Image](resources/sdcEdgeSplash.png)
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/streamsets/datacollector-edge)](https://goreportcard.com/report/github.com/streamsets/datacollector-edge)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fstreamsets%2Fdatacollector-edge.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fstreamsets%2Fdatacollector-edge?ref=badge_shield)
@@ -43,7 +43,7 @@ If you need help with production systems, you can check out the variety of suppo
 # Useful resources
 
 * [Nightly Builds](http://nightly.streamsets.com/latest/tarball/SDCe)
-* [Quickstart](QUICKSTART.md)
+* [Quickstart](resources/QUICKSTART.md)
 * [Building StreamSets Data Collector Edge](BUILD.md)
 * [StreamSets Data Collector Edge Documentation](https://streamsets.com/documentation/datacollector/latest/help/datacollector/UserGuide/Edge_Mode/EdgePipelines_Overview.html#concept_d4h_kkq_4bb)
 

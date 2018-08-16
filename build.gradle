@@ -89,7 +89,7 @@ clean {
 
 CopySpec standardDistribution(String platform) {
   copySpec {
-    from(projectDir) {
+    from("$projectDir/resources") {
       includeEmptyDirs = true
       include('etc/', 'data/', 'log/', 'QUICKSTART.md')
       exclude('data/**/*.png', 'data/**/*.md')
@@ -221,7 +221,7 @@ task buildMSI {
   doLast {
     exec {
       workingDir 'dist'
-      commandLine 'cmd', '/c', 'go-msi make --path ../dev-support/windows/wix.json --src ../dev-support/windows/templates --msi ./${appName}.msi --version ${project.version}'
+      commandLine 'cmd', '/c', 'go-msi make --path ../resources/dev-support/windows/wix.json --src ../resources/dev-support/windows/templates --msi ./${appName}.msi --version ${project.version}'
     }
   }
 }

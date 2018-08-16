@@ -116,7 +116,7 @@ e.g.
 
 To run a container from the resulting image:
 
-    docker run --publish 18633:18633 --name edge --rm streamsets/datacollector-edge:3.1.0.0-SNAPSHOT
+    docker run --publish 18633:18633 --name edge --rm streamsets/datacollector-edge:latest
 
 Getting inside the container
 
@@ -140,10 +140,10 @@ Getting inside the container
 
     Service Name - datacollector-edge
 
-| Command                            | Description                               |
-|------------------------------------|---------------------------                |
-| `edge -service install`            | Install Data Collector Edge as a service  |
-| `edge -service uninstall`          | Uninstall the Data Collector Edge service |
-| `edge -service start`              | Start the Data Collector Edge service     |
-| `edge -service stop`               | Stop the Data Collector Edge service      |
-| `edge -service restart`            | Restart the Data Collector Edge service   |
+| Command                                | Description                               |
+|----------------------------------------|-------------------------------------------|
+| `bin/edge -service install`            | Install Data Collector Edge as a service  |
+| `bin/edge -service uninstall`          | Uninstall the Data Collector Edge service |
+| `bin/edge -service start`              | Start the Data Collector Edge service     |
+| `bin/edge -service stop`               | Stop the Data Collector Edge service      |
+| `bin/edge -service restart`            | Restart the Data Collector Edge service   |
