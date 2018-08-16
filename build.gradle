@@ -57,7 +57,7 @@ def getLdFlags() {
   final X_CONTAINER_COMMON_PATH = " -X ${gitPath}/container/common"
 
   "\"" + X_CONTAINER_COMMON_PATH + ".Version=${version}" +
-      X_CONTAINER_COMMON_PATH + ".BuiltBy=" + System.properties['user.name'] +
+      X_CONTAINER_COMMON_PATH + ".BuiltBy=" + System.properties['user.name'].replaceAll("\\s", "") +
       X_CONTAINER_COMMON_PATH + ".BuiltDate=" + buildDate +
       X_CONTAINER_COMMON_PATH + ".BuiltRepoSha=" + gitVersion() + additionalFlag + "\""
 }
