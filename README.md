@@ -48,19 +48,19 @@ If you need help with production systems, you can check out the variety of suppo
 * [StreamSets Data Collector Edge Documentation](https://streamsets.com/documentation/datacollector/latest/help/datacollector/UserGuide/Edge_Mode/EdgePipelines_Overview.html#concept_d4h_kkq_4bb)
 
 ## Sample Pipelines
-* [System Metrics to HTTP](data/pipelines/systemMetricsToHttp)
-* [Windows Event To Http](data/pipelines/windowsEventToHttp)
-* [Tail File To Http](data/pipelines/tailFileToHttp)
-* [Directory Spooler to Http](data/pipelines/directoryToHttp)
-* [Bosch BME280 Humidity, Barometric Pressure, Temperature Sensor data to HTTP](data/pipelines/sensorBME280ToHttp)
+* [System Metrics to HTTP](resources/data/pipelines/systemMetricsToHttp)
+* [Windows Event To Http](resources/data/pipelines/windowsEventToHttp)
+* [Tail File To Http](resources/data/pipelines/tailFileToHttp)
+* [Directory Spooler to Http](resources/data/pipelines/directoryToHttp)
+* [Bosch BME280 Humidity, Barometric Pressure, Temperature Sensor data to HTTP](resources/data/pipelines/sensorBME280ToHttp)
 * [Stream Ripple Ledger Information](data/pipelines/websocketClientToTrash)
-* [MQTT To HTTP](data/pipelines/mqttToHttp)
-* [Dev Raw Data To Expression Evaluator to Kafka](data/pipelines/devRawDataToExpressionToKafka)
-* [Random Data to MQTT](data/pipelines/randomToMqtt)
-* [Random Data to CoAP](data/pipelines/randomToCoap)
-* [Random Data To Http](data/pipelines/randomToHttp)
-* [HTTP Server To Trash](data/pipelines/httpServerToTrash)
-* [Random Data To Identity Processor To Trash](data/pipelines/randomToIdentityToTrash)
+* [MQTT To HTTP](resources/data/pipelines/mqttToHttp)
+* [Dev Raw Data To Expression Evaluator to Kafka](resources/data/pipelines/devRawDataToExpressionToKafka)
+* [Random Data to MQTT](resources/data/pipelines/randomToMqtt)
+* [Random Data to CoAP](resources/data/pipelines/randomToCoap)
+* [Random Data To Http](resources/data/pipelines/randomToHttp)
+* [HTTP Server To Trash](resources/data/pipelines/httpServerToTrash)
+* [Random Data To Identity Processor To Trash](resources/data/pipelines/randomToIdentityToTrash)
 
 
 ## Contributing code
