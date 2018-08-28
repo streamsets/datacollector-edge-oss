@@ -40,6 +40,7 @@ func Evaluate(
 			&MathEL{},
 			&MapListEL{},
 			&PipelineEL{Context: elContext},
+			&JobEL{Context: elContext},
 		},
 	)
 	return evaluator.Evaluate(value)

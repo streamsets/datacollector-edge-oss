@@ -17,12 +17,16 @@ import (
 	"errors"
 	"fmt"
 	"github.com/madhukard/govaluate"
+	"time"
 )
 
 const (
-	PipelineIdContextVar    = "PIPELINE_ID"
-	PipelineTitleContextVar = "PIPELINE_TITLE"
-	PipelineUserContextVar  = "PIPELINE_USER"
+	PipelineElContextVar        = "PIPELINE_EL"
+	PipelineIdContextVar        = "PIPELINE_ID"
+	PipelineTitleContextVar     = "PIPELINE_TITLE"
+	PipelineUserContextVar      = "PIPELINE_USER"
+	PipelineStartTimeContextVar = "PIPELINE_START_TIME"
+	UndefinedValue              = "UNDEFINED"
 )
 
 type PipelineEL struct {
@@ -36,12 +40,12 @@ func (p *PipelineEL) GetId(args ...interface{}) (interface{}, error) {
 		)
 	}
 
-	if p.Context != nil {
-		pipelineId := p.Context.Value(PipelineIdContextVar).(string)
-		return pipelineId, nil
+	if p.Context != nil && p.Context.Value(PipelineElContextVar) != nil {
+		pipelineELContextValues := p.Context.Value(PipelineElContextVar).(map[string]interface{})
+		return pipelineELContextValues[PipelineIdContextVar], nil
 	}
 
-	return nil, nil
+	return UndefinedValue, nil
 }
 
 func (p *PipelineEL) GetTitle(args ...interface{}) (interface{}, error) {
@@ -51,12 +55,12 @@ func (p *PipelineEL) GetTitle(args ...interface{}) (interface{}, error) {
 		)
 	}
 
-	if p.Context != nil {
-		pipelineId := p.Context.Value(PipelineTitleContextVar).(string)
-		return pipelineId, nil
+	if p.Context != nil && p.Context.Value(PipelineElContextVar) != nil {
+		pipelineELContextValues := p.Context.Value(PipelineElContextVar).(map[string]interface{})
+		return pipelineELContextValues[PipelineTitleContextVar], nil
 	}
 
-	return nil, nil
+	return UndefinedValue, nil
 }
 
 func (p *PipelineEL) GetUser(args ...interface{}) (interface{}, error) {
@@ -66,19 +70,35 @@ func (p *PipelineEL) GetUser(args ...interface{}) (interface{}, error) {
 		)
 	}
 
-	if p.Context != nil {
-		pipelineId := p.Context.Value(PipelineUserContextVar).(string)
-		return pipelineId, nil
+	if p.Context != nil && p.Context.Value(PipelineElContextVar) != nil {
+		pipelineELContextValues := p.Context.Value(PipelineElContextVar).(map[string]interface{})
+		return pipelineELContextValues[PipelineUserContextVar], nil
 	}
 
-	return nil, nil
+	return UndefinedValue, nil
+}
+
+func (p *PipelineEL) GetStartTime(args ...interface{}) (interface{}, error) {
+	if len(args) != 0 {
+		return "", errors.New(
+			fmt.Sprintf("The function 'pipeline:startTime' requires 0 arguments but was passed %d", len(args)),
+		)
+	}
+
+	if p.Context != nil && p.Context.Value(PipelineElContextVar) != nil {
+		pipelineELContextValues := p.Context.Value(PipelineElContextVar).(map[string]interface{})
+		return pipelineELContextValues[PipelineStartTimeContextVar], nil
+	}
+
+	return time.Now(), nil
 }
 
 func (p *PipelineEL) GetELFunctionDefinitions() map[string]govaluate.ExpressionFunction {
 	functions := map[string]govaluate.ExpressionFunction{
-		"pipeline:id":    p.GetId,
-		"pipeline:title": p.GetTitle,
-		"pipeline:user":  p.GetUser,
+		"pipeline:id":        p.GetId,
+		"pipeline:title":     p.GetTitle,
+		"pipeline:user":      p.GetUser,
+		"pipeline:startTime": p.GetStartTime,
 	}
 	return functions
 }

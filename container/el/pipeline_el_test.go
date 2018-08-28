@@ -15,12 +15,14 @@ package el
 import (
 	"context"
 	"testing"
+	"time"
 )
 
 func TestPipelineEL(test *testing.T) {
 	pipelineId := "samplePipelineId"
 	pipelineTitle := "Sample Pipeline"
 	pipelineUser := "admin"
+	pipelineStartTime := time.Now()
 	evaluationTests := []EvaluationTest{
 		{
 			Name:       "Test pipeline:id()",
@@ -57,10 +59,48 @@ func TestPipelineEL(test *testing.T) {
 			Expected:   "The function 'pipeline:user' requires 0 arguments but was passed 1",
 			ErrorCase:  true,
 		},
+
+		{
+			Name:       "Test pipeline:startTime()",
+			Expression: "${pipeline:startTime()}",
+			Expected:   pipelineStartTime,
+		},
+		{
+			Name:       "Test function pipeline:startTime() - Error 1",
+			Expression: "${pipeline:startTime('invalid param')}",
+			Expected:   "The function 'pipeline:startTime' requires 0 arguments but was passed 1",
+			ErrorCase:  true,
+		},
 	}
 
-	pipelineElContext := context.WithValue(context.Background(), PipelineIdContextVar, pipelineId)
-	pipelineElContext = context.WithValue(pipelineElContext, PipelineTitleContextVar, pipelineTitle)
-	pipelineElContext = context.WithValue(pipelineElContext, PipelineUserContextVar, pipelineUser)
+	pipelineELContextValues := map[string]interface{}{
+		PipelineIdContextVar:        pipelineId,
+		PipelineTitleContextVar:     pipelineTitle,
+		PipelineUserContextVar:      pipelineUser,
+		PipelineStartTimeContextVar: pipelineStartTime,
+	}
+	pipelineElContext := context.WithValue(context.Background(), PipelineElContextVar, pipelineELContextValues)
+
 	RunEvaluationTests(evaluationTests, []Definitions{&PipelineEL{Context: pipelineElContext}}, test)
+}
+
+func TestPipelineELUndefinedValues(test *testing.T) {
+	evaluationTests := []EvaluationTest{
+		{
+			Name:       "Test pipeline:id()",
+			Expression: "${pipeline:id()}",
+			Expected:   UndefinedValue,
+		},
+		{
+			Name:       "Test pipeline:title()",
+			Expression: "${pipeline:title()}",
+			Expected:   UndefinedValue,
+		},
+		{
+			Name:       "Test pipeline:user()",
+			Expression: "${pipeline:user()}",
+			Expected:   UndefinedValue,
+		},
+	}
+	RunEvaluationTests(evaluationTests, []Definitions{&PipelineEL{Context: context.Background()}}, test)
 }
