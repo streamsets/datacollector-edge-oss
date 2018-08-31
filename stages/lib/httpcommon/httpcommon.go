@@ -108,19 +108,16 @@ func (h *HttpCommon) InitializeClient(clientConfig ClientConfigBean) error {
 		digestTransport := dac.NewTransport(h.clientConfig.BasicAuth.Username, h.clientConfig.BasicAuth.Password)
 		h.HttpClient.Transport = &digestTransport
 	case OAuth:
-		consumer := oauth1.NewCustomHttpClientConsumer(
+		consumer := oauth1.NewConsumer(
 			h.clientConfig.Oauth.ConsumerKey,
 			h.clientConfig.Oauth.ConsumerSecret,
 			oauth1.ServiceProvider{},
-			h.HttpClient,
 		)
 		token := oauth1.AccessToken{
 			Token:  h.clientConfig.Oauth.Token,
 			Secret: h.clientConfig.Oauth.TokenSecret,
 		}
-		// Use OAuth library's transport
-		t, _ := consumer.MakeRoundTripper(&token)
-		h.HttpClient.Transport = t
+		h.HttpClient, err = consumer.MakeHttpClient(&token)
 	}
 
 	return err
