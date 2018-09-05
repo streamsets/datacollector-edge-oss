@@ -16,7 +16,7 @@ repositories {
 }
 
 golang {
-  goVersion = '1.10.3'
+  goVersion = '1.11'
   packagePath = gitPath
 }
 
