@@ -22,7 +22,8 @@ golang {
 
 dependencies {
   golang {
-    build name: 'github.com/Shopify/sarama', commit: 'c5b44e38e1ca1b27bcaa35d908f161b690ea72e0'
+    build name: 'github.com/Shopify/sarama', tag: '1.17.0'
+    build name: 'github.com/pierrec/lz4', tag: 'v2.0.5'
     build name: 'github.com/sirupsen/logrus', tag: 'v1.0.3'
     build name: 'github.com/AllenDang/w32', commit: '9a4ee0f7d224efbff75947fa7060daadccc4741c'
     build name: 'github.com/BurntSushi/toml', commit: 'b26d9c308763d68093482582cea63d69be07a0f0'
