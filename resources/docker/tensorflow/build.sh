@@ -8,6 +8,6 @@ VCS_REF=$(git describe --tags --always --first-parent)
 docker build --build-arg VCS_REF="${VCS_REF}" \
   --build-arg BUILD_DATE="${BUILD_DATE}" \
   --build-arg VERSION="${VER}" \
-  -f docker/tensorflow/Dockerfile \
+  -f resources/docker/tensorflow/Dockerfile \
   -t "${IMG}:tf" \
   .

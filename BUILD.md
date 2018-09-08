@@ -97,7 +97,22 @@ e.g.
 ### To include TensorFlow Processor in the Edge binary
 
 * Install TensorFlow for Go - https://www.tensorflow.org/install/install_go
-* Build Edge using - 'gradle build -PincludeStage="kafka javascript tensorflow" '
+* Build Edge using:
+    ./gradlew install<platform> -PincludeStage="kafka javascript tensorflow"
+
+    Where platform is one of:
+
+    * DarwinAmd64
+    * LinuxAmd64
+    * LinuxArm
+    * WindowsAmd64
+
+    e.g. `./gradlew installDarwinAmd64  -PincludeStage="kafka javascript tensorflow" `
+
+or use TensorFlow Docker build
+
+    > resources/docker/tensorflow/build.sh
+    > docker run --publish 18633:18633 --name edge --rm streamsets/datacollector-edge:tf
 
 
 ## REST API

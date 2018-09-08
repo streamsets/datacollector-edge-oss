@@ -16,4 +16,4 @@ GPU support can be enabled by setting the build arg TF_TYPE to "gpu".
 
 ### Building
 
-    docker/tensorflow/build.sh
+    resources/docker/tensorflow/build.sh

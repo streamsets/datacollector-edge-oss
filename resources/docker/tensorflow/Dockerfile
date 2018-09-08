@@ -14,10 +14,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV CGO_ENABLED=1
 ARG TF_TYPE="cpu"
 ENV TARGET_DIRECTORY="/usr/local"
-ENV PATH=${PATH}:"/root/.gradle/go/binary/1.10.3/go/bin"
+ENV PATH=${PATH}:"/root/.gradle/go/binary/1.11/go/bin"
 ENV GOPATH=/usr/src/datacollector-edge/.gogradle/project_gopath
 RUN curl -L "https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-${TF_TYPE}-$(go env GOOS)-x86_64-1.10.0.tar.gz" | tar -C ${TARGET_DIRECTORY} -xz && ldconfig
-RUN go get github.com/tensorflow/tensorflow/tensorflow/go && go test github.com/tensorflow/tensorflow/tensorflow/go
 ONBUILD COPY . .
 ONBUILD ENV VER="$(grep version gradle.properties | awk -F = '{print $2}')"
 ONBUILD RUN ./gradlew --no-daemon -Prelease -PincludeStage="kafka javascript tensorflow" installLinuxAmd64
