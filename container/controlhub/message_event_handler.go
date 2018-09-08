@@ -26,13 +26,14 @@ import (
 	"github.com/streamsets/datacollector-edge/container/util"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"runtime"
 	"time"
 )
 
 const (
-	MESSAGING_URL_PATH = "/messaging/rest/v1/events"
+	MessagingUrlPath = "/messaging/rest/v1/events"
 )
 
 type MessageEventHandler struct {
@@ -177,8 +178,20 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 		return err
 	}
 
-	var eventsUrl = m.schConfig.BaseUrl + MESSAGING_URL_PATH
-	req, err := http.NewRequest("POST", eventsUrl, bytes.NewBuffer(jsonValue))
+	baseUrl, err := url.Parse(m.schConfig.BaseUrl)
+	if err != nil {
+		log.WithError(err).Error()
+		return err
+	}
+
+	messagingUrl, err := url.Parse(MessagingUrlPath);
+	if err != nil {
+		log.WithError(err).Error()
+		return err
+	}
+
+	var eventsUrl = baseUrl.ResolveReference(messagingUrl)
+	req, err := http.NewRequest("POST", eventsUrl.String(), bytes.NewBuffer(jsonValue))
 	req.Header.Set(common.HEADER_X_APP_AUTH_TOKEN, m.schConfig.AppAuthToken)
 	req.Header.Set(common.HEADER_X_APP_COMPONENT_ID, m.runtimeInfo.ID)
 	req.Header.Set(common.HEADER_X_REST_CALL, "true")
@@ -224,12 +237,19 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 }
 
 func (m *MessageEventHandler) createSdcEdgeInfoEvent() *ClientEvent {
+	jobLabels := make([]string, 0)
+	for _, jobLabel := range m.schConfig.JobLabels {
+		if len(jobLabel) > 0 {
+			jobLabels = append(jobLabels, jobLabel)
+		}
+	}
+
 	sdcInfoEvent := SDCInfoEvent{
 		EdgeId:        m.runtimeInfo.ID,
 		HttpUrl:       m.runtimeInfo.HttpUrl,
 		GoVersion:     runtime.Version(),
 		EdgeBuildInfo: m.buildInfo,
-		Labels:        m.schConfig.JobLabels,
+		Labels:        jobLabels,
 		Edge:          true,
 	}
 
