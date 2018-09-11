@@ -120,7 +120,9 @@ func (wel *WindowsEventLogSource) Produce(
 }
 
 func (wel *WindowsEventLogSource) createRecordAndAddToBatch(event EventLogRecord, batchMaker api.BatchMaker) error {
-	recordId := event.ComputerName + "::" + wel.resolvedLogName + "::" + string(event.EventID)
+	recordId := event.ComputerName + "::" + wel.resolvedLogName + "::" +
+		strconv.FormatUint(uint64(event.RecordNumber), 10) + "::" +
+		strconv.FormatUint(uint64(event.TimeGenerated), 10)
 	recordVal := map[string]interface{}{
 		"ComputerName":  event.ComputerName,
 		"RecordNumber":  event.RecordNumber,

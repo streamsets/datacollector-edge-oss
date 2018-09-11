@@ -184,7 +184,7 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 		return err
 	}
 
-	messagingUrl, err := url.Parse(MessagingUrlPath);
+	messagingUrl, err := url.Parse(MessagingUrlPath)
 	if err != nil {
 		log.WithError(err).Error()
 		return err
