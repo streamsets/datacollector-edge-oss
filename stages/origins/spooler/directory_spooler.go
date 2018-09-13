@@ -43,11 +43,11 @@ func isFileEligible(
 	readOrder string,
 ) bool {
 	if currentFileInformation != nil {
-		return (readOrder == TIMESTAMP &&
+		return (readOrder == Timestamp &&
 			(modTime.After(currentFileInformation.getModTime()) ||
 				(modTime.Equal(currentFileInformation.getModTime()) &&
 					strings.Compare(path, currentFileInformation.getFullPath()) > 0))) ||
-			(readOrder == LEXICOGRAPHICAL &&
+			(readOrder == Lexicographical &&
 				(strings.Compare(path, currentFileInformation.getFullPath()) > 0 ||
 					(strings.Compare(path, currentFileInformation.getFullPath()) == 0 &&
 						modTime.After(currentFileInformation.getModTime()))))
@@ -56,7 +56,7 @@ func isFileEligible(
 }
 
 func isMatch(pathMatcherMode string, fileName string, filePattern string) (bool, error) {
-	if pathMatcherMode == GLOB {
+	if pathMatcherMode == Glob {
 		return filepath.Match(filePattern, fileName)
 	} else {
 		return regexp.MatchString(filePattern, fileName)
@@ -64,7 +64,7 @@ func isMatch(pathMatcherMode string, fileName string, filePattern string) (bool,
 }
 
 func (d *DirectorySpooler) findAndAddMatchingFilesInTheDirectory() error {
-	if d.pathMatcherMode == REGEX {
+	if d.pathMatcherMode == Regex {
 		allFileInfos, err := ioutil.ReadDir(d.dirPath)
 		if err == nil {
 			for _, fileInfo := range allFileInfos {

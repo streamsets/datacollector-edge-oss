@@ -26,6 +26,16 @@ import (
 	"time"
 )
 
+const (
+	SpoolDirPath          = "conf.spoolDir"
+	UseLastModified       = "conf.useLastModified"
+	PollingTimeoutSecs    = "conf.poolingTimeoutSecs"
+	InitialFileToProcess  = "conf.initialFileToProcess"
+	ProcessSubdirectories = "conf.processSubdirectories"
+	FilePattern           = "conf.filePattern"
+	PathMatcherMode       = "conf.pathMatcherMode"
+)
+
 func createStageContext(
 	dirPath string,
 	processSubDirectories bool,
@@ -34,51 +44,57 @@ func createStageContext(
 	useLastModified bool,
 	initialFileToProcess string,
 	pollingTimeoutSeconds int64,
+	dataFormat string,
 ) *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
-	stageConfig.Library = LIBRARY
-	stageConfig.StageName = STAGE_NAME
-	stageConfig.Configuration = make([]common.Config, 7)
+	stageConfig.Library = Library
+	stageConfig.StageName = StageName
+	stageConfig.Configuration = make([]common.Config, 8)
 
 	stageConfig.Configuration[0] = common.Config{
-		Name:  SPOOL_DIR_PATH,
+		Name:  SpoolDirPath,
 		Value: dirPath,
 	}
 
 	stageConfig.Configuration[1] = common.Config{
-		Name:  PROCESS_SUB_DIRECTORIES,
+		Name:  ProcessSubdirectories,
 		Value: processSubDirectories,
 	}
 
 	stageConfig.Configuration[2] = common.Config{
-		Name:  PATH_MATHER_MODE,
+		Name:  PathMatcherMode,
 		Value: pathMatherMode,
 	}
 
 	stageConfig.Configuration[3] = common.Config{
-		Name:  FILE_PATTERN,
+		Name:  FilePattern,
 		Value: filePattern,
 	}
 
-	readOrder := LEXICOGRAPHICAL
+	readOrder := Lexicographical
 
 	if useLastModified {
-		readOrder = TIMESTAMP
+		readOrder = Timestamp
 	}
 
 	stageConfig.Configuration[4] = common.Config{
-		Name:  USE_LAST_MODIFIED,
+		Name:  UseLastModified,
 		Value: readOrder,
 	}
 
 	stageConfig.Configuration[5] = common.Config{
-		Name:  INITIAL_FILE_TO_PROCESS,
+		Name:  InitialFileToProcess,
 		Value: initialFileToProcess,
 	}
 
 	stageConfig.Configuration[6] = common.Config{
-		Name:  POLLING_TIMEOUT_SECONDS,
+		Name:  PollingTimeoutSecs,
 		Value: float64(pollingTimeoutSeconds),
+	}
+
+	stageConfig.Configuration[7] = common.Config{
+		Name:  "conf.dataFormat",
+		Value: dataFormat,
 	}
 
 	return &common.StageContextImpl{
@@ -161,7 +177,7 @@ func checkRecord(
 	isError := false
 	expectedValue := value.(string)
 
-	rootField, _ := record.Get()
+	rootField, _ := record.Get("/text")
 	actualValue := rootField.Value.(string)
 	actualHeaders := record.GetHeader().GetAttributes()
 
@@ -194,6 +210,20 @@ func checkRecord(
 	}
 }
 
+func TestSpoolDirSource_Init_InvalidDataFormat(t *testing.T) {
+	testDir := createTestDirectory(t)
+	stageContext := createStageContext(testDir, false, Regex, "(.*)[.]txt", true, "", 1, "LOG")
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		t.Error(err)
+	}
+	stageInstance := stageBean.Stage
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 1 {
+		t.Error("Expected Unsupported Data Format - LOG error")
+	}
+}
+
 func TestUseLastModified(t *testing.T) {
 	testDir := createTestDirectory(t)
 
@@ -216,7 +246,7 @@ func TestUseLastModified(t *testing.T) {
 		filepath.Join(testDir, "b.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
-	stageContext := createStageContext(testDir, false, REGEX, "(.*)[.]txt", true, "", 1)
+	stageContext := createStageContext(testDir, false, Regex, "(.*)[.]txt", true, "", 1, "TEXT")
 
 	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
 
@@ -225,17 +255,17 @@ func TestUseLastModified(t *testing.T) {
 	}
 
 	expectedHeaders := map[string]string{
-		FILE:      filepath.Join(testDir, "a.txt"),
-		FILE_NAME: "a.txt",
-		OFFSET:    "0",
+		File:     filepath.Join(testDir, "a.txt"),
+		FileName: "a.txt",
+		Offset:   "0",
 	}
 
 	checkRecord(t, records[0], "123", expectedHeaders)
 
 	expectedHeaders = map[string]string{
-		FILE:      filepath.Join(testDir, "a.txt"),
-		FILE_NAME: "a.txt",
-		OFFSET:    "4",
+		File:     filepath.Join(testDir, "a.txt"),
+		FileName: "a.txt",
+		Offset:   "4",
 	}
 
 	checkRecord(t, records[1], "456", expectedHeaders)
@@ -247,17 +277,17 @@ func TestUseLastModified(t *testing.T) {
 	}
 
 	expectedHeaders = map[string]string{
-		FILE:      filepath.Join(testDir, "c.txt"),
-		FILE_NAME: "c.txt",
-		OFFSET:    "0",
+		File:     filepath.Join(testDir, "c.txt"),
+		FileName: "c.txt",
+		Offset:   "0",
 	}
 
 	checkRecord(t, records[0], "111112113", expectedHeaders)
 
 	expectedHeaders = map[string]string{
-		FILE:      filepath.Join(testDir, "c.txt"),
-		FILE_NAME: "c.txt",
-		OFFSET:    "10",
+		File:     filepath.Join(testDir, "c.txt"),
+		FileName: "c.txt",
+		Offset:   "10",
 	}
 
 	checkRecord(t, records[1], "114115116", expectedHeaders)
@@ -269,9 +299,9 @@ func TestUseLastModified(t *testing.T) {
 	}
 
 	expectedHeaders = map[string]string{
-		FILE:      filepath.Join(testDir, "c.txt"),
-		FILE_NAME: "c.txt",
-		OFFSET:    "20",
+		File:     filepath.Join(testDir, "c.txt"),
+		FileName: "c.txt",
+		Offset:   "20",
 	}
 
 	checkRecord(t, records[0], "117118119", expectedHeaders)
@@ -283,17 +313,17 @@ func TestUseLastModified(t *testing.T) {
 	}
 
 	expectedHeaders = map[string]string{
-		FILE:      filepath.Join(testDir, "b.txt"),
-		FILE_NAME: "b.txt",
-		OFFSET:    "0",
+		File:     filepath.Join(testDir, "b.txt"),
+		FileName: "b.txt",
+		Offset:   "0",
 	}
 
 	checkRecord(t, records[0], "111213", expectedHeaders)
 
 	expectedHeaders = map[string]string{
-		FILE:      filepath.Join(testDir, "b.txt"),
-		FILE_NAME: "b.txt",
-		OFFSET:    "7",
+		File:     filepath.Join(testDir, "b.txt"),
+		FileName: "b.txt",
+		Offset:   "7",
 	}
 
 	checkRecord(t, records[1], "141516", expectedHeaders)
@@ -322,7 +352,7 @@ func TestLexicographical(t *testing.T) {
 		filepath.Join(testDir, "c.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
-	stageContext := createStageContext(testDir, false, GLOB, "*", false, "", 1)
+	stageContext := createStageContext(testDir, false, Glob, "*", false, "", 1, "TEXT")
 
 	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
 
@@ -331,17 +361,17 @@ func TestLexicographical(t *testing.T) {
 	}
 
 	expectedHeaders := map[string]string{
-		FILE:      filepath.Join(testDir, "a.txt"),
-		FILE_NAME: "a.txt",
-		OFFSET:    "0",
+		File:     filepath.Join(testDir, "a.txt"),
+		FileName: "a.txt",
+		Offset:   "0",
 	}
 
 	checkRecord(t, records[0], "123", expectedHeaders)
 
 	expectedHeaders = map[string]string{
-		FILE:      filepath.Join(testDir, "a.txt"),
-		FILE_NAME: "a.txt",
-		OFFSET:    "4",
+		File:     filepath.Join(testDir, "a.txt"),
+		FileName: "a.txt",
+		Offset:   "4",
 	}
 
 	checkRecord(t, records[1], "456", expectedHeaders)
@@ -353,17 +383,17 @@ func TestLexicographical(t *testing.T) {
 	}
 
 	expectedHeaders = map[string]string{
-		FILE:      filepath.Join(testDir, "b.txt"),
-		FILE_NAME: "b.txt",
-		OFFSET:    "0",
+		File:     filepath.Join(testDir, "b.txt"),
+		FileName: "b.txt",
+		Offset:   "0",
 	}
 
 	checkRecord(t, records[0], "111213", expectedHeaders)
 
 	expectedHeaders = map[string]string{
-		FILE:      filepath.Join(testDir, "b.txt"),
-		FILE_NAME: "b.txt",
-		OFFSET:    "7",
+		File:     filepath.Join(testDir, "b.txt"),
+		FileName: "b.txt",
+		Offset:   "7",
 	}
 
 	checkRecord(t, records[1], "141516", expectedHeaders)
@@ -375,17 +405,17 @@ func TestLexicographical(t *testing.T) {
 	}
 
 	expectedHeaders = map[string]string{
-		FILE:      filepath.Join(testDir, "c.txt"),
-		FILE_NAME: "c.txt",
-		OFFSET:    "0",
+		File:     filepath.Join(testDir, "c.txt"),
+		FileName: "c.txt",
+		Offset:   "0",
 	}
 
 	checkRecord(t, records[0], "111112113", expectedHeaders)
 
 	expectedHeaders = map[string]string{
-		FILE:      filepath.Join(testDir, "c.txt"),
-		FILE_NAME: "c.txt",
-		OFFSET:    "10",
+		File:     filepath.Join(testDir, "c.txt"),
+		FileName: "c.txt",
+		Offset:   "10",
 	}
 
 	checkRecord(t, records[1], "114115116", expectedHeaders)
@@ -397,9 +427,9 @@ func TestLexicographical(t *testing.T) {
 	}
 
 	expectedHeaders = map[string]string{
-		FILE:      filepath.Join(testDir, "c.txt"),
-		FILE_NAME: "c.txt",
-		OFFSET:    "20",
+		File:     filepath.Join(testDir, "c.txt"),
+		FileName: "c.txt",
+		Offset:   "20",
 	}
 
 	checkRecord(t, records[0], "117118119", expectedHeaders)
@@ -423,7 +453,7 @@ func TestSubDirectories(t *testing.T) {
 		"x/y/z",
 	}
 
-	createdFiles := []string{}
+	var createdFiles []string
 
 	currentTime := time.Now()
 
@@ -444,9 +474,9 @@ func TestSubDirectories(t *testing.T) {
 		createdFiles = append(createdFiles, fileToCreate)
 	}
 
-	stageContext := createStageContext(testDir, true, GLOB, "*", true, "", 1)
+	stageContext := createStageContext(testDir, true, Glob, "*", true, "", 1, "TEXT")
 
-	var offset string = ""
+	var offset = ""
 	var records []api.Record
 
 	for _, fileToCreate := range createdFiles {
@@ -461,9 +491,9 @@ func TestSubDirectories(t *testing.T) {
 		}
 
 		expectedHeaders := map[string]string{
-			FILE:      fileToCreate,
-			FILE_NAME: filepath.Base(fileToCreate),
-			OFFSET:    "0",
+			File:     fileToCreate,
+			FileName: filepath.Base(fileToCreate),
+			Offset:   "0",
 		}
 
 		checkRecord(t, records[0], "sample text", expectedHeaders)
@@ -476,13 +506,13 @@ func TestReadingFileAcrossBatches(t *testing.T) {
 
 	allLetters := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-	expectedRecordContents := []string{}
+	var expectedRecordContents []string
 	contents := bytes.NewBuffer([]byte{})
 
 	totalLines, totalCharactersInLine := 100, 20
 
 	for line := 0; line < totalLines; line++ {
-		var currentLine string = ""
+		var currentLine = ""
 		for lineLetters := 0; lineLetters < totalCharactersInLine; lineLetters++ {
 			currentLine = currentLine + string(allLetters[rand.Intn(len(allLetters)-1)])
 
@@ -494,7 +524,7 @@ func TestReadingFileAcrossBatches(t *testing.T) {
 	//Create a.txt,c.txt,b.txt with different mod times
 	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), contents.String())
 
-	stageInstance := createSpooler(t, createStageContext(testDir, false, REGEX, ".*", true, "", 1))
+	stageInstance := createSpooler(t, createStageContext(testDir, false, Regex, ".*", true, "", 1, "TEXT"))
 	defer stageInstance.Destroy()
 
 	noOfRecords := 0
@@ -518,4 +548,104 @@ func TestReadingFileAcrossBatches(t *testing.T) {
 	if len(batchMaker.GetStageOutput()) != 0 {
 		t.Fatal("Read more number of records than expected")
 	}
+}
+
+func TestLexicographical_JSON_FORMAT(t *testing.T) {
+
+	testDir := createTestDirectory(t)
+
+	defer deleteTestDirectory(t, testDir)
+
+	//Create a.txt,c.txt,b.txt with different mod times
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), "{\"text\": \"123\"}\n{\"text\": \"456\"}")
+	createFileAndWriteContents(t, filepath.Join(testDir, "b.txt"), "{\"text\": \"111213\"}\n{\"text\": \"141516\"}")
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.txt"), "{\"text\": \"111112113\"}{\"text\": \"114115116\"}\n{\"text\": \"117118119\"}")
+
+	currentTime := time.Now()
+
+	os.Chtimes(
+		filepath.Join(testDir, "a.txt"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
+	os.Chtimes(
+		filepath.Join(testDir, "b.txt"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(2*time.Second).Nanoseconds()))
+	os.Chtimes(
+		filepath.Join(testDir, "c.txt"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
+
+	stageContext := createStageContext(testDir, false, Glob, "*", false, "", 1, "JSON")
+
+	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
+
+	if len(records) != 2 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 2)
+	}
+
+	expectedHeaders := map[string]string{
+		File:     filepath.Join(testDir, "a.txt"),
+		FileName: "a.txt",
+		Offset:   "0",
+	}
+
+	checkRecord(t, records[0], "123", expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "a.txt"),
+		FileName: "a.txt",
+		Offset:   "16",
+	}
+
+	checkRecord(t, records[1], "456", expectedHeaders)
+
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
+
+	if len(records) != 2 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 2)
+	}
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "b.txt"),
+		FileName: "b.txt",
+		Offset:   "0",
+	}
+
+	checkRecord(t, records[0], "111213", expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "b.txt"),
+		FileName: "b.txt",
+		Offset:   "19",
+	}
+
+	checkRecord(t, records[1], "141516", expectedHeaders)
+
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
+
+	if len(records) != 3 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 3)
+	}
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "c.txt"),
+		FileName: "c.txt",
+		Offset:   "0",
+	}
+
+	checkRecord(t, records[0], "111112113", expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "c.txt"),
+		FileName: "c.txt",
+		Offset:   "0",
+	}
+
+	checkRecord(t, records[1], "114115116", expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "c.txt"),
+		FileName: "c.txt",
+		Offset:   "43",
+	}
+
+	checkRecord(t, records[2], "117118119", expectedHeaders)
 }

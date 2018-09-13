@@ -14,10 +14,13 @@ package spooler
 
 import (
 	"bufio"
+	"bytes"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/recordio"
+	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io"
 	"os"
@@ -28,26 +31,17 @@ import (
 )
 
 const (
-	LIBRARY         = "streamsets-datacollector-basic-lib"
-	STAGE_NAME      = "com_streamsets_pipeline_stage_origin_spooldir_SpoolDirDSource"
-	TIMESTAMP       = "TIMESTAMP"
-	LEXICOGRAPHICAL = "LEXICOGRAPHICAL"
-	EOF_OFFSET      = int64(-1)
-	INVALID_OFFSET  = int64(-2)
-
-	SPOOL_DIR_PATH          = "conf.spoolDir"
-	USE_LAST_MODIFIED       = "conf.useLastModified"
-	POLLING_TIMEOUT_SECONDS = "conf.poolingTimeoutSecs"
-	INITIAL_FILE_TO_PROCESS = "conf.initialFileToProcess"
-	PROCESS_SUB_DIRECTORIES = "conf.processSubdirectories"
-	FILE_PATTERN            = "conf.filePattern"
-	PATH_MATHER_MODE        = "conf.pathMatcherMode"
-
-	FILE      = "file"
-	FILE_NAME = "filename"
-	OFFSET    = "offset"
-	GLOB      = "GLOB"
-	REGEX     = "REGEX"
+	Library         = "streamsets-datacollector-basic-lib"
+	StageName       = "com_streamsets_pipeline_stage_origin_spooldir_SpoolDirDSource"
+	Timestamp       = "TIMESTAMP"
+	Lexicographical = "LEXICOGRAPHICAL"
+	EOFOffset       = int64(-1)
+	InvalidOffset   = int64(-2)
+	File            = "file"
+	FileName        = "filename"
+	Offset          = "offset"
+	Glob            = "GLOB"
+	Regex           = "REGEX"
 )
 
 type SpoolDirSource struct {
@@ -59,17 +53,19 @@ type SpoolDirSource struct {
 }
 
 type SpoolDirConfigBean struct {
-	SpoolDir              string  `ConfigDef:"type=STRING,required=true"`
-	UseLastModified       string  `ConfigDef:"type=STRING,required=true"`
-	PoolingTimeoutSecs    float64 `ConfigDef:"type=NUMBER,required=true"`
-	InitialFileToProcess  string  `ConfigDef:"type=STRING,required=true"`
-	ProcessSubdirectories bool    `ConfigDef:"type=BOOLEAN,required=true"`
-	FilePattern           string  `ConfigDef:"type=STRING,required=true"`
-	PathMatcherMode       string  `ConfigDef:"type=STRING,required=true"`
+	SpoolDir              string                            `ConfigDef:"type=STRING,required=true"`
+	UseLastModified       string                            `ConfigDef:"type=STRING,required=true"`
+	PoolingTimeoutSecs    float64                           `ConfigDef:"type=NUMBER,required=true"`
+	InitialFileToProcess  string                            `ConfigDef:"type=STRING,required=true"`
+	ProcessSubdirectories bool                              `ConfigDef:"type=BOOLEAN,required=true"`
+	FilePattern           string                            `ConfigDef:"type=STRING,required=true"`
+	PathMatcherMode       string                            `ConfigDef:"type=STRING,required=true"`
+	DataFormat            string                            `ConfigDef:"type=STRING,required=true"`
+	DataFormatConfig      dataparser.DataParserFormatConfig `ConfigDefBean:"dataFormatConfig"`
 }
 
 func init() {
-	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(Library, StageName, func() api.Stage {
 		return &SpoolDirSource{BaseStage: &common.BaseStage{}}
 	})
 }
@@ -85,7 +81,7 @@ func (s *SpoolDirSource) Init(stageContext api.StageContext) []validation.Issue 
 		spoolWaitDuration: time.Duration(int64(s.Conf.PoolingTimeoutSecs) * 1000 * 1000),
 	}
 
-	if s.spooler.pathMatcherMode != GLOB && s.spooler.pathMatcherMode != REGEX {
+	if s.spooler.pathMatcherMode != Glob && s.spooler.pathMatcherMode != Regex {
 		issues = append(issues, stageContext.CreateConfigIssue(
 			"Unsupported Path Matcher mode :"+s.spooler.pathMatcherMode,
 		))
@@ -94,19 +90,19 @@ func (s *SpoolDirSource) Init(stageContext api.StageContext) []validation.Issue 
 
 	s.spooler.Init()
 	if s.Conf.InitialFileToProcess != "" {
-		file_matches, err := filepath.Glob(s.Conf.InitialFileToProcess)
+		fileMatches, err := filepath.Glob(s.Conf.InitialFileToProcess)
 		if err == nil {
-			if len(file_matches) > 1 {
+			if len(fileMatches) > 1 {
 				issues = append(issues, stageContext.CreateConfigIssue(
 					"Initial File to Process '"+
 						s.Conf.InitialFileToProcess+"' matches multiple files",
 				))
 				return issues
 			}
-			s.Conf.InitialFileToProcess = file_matches[0]
+			s.Conf.InitialFileToProcess = fileMatches[0]
 		}
 	}
-	return issues
+	return s.Conf.DataFormatConfig.Init(s.Conf.DataFormat, stageContext, issues)
 }
 
 func (s *SpoolDirSource) initializeBuffReaderIfNeeded() error {
@@ -132,7 +128,7 @@ func (s *SpoolDirSource) initCurrentFileIfNeeded(lastSourceOffset *string) (bool
 		return false, err
 	}
 
-	//Pipeline resume case
+	// Pipeline resume case
 	if s.spooler.getCurrentFileInfo() == nil && currentFilePath != "" {
 		s.spooler.setCurrentFileInfo(
 			NewAtomicFileInformation(
@@ -143,7 +139,7 @@ func (s *SpoolDirSource) initCurrentFileIfNeeded(lastSourceOffset *string) (bool
 		)
 	}
 
-	//Offset is not present and initial file to process is configured.
+	// Offset is not present and initial file to process is configured.
 	if currentFilePath == "" && s.Conf.InitialFileToProcess != "" {
 		fileInfo, err := os.Stat(currentFilePath)
 		if err != nil {
@@ -171,28 +167,56 @@ func (s *SpoolDirSource) initCurrentFileIfNeeded(lastSourceOffset *string) (bool
 	return true, nil
 }
 
-func (s *SpoolDirSource) createRecordAndAddToBatch(line_bytes []byte, batchMaker api.BatchMaker) {
+func (s *SpoolDirSource) createRecordAndAddToBatch(
+	recordReaderFactory recordio.RecordReaderFactory,
+	lineText string,
+	batchMaker api.BatchMaker,
+) error {
 	fInfo := s.spooler.getCurrentFileInfo()
-	if len(line_bytes) > 0 {
-		if line_bytes[len(line_bytes)-1] == byte('\n') {
-			line_bytes = line_bytes[:len(line_bytes)-1] //Throwing out delimiter
-		}
+	recordId := fInfo.getFullPath() + "::" + strconv.FormatInt(fInfo.getOffsetToRead(), 10)
+	if s.Conf.DataFormat == "TEXT" {
+		recordValue := map[string]interface{}{"text": lineText}
+		record, _ := s.GetStageContext().CreateRecord(recordId, recordValue)
 
-		record, _ := s.GetStageContext().CreateRecord(
-			fInfo.getFullPath()+"::"+
-				strconv.FormatInt(fInfo.getOffsetToRead(), 10),
-			string(line_bytes),
-		)
-
-		record.GetHeader().SetAttribute(FILE, fInfo.getFullPath())
-		record.GetHeader().SetAttribute(FILE_NAME, fInfo.getName())
+		record.GetHeader().SetAttribute(File, fInfo.getFullPath())
+		record.GetHeader().SetAttribute(FileName, fInfo.getName())
 		record.GetHeader().SetAttribute(
-			OFFSET,
+			Offset,
 			strconv.FormatInt(fInfo.getOffsetToRead(), 10),
 		)
-
 		batchMaker.AddRecord(record)
+	} else if s.Conf.DataFormat == "JSON" {
+		recordBuffer := bytes.NewBufferString(lineText)
+
+		recordReader, err := recordReaderFactory.CreateReader(s.GetStageContext(), recordBuffer, recordId)
+		if err != nil {
+			log.WithError(err).Error("Failed to create record reader")
+			return err
+		}
+		defer recordReader.Close()
+
+		for {
+			record, err := recordReader.ReadRecord()
+			if err != nil {
+				log.WithError(err).Error("Failed to parse raw data")
+				return err
+			}
+
+			if record == nil {
+				break
+			}
+
+			record.GetHeader().SetAttribute(File, fInfo.getFullPath())
+			record.GetHeader().SetAttribute(FileName, fInfo.getName())
+			record.GetHeader().SetAttribute(
+				Offset,
+				strconv.FormatInt(fInfo.getOffsetToRead(), 10),
+			)
+			batchMaker.AddRecord(record)
+		}
 	}
+
+	return nil
 }
 
 func (s *SpoolDirSource) readAndCreateRecords(
@@ -200,30 +224,44 @@ func (s *SpoolDirSource) readAndCreateRecords(
 	batchMaker api.BatchMaker,
 ) (int64, error) {
 	isEof := false
-
 	startOffsetForBatch := s.spooler.getCurrentFileInfo().getOffsetToRead()
-
+	recordReaderFactory := s.Conf.DataFormatConfig.RecordReaderFactory
 	for recordCnt := 0; recordCnt < maxBatchSize; recordCnt++ {
 		if s.bufReader == nil {
 			// if pipeline stopped
 			break
 		}
-		line_bytes, err := s.bufReader.ReadBytes('\n')
+		lineBytes, err := s.bufReader.ReadBytes('\n')
 		if err != nil {
 			if err != io.EOF {
-				//TODO Try Error Archiving for file?
+				// TODO Try Error Archiving for file?
 				log.WithError(err).Error("Error while reading file")
-				return startOffsetForBatch, err
+				s.GetStageContext().ReportError(err)
+				return startOffsetForBatch, nil
 			}
 			isEof = true
 		}
-		bytesRead := len(line_bytes)
 
-		s.createRecordAndAddToBatch(line_bytes, batchMaker)
+		bytesRead := len(lineBytes)
+		if bytesRead > 0 {
+			err = s.createRecordAndAddToBatch(
+				recordReaderFactory,
+				strings.Replace(string(lineBytes), "\n", "", 1),
+				batchMaker,
+			)
+
+			if err != nil {
+				// TODO Try Error Archiving for file?
+				log.WithError(err).Error("Error while reading file")
+				s.GetStageContext().ReportError(err)
+				return startOffsetForBatch, nil
+			}
+		}
 
 		if isEof {
-			log.WithField("File Name", s.spooler.getCurrentFileInfo().getFullPath()).Debug("Reached End of File")
-			s.spooler.getCurrentFileInfo().setOffsetToRead(EOF_OFFSET)
+			log.WithField("File Name", s.spooler.getCurrentFileInfo().getFullPath()).
+				Debug("Reached End of File")
+			s.spooler.getCurrentFileInfo().setOffsetToRead(EOFOffset)
 			s.resetFileAndBuffReader()
 			break
 		}
@@ -235,7 +273,7 @@ func (s *SpoolDirSource) readAndCreateRecords(
 
 func parseLastOffset(offsetString string) (string, int64, time.Time, error) {
 	if offsetString == "" {
-		return "", INVALID_OFFSET, time.Now(), nil
+		return "", InvalidOffset, time.Now(), nil
 	}
 	offsetSplit := strings.Split(offsetString, "::")
 
@@ -276,19 +314,19 @@ func (s *SpoolDirSource) Produce(
 
 		offset, err := s.readAndCreateRecords(maxBatchSize, batchMaker)
 
-		if offset == INVALID_OFFSET && err != nil {
+		if offset == InvalidOffset && err != nil {
 			s.GetStageContext().ReportError(err)
 			return lastSourceOffset, err
 		}
 		newOffset := s.spooler.getCurrentFileInfo().createOffset()
-		return &newOffset, nil
+		return &newOffset, err
 	}
 	return lastSourceOffset, err
 }
 
 func (s *SpoolDirSource) resetFileAndBuffReader() {
 	if s.file != nil {
-		//Close Quietly
+		// Close Quietly
 		if err := s.file.Close(); err != nil {
 			log.WithError(err).WithField("file", s.file.Name()).Error("Error During file close")
 		}

@@ -28,11 +28,11 @@ func (h FilesHeap) Len() int {
 }
 
 func (h FilesHeap) Less(i, j int) bool {
-	return (h.readOrder == TIMESTAMP &&
+	return (h.readOrder == Timestamp &&
 		(h.fileInfos[i].getModTime().Before(h.fileInfos[j].getModTime()) ||
 			(h.fileInfos[i].getModTime().Equal(h.fileInfos[j].getModTime()) &&
 				strings.Compare(h.fileInfos[i].getFullPath(), h.fileInfos[j].getFullPath()) < 0))) ||
-		(h.readOrder == LEXICOGRAPHICAL &&
+		(h.readOrder == Lexicographical &&
 			(strings.Compare(h.fileInfos[i].getFullPath(), h.fileInfos[j].getFullPath()) < 0 ||
 				(strings.Compare(h.fileInfos[i].getFullPath(), h.fileInfos[j].getFullPath()) == 0 &&
 					h.fileInfos[i].getModTime().Before(h.fileInfos[j].getModTime()))))
