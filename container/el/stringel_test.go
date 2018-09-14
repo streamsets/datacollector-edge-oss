@@ -264,6 +264,23 @@ func TestStringEL(test *testing.T) {
 			Expected:   "The function 'str:urlEncode' requires 1 arguments but was passed 0",
 			ErrorCase:  true,
 		},
+		{
+			Name:       "Test function str:split - 1",
+			Expression: "${str:split('a,b,c,d', ',')}",
+			Expected:   []string{"a", "b", "c", "d"},
+		},
+		{
+			Name:       "Test function str:split - Error 1",
+			Expression: "${str:split()}",
+			Expected:   "The function 'str:split' requires 2 arguments but was passed 0",
+			ErrorCase:  true,
+		},
+		{
+			Name:       "Test function str:split - Error 2",
+			Expression: "${str:split('a,b,c,d', ',', '123')}",
+			Expected:   "The function 'str:split' requires 2 arguments but was passed 3",
+			ErrorCase:  true,
+		},
 	}
 	RunEvaluationTests(evaluationTests, []Definitions{&StringEL{}}, test)
 }

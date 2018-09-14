@@ -14,6 +14,7 @@ package el
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -94,7 +95,7 @@ func RunEvaluationTests(evaluationTests []EvaluationTest, definitionsList []Defi
 			continue
 		}
 
-		if result != evaluationTest.Expected {
+		if !reflect.DeepEqual(result, evaluationTest.Expected) {
 			test.Logf("Test '%s' failed", evaluationTest.Name)
 			test.Logf("Evaluation result '%v' does not match expected: '%v'", result, evaluationTest.Expected)
 			test.Fail()

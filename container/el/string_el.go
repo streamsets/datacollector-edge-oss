@@ -250,6 +250,17 @@ func (stringEL *StringEL) UnescapeJava(args ...interface{}) (interface{}, error)
 	return nil, errors.New("Not Supported")
 }
 
+func (stringEL *StringEL) Split(args ...interface{}) (interface{}, error) {
+	if len(args) != 2 {
+		return "", errors.New(
+			fmt.Sprintf("The function 'str:split' requires 2 arguments but was passed %d", len(args)),
+		)
+	}
+	str := args[0].(string)
+	separator := args[1].(string)
+	return strings.Split(str, separator), nil
+}
+
 func (stringEL *StringEL) GetELFunctionDefinitions() map[string]govaluate.ExpressionFunction {
 	functions := map[string]govaluate.ExpressionFunction{
 		"str:substring":    stringEL.Substring,
@@ -271,6 +282,7 @@ func (stringEL *StringEL) GetELFunctionDefinitions() map[string]govaluate.Expres
 		"str:escapeXML11":  stringEL.EscapeXML11,
 		"str:unescapeXML":  stringEL.UnescapeXML,
 		"str:unescapeJava": stringEL.UnescapeJava,
+		"str:split":        stringEL.Split,
 	}
 	return functions
 }
