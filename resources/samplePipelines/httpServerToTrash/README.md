@@ -1,6 +1,6 @@
 # HTTP Server to Trash
 
-[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=httpServerToTrash&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/httpServerToTrash/pipeline.json)
+[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=httpServerToTrash&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/master/resources/samplePipelines/httpServerToTrash/pipeline.json)
 
 ### To start pipeline on SDE start
 

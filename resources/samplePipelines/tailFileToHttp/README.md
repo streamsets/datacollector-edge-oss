@@ -1,6 +1,6 @@
 # Tail File to HTTP
 
-[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=tailFileToHttp&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/tailFileToHttp/pipeline.json)
+[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=tailFileToHttp&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/master/resources/samplePipelines/tailFileToHttp/pipeline.json)
 
 ### To start pipeline on SDE start
 

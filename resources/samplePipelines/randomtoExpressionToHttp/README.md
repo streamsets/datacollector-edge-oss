@@ -1,6 +1,6 @@
 # Random Origin -> Expression Processor -> Http
 
-[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=randomToExpressionToHttp&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/randomToExpressionToHttp/pipeline.json)
+[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=randomToExpressionToHttp&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/master/resources/samplePipelines/randomToExpressionToHttp/pipeline.json)
 
 ### To start pipeline on SDE start
 

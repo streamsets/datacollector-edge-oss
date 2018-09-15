@@ -1,6 +1,6 @@
 # Directory Spooler to HTTP
 
-[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=directoryToHttp&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/directoryToHttp/pipeline.json)
+[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=directoryToHttp&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/master/resources/samplePipelines/directoryToHttp/pipeline.json)
 
 ### To start pipeline on SDE start
 
