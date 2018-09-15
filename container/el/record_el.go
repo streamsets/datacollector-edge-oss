@@ -17,6 +17,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/madhukard/govaluate"
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/util"
 )
@@ -36,7 +37,7 @@ func (r *RecordEL) GetType(args ...interface{}) (interface{}, error) {
 		)
 	}
 
-	fieldPath := args[0].(string)
+	fieldPath := cast.ToString(args[0])
 
 	record, err := r.getRecordInContext()
 	if err != nil {
@@ -58,7 +59,7 @@ func (r *RecordEL) GetValue(args ...interface{}) (interface{}, error) {
 		)
 	}
 
-	fieldPath := args[0].(string)
+	fieldPath := cast.ToString(args[0])
 
 	record, err := r.getRecordInContext()
 	if err != nil {
@@ -85,7 +86,7 @@ func (r *RecordEL) GetValueOrDefault(args ...interface{}) (interface{}, error) {
 		)
 	}
 
-	fieldPath := args[0].(string)
+	fieldPath := cast.ToString(args[0])
 	defaultValue := args[1]
 
 	record, err := r.getRecordInContext()
@@ -111,7 +112,7 @@ func (r *RecordEL) GetAttribute(args ...interface{}) (interface{}, error) {
 		)
 	}
 
-	attributeName := args[0].(string)
+	attributeName := cast.ToString(args[0])
 
 	record, err := r.getRecordInContext()
 	if err != nil {
@@ -131,7 +132,7 @@ func (r *RecordEL) GetAttributeOrDefault(args ...interface{}) (interface{}, erro
 		)
 	}
 
-	attributeName := args[0].(string)
+	attributeName := cast.ToString(args[0])
 	defaultValue := args[1]
 
 	record, err := r.getRecordInContext()
@@ -157,7 +158,7 @@ func (r *RecordEL) Exists(args ...interface{}) (interface{}, error) {
 		)
 	}
 
-	fieldPath := args[0].(string)
+	fieldPath := cast.ToString(args[0])
 
 	record, err := r.getRecordInContext()
 	if err != nil {

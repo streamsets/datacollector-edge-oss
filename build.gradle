@@ -47,6 +47,7 @@ dependencies {
     build name: 'github.com/icrowley/fake', commit: '4178557ae428460c3780a381c824a1f3aceb6325'
     build name: 'github.com/kardianos/service', commit: '615a14ed75099c9eaac6949e22ac2341bf9d3197'
     build name: 'github.com/tensorflow/tensorflow/tensorflow/go', tag: '1.10.0'
+    build name: 'github.com/spf13/cast', tag: 'v1.2.0'
   }
 }
 
