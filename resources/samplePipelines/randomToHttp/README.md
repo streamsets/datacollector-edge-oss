@@ -1,6 +1,6 @@
 # Random to HTTP
 
-[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=randomToHttp&importPipelineFromUrl=https://github.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/randomToHttp/pipeline.json)
+[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=randomToHttp&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/randomToHttp/pipeline.json)
 
 ### To start pipeline on SDE start
 

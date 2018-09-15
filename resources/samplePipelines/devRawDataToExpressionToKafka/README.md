@@ -1,6 +1,6 @@
 # Dev Raw Data Source To Expression Evaluator To Kafka
 
-[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=devRawDataToExpressionToKafka&importPipelineFromUrl=https://github.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/devRawDataToExpressionToKafka/pipeline.json)
+[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=devRawDataToExpressionToKafka&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/devRawDataToExpressionToKafka/pipeline.json)
 
 ### To start pipeline on SDE start
 

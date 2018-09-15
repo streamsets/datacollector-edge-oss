@@ -1,6 +1,6 @@
 #  Bosch BME280 Humidity, Barometric Pressure, Temperature Sensor data to HTTP
 
-[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=sensorBME280ToHttp&importPipelineFromUrl=https://github.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/sensorBME280ToHttp/pipeline.json)
+[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=sensorBME280ToHttp&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/sensorBME280ToHttp/pipeline.json)
 
 ### To start pipeline on SDE start
 
