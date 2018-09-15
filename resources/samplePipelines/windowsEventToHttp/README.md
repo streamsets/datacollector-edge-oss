@@ -1,6 +1,6 @@
 # Windows Event Log to HTTP
 
-[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=windowsEventToHttp&importPipelineFromUrl=https://github.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/windowsEventToHttp/pipeline.json)
+[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=windowsEventToHttp&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/windowsEventToHttp/pipeline.json)
 
 ### To start pipeline on SDE start
 

@@ -1,6 +1,6 @@
 # Random to MQTT
 
-[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=randomToMqtt&importPipelineFromUrl=https://github.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/randomToMqtt/pipeline.json)
+[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=randomToMqtt&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/randomToMqtt/pipeline.json)
 
 ### To start pipeline on SDE start
 

@@ -1,6 +1,6 @@
 # Stream Ripple ledger information
 
-[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=websocketClientToTrash&importPipelineFromUrl=https://github.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/websocketClientToTrash/pipeline.json)
+[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=websocketClientToTrash&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/websocketClientToTrash/pipeline.json)
 
 ### To start pipeline on SDE start
 

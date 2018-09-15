@@ -1,6 +1,6 @@
 #  System level CPU usage, memory, disk IO, and network IO statistics from Linux, Windows and Mac hosts to HTTP End Point.
 
-[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=systemMetricsToHttp&importPipelineFromUrl=https://github.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/serverMetricsToHttp/pipeline.json)
+[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=systemMetricsToHttp&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/serverMetricsToHttp/pipeline.json)
 
 # Supported Architectures
     Linux i386/amd64/arm(raspberry pi)
