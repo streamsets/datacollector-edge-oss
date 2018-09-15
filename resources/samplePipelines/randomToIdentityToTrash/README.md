@@ -1,6 +1,6 @@
 # Random Origin -> Identity Processor -> Trash
 
-[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=randomToIdentityToTrash&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/randomToIdentityToTrash/pipeline.json)
+[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=randomToIdentityToTrash&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/master/resources/samplePipelines/randomToIdentityToTrash/pipeline.json)
 
 ### To start pipeline on SDE start
 

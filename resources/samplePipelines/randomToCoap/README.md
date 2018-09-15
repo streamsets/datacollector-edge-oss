@@ -1,6 +1,6 @@
 # Random to CoAP
 
-[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=randomToCoap&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/blob/master/resources/samplePipelines/randomToCoap/pipeline.json)
+[![Try Now](../trynow.png)](http://localhost:18630?pipelineTitle=randomToCoap&importPipelineFromUrl=https://raw.githubusercontent.com/streamsets/datacollector-edge/master/resources/samplePipelines/randomToCoap/pipeline.json)
 
 ### To start pipeline on SDE start
 
