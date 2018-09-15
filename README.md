@@ -48,19 +48,19 @@ If you need help with production systems, you can check out the variety of suppo
 * [StreamSets Data Collector Edge Documentation](https://streamsets.com/documentation/datacollector/latest/help/datacollector/UserGuide/Edge_Mode/EdgePipelines_Overview.html#concept_d4h_kkq_4bb)
 
 ## Sample Pipelines
-* [System Metrics to HTTP](resources/data/pipelines/systemMetricsToHttp)
-* [Windows Event To Http](resources/data/pipelines/windowsEventToHttp)
-* [Tail File To Http](resources/data/pipelines/tailFileToHttp)
-* [Directory Spooler to Http](resources/data/pipelines/directoryToHttp)
-* [Bosch BME280 Humidity, Barometric Pressure, Temperature Sensor data to HTTP](resources/data/pipelines/sensorBME280ToHttp)
-* [Stream Ripple Ledger Information](data/pipelines/websocketClientToTrash)
-* [MQTT To HTTP](resources/data/pipelines/mqttToHttp)
-* [Dev Raw Data To Expression Evaluator to Kafka](resources/data/pipelines/devRawDataToExpressionToKafka)
-* [Random Data to MQTT](resources/data/pipelines/randomToMqtt)
-* [Random Data to CoAP](resources/data/pipelines/randomToCoap)
-* [Random Data To Http](resources/data/pipelines/randomToHttp)
-* [HTTP Server To Trash](resources/data/pipelines/httpServerToTrash)
-* [Random Data To Identity Processor To Trash](resources/data/pipelines/randomToIdentityToTrash)
+* [System Metrics to HTTP](resources/samplePipelines/systemMetricsToHttp)
+* [Windows Event To Http](resources/samplePipelines/windowsEventToHttp)
+* [Tail File To Http](resources/samplePipelines/tailFileToHttp)
+* [Directory Spooler to Http](resources/samplePipelines/directoryToHttp)
+* [Bosch BME280 Humidity, Barometric Pressure, Temperature Sensor data to HTTP](resources/samplePipelines/sensorBME280ToHttp)
+* [Stream Ripple Ledger Information](resources/samplePipelines/websocketClientToTrash)
+* [MQTT To HTTP](resources/samplePipelines/mqttToHttp)
+* [Dev Raw Data To Expression Evaluator to Kafka](resources/samplePipelines/devRawDataToExpressionToKafka)
+* [Random Data to MQTT](resources/samplePipelines/randomToMqtt)
+* [Random Data to CoAP](resources/samplePipelines/randomToCoap)
+* [Random Data To Http](resources/samplePipelines/randomToHttp)
+* [HTTP Server To Trash](resources/samplePipelines/httpServerToTrash)
+* [Random Data To Identity Processor To Trash](resources/samplePipelines/randomToIdentityToTrash)
 
 
 ## Contributing code
