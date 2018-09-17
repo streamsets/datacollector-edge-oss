@@ -37,10 +37,12 @@ const (
 	APACHE_KAFKA_0_11_LIBRARY = "streamsets-datacollector-apache-kafka_0_11-lib"
 	APACHE_KAFKA_1_0_LIBRARY  = "streamsets-datacollector-apache-kafka_1_0-lib"
 	APACHE_KAFKA_1_1_LIBRARY  = "streamsets-datacollector-apache-kafka_1_1-lib"
+	APACHE_KAFKA_2_0_LIBRARY  = "streamsets-datacollector-apache-kafka_2_0-lib"
 
 	CDH_KAFKA_2_0_LIBRARY = "streamsets-datacollector-cdh_kafka_2_0-lib"
 	CDH_KAFKA_2_1_LIBRARY = "streamsets-datacollector-cdh_kafka_2_1-lib"
 	CDH_KAFKA_3_0_LIBRARY = "streamsets-datacollector-cdh_kafka_3_0-lib"
+	CDH_6_0_LIBRARY = "streamsets-datacollector-cdh_6_0-lib"
 
 	HDP_KAFKA_2_4_LIBRARY = "streamsets-datacollector-hdp_2_4-lib"
 	HDP_KAFKA_2_5_LIBRARY = "streamsets-datacollector-hdp_2_5-lib"
@@ -107,6 +109,9 @@ func init() {
 	stagelibrary.SetCreator(APACHE_KAFKA_1_1_LIBRARY, StageName, func() api.Stage {
 		return &KafkaDestination{BaseStage: &common.BaseStage{}}
 	})
+	stagelibrary.SetCreator(APACHE_KAFKA_2_0_LIBRARY, StageName, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+	})
 
 	stagelibrary.SetCreator(CDH_KAFKA_2_0_LIBRARY, StageName, func() api.Stage {
 		return &KafkaDestination{BaseStage: &common.BaseStage{}}
@@ -115,6 +120,9 @@ func init() {
 		return &KafkaDestination{BaseStage: &common.BaseStage{}}
 	})
 	stagelibrary.SetCreator(CDH_KAFKA_3_0_LIBRARY, StageName, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+	})
+	stagelibrary.SetCreator(CDH_6_0_LIBRARY, StageName, func() api.Stage {
 		return &KafkaDestination{BaseStage: &common.BaseStage{}}
 	})
 
