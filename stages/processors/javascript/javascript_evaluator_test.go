@@ -15,6 +15,7 @@
 package javascript
 
 import (
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
 	"github.com/streamsets/datacollector-edge/container/common"
@@ -35,10 +36,10 @@ func getStageContext(
 	initScript string,
 	script string,
 	destroyScript string,
-) (*common.StageContextImpl, *common.ErrorSink) {
+) (*common.StageContextImpl, *common.ErrorSink, *common.EventSink) {
 	stageConfig := common.StageConfiguration{}
-	stageConfig.Library = LIBRARY
-	stageConfig.StageName = STAGE_NAME
+	stageConfig.Library = Library
+	stageConfig.StageName = StageName
 	stageConfig.InstanceName = "javascriptEvaluator"
 	stageConfig.Configuration = []common.Config{
 		{
@@ -59,12 +60,14 @@ func getStageContext(
 		},
 	}
 	errorSink := common.NewErrorSink()
+	eventSink := common.NewEventSink()
 	return &common.StageContextImpl{
 		StageConfig:       &stageConfig,
-		Parameters:        nil,
+		Parameters:        map[string]interface{}{"param1": "param1Value"},
 		ErrorSink:         errorSink,
 		ErrorRecordPolicy: common.ErrorRecordPolicyStage,
-	}, errorSink
+		EventSink:         eventSink,
+	}, errorSink, eventSink
 }
 
 func TestJavaScriptProcessor_Success(t *testing.T) {
@@ -84,7 +87,7 @@ func TestJavaScriptProcessor_Success(t *testing.T) {
 		}
 	`
 	destroyScript := `state.counter = -1;`
-	stageContext, errSink := getStageContext(BATCH_PROCESSING_MODE, initScript, script, destroyScript)
+	stageContext, errSink, _ := getStageContext(BatchProcessingMode, initScript, script, destroyScript)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -94,8 +97,8 @@ func TestJavaScriptProcessor_Success(t *testing.T) {
 	if stageInstance == nil {
 		t.Fatal("Failed to create stage instance")
 	}
-	err = stageInstance.Init(stageContext)
-	if err != nil {
+	issues := stageInstance.Init(stageContext)
+	if len(issues) > 0 {
 		t.Fatal("Error initializing stage context for the stage")
 	}
 
@@ -178,7 +181,7 @@ func TestJavaScriptProcessor_Failure(t *testing.T) {
 		}
 	`
 	destroyScript := `state.counter = -1;`
-	stageContext, errSink := getStageContext(BATCH_PROCESSING_MODE, initScript, script, destroyScript)
+	stageContext, errSink, _ := getStageContext(BatchProcessingMode, initScript, script, destroyScript)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -188,8 +191,8 @@ func TestJavaScriptProcessor_Failure(t *testing.T) {
 	if stageInstance == nil {
 		t.Fatal("Failed to create stage instance")
 	}
-	err = stageInstance.Init(stageContext)
-	if err != nil {
+	issues := stageInstance.Init(stageContext)
+	if len(issues) > 0 {
 		t.Fatal("Error initializing stage context for the stage")
 	}
 
@@ -252,7 +255,7 @@ func TestJavaScriptProcessor_TypedNullObject(t *testing.T) {
 		}
 	`
 	destroyScript := `state.counter = -1;`
-	stageContext, _ := getStageContext(BATCH_PROCESSING_MODE, initScript, script, destroyScript)
+	stageContext, _, _ := getStageContext(BatchProcessingMode, initScript, script, destroyScript)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -262,8 +265,8 @@ func TestJavaScriptProcessor_TypedNullObject(t *testing.T) {
 	if stageInstance == nil {
 		t.Fatal("Failed to create stage instance")
 	}
-	err = stageInstance.Init(stageContext)
-	if err != nil {
+	issues := stageInstance.Init(stageContext)
+	if len(issues) > 0 {
 		t.Fatal("Error initializing stage context for the stage")
 	}
 
@@ -326,5 +329,136 @@ func TestJavaScriptProcessor_TypedNullObject(t *testing.T) {
 	if newFieldValue.Type != fieldtype.STRING {
 		t.Errorf("Expected : String. Actual:%s", newFieldValue.Type)
 	}
+}
 
+func TestJavaScriptProcessor_SDCFunctions(t *testing.T) {
+	initScript := `state.counter = 1;`
+	script := `
+		for(var i = 0; i < records.length; i++) {
+		  try {
+            var record = records[i];
+			record.value.a = 20.2 + state.counter;
+            record.value.newMapField = { e: "eValue" };
+            record.value.newArrayField = ['Element 1', 'Element 2'];
+			output.write(record);
+
+			var newRecord = sdcFunctions.createRecord('newId');
+			newRecord.value.a = 20.2 + state.counter;
+			newRecord.value.b = sdcFunctions.createMap();
+			newRecord.value.b.f1 = 'test';
+			newRecord.value.previewMode = sdcFunctions.isPreview();
+			newRecord.value.pipelineParameters = sdcFunctions.pipelineParameters();
+			output.write(newRecord);
+
+			var eventRecord = sdcFunctions.createEvent('sampleEventType', 1);
+			sdcFunctions.toEvent(eventRecord);
+		  } catch (e) {
+			// Send record to error
+			error.write(records[i], e);
+		  }
+		}
+	`
+	destroyScript := `state.counter = -1;`
+	stageContext, errSink, eventSink := getStageContext(BatchProcessingMode, initScript, script, destroyScript)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stageInstance := stageBean.Stage.(*JavaScriptProcessor)
+	if stageInstance == nil {
+		t.Fatal("Failed to create stage instance")
+	}
+	issues := stageInstance.Init(stageContext)
+	if len(issues) > 0 {
+		t.Fatal("Error initializing stage context for the stage")
+	}
+
+	records := make([]api.Record, 1)
+	records[0], _ = stageContext.CreateRecord(
+		"abc",
+		map[string]interface{}{
+			"a": float64(2.55),
+			"b": float64(3.55),
+			"c": "random",
+		},
+	)
+	batch := runner.NewBatchImpl("random", records, nil)
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+
+	err = stageInstance.Process(batch, batchMaker)
+
+	if err != nil {
+		t.Fatal("Error when processing batch: " + err.Error())
+	}
+
+	if errSink.GetTotalErrorRecords() != 0 {
+		errorRecord := errSink.GetStageErrorRecords("javascriptEvaluator")[0]
+		t.Fatal("There should be no error records in error sink - " + errorRecord.GetHeader().GetErrorMessage())
+	}
+
+	records = batchMaker.GetStageOutput()
+
+	if len(records) != 2 {
+		t.Error("No output records generated")
+		return
+	}
+
+	// Test sdcFunctions.createRecord
+	record := records[1]
+	aValue, err := record.Get("/a")
+	if err != nil {
+		t.Error("Error when getting value of /a " + err.Error())
+	}
+
+	if aValue.Value.(float64) != float64(21.2) {
+		t.Errorf("Error in javascript evaluator when evaluating /d, Expected : 20.2. Actual:%d", aValue.Value)
+	}
+
+	// Test sdcFunctions.createMap()
+	f1Value, err := record.Get("/b/f1")
+	if err != nil {
+		t.Error("Error when getting value of /b/f1 " + err.Error())
+	}
+	if cast.ToString(f1Value.Value) != "test" {
+		t.Errorf("Error when evaluating /b/f1, Expected : 'test'. Actual:%d", f1Value.Value)
+	}
+
+	// Test sdcFunctions.isPreview()
+	previewModeField, err := record.Get("/previewMode")
+	if err != nil {
+		t.Error("Error when getting value of /previewMode " + err.Error())
+	}
+	if cast.ToBool(previewModeField.Value) {
+		t.Errorf("sdcFunctions.isPreview returned wrong value")
+	}
+
+	// Test sdcFunctions.pipelineParameters()
+	param1Field, err := record.Get("/pipelineParameters/param1")
+	if err != nil {
+		t.Error("Error when getting value of /pipelineParameters/param1 " + err.Error())
+	}
+	if cast.ToString(param1Field.Value) != "param1Value" {
+		t.Errorf("sdcFunctions.pipelineParameters returned wrong value")
+	}
+
+	// Test sdcFunctions.createEvent
+	eventRecords := eventSink.GetStageEvents("javascriptEvaluator")
+	if len(eventRecords) != 1 {
+		t.Errorf("Failed to create event records")
+	}
+
+	if eventRecords[0].GetHeader().GetAttribute(api.EventRecordHeaderType) != "sampleEventType" {
+		t.Errorf("Wrong event type")
+	}
+
+	if eventRecords[0].GetHeader().GetAttribute(api.EventRecordHeaderVersion) != "1" {
+		t.Errorf("Wrong event version")
+	}
+
+	// Call destroy
+	err = stageInstance.Destroy()
+	if err != nil {
+		t.Fatal("Error in destroy phase " + err.Error())
+	}
 }

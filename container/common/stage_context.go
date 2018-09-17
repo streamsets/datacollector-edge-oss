@@ -39,6 +39,7 @@ type StageContextImpl struct {
 	ErrorRecordPolicy string
 	Services          map[string]api.Service
 	ElContext         context.Context
+	previewMode       bool
 }
 
 func (s *StageContextImpl) GetResolvedValue(configValue interface{}) (interface{}, error) {
@@ -204,6 +205,14 @@ func (s *StageContextImpl) GetService(serviceName string) (api.Service, error) {
 	return nil, errors.New(fmt.Sprintf("No Service instance found for service name: %s", serviceName))
 }
 
+func (s *StageContextImpl) IsPreview() bool {
+	return s.previewMode
+}
+
+func (s *StageContextImpl) GetPipelineParameters() map[string]interface{} {
+	return s.Parameters
+}
+
 func constructErrorRecord(instanceName string, err error, errorRecordPolicy string, record api.Record) api.Record {
 	var recordToBeSentToError api.Record
 	headerForRecord := record.GetHeader().(*HeaderImpl)
@@ -250,6 +259,7 @@ func NewStageContext(
 	services map[string]api.Service,
 	elContext context.Context,
 	eventSink *EventSink,
+	isPreview bool,
 ) (*StageContextImpl, error) {
 	stageContext := &StageContextImpl{
 		StageConfig:       stageConfig,
@@ -261,6 +271,7 @@ func NewStageContext(
 		ErrorRecordPolicy: errorRecordPolicy,
 		Services:          services,
 		ElContext:         elContext,
+		previewMode:       isPreview,
 	}
 
 	return stageContext, nil
