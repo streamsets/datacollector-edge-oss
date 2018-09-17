@@ -25,14 +25,14 @@ type ErrorSink struct {
 
 func NewErrorSink() *ErrorSink {
 	errorSink := &ErrorSink{}
-	errorSink.ClearErrorRecordsAndMesssages()
+	errorSink.ClearErrorRecordsAndMessages()
 	errorSink.totalErrorMessages = 0
 	errorSink.totalErrorRecords = 0
 	return errorSink
 }
 
 //After each batch call this function to clear current batch error messages/records
-func (e *ErrorSink) ClearErrorRecordsAndMesssages() {
+func (e *ErrorSink) ClearErrorRecordsAndMessages() {
 	e.stageErrorMessages = make(map[string][]api.ErrorMessage)
 	e.stageErrorRecords = make(map[string][]api.Record)
 	e.totalErrorMessages = 0

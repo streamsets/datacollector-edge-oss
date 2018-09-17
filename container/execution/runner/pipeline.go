@@ -99,7 +99,7 @@ func (p *Pipeline) runBatch() error {
 	committed := false
 	start := time.Now()
 
-	p.errorSink.ClearErrorRecordsAndMesssages()
+	p.errorSink.ClearErrorRecordsAndMessages()
 	p.eventSink.ClearEventRecords()
 
 	previousOffset := p.offsetTracker.GetOffset()
@@ -221,6 +221,7 @@ func NewPipeline(
 			services,
 			pipelineBean.ElContext,
 			eventSink,
+			false,
 		)
 		if err != nil {
 			issues = append(issues, validation.Issue{
@@ -246,6 +247,7 @@ func NewPipeline(
 		nil,
 		pipelineBean.ElContext,
 		eventSink,
+		false,
 	)
 	if err != nil {
 		issues = append(issues, validation.Issue{

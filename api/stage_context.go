@@ -32,4 +32,6 @@ type StageContext interface {
 	IsErrorStage() bool
 	CreateConfigIssue(error string, optional ...interface{}) validation.Issue
 	GetService(serviceName string) (Service, error)
+	IsPreview() bool
+	GetPipelineParameters() map[string]interface{}
 }

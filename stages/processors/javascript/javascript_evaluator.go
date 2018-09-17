@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/robertkrimen/otto"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
@@ -29,15 +30,15 @@ import (
 )
 
 const (
-	LIBRARY                = "streamsets-datacollector-basic-lib"
-	STAGE_NAME             = "com_streamsets_pipeline_stage_processor_javascript_JavaScriptDProcessor"
-	VERSION                = 2
-	STATE                  = "state"
-	RECORDS                = "records"
-	OUTPUT                 = "output"
-	ERROR                  = "error"
-	RECORD_PROCESSING_MODE = "RECORD"
-	BATCH_PROCESSING_MODE  = "BATCH"
+	Library              = "streamsets-datacollector-basic-lib"
+	StageName            = "com_streamsets_pipeline_stage_processor_javascript_JavaScriptDProcessor"
+	State                = "state"
+	Records              = "records"
+	Output               = "output"
+	Error                = "error"
+	SdcFunctions         = "sdcFunctions"
+	RecordProcessingMode = "RECORD"
+	BatchProcessingMode  = "BATCH"
 )
 
 type JavaScriptProcessor struct {
@@ -50,7 +51,7 @@ type JavaScriptProcessor struct {
 }
 
 func init() {
-	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(Library, StageName, func() api.Stage {
 		return &JavaScriptProcessor{BaseStage: &common.BaseStage{}}
 	})
 }
@@ -61,7 +62,7 @@ func (j *JavaScriptProcessor) Init(stageContext api.StageContext) []validation.I
 
 	if j.InitScript != "" {
 		vm := otto.New()
-		vm.Set(STATE, j.state)
+		vm.Set(State, j.state)
 		_, err := vm.Run(j.InitScript)
 		if err != nil {
 			log.Error(fmt.Sprintf("Failed to execute init script code due to error: %s", err.Error()))
@@ -77,9 +78,9 @@ func (j *JavaScriptProcessor) Init(stageContext api.StageContext) []validation.I
 
 func (j *JavaScriptProcessor) Process(batch api.Batch, batchMaker api.BatchMaker) error {
 	switch j.ProcessingMode {
-	case RECORD_PROCESSING_MODE:
+	case RecordProcessingMode:
 		return j.runRecordProcessingMode(batch, batchMaker)
-	case BATCH_PROCESSING_MODE:
+	case BatchProcessingMode:
 		return j.runBatchProcessingMode(batch, batchMaker)
 	default:
 		return errors.New("Invalid Processing mode")
@@ -93,7 +94,9 @@ func (j *JavaScriptProcessor) runRecordProcessingMode(batch api.Batch, batchMake
 		scriptRecords := make([]map[string]interface{}, 0)
 		scriptRecord, err := scriptObjectFactory.CreateScriptRecord(record)
 		if err != nil {
-			return nil
+			log.WithError(err).Error("Failed to create script record")
+			j.GetStageContext().ToError(err, record)
+			continue
 		}
 		scriptRecords = append(scriptRecords, scriptRecord)
 		j.runScript(scriptRecords, j.GetStageContext(), batchMaker, scriptObjectFactory)
@@ -108,7 +111,9 @@ func (j *JavaScriptProcessor) runBatchProcessingMode(batch api.Batch, batchMaker
 	for _, record := range batch.GetRecords() {
 		scriptRecord, err := scriptObjectFactory.CreateScriptRecord(record)
 		if err != nil {
-			return nil
+			log.WithError(err).Error("Failed to create script record")
+			j.GetStageContext().ToError(err, record)
+			continue
 		}
 		scriptRecords = append(scriptRecords, scriptRecord)
 	}
@@ -122,14 +127,18 @@ func (j *JavaScriptProcessor) runScript(
 	scriptObjectFactory scripting.ScriptObjectFactory,
 ) error {
 	vm := otto.New()
-	vm.Set(RECORDS, scriptRecords)
-	vm.Set(STATE, j.state)
-	vm.Set(OUTPUT, &Out{
+	vm.Set(Records, scriptRecords)
+	vm.Set(State, j.state)
+	vm.Set(Output, &Out{
 		batchMaker:          batchMaker,
 		scriptObjectFactory: scriptObjectFactory,
 		stageContext:        j.GetStageContext(),
 	})
-	vm.Set(ERROR, &Err{
+	vm.Set(Error, &Err{
+		scriptObjectFactory: scriptObjectFactory,
+		stageContext:        j.GetStageContext(),
+	})
+	vm.Set(SdcFunctions, &SDCEdgeFunctions{
 		scriptObjectFactory: scriptObjectFactory,
 		stageContext:        j.GetStageContext(),
 	})
@@ -150,7 +159,7 @@ func (j *JavaScriptProcessor) runScript(
 	_, err := vm.Run(j.Script)
 	if err != nil {
 		log.Error(fmt.Sprintf("Failed to execute JavaScript code due to error: %s", err.Error()))
-		return err
+		j.GetStageContext().ReportError(err)
 	}
 
 	return nil
@@ -159,11 +168,11 @@ func (j *JavaScriptProcessor) runScript(
 func (j *JavaScriptProcessor) Destroy() error {
 	if j.DestroyScript != "" {
 		vm := otto.New()
-		vm.Set(STATE, j.state)
+		vm.Set(State, j.state)
 		_, err := vm.Run(j.DestroyScript)
 		if err != nil {
 			log.Error(fmt.Sprintf("Failed to execute destroy script code due to error: %s", err.Error()))
-			return err
+			j.GetStageContext().ReportError(err)
 		}
 	}
 	return j.BaseStage.Destroy()
@@ -173,6 +182,13 @@ func (j *JavaScriptProcessor) preProcessScript(script string) string {
 	replacer := strings.NewReplacer(
 		"output.write(", "output.Write(",
 		"error.write(", "error.Write(",
+		"sdcFunctions.getFieldNull(", "sdcFunctions.GetFieldNull(",
+		"sdcFunctions.createRecord(", "sdcFunctions.CreateRecord(",
+		"sdcFunctions.createMap(", "sdcFunctions.CreateMap(",
+		"sdcFunctions.createEvent(", "sdcFunctions.CreateEvent(",
+		"sdcFunctions.toEvent(", "sdcFunctions.ToEvent(",
+		"sdcFunctions.isPreview(", "sdcFunctions.IsPreview(",
+		"sdcFunctions.pipelineParameters(", "sdcFunctions.PipelineParameters(",
 	)
 	return replacer.Replace(script)
 }
@@ -226,5 +242,170 @@ func (e *Err) Write(call otto.FunctionCall) otto.Value {
 	return otto.Value{}
 }
 
-type SdcFunctions struct {
+type SDCEdgeFunctions struct {
+	stageContext        api.StageContext
+	scriptObjectFactory scripting.ScriptObjectFactory
+}
+
+func (s *SDCEdgeFunctions) GetFieldNull(call otto.FunctionCall) otto.Value {
+	val, err := call.Argument(0).Export()
+	if err != nil {
+		log.Error(fmt.Sprintf("Failed to read object from write: %s", err.Error()))
+		s.stageContext.ReportError(err)
+		return otto.Value{}
+	}
+	scriptRecord := val.(map[string]interface{})
+	record, err := s.scriptObjectFactory.GetRecord(scriptRecord)
+	if err != nil {
+		log.Error(fmt.Sprintf("Failed to get record from script record: %s", err.Error()))
+		s.stageContext.ReportError(err)
+		return otto.Value{}
+	}
+
+	secondArg, err := call.Argument(1).Export()
+	if err != nil {
+		log.Error(fmt.Sprintf("Failed to read field path from getFieldNull: %s", err.Error()))
+		s.stageContext.ReportError(err)
+		return otto.Value{}
+	}
+	fieldPath := cast.ToString(secondArg)
+
+	nullValue, err := scripting.GetFieldNull(record, fieldPath)
+	if err != nil {
+		log.Error(fmt.Sprintf("Failed to getFieldNull: %s", err.Error()))
+		s.stageContext.ReportError(err)
+		return otto.Value{}
+	}
+
+	vm := otto.New()
+	ottoValue, err := vm.ToValue(nullValue)
+	if err != nil {
+		log.WithError(err).Error("CreateMap: Failed to get otto value")
+		return otto.Value{}
+	}
+
+	return ottoValue
+}
+
+func (s *SDCEdgeFunctions) CreateRecord(call otto.FunctionCall) otto.Value {
+	val, err := call.Argument(0).Export()
+	if err != nil {
+		log.WithError(err).Error("Failed to read object from createRecord")
+		s.stageContext.ReportError(err)
+		return otto.Value{}
+	}
+	recordId := cast.ToString(val)
+	newRecord, err := s.stageContext.CreateRecord(recordId, make(map[string]interface{}))
+	if err != nil {
+		log.WithError(err).Error("Failed to create new record")
+		s.stageContext.ReportError(err)
+		return otto.Value{}
+	}
+
+	scriptRecord, err := s.scriptObjectFactory.CreateScriptRecord(newRecord)
+	if err != nil {
+		log.WithError(err).Error("Failed to create script record")
+		s.stageContext.ReportError(err)
+		return otto.Value{}
+	}
+
+	vm := otto.New()
+	value, err := vm.ToValue(scriptRecord)
+	if err != nil {
+		log.WithError(err).Error("Failed to get otto value")
+		return otto.FalseValue()
+	}
+	return value
+}
+
+func (s *SDCEdgeFunctions) CreateEvent(call otto.FunctionCall) otto.Value {
+	arg1Val, err := call.Argument(0).Export()
+	if err != nil {
+		log.WithError(err).Error("Failed to read first argument from CreateEvent")
+		s.stageContext.ReportError(err)
+		return otto.Value{}
+	}
+	eventType := cast.ToString(arg1Val)
+
+	arg2Val, err := call.Argument(1).Export()
+	if err != nil {
+		log.WithError(err).Error("Failed to read second argument from CreateEvent")
+		s.stageContext.ReportError(err)
+		return otto.Value{}
+	}
+	eventVersion := cast.ToInt(arg2Val)
+
+	newEventRecord, err := s.stageContext.CreateEventRecord(
+		"evenId",
+		make(map[string]interface{}),
+		eventType,
+		eventVersion,
+	)
+	if err != nil {
+		log.WithError(err).Error("Failed to create new record")
+		s.stageContext.ReportError(err)
+		return otto.Value{}
+	}
+
+	scriptRecord, err := s.scriptObjectFactory.CreateScriptRecord(newEventRecord)
+	if err != nil {
+		log.WithError(err).Error("Failed to create script record")
+		s.stageContext.ReportError(err)
+		return otto.Value{}
+	}
+
+	vm := otto.New()
+	value, err := vm.ToValue(scriptRecord)
+	if err != nil {
+		log.WithError(err).Error("Failed to get otto value")
+		return otto.FalseValue()
+	}
+	return value
+}
+
+func (s *SDCEdgeFunctions) ToEvent(call otto.FunctionCall) otto.Value {
+	val, err := call.Argument(0).Export()
+	if err != nil {
+		log.WithError(err).Error("Failed to read object from toEvent")
+		s.stageContext.ReportError(err)
+		return otto.Value{}
+	}
+	scriptRecord := val.(map[string]interface{})
+	eventRecord, err := s.scriptObjectFactory.GetRecord(scriptRecord)
+	if err != nil {
+		log.WithError(err).Error("Failed to get record from script record")
+		s.stageContext.ReportError(err)
+		return otto.Value{}
+	}
+	s.stageContext.ToEvent(eventRecord)
+	return otto.Value{}
+}
+
+func (s *SDCEdgeFunctions) IsPreview(call otto.FunctionCall) otto.Value {
+	value, err := otto.ToValue(s.stageContext.IsPreview())
+	if err != nil {
+		log.WithError(err).Error("IsPreview: Failed to get otto value")
+		return otto.FalseValue()
+	}
+	return value
+}
+
+func (s *SDCEdgeFunctions) CreateMap(call otto.FunctionCall) otto.Value {
+	vm := otto.New()
+	mapValue, err := vm.ToValue(make(map[string]interface{}))
+	if err != nil {
+		log.WithError(err).Error("CreateMap: Failed to get otto value")
+		return otto.Value{}
+	}
+	return mapValue
+}
+
+func (s *SDCEdgeFunctions) PipelineParameters(call otto.FunctionCall) otto.Value {
+	vm := otto.New()
+	mapValue, err := vm.ToValue(s.stageContext.GetPipelineParameters())
+	if err != nil {
+		log.WithError(err).Error("PipelineParameters: Failed to get otto value")
+		return otto.Value{}
+	}
+	return mapValue
 }

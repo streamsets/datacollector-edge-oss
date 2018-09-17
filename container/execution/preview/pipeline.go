@@ -85,7 +85,7 @@ func (p *Pipeline) Run(
 }
 
 func (p *Pipeline) runBatch(batchCount int, batchSize int, skipTargets bool) error {
-	p.errorSink.ClearErrorRecordsAndMesssages()
+	p.errorSink.ClearErrorRecordsAndMessages()
 	previousOffset := p.offsetTracker.GetOffset()
 	pipeBatch := runner.NewFullPipeBatch(p.offsetTracker, batchSize, p.errorSink, p.eventSink, true)
 
@@ -173,6 +173,7 @@ func NewPreviewPipeline(
 			services,
 			pipelineBean.ElContext,
 			eventSink,
+			true,
 		)
 		if err != nil {
 			issues = append(issues, validation.Issue{
@@ -198,6 +199,7 @@ func NewPreviewPipeline(
 		nil,
 		pipelineBean.ElContext,
 		eventSink,
+		true,
 	)
 	if err != nil {
 		issues = append(issues, validation.Issue{
