@@ -68,7 +68,8 @@ func (d *DevRawDataDSource) Produce(
 		record, err := recordReader.ReadRecord()
 		if err != nil {
 			log.WithError(err).Error("Failed to parse raw data")
-			return nil, err
+			d.GetStageContext().ReportError(err)
+			return nil, nil
 		}
 
 		if record == nil {
@@ -78,8 +79,8 @@ func (d *DevRawDataDSource) Produce(
 	}
 
 	if d.StopAfterFirstBatch {
-		return nil, err
+		return nil, nil
 	}
 
-	return &randomOffset, err
+	return &randomOffset, nil
 }
