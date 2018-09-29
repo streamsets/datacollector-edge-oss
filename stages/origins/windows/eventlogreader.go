@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"github.com/AllenDang/w32"
 	log "github.com/sirupsen/logrus"
+	syswin "golang.org/x/sys/windows"
 	"io"
 	"syscall"
 	"unsafe"
@@ -35,6 +36,27 @@ const (
 )
 
 type EventLogReaderMode string
+
+type SIDType uint32
+
+//https://docs.microsoft.com/en-us/windows/desktop/CIMWin32Prov/win32-useraccount
+var SIDTypeStringMap = map[SIDType]string{
+	SIDType(1): "User",
+	SIDType(2): "Group",
+	SIDType(3): "Alias",
+	SIDType(4): "Well Known Group",
+	SIDType(5): "Alias",
+	SIDType(6): "Deleted Account",
+	SIDType(7): "Unknown",
+	SIDType(8): "Computer",
+}
+
+func (s SIDType) getSidTypeString() string {
+	if mapping, stringMappingPresent := SIDTypeStringMap[s]; stringMappingPresent {
+		return mapping
+	}
+	return ""
+}
 
 const (
 	READ_ALL = EventLogReaderMode("ALL")
@@ -50,6 +72,12 @@ type EventLogReader struct {
 	handle      w32.HANDLE
 }
 
+type SIDInfo struct {
+	Name    string
+	Domain  string
+	SIDType SIDType
+}
+
 type EventLogRecord struct {
 	w32.EVENTLOGRECORD
 	SourceName   string
@@ -57,6 +85,7 @@ type EventLogRecord struct {
 	MsgStrings   []string
 	Message      string
 	Category     string
+	SIDInfo      *SIDInfo
 }
 
 func NewReader(logName string, mode EventLogReaderMode, initialOffset uint32, knownOffset bool) *EventLogReader {
@@ -84,7 +113,7 @@ func (elreader *EventLogReader) Close() error {
 	if w32.CloseEventLog(elreader.handle) {
 		return nil
 	} else {
-		return fmt.Errorf("Could not close event log reader %+v", elreader)
+		return fmt.Errorf("could not close event log reader %+v", elreader)
 	}
 }
 
@@ -98,7 +127,7 @@ func (elreader *EventLogReader) determineFirstEventToRead() error {
 		} else if elreader.mode == READ_NEW {
 			flags = w32.EVENTLOG_BACKWARDS_READ | w32.EVENTLOG_SEQUENTIAL_READ
 		} else {
-			return fmt.Errorf("Invalid mode, %s", elreader.mode)
+			return fmt.Errorf("invalid mode, %s", elreader.mode)
 		}
 		if events, err := elreader.read(flags, 0, 1); err == nil {
 			if len(events) == 0 {
@@ -193,13 +222,57 @@ func (elreader *EventLogReader) read(flags uint32, offset uint32, maxRecords int
 			bytesLeft := event.Length - EventSize
 			eventData := make([]byte, bytesLeft, bytesLeft)
 			_, err = io.ReadFull(reader, eventData)
+
 			if err != nil {
 				return nil, err
 			}
+
 			// extract source name and computer name
 			strs := extractStrings(eventData, uint16(2))
 			event.SourceName = strs[0]
 			event.ComputerName = strs[1]
+
+			//This means we have SID information in the Event Log
+			if event.UserSidLength > 0 {
+				log.Debugf(
+					"Trying to extract Sid Information for"+
+						" Record number : %d,"+
+						" Sid Offset: %d,"+
+						" Sid Length : %d",
+					event.RecordNumber, event.UserSidOffset, event.UserSidLength)
+				sidOffset := event.UserSidOffset - EventSize
+				sidPtr := (*syswin.SID)(unsafe.Pointer(&eventData[sidOffset]))
+				sidString, err := sidPtr.String()
+				if err != nil {
+					log.WithError(err).Errorf(
+						"Error extracting sid from Sid Offset:%d and Length:%d for record Number %d",
+						event.UserSidOffset,
+						event.UserSidLength,
+						event.RecordNumber)
+				} else {
+					log.Debugf("SID String : %s", sidString)
+					sid, err := syswin.StringToSid(sidString)
+					if err != nil {
+						log.WithError(err).Errorf("Error extracting SID from SID String %s, record Number %d",
+							sidString,
+							event.RecordNumber)
+					} else {
+						account, domain, sidType, err := sid.LookupAccount("")
+						if err != nil {
+							log.WithError(err).Errorf(
+								"Error Lookup Account Name for SID String: %s record Number %d",
+								sidString,
+								event.RecordNumber)
+						} else {
+							event.SIDInfo = &SIDInfo{Name: account, Domain: domain, SIDType: SIDType(sidType)}
+						}
+					}
+				}
+
+			} else {
+				log.Infof("No SID Information in the windows event log record number %d", event.RecordNumber)
+			}
+
 			// extract message strings
 			if event.NumStrings > 0 {
 				strOffset := event.StringOffset - EventSize

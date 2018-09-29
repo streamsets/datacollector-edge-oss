@@ -145,6 +145,18 @@ func (wel *WindowsEventLogSource) createRecordAndAddToBatch(event EventLogRecord
 		"MsgStrings":    event.MsgStrings,
 		"Message":       event.Message,
 	}
+
+	if event.SIDInfo != nil {
+		recordVal["SIDInfo"] = map[string]interface{}{
+			"username": event.SIDInfo.Name,
+			"domain":   event.SIDInfo.Domain,
+			"sidType": map[string]interface{}{
+				"Type":         uint32(event.SIDInfo.SIDType),
+				"MappedString": event.SIDInfo.SIDType.getSidTypeString(),
+			},
+		}
+	}
+
 	record, er := wel.GetStageContext().CreateRecord(recordId, recordVal)
 	if er != nil {
 		return er
