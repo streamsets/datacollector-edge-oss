@@ -39,6 +39,11 @@ type FilePipelineStoreTask struct {
 
 func (store *FilePipelineStoreTask) GetPipelines() ([]common.PipelineInfo, error) {
 	var pipelineInfoList []common.PipelineInfo
+	_, err := os.Stat(store.runtimeInfo.BaseDir + PIPELINES_FOLDER)
+	if os.IsNotExist(err) {
+		return pipelineInfoList, nil
+	}
+
 	files, err := ioutil.ReadDir(store.runtimeInfo.BaseDir + PIPELINES_FOLDER)
 
 	if err != nil {
