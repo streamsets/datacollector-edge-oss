@@ -20,6 +20,7 @@ import (
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"math/big"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -58,6 +59,7 @@ const (
 	COMPANY_BUZZWORD            = "COMPANY_BUZZWORD"
 	COMPANY_URL                 = "COMPANY_URL"
 	DEMOGRAPHIC                 = "DEMOGRAPHIC"
+	EMAIL                       = "EMAIL"
 	FILE                        = "FILE"
 	FINANCE                     = "FINANCE"
 	INTERNET                    = "INTERNET"
@@ -65,13 +67,23 @@ const (
 	MUSIC                       = "MUSIC"
 	NAME                        = "NAME"
 	PHONENUMBER                 = "PHONENUMBER"
+	RACE                        = "RACE"
+	SEX                         = "SEX"
 	SHAKESPEARE                 = "SHAKESPEARE"
 	SPACE                       = "SPACE"
+	SSN                         = "SSN"
 	STOCK                       = "STOCK"
 	NotSupported                = "Not Supported"
 )
 
 var randomOffset = "random"
+var race = []string{
+	"American Indian or Alaska Native",
+	"Asian",
+	"Black or African American",
+	"Native Hawaiian or Other Pacific Islander",
+	"White",
+}
 
 type Origin struct {
 	*common.BaseStage
@@ -201,6 +213,8 @@ func (d *Origin) createField(r *rand.Rand, delta int64, min int64) (*api.Field, 
 			rootField[config.Field], _ = api.CreateStringField(fake.DomainName())
 		case DEMOGRAPHIC:
 			rootField[config.Field], _ = api.CreateStringField(fake.Characters())
+		case EMAIL:
+			rootField[config.Field], _ = api.CreateStringField(fake.EmailAddress())
 		case FINANCE:
 			rootField[config.Field], _ = api.CreateStringField(fake.Currency())
 		case INTERNET:
@@ -211,8 +225,17 @@ func (d *Origin) createField(r *rand.Rand, delta int64, min int64) (*api.Field, 
 			rootField[config.Field], _ = api.CreateStringField(fake.FullName())
 		case PHONENUMBER:
 			rootField[config.Field], _ = api.CreateStringField(fake.Phone())
+		case RACE:
+			raceIndex := randIntRange(r, 0, len(race)-1)
+			rootField[config.Field], _ = api.CreateStringField(race[raceIndex])
+		case SEX:
+			rootField[config.Field], _ = api.CreateStringField(fake.Gender())
 		case SHAKESPEARE:
 			rootField[config.Field], _ = api.CreateStringField(fake.Sentences())
+		case SSN:
+			rootField[config.Field], _ = api.CreateStringField(
+				strconv.Itoa(randIntRange(r, 100000000, 999999999)),
+			)
 		case STOCK:
 			rootField[config.Field], _ = api.CreateStringField(fake.CurrencyCode())
 		default:
@@ -221,4 +244,11 @@ func (d *Origin) createField(r *rand.Rand, delta int64, min int64) (*api.Field, 
 	}
 
 	return api.CreateMapFieldWithMapOfFields(rootField), nil
+}
+
+func randIntRange(r *rand.Rand, min, max int) int {
+	if min == max {
+		return min
+	}
+	return r.Intn((max+1)-min) + min
 }
