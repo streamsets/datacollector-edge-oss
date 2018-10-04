@@ -14,7 +14,7 @@
 // limitations under the License.
 // Copied from https://github.com/streamsets/windataextractor/tree/master/dev/src/lib/win/eventlog
 
-package windows
+package eventlogging
 
 import (
 	"syscall"

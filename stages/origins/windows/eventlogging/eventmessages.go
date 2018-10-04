@@ -14,7 +14,7 @@
 // limitations under the License.
 
 // Copied from https://github.com/streamsets/windataextractor/tree/master/dev/src/lib/win/eventlog
-package windows
+package eventlogging
 
 import (
 	"bytes"
@@ -25,13 +25,6 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-)
-
-const (
-	APPLICATION = "Application"
-	SYSTEM      = "System"
-	SECURITY    = "Security"
-	Custom      = "Custom"
 )
 
 var (
@@ -181,7 +174,7 @@ func messageF(value string, args []string) string {
 	return msg
 }
 
-func findResourceString(logName string, libType string, event *EventLogRecord, resourceId uint32) string {
+func findResourceString(logName string, libType string, event *EventLoggingRecord, resourceId uint32) string {
 	handles := getResourceLibraries(logName, event.SourceName)
 	if msgTemplate, err := getMessageString(handles[libType], resourceId); err == nil {
 		log.Debugf("ResourceLibraries - Found %s resource string for '%s' for resource %d: %s", libType, event.SourceName, resourceId, msgTemplate)
@@ -191,10 +184,10 @@ func findResourceString(logName string, libType string, event *EventLogRecord, r
 	return ""
 }
 
-func findEventMessageTemplate(logName string, event *EventLogRecord) string {
+func findEventMessageTemplate(logName string, event *EventLoggingRecord) string {
 	return findResourceString(logName, "EventMessageFile", event, event.EventID)
 }
 
-func findEventCategory(logName string, event *EventLogRecord) string {
+func findEventCategory(logName string, event *EventLoggingRecord) string {
 	return findResourceString(logName, "CategoryMessageFile", event, uint32(event.EventCategory))
 }

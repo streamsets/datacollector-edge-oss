@@ -30,11 +30,11 @@ func createStageContext(logName string) *common.StageContextImpl {
 	stageConfig.Configuration = make([]common.Config, 2)
 
 	stageConfig.Configuration[0] = common.Config{
-		Name:  LOG_NAME_CONFIG,
+		Name:  "logName",
 		Value: logName,
 	}
 	stageConfig.Configuration[1] = common.Config{
-		Name:  READ_MODE_CONFIG,
+		Name:  "readMode",
 		Value: "ALL",
 	}
 	return &common.StageContextImpl{
@@ -83,9 +83,9 @@ func testWindowsEventLogRead(t *testing.T, logName string, maxBatchSize int) {
 }
 
 func TestWindowsApplicationLogRead(t *testing.T) {
-	testWindowsEventLogRead(t, APPLICATION, 1)
+	testWindowsEventLogRead(t, Application, 1)
 }
 
 func TestWindowsSystemLogRead(t *testing.T) {
-	testWindowsEventLogRead(t, SYSTEM, 1)
+	testWindowsEventLogRead(t, System, 1)
 }

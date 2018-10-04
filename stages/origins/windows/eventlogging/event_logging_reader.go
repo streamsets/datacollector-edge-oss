@@ -14,16 +14,21 @@
 // limitations under the License.
 
 // Copied from https://github.com/streamsets/windataextractor/tree/master/dev/src/lib/win/eventlog
-package windows
+package eventlogging
 
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"github.com/AllenDang/w32"
 	log "github.com/sirupsen/logrus"
+	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/container/common"
+	wincommon "github.com/streamsets/datacollector-edge/stages/origins/windows/common"
 	syswin "golang.org/x/sys/windows"
 	"io"
+	"strconv"
 	"syscall"
 	"unsafe"
 )
@@ -35,7 +40,9 @@ const (
 	EventSize         = uint32(unsafe.Sizeof(w32.EVENTLOGRECORD{}))
 )
 
-type EventLogReaderMode string
+//Windows Event Log Reader - https://docs.microsoft.com/en-us/windows/desktop/wes/windows-event-log
+
+// Event Logging - https://docs.microsoft.com/en-us/windows/desktop/EventLog/event-logging
 
 type SIDType uint32
 
@@ -58,14 +65,9 @@ func (s SIDType) getSidTypeString() string {
 	return ""
 }
 
-const (
-	READ_ALL = EventLogReaderMode("ALL")
-	READ_NEW = EventLogReaderMode("NEW")
-)
-
-type EventLogReader struct {
-	log         string
-	mode        EventLogReaderMode
+type EventLoggingReader struct {
+	*common.BaseStage
+	*wincommon.BaseEventLogReader
 	offset      uint32
 	emptyLog    bool
 	knownOffset bool
@@ -78,7 +80,7 @@ type SIDInfo struct {
 	SIDType SIDType
 }
 
-type EventLogRecord struct {
+type EventLoggingRecord struct {
 	w32.EVENTLOGRECORD
 	SourceName   string
 	ComputerName string
@@ -88,46 +90,115 @@ type EventLogRecord struct {
 	SIDInfo      *SIDInfo
 }
 
-func NewReader(logName string, mode EventLogReaderMode, initialOffset uint32, knownOffset bool) *EventLogReader {
-	return &EventLogReader{logName, mode, initialOffset, false, knownOffset, 0}
+func NewEventLoggingReader(
+	baseStage *common.BaseStage,
+	logName string,
+	mode wincommon.EventLogReaderMode,
+	lastSourceOffset string,
+) (*EventLoggingReader, error) {
+	offset := uint32(0)
+	knownOffset := false
+
+	if lastSourceOffset != "" {
+		off, err := strconv.ParseUint(lastSourceOffset, 10, 32)
+		if err != nil {
+			baseStage.GetStageContext().ReportError(err)
+			log.WithError(err).WithField("offset", lastSourceOffset).Error("Error while parsing offset")
+			return nil, err
+		}
+		offset = uint32(off)
+		knownOffset = true
+	}
+
+	return &EventLoggingReader{
+		BaseStage:          baseStage,
+		BaseEventLogReader: &wincommon.BaseEventLogReader{Log: logName, Mode: mode},
+		offset:             offset,
+		emptyLog:           false,
+		knownOffset:        knownOffset,
+	}, nil
 }
 
-func (elreader *EventLogReader) Open() error {
-	log.Debugf("EventLogReader[%s] - Opening\n", elreader.log)
-	w32Handle := w32.OpenEventLog(`\\localhost`, elreader.log)
+func (elreader *EventLoggingReader) Open() error {
+	log.Debugf("EventLoggingReader[%s] - Opening\n", elreader.Log)
+	w32Handle := w32.OpenEventLog(`\\localhost`, elreader.Log)
 	if w32Handle == 0 {
-		return fmt.Errorf("Could not open event log reader for '%s'", elreader.log)
+		return errors.New(fmt.Sprintf("could not open event log reader for '%s'", elreader.Log))
 	} else {
 		elreader.handle = w32Handle
 		return elreader.determineFirstEventToRead()
 	}
 }
 
-// returns -1 if unknown
-func (elreader *EventLogReader) GetCurrentOffset() uint32 {
-	return elreader.offset
+func (elreader *EventLoggingReader) Read(maxRecords int) ([]api.Record, error) {
+	records := make([]api.Record, 0)
+	var flags uint32
+	log.WithFields(log.Fields{
+		"emptyLog":   elreader.Log,
+		"offset":     elreader.offset,
+		"maxRecords": maxRecords,
+	}).Debug("Attempting to read")
+	if elreader.emptyLog {
+		//special case where the event log is empty at the time of opening the reader
+		flags = w32.EVENTLOG_FORWARDS_READ | w32.EVENTLOG_SEQUENTIAL_READ
+	} else {
+		flags = w32.EVENTLOG_FORWARDS_READ | w32.EVENTLOG_SEEK_READ
+	}
+	if events, err := elreader.read(flags, uint32(elreader.offset), maxRecords); err == nil {
+		if len(events) > 0 {
+			elreader.offset = events[len(events)-1].RecordNumber + 1
+			log.WithFields(log.Fields{
+				"log":              elreader.Log,
+				"eventRecordsRead": len(events),
+				"lastRecordNumber": events[len(events)-1].RecordNumber,
+			}).Debug()
+			//after we read a record, we must rest the emtpyLog flag in case it is set
+			elreader.emptyLog = false
+			for _, event := range events {
+				record, err := elreader.createRecord(event)
+				if err != nil {
+					log.WithError(err).Errorf("Error creating record for Record Number : %d", event.RecordNumber)
+				}
+				records = append(records, record)
+			}
+		} else {
+			log.WithField("log", elreader.Log).Debug("No event records to read")
+		}
+		return records, nil
+	} else {
+		return nil, err
+	}
 }
 
-func (elreader *EventLogReader) Close() error {
-	log.Debug("EventLogReader[%s] - Closing\n", elreader.log)
+// returns -1 if unknown
+func (elreader *EventLoggingReader) GetCurrentOffset() string {
+	return strconv.FormatUint(uint64(elreader.offset), 10)
+}
+
+func (elreader *EventLoggingReader) Close() error {
+	log.Debug("EventLoggingReader[%s] - Closing\n", elreader.Log)
 	if w32.CloseEventLog(elreader.handle) {
 		return nil
 	} else {
 		return fmt.Errorf("could not close event log reader %+v", elreader)
 	}
+	ReleaseResourceLibraries()
+	return nil
 }
 
-func (elreader *EventLogReader) determineFirstEventToRead() error {
-	elReaderLogger := log.WithFields(log.Fields{"log": elreader.log})
+// Private Methods
+
+func (elreader *EventLoggingReader) determineFirstEventToRead() error {
+	elReaderLogger := log.WithFields(log.Fields{"log": elreader.Log})
 	if !elreader.knownOffset {
 		elReaderLogger.Debug("First event record number to read not known, locating...")
 		var flags uint32
-		if elreader.mode == READ_ALL {
+		if elreader.Mode == wincommon.ReadAll {
 			flags = w32.EVENTLOG_FORWARDS_READ | w32.EVENTLOG_SEQUENTIAL_READ
-		} else if elreader.mode == READ_NEW {
+		} else if elreader.Mode == wincommon.ReadNew {
 			flags = w32.EVENTLOG_BACKWARDS_READ | w32.EVENTLOG_SEQUENTIAL_READ
 		} else {
-			return fmt.Errorf("invalid mode, %s", elreader.mode)
+			return fmt.Errorf("invalid mode, %s", elreader.Mode)
 		}
 		if events, err := elreader.read(flags, 0, 1); err == nil {
 			if len(events) == 0 {
@@ -138,7 +209,7 @@ func (elreader *EventLogReader) determineFirstEventToRead() error {
 				elreader.emptyLog = true
 			} else {
 				elreader.offset = events[0].RecordNumber
-				if elreader.mode == READ_NEW {
+				if elreader.Mode == wincommon.ReadNew {
 					elreader.offset += 1
 				}
 				elReaderLogger.WithField("offset", elReaderLogger).Debug("First event record number to read")
@@ -196,9 +267,50 @@ func (elreader *EventLogReader) determineFirstEventToRead() error {
 	}
 }
 
+func (elreader *EventLoggingReader) createRecord(event EventLoggingRecord) (api.Record, error) {
+	recordId := event.ComputerName + "::" + elreader.Log + "::" +
+		strconv.FormatUint(uint64(event.RecordNumber), 10) + "::" +
+		strconv.FormatUint(uint64(event.TimeGenerated), 10)
+	recordVal := map[string]interface{}{
+		"ComputerName":  event.ComputerName,
+		"RecordNumber":  event.RecordNumber,
+		"DataOffset":    event.DataOffset,
+		"DataLength":    event.DataLength,
+		"Category":      event.EventCategory,
+		"EventId":       event.EventID,
+		"EventType":     event.EventType,
+		"SourceName":    event.SourceName,
+		"LogName":       elreader.Log,
+		"StringOffset":  event.StringOffset,
+		"Reserved":      event.Reserved,
+		"TimeGenerated": event.TimeGenerated,
+		"TimeWritten":   event.TimeWritten,
+		"ReservedFlags": event.ReservedFlags,
+		"UserSidLength": event.UserSidLength,
+		"UserSidOffset": event.UserSidOffset,
+		"NumStrings":    event.NumStrings,
+		"Length":        event.Length,
+		"MsgStrings":    event.MsgStrings,
+		"Message":       event.Message,
+	}
+
+	if event.SIDInfo != nil {
+		recordVal["SIDInfo"] = map[string]interface{}{
+			"username": event.SIDInfo.Name,
+			"domain":   event.SIDInfo.Domain,
+			"sidType": map[string]interface{}{
+				"Type":         uint32(event.SIDInfo.SIDType),
+				"MappedString": event.SIDInfo.SIDType.getSidTypeString(),
+			},
+		}
+	}
+
+	return elreader.GetStageContext().CreateRecord(recordId, recordVal)
+}
+
 // we don't return EOF, we just return an empty slice
-func (elreader *EventLogReader) read(flags uint32, offset uint32, maxRecords int) ([]EventLogRecord, error) {
-	events := make([]EventLogRecord, 0, maxRecords)
+func (elreader *EventLoggingReader) read(flags uint32, offset uint32, maxRecords int) ([]EventLoggingRecord, error) {
+	events := make([]EventLoggingRecord, 0, maxRecords)
 	buffer := make([]byte, BufferSize)
 	var read, needs uint32
 	if w32.ReadEventLog(elreader.handle, flags, offset, buffer, BufferSize, &read, &needs) {
@@ -211,7 +323,7 @@ func (elreader *EventLogReader) read(flags uint32, offset uint32, maxRecords int
 			if maxRecords > -1 && len(events) >= maxRecords {
 				break
 			}
-			event := EventLogRecord{}
+			event := EventLoggingRecord{}
 			w32EventPtr := (*w32.EVENTLOGRECORD)(unsafe.Pointer(&event))
 			err := binary.Read(reader, binary.LittleEndian, w32EventPtr)
 			if err == io.EOF {
@@ -279,44 +391,12 @@ func (elreader *EventLogReader) read(flags uint32, offset uint32, maxRecords int
 				eventData := eventData[strOffset:]
 				event.MsgStrings = extractStrings(eventData, uint16(event.NumStrings))
 			}
-			event.Message = messageF(findEventMessageTemplate(elreader.log, &event), event.MsgStrings)
-			event.Category = findEventCategory(elreader.log, &event)
+			event.Message = messageF(findEventMessageTemplate(elreader.Log, &event), event.MsgStrings)
+			event.Category = findEventCategory(elreader.Log, &event)
 			events = append(events, event)
 		}
 	}
 	return events, nil
-}
-
-func (elreader *EventLogReader) Read(maxRecords int) ([]EventLogRecord, error) {
-	var flags uint32
-	log.WithFields(log.Fields{
-		"emptyLog":   elreader.log,
-		"offset":     elreader.offset,
-		"maxRecords": maxRecords,
-	}).Debug("Attempting to read")
-	if elreader.emptyLog {
-		//special case where the event log is empty at the time of opening the reader
-		flags = w32.EVENTLOG_FORWARDS_READ | w32.EVENTLOG_SEQUENTIAL_READ
-	} else {
-		flags = w32.EVENTLOG_FORWARDS_READ | w32.EVENTLOG_SEEK_READ
-	}
-	if events, err := elreader.read(flags, uint32(elreader.offset), maxRecords); err == nil {
-		if len(events) > 0 {
-			elreader.offset = events[len(events)-1].RecordNumber + 1
-			log.WithFields(log.Fields{
-				"log":              elreader.log,
-				"eventRecordsRead": len(events),
-				"lastRecordNumber": events[len(events)-1].RecordNumber,
-			}).Debug()
-			//after we read a record, we must rest the emtpyLog flag in case it is set
-			elreader.emptyLog = false
-		} else {
-			log.WithField("log", elreader.log).Debug("No event records to read")
-		}
-		return events, nil
-	} else {
-		return nil, err
-	}
 }
 
 func extractStrings(byteData []byte, stringCount uint16) (strs []string) {
