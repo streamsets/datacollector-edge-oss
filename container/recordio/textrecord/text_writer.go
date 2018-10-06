@@ -16,9 +16,11 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
+	"github.com/streamsets/datacollector-edge/api/linkedhashmap"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"io"
 )
@@ -69,10 +71,23 @@ func (textWriter *TextWriterImpl) getTextFieldPathValue(field *api.Field) (strin
 			err = errors.New("Invalid Field Type for Text Field path - " + textField.Type)
 			return textFieldValue, err
 		}
-		textFieldValue = textField.Value.(string)
+		textFieldValue = cast.ToString(textField.Value)
+		return textFieldValue, err
+	case fieldtype.LIST_MAP:
+		listMapValue := field.Value.(*linkedhashmap.Map)
+		textValue, found := listMapValue.Get(DEFAULT_TEXT_FIELD)
+		if !found {
+			return textFieldValue, fmt.Errorf("invalid field path - %s", DEFAULT_TEXT_FIELD)
+		}
+		textField := textValue.(*api.Field)
+		if textField.Type != fieldtype.STRING {
+			err = errors.New("Invalid Field Type for Text Field path - " + textField.Type)
+			return textFieldValue, err
+		}
+		textFieldValue = cast.ToString(textField.Value)
 		return textFieldValue, err
 	default:
-		err = errors.New("Unsupported Field Type")
+		err = errors.New("unsupported Field Type")
 	}
 	return textFieldValue, err
 }

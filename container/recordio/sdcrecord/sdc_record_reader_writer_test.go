@@ -16,6 +16,7 @@ import (
 	"bytes"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
+	"github.com/streamsets/datacollector-edge/api/linkedhashmap"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"reflect"
 	"strings"
@@ -49,19 +50,26 @@ var complexRecordField = map[string]interface{}{
 	"sampleListField":   []string{"a", "b"},
 	"sampleStringField": "abc",
 }
-var allTypesRecordField = map[string]interface{}{
-	"sampleBool":       true,
-	"sampleByte":       byte(0xa1),
-	"sampleByteArray":  []byte{0xa0, 0xb1, 0xc2, 0xd3},
-	"sampleShort":      int8(1),
-	"sampleInteger":    int(2),
-	"sampleLong":       int64(3),
-	"sampleFloat":      float32(1.0),
-	"sampleDouble":     float64(2.0),
-	"sampleString":     "sample",
-	"sampleMap":        map[string]interface{}{"a": 1, "b": 2},
-	"sampleStringList": []string{"a", "b"},
-	"sampleList":       []interface{}{1, 2},
+
+func getAllTypesRecordField() map[string]interface{} {
+	sampleListMap := linkedhashmap.New()
+	sampleListMap.Put("a", 1)
+	sampleListMap.Put("b", 2)
+	return map[string]interface{}{
+		"sampleBool":       true,
+		"sampleByte":       byte(0xa1),
+		"sampleByteArray":  []byte{0xa0, 0xb1, 0xc2, 0xd3},
+		"sampleShort":      int8(1),
+		"sampleInteger":    int(2),
+		"sampleLong":       int64(3),
+		"sampleFloat":      float32(1.0),
+		"sampleDouble":     float64(2.0),
+		"sampleString":     "sample",
+		"sampleMap":        map[string]interface{}{"a": 1, "b": 2},
+		"sampleStringList": []string{"a", "b"},
+		"sampleList":       []interface{}{1, 2},
+		"sampleListMap":    sampleListMap,
+	}
 }
 
 func CreateStageContext() api.StageContext {
@@ -122,6 +130,26 @@ func checkField(t *testing.T, actual *api.Field, expected *api.Field) {
 				v2, ok := mapField2[k]
 				if !ok {
 					t.Fatalf("Key %s does not exist in map", k)
+				}
+				checkField(t, v1, v2)
+			}
+		case fieldtype.LIST_MAP:
+			listMapField1 := actual.Value.(*linkedhashmap.Map)
+			listMapField2 := expected.Value.(*linkedhashmap.Map)
+			if listMapField1.Size() != listMapField2.Size() {
+				t.Fatal("List Map Length does not match")
+			}
+
+			it := listMapField1.Iterator()
+			for it.HasNext() {
+				entry := it.Next()
+				key := entry.GetKey()
+				v1 := entry.GetValue().(*api.Field)
+				var v2 *api.Field
+				if v, found := listMapField2.Get(key); !found {
+					t.Fatalf("Key %s does not exist in map", key)
+				} else {
+					v2 = v.(*api.Field)
 				}
 				checkField(t, v1, v2)
 			}
@@ -269,7 +297,7 @@ func TestReadAndWriteRecord(t *testing.T) {
 	record2.GetHeader().SetAttribute("Sample Attribute", "Sample Value2")
 	expectedRecords = append(expectedRecords, record2)
 
-	record3, err := st.CreateRecord("Sample Record Id3", allTypesRecordField)
+	record3, err := st.CreateRecord("Sample Record Id3", getAllTypesRecordField())
 	if err != nil {
 		t.Fatal(err)
 	}

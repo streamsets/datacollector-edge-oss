@@ -22,8 +22,8 @@ import (
 )
 
 const (
-	LIBRARY    = "streamsets-datacollector-dev-lib"
-	STAGE_NAME = "com_streamsets_pipeline_stage_devtest_rawdata_RawDataDSource"
+	Library   = "streamsets-datacollector-dev-lib"
+	StageName = "com_streamsets_pipeline_stage_devtest_rawdata_RawDataDSource"
 )
 
 var randomOffset = "random"
@@ -35,7 +35,7 @@ type DevRawDataDSource struct {
 }
 
 func init() {
-	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(Library, StageName, func() api.Stage {
 		return &DevRawDataDSource{BaseStage: &common.BaseStage{}}
 	})
 }

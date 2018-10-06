@@ -16,8 +16,10 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
+	"github.com/streamsets/datacollector-edge/api/linkedhashmap"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/util"
 	"strconv"
@@ -55,6 +57,23 @@ func marshalField(prefix string, f *api.Field) map[string]interface{} {
 			sdcRecordMapValue[key] = marshalField(fmt.Sprintf(childPrefix+"/%s", key), childField)
 		}
 		sdcFieldJsonValue = sdcRecordMapValue
+	case fieldtype.LIST_MAP:
+		listMapValue := f.Value.(*linkedhashmap.Map)
+		sdcRecordListValue := make([]interface{}, listMapValue.Size())
+		childPrefix := prefix
+		if strings.HasSuffix(prefix, "/") {
+			childPrefix = strings.TrimRight(prefix, "/")
+		}
+		i := 0
+		it := listMapValue.Iterator()
+		for it.HasNext() {
+			entry := it.Next()
+			key := entry.GetKey()
+			childField := entry.GetValue().(*api.Field)
+			sdcRecordListValue[i] = marshalField(fmt.Sprintf(childPrefix+"/%s", cast.ToString(key)), childField)
+			i++
+		}
+		sdcFieldJsonValue = sdcRecordListValue
 	case fieldtype.BYTE_ARRAY:
 		fallthrough //Will be encoded in base64 during json serialize
 	case fieldtype.BYTE:
@@ -105,6 +124,21 @@ func unmarshalField(sdcRecordFieldJson map[string]interface{}) (*api.Field, erro
 		}
 		if err == nil {
 			f = api.CreateMapFieldWithMapOfFields(mapField)
+		}
+	case fieldtype.LIST_MAP:
+		listMapValue := value.([]interface{})
+		listMapField := linkedhashmap.New()
+		for _, elem := range listMapValue {
+			elemMap := elem.(map[string]interface{})
+			field, err := unmarshalField(elemMap)
+			if err != nil {
+				return nil, err
+			}
+			path := cast.ToString(elemMap["sqpath"])
+			listMapField.Put(util.GetLastFieldNameFromPath(path), field)
+		}
+		if err == nil {
+			f = api.CreateListMapFieldWithMapOfFields(listMapField)
 		}
 	case fieldtype.BYTE_ARRAY:
 		if stringBytes, ok := value.(string); ok {

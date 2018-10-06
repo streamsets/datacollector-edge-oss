@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
+	"github.com/streamsets/datacollector-edge/api/linkedhashmap"
 	"math/big"
 	"reflect"
 	"strconv"
@@ -37,12 +38,16 @@ func (f *Field) Clone() *Field {
 		}
 		return &Field{Type: f.Type, Value: returnMap}
 	case fieldtype.LIST_MAP:
-		mapField := f.Value.(map[string](*Field))
-		returnMap := map[string](*Field){}
-		for k, v := range mapField {
-			returnMap[k] = v.Clone()
+		mapField := f.Value.(*linkedhashmap.Map)
+		returnListMap := linkedhashmap.New()
+		it := mapField.Iterator()
+		for it.HasNext() {
+			entry := it.Next()
+			key := entry.GetKey()
+			value := entry.GetValue().(*Field)
+			returnListMap.Put(key, value.Clone())
 		}
-		return &Field{Type: f.Type, Value: returnMap}
+		return &Field{Type: f.Type, Value: returnListMap}
 	case fieldtype.LIST:
 		listField := f.Value.([](*Field))
 		returnList := make([](*Field), len(listField))
@@ -124,6 +129,8 @@ func CreateField(value interface{}) (*Field, error) {
 		return CreateListField(value.([]interface{}))
 	case map[string]interface{}:
 		return CreateMapField(value.(map[string]interface{}))
+	case *linkedhashmap.Map:
+		return CreateListMapField(value.(*linkedhashmap.Map))
 	case time.Time:
 		return CreateDateTimeField(value.(time.Time))
 	default:
@@ -235,6 +242,23 @@ func CreateMapField(mapValue map[string]interface{}) (*Field, error) {
 	return &mapField, nil
 }
 
+func CreateListMapField(listMapValue *linkedhashmap.Map) (*Field, error) {
+	listMapFieldValue := linkedhashmap.New()
+	it := listMapValue.Iterator()
+	for it.HasNext() {
+		entry := it.Next()
+		key := entry.GetKey()
+		value := entry.GetValue()
+		valField, err := CreateField(value)
+		if err != nil {
+			return nil, err
+		}
+		listMapFieldValue.Put(key, valField)
+	}
+	mapField := Field{Type: fieldtype.LIST_MAP, Value: listMapFieldValue}
+	return &mapField, nil
+}
+
 func CreateMapListField(listValue []map[string]interface{}) (*Field, error) {
 	listFieldValue := make([]*Field, 0)
 	for _, value := range listValue {
@@ -269,6 +293,10 @@ func CreateMapFieldWithMapOfFields(mapFields map[string]*Field) *Field {
 	return &Field{Type: fieldtype.MAP, Value: mapFields}
 }
 
+func CreateListMapFieldWithMapOfFields(mapFields *linkedhashmap.Map) *Field {
+	return &Field{Type: fieldtype.LIST_MAP, Value: mapFields}
+}
+
 func Create(fieldType string, value interface{}) (*Field, error) {
 	return &Field{Type: fieldType, Value: value}, nil
 }
@@ -279,6 +307,8 @@ func CreateFieldFromSDCField(value interface{}) (*Field, error) {
 		return CreateListFieldWithListOfFields(value.([]*Field)), nil
 	case map[string]*Field:
 		return CreateMapFieldWithMapOfFields(value.(map[string]*Field)), nil
+	case *linkedhashmap.Map:
+		return CreateListMapFieldWithMapOfFields(value.(*linkedhashmap.Map)), nil
 	case *Field:
 		f := value.(*Field)
 		return &Field{Type: f.Type, Value: f.Value}, nil
