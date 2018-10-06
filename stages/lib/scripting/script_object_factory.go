@@ -15,8 +15,10 @@ package scripting
 
 import (
 	"github.com/robertkrimen/otto"
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
+	"github.com/streamsets/datacollector-edge/api/linkedhashmap"
 	"math/big"
 	"strconv"
 	"time"
@@ -60,8 +62,6 @@ func (s *ScriptObjectFactory) fieldToScript(field *api.Field) (interface{}, erro
 		if scriptObject != nil {
 			switch field.Type {
 			case fieldtype.MAP:
-				fallthrough
-			case fieldtype.LIST_MAP:
 				fieldMap := scriptObject.(map[string]*api.Field)
 				scriptMap := createMap()
 				for key, field := range fieldMap {
@@ -72,7 +72,21 @@ func (s *ScriptObjectFactory) fieldToScript(field *api.Field) (interface{}, erro
 					putInMap(scriptMap, key, v)
 				}
 				scriptObject = scriptMap
-
+			case fieldtype.LIST_MAP:
+				fieldListMap := scriptObject.(*linkedhashmap.Map)
+				scriptMap := createMap()
+				it := fieldListMap.Iterator()
+				for it.HasNext() {
+					entry := it.Next()
+					key := entry.GetKey()
+					field := entry.GetValue().(*api.Field)
+					v, err := s.fieldToScript(field)
+					if err != nil {
+						return nil, err
+					}
+					scriptMap[cast.ToString(key)] = v
+				}
+				scriptObject = scriptMap
 			case fieldtype.LIST:
 				fieldArray := scriptObject.([]*api.Field)
 				scripArrayElements := make([]interface{}, len(fieldArray))

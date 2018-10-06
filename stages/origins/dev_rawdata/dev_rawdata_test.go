@@ -24,8 +24,8 @@ import (
 )
 
 const (
-	CONF_RAW_DATA    = "rawData"
-	CONF_DATA_FORMAT = "dataFormat"
+	ConfRawData    = "rawData"
+	ConfDataFormat = "dataFormat"
 )
 
 func getStageContext(
@@ -34,11 +34,11 @@ func getStageContext(
 	parameters map[string]interface{},
 ) *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
-	stageConfig.Library = LIBRARY
-	stageConfig.StageName = STAGE_NAME
+	stageConfig.Library = Library
+	stageConfig.StageName = StageName
 	stageConfig.Configuration = []common.Config{
 		{
-			Name:  CONF_RAW_DATA,
+			Name:  ConfRawData,
 			Value: rawData,
 		},
 	}
@@ -47,7 +47,7 @@ func getStageContext(
 	serviceConfig.Service = dataformats.DataFormatParserServiceName
 	serviceConfig.Configuration = []common.Config{
 		{
-			Name:  CONF_DATA_FORMAT,
+			Name:  ConfDataFormat,
 			Value: dataFormat,
 		},
 	}

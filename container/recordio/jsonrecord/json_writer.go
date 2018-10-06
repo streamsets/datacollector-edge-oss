@@ -14,9 +14,11 @@ package jsonrecord
 
 import (
 	"encoding/json"
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
+	"github.com/streamsets/datacollector-edge/api/linkedhashmap"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"github.com/streamsets/datacollector-edge/container/util"
 	"io"
@@ -108,6 +110,20 @@ func writeFieldToJsonObject(field *api.Field) (interface{}, error) {
 		fieldValue := field.Value.(map[string]*api.Field)
 		for k, v := range fieldValue {
 			jsonObject[k], err = writeFieldToJsonObject(v)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return jsonObject, err
+	case fieldtype.LIST_MAP:
+		jsonObject := make(map[string]interface{})
+		listMapValue := field.Value.(*linkedhashmap.Map)
+		it := listMapValue.Iterator()
+		for it.HasNext() {
+			entry := it.Next()
+			key := entry.GetKey()
+			value := entry.GetValue().(*api.Field)
+			jsonObject[cast.ToString(key)], err = writeFieldToJsonObject(value)
 			if err != nil {
 				return nil, err
 			}

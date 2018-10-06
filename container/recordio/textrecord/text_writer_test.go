@@ -14,6 +14,7 @@ package textrecord
 
 import (
 	"bytes"
+	"github.com/streamsets/datacollector-edge/api/linkedhashmap"
 	"testing"
 )
 
@@ -21,7 +22,9 @@ func TestWriteTextRecord(t *testing.T) {
 	stageContext := CreateStageContext()
 	record1, err := stageContext.CreateRecord("Id1", map[string]interface{}{"text": "log line 1"})
 	record2, err := stageContext.CreateRecord("Id2", map[string]interface{}{"text": "log line 2"})
-	record3, err := stageContext.CreateRecord("Id3", map[string]interface{}{"text": "log line 3"})
+	listMapValue := linkedhashmap.New()
+	listMapValue.Put("text", "log line 3")
+	record3, err := stageContext.CreateRecord("Id3", listMapValue)
 
 	bufferWriter := bytes.NewBuffer([]byte{})
 	recordWriterFactory := &TextWriterFactoryImpl{}

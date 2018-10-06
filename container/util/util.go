@@ -13,6 +13,7 @@
 package util
 
 import (
+	"strings"
 	"time"
 	"unicode"
 )
@@ -82,4 +83,9 @@ func CastToFloat64(value interface{}) interface{} {
 		}
 	}
 	return value
+}
+
+func GetLastFieldNameFromPath(path string) string {
+	pathArr := strings.Split(path, "/")
+	return pathArr[len(pathArr)-1]
 }

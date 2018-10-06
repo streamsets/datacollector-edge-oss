@@ -14,6 +14,7 @@ package expression
 
 import (
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/linkedhashmap"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
@@ -90,7 +91,9 @@ func TestExpressionProcessor_Success(t *testing.T) {
 	defer stageInstance.Destroy()
 
 	records := make([]api.Record, 1)
-	records[0], _ = stageContext.CreateRecord("abc", map[string]interface{}{"a": float64(2.55), "b": float64(3.55), "c": "random"})
+	records[0], _ = stageContext.CreateRecord(
+		"abc", map[string]interface{}{"a": float64(2.55), "b": float64(3.55), "c": "random"},
+	)
 	batch := runner.NewBatchImpl("random", records, nil)
 	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
 
@@ -285,6 +288,66 @@ func TestExpressionProcessor_NumberComparison(t *testing.T) {
 
 	if dValue.Value.(bool) != false {
 		t.Errorf("Error in expression processor when evaluating /isValueGreater, Expected : false. Actual:%d", dValue.Value)
+	}
+
+	if errSink.GetTotalErrorRecords() != 0 {
+		t.Fatal("There should be no error records in error sink")
+	}
+}
+
+func TestExpressionProcessor_ListMap(t *testing.T) {
+	stageContext, errSink := getStageContext()
+
+	fieldValueConfigs := []interface{}{}
+	fieldValueConfigs = append(fieldValueConfigs, map[string]interface{}{
+		FIELD_TO_SET: "/",
+		EXPRESSION:   "${record:value('/')}",
+	})
+	stageContext.StageConfig.Configuration[0].Value = fieldValueConfigs
+
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	stageInstance := stageBean.Stage.(*ExpressionProcessor)
+	if stageInstance == nil {
+		t.Fatal("Failed to create stage instance")
+	}
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
+	}
+	defer stageInstance.Destroy()
+
+	records := make([]api.Record, 1)
+	listMapValue := linkedhashmap.New()
+	listMapValue.Put("a", float64(2.55))
+	listMapValue.Put("b", float64(3.55))
+	listMapValue.Put("c", "random")
+
+	records[0], _ = stageContext.CreateRecord("abc", listMapValue)
+	batch := runner.NewBatchImpl("random", records, nil)
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+
+	err = stageInstance.Process(batch, batchMaker)
+
+	if err != nil {
+		t.Fatal("Error when processing batch " + err.Error())
+	}
+
+	records = batchMaker.GetStageOutput()
+
+	record := records[0]
+
+	dValue, err := record.Get("/a")
+
+	if err != nil {
+		t.Error("Error when getting value of /a " + err.Error())
+	}
+
+	if dValue.Value.(float64) != float64(2.55) {
+		t.Errorf("Error in expression processor when evaluating /d, Expected : 6. Actual:%d", dValue.Value)
 	}
 
 	if errSink.GetTotalErrorRecords() != 0 {

@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/fieldtype"
+	"github.com/streamsets/datacollector-edge/api/linkedhashmap"
 	"strings"
 )
 
@@ -107,7 +108,7 @@ func (r *RecordImpl) getFromPathElements(pathElements []PathElement) []*api.Fiel
 				fields = append(fields, current)
 				next = current
 			case MAP:
-				if current.Type == fieldtype.MAP || current.Type == fieldtype.LIST_MAP {
+				if current.Type == fieldtype.MAP {
 					mapValue := current.Value.(map[string](*api.Field))
 					if mapValue != nil {
 						field, ok := mapValue[pathElement.Name]
@@ -116,6 +117,19 @@ func (r *RecordImpl) getFromPathElements(pathElements []PathElement) []*api.Fiel
 						} else if len(field.Type) > 0 {
 							fields = append(fields, field)
 							next = field
+						}
+					}
+				} else if current.Type == fieldtype.LIST_MAP {
+					if current.Value != nil {
+						listMapValue := current.Value.(*linkedhashmap.Map)
+						if f, ok := listMapValue.Get(pathElement.Name); !ok {
+							return fields
+						} else {
+							field := f.(*api.Field)
+							if len(field.Type) > 0 {
+								fields = append(fields, field)
+								next = field
+							}
 						}
 					}
 				}

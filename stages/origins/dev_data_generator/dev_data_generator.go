@@ -15,6 +15,7 @@ package dev_random
 import (
 	"github.com/icrowley/fake"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/api/linkedhashmap"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
@@ -27,6 +28,8 @@ import (
 const (
 	Library                     = "streamsets-datacollector-dev-lib"
 	StageName                   = "com_streamsets_pipeline_stage_devtest_RandomDataGeneratorSource"
+	MapRootType                 = "MAP"
+	ListMapRootType             = "LIST_MAP"
 	STRING                      = "STRING"
 	INTEGER                     = "INTEGER"
 	LONG                        = "LONG"
@@ -90,6 +93,7 @@ type Origin struct {
 	DataGenConfigs []DataGeneratorConfig `ConfigDef:"type=MODEL" ListBeanModel:"name=dataGenConfigs"`
 	Delay          float64               `ConfigDef:"type=NUMBER,required=true"`
 	EventName      string                `ConfigDef:"type=STRING,required=true"`
+	RootFieldType  string                `ConfigDef:"type=STRING,required=true"`
 }
 
 type DataGeneratorConfig struct {
@@ -121,7 +125,12 @@ func (d *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 	delta := max - min
 
 	for i := 0; i < maxBatchSize; i++ {
-		rootField, _ := d.createField(r, delta, min)
+		var rootField *api.Field
+		if d.RootFieldType == MapRootType {
+			rootField, _ = d.createMapTypeField(r, delta, min)
+		} else {
+			rootField, _ = d.createListMapTypeField(r, delta, min)
+		}
 		recordId := common.CreateRecordId("dev-data", i)
 		if record, err := d.GetStageContext().CreateRecord(recordId, map[string]interface{}{}); err == nil {
 			record.Set(rootField)
@@ -131,7 +140,12 @@ func (d *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 		}
 	}
 
-	rootEventField, _ := d.createField(r, delta, min)
+	var rootEventField *api.Field
+	if d.RootFieldType == MapRootType {
+		rootEventField, _ = d.createMapTypeField(r, delta, min)
+	} else {
+		rootEventField, _ = d.createListMapTypeField(r, delta, min)
+	}
 	recordId := common.CreateRecordId("dev-data-event", 1)
 	if eventRecord, err := d.GetStageContext().CreateEventRecord(
 		recordId,
@@ -148,102 +162,114 @@ func (d *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 	return &randomOffset, nil
 }
 
-func (d *Origin) createField(r *rand.Rand, delta int64, min int64) (*api.Field, error) {
+func (d *Origin) createMapTypeField(r *rand.Rand, delta int64, min int64) (*api.Field, error) {
 	var rootField = make(map[string]*api.Field)
 	for _, config := range d.DataGenConfigs {
-		switch config.Type {
-		case BOOLEAN:
-			rootField[config.Field], _ = api.CreateBoolField(r.Int63()&(1<<62) == 0)
-		case DATE:
-			fallthrough
-		case TIME:
-			fallthrough
-		case DATETIME:
-			sec := r.Int63n(delta) + min
-			rootField[config.Field], _ = api.CreateDateTimeField((time.Unix(sec, 0)))
-		case DOUBLE:
-			rootField[config.Field], _ = api.CreateDoubleField(r.Float64())
-		case FLOAT:
-			rootField[config.Field], _ = api.CreateFloatField(r.Float32())
-		case INTEGER:
-			rootField[config.Field], _ = api.CreateIntegerField(r.Int())
-		case LONG:
-			rootField[config.Field], _ = api.CreateLongField(r.Int63())
-		case STRING:
-			rootField[config.Field], _ = api.CreateStringField(fake.Sentence())
-		case DECIMAL:
-			i := new(big.Int)
-			i.SetString("64443234234123423", 10)
-			rootField[config.Field], _ = api.CreateBigIntField(*i)
-		case ADDRESS_FULL_ADDRESS:
-			rootField[config.Field], _ = api.CreateStringField(fake.StreetAddress())
-		case ADDRESS_BUILDING_NUMBER:
-			rootField[config.Field], _ = api.CreateStringField(fake.StreetAddress())
-		case ADDRESS_STREET_ADDRESS:
-			rootField[config.Field], _ = api.CreateStringField(fake.StreetAddress())
-		case ADDRESS_CITY:
-			rootField[config.Field], _ = api.CreateStringField(fake.City())
-		case ADDRESS_STATE:
-			rootField[config.Field], _ = api.CreateStringField(fake.State())
-		case ADDRESS_COUNTRY:
-			rootField[config.Field], _ = api.CreateStringField(fake.Country())
-		case ADDRESS_LATITUDE:
-			rootField[config.Field], _ = api.CreateFloatField(fake.Latitude())
-		case ADDRESS_LONGITUDE:
-			rootField[config.Field], _ = api.CreateFloatField(fake.Longitude())
-		case APP_NAME:
-			rootField[config.Field], _ = api.CreateStringField(fake.ProductName())
-		case APP_AUTHOR:
-			rootField[config.Field], _ = api.CreateStringField(fake.FullName())
-		case APP_VERSION:
-			rootField[config.Field], _ = api.CreateIntegerField(fake.MonthNum())
-		case BUSINESS_CREDIT_CARD_NUMBER:
-			rootField[config.Field], _ = api.CreateStringField(fake.CreditCardNum(fake.CreditCardType()))
-		case BUSINESS_CREDIT_CARD_TYPE:
-			rootField[config.Field], _ = api.CreateStringField(fake.CreditCardType())
-		case COLOR:
-			rootField[config.Field], _ = api.CreateStringField(fake.Color())
-		case COMPANY_NAME:
-			rootField[config.Field], _ = api.CreateStringField(fake.Company())
-		case COMPANY_INDUSTRY:
-			rootField[config.Field], _ = api.CreateStringField(fake.Industry())
-		case COMPANY_BUZZWORD:
-			rootField[config.Field], _ = api.CreateStringField(fake.ProductName())
-		case COMPANY_URL:
-			rootField[config.Field], _ = api.CreateStringField(fake.DomainName())
-		case DEMOGRAPHIC:
-			rootField[config.Field], _ = api.CreateStringField(fake.Characters())
-		case EMAIL:
-			rootField[config.Field], _ = api.CreateStringField(fake.EmailAddress())
-		case FINANCE:
-			rootField[config.Field], _ = api.CreateStringField(fake.Currency())
-		case INTERNET:
-			rootField[config.Field], _ = api.CreateStringField(fake.DomainName())
-		case LOREM:
-			rootField[config.Field], _ = api.CreateStringField(fake.Sentence())
-		case NAME:
-			rootField[config.Field], _ = api.CreateStringField(fake.FullName())
-		case PHONENUMBER:
-			rootField[config.Field], _ = api.CreateStringField(fake.Phone())
-		case RACE:
-			raceIndex := randIntRange(r, 0, len(race)-1)
-			rootField[config.Field], _ = api.CreateStringField(race[raceIndex])
-		case SEX:
-			rootField[config.Field], _ = api.CreateStringField(fake.Gender())
-		case SHAKESPEARE:
-			rootField[config.Field], _ = api.CreateStringField(fake.Sentences())
-		case SSN:
-			rootField[config.Field], _ = api.CreateStringField(
-				strconv.Itoa(randIntRange(r, 100000000, 999999999)),
-			)
-		case STOCK:
-			rootField[config.Field], _ = api.CreateStringField(fake.CurrencyCode())
-		default:
-			rootField[config.Field], _ = api.CreateStringField(NotSupported)
-		}
+		rootField[config.Field], _ = d.createField(config, r, delta, min)
 	}
-
 	return api.CreateMapFieldWithMapOfFields(rootField), nil
+}
+
+func (d *Origin) createListMapTypeField(r *rand.Rand, delta int64, min int64) (*api.Field, error) {
+	var listMapField = linkedhashmap.New()
+	for _, config := range d.DataGenConfigs {
+		field, _ := d.createField(config, r, delta, min)
+		listMapField.Put(config.Field, field)
+	}
+	return api.CreateListMapFieldWithMapOfFields(listMapField), nil
+}
+
+func (d *Origin) createField(config DataGeneratorConfig, r *rand.Rand, delta int64, min int64) (*api.Field, error) {
+	switch config.Type {
+	case BOOLEAN:
+		return api.CreateBoolField(r.Int63()&(1<<62) == 0)
+	case DATE:
+		fallthrough
+	case TIME:
+		fallthrough
+	case DATETIME:
+		sec := r.Int63n(delta) + min
+		return api.CreateDateTimeField((time.Unix(sec, 0)))
+	case DOUBLE:
+		return api.CreateDoubleField(r.Float64())
+	case FLOAT:
+		return api.CreateFloatField(r.Float32())
+	case INTEGER:
+		return api.CreateIntegerField(r.Int())
+	case LONG:
+		return api.CreateLongField(r.Int63())
+	case STRING:
+		return api.CreateStringField(fake.Sentence())
+	case DECIMAL:
+		i := new(big.Int)
+		i.SetString("64443234234123423", 10)
+		return api.CreateBigIntField(*i)
+	case ADDRESS_FULL_ADDRESS:
+		return api.CreateStringField(fake.StreetAddress())
+	case ADDRESS_BUILDING_NUMBER:
+		return api.CreateStringField(fake.StreetAddress())
+	case ADDRESS_STREET_ADDRESS:
+		return api.CreateStringField(fake.StreetAddress())
+	case ADDRESS_CITY:
+		return api.CreateStringField(fake.City())
+	case ADDRESS_STATE:
+		return api.CreateStringField(fake.State())
+	case ADDRESS_COUNTRY:
+		return api.CreateStringField(fake.Country())
+	case ADDRESS_LATITUDE:
+		return api.CreateFloatField(fake.Latitude())
+	case ADDRESS_LONGITUDE:
+		return api.CreateFloatField(fake.Longitude())
+	case APP_NAME:
+		return api.CreateStringField(fake.ProductName())
+	case APP_AUTHOR:
+		return api.CreateStringField(fake.FullName())
+	case APP_VERSION:
+		return api.CreateIntegerField(fake.MonthNum())
+	case BUSINESS_CREDIT_CARD_NUMBER:
+		return api.CreateStringField(fake.CreditCardNum(fake.CreditCardType()))
+	case BUSINESS_CREDIT_CARD_TYPE:
+		return api.CreateStringField(fake.CreditCardType())
+	case COLOR:
+		return api.CreateStringField(fake.Color())
+	case COMPANY_NAME:
+		return api.CreateStringField(fake.Company())
+	case COMPANY_INDUSTRY:
+		return api.CreateStringField(fake.Industry())
+	case COMPANY_BUZZWORD:
+		return api.CreateStringField(fake.ProductName())
+	case COMPANY_URL:
+		return api.CreateStringField(fake.DomainName())
+	case DEMOGRAPHIC:
+		return api.CreateStringField(fake.Characters())
+	case EMAIL:
+		return api.CreateStringField(fake.EmailAddress())
+	case FINANCE:
+		return api.CreateStringField(fake.Currency())
+	case INTERNET:
+		return api.CreateStringField(fake.DomainName())
+	case LOREM:
+		return api.CreateStringField(fake.Sentence())
+	case NAME:
+		return api.CreateStringField(fake.FullName())
+	case PHONENUMBER:
+		return api.CreateStringField(fake.Phone())
+	case RACE:
+		raceIndex := randIntRange(r, 0, len(race)-1)
+		return api.CreateStringField(race[raceIndex])
+	case SEX:
+		return api.CreateStringField(fake.Gender())
+	case SHAKESPEARE:
+		return api.CreateStringField(fake.Sentences())
+	case SSN:
+		return api.CreateStringField(
+			strconv.Itoa(randIntRange(r, 100000000, 999999999)),
+		)
+	case STOCK:
+		return api.CreateStringField(fake.CurrencyCode())
+	default:
+		return api.CreateStringField(NotSupported)
+	}
 }
 
 func randIntRange(r *rand.Rand, min, max int) int {
