@@ -17,6 +17,8 @@ import (
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/http"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/kafka"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/mqtt"
+	_ "github.com/streamsets/datacollector-edge/stages/destinations/toerror"
+	_ "github.com/streamsets/datacollector-edge/stages/destinations/toevent"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/trash"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/websocket"
 )
