@@ -15,9 +15,9 @@
 package wineventlog
 
 import (
+	log "github.com/sirupsen/logrus"
 	"syscall"
 	"unsafe"
-	log "github.com/sirupsen/logrus"
 )
 
 type PushWinEventSubscriber struct {
@@ -31,7 +31,6 @@ func (pwes *PushWinEventSubscriber) Subscribe() error {
 		eventHandle EventHandle,
 	) syscall.Errno {
 		var returnStatus syscall.Errno
-		log.Debug("Subscription callback called")
 		switch action {
 		case EvtSubscribeActionError:
 			log.Errorf("Error Id %d", eventHandle)
@@ -52,8 +51,3 @@ func (pwes *PushWinEventSubscriber) Subscribe() error {
 	}
 	return pwes.BaseWinEventSubscriber.Subscribe()
 }
-
-func (pwes *PushWinEventSubscriber) Read() ([]string, error) {
-	return pwes.BaseWinEventSubscriber.Read()
-}
-

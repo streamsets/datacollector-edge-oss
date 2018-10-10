@@ -36,8 +36,8 @@ import (
 const (
 	//https://msdn.microsoft.com/en-us/library/windows/desktop/aa363674(v=vs.85).aspx
 	// -> Max buffer size allowed 0x7ffff (which is equal to 524287)
-	BufferSize uint32 = 524287
-	EventSize         = uint32(unsafe.Sizeof(w32.EVENTLOGRECORD{}))
+	BufferSizeMax = uint32(524287)
+	EventSize     = uint32(unsafe.Sizeof(w32.EVENTLOGRECORD{}))
 )
 
 //Windows Event Log Reader - https://docs.microsoft.com/en-us/windows/desktop/wes/windows-event-log
@@ -72,6 +72,7 @@ type EventLoggingReader struct {
 	emptyLog    bool
 	knownOffset bool
 	handle      w32.HANDLE
+	buffer      []byte
 }
 
 type SIDInfo struct {
@@ -94,10 +95,23 @@ func NewEventLoggingReader(
 	baseStage *common.BaseStage,
 	logName string,
 	mode wincommon.EventLogReaderMode,
+	bufferSize int,
+	maxBatchSize int,
 	lastSourceOffset string,
 ) (*EventLoggingReader, error) {
 	offset := uint32(0)
 	knownOffset := false
+
+	if uint32(bufferSize) > BufferSizeMax {
+		err := errors.New(fmt.Sprintf("Invalid Buffer Size : %d should be < %d", bufferSize, BufferSizeMax))
+		baseStage.GetStageContext().ReportError(err)
+		log.WithError(err).WithField("bufferSize", bufferSize).Error("Wrong Buffer Size")
+		return nil, err
+	}
+
+	if bufferSize == -1 {
+		bufferSize = int(BufferSizeMax)
+	}
 
 	if lastSourceOffset != "" {
 		off, err := strconv.ParseUint(lastSourceOffset, 10, 32)
@@ -111,11 +125,16 @@ func NewEventLoggingReader(
 	}
 
 	return &EventLoggingReader{
-		BaseStage:          baseStage,
-		BaseEventLogReader: &wincommon.BaseEventLogReader{Log: logName, Mode: mode},
-		offset:             offset,
-		emptyLog:           false,
-		knownOffset:        knownOffset,
+		BaseStage: baseStage,
+		BaseEventLogReader: &wincommon.BaseEventLogReader{
+			Log:          logName,
+			Mode:         mode,
+			MaxBatchSize: maxBatchSize,
+		},
+		offset:      offset,
+		emptyLog:    false,
+		knownOffset: knownOffset,
+		buffer:      make([]byte, bufferSize),
 	}, nil
 }
 
@@ -130,13 +149,13 @@ func (elreader *EventLoggingReader) Open() error {
 	}
 }
 
-func (elreader *EventLoggingReader) Read(maxRecords int) ([]api.Record, error) {
+func (elreader *EventLoggingReader) Read() ([]api.Record, error) {
 	records := make([]api.Record, 0)
 	var flags uint32
 	log.WithFields(log.Fields{
 		"emptyLog":   elreader.Log,
 		"offset":     elreader.offset,
-		"maxRecords": maxRecords,
+		"maxRecords": elreader.MaxBatchSize,
 	}).Debug("Attempting to read")
 	if elreader.emptyLog {
 		//special case where the event log is empty at the time of opening the reader
@@ -144,7 +163,7 @@ func (elreader *EventLoggingReader) Read(maxRecords int) ([]api.Record, error) {
 	} else {
 		flags = w32.EVENTLOG_FORWARDS_READ | w32.EVENTLOG_SEEK_READ
 	}
-	if events, err := elreader.read(flags, uint32(elreader.offset), maxRecords); err == nil {
+	if events, err := elreader.read(flags, uint32(elreader.offset), elreader.MaxBatchSize); err == nil {
 		if len(events) > 0 {
 			elreader.offset = events[len(events)-1].RecordNumber + 1
 			log.WithFields(log.Fields{
@@ -311,9 +330,9 @@ func (elreader *EventLoggingReader) createRecord(event EventLoggingRecord) (api.
 // we don't return EOF, we just return an empty slice
 func (elreader *EventLoggingReader) read(flags uint32, offset uint32, maxRecords int) ([]EventLoggingRecord, error) {
 	events := make([]EventLoggingRecord, 0, maxRecords)
-	buffer := make([]byte, BufferSize)
+	buffer := elreader.buffer
 	var read, needs uint32
-	if w32.ReadEventLog(elreader.handle, flags, offset, buffer, BufferSize, &read, &needs) {
+	if w32.ReadEventLog(elreader.handle, flags, offset, buffer, uint32(len(buffer)), &read, &needs) {
 		if read == 0 {
 			return events, nil
 		}

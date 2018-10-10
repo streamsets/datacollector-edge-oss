@@ -27,8 +27,8 @@ import (
 type SubscriptionMode string
 
 const (
-	PushSubscription = SubscriptionMode("PUSH")
-	PullSubscription = SubscriptionMode("PULL")
+	PushSubscription  = SubscriptionMode("PUSH")
+	PullSubscription  = SubscriptionMode("PULL")
 	BufferSizeDefault = uint32(8 * 1024)
 )
 
@@ -39,6 +39,11 @@ type WinEventSubscriber interface {
 	/** Read a singl event
 	 */
 	Read() ([]string, error)
+
+	/** Get BookmarkXML
+	 */
+	GetBookmark() string
+
 	/** Close Subscription
 	 */
 	Close()
@@ -56,9 +61,8 @@ type BaseWinEventSubscriber struct {
 	bufferSize           int
 	bufferForRender      []byte
 	//TODO : Batch wait time or poll time which can be exposed
-	maxWaitTimeMillis	 int
+	maxWaitTimeMillis int
 }
-
 
 func (bwes *BaseWinEventSubscriber) renderEventXML(eventHandle EventHandle) (string, error) {
 	dwBufferUsed := uint32(0)
@@ -66,13 +70,13 @@ func (bwes *BaseWinEventSubscriber) renderEventXML(eventHandle EventHandle) (str
 	var eventString string
 	err := EvtRender(EventHandle(0), eventHandle, EvtRenderEventXml, uint32(len(bwes.bufferForRender)),
 		unsafe.Pointer(&bwes.bufferForRender[0]), &dwBufferUsed, &dwPropertyCount)
-	if err != nil && err == ErrorInsufficientBuffer && bwes.bufferSize == -1{
+	if err != nil && err == ErrorInsufficientBuffer && bwes.bufferSize == -1 {
 		log.Infof(
 			"Insufficient Buffer with length: %d. Retrying with Buffer of size: %d",
 			len(bwes.bufferForRender),
 			dwBufferUsed,
 		)
-		bwes.bufferForRender = make([]byte, dwBufferUsed + 1) //Creating a new buffer of size determined by
+		bwes.bufferForRender = make([]byte, dwBufferUsed+1) //Creating a new buffer of size determined by
 		err = EvtRender(EventHandle(0), eventHandle, EvtRenderEventXml, uint32(len(bwes.bufferForRender)),
 			unsafe.Pointer(&bwes.bufferForRender[0]), &dwBufferUsed, &dwPropertyCount)
 	}
@@ -101,7 +105,6 @@ func (bwes *BaseWinEventSubscriber) Subscribe() error {
 		//If no offset use Start from oldest record if ReadAll or else use Only Future Events (i.e Read New)
 		flags = EvtSubscribeStartAtOldestRecord
 	}
-	log.Infof("Subscription Callback Present : %d", bwes.subscriptionCallback != nil)
 	if bwes.subscriptionHandle, err = EvtSubscribe(
 		bwes.signalEventHandle,
 		"",
@@ -129,16 +132,23 @@ func (bwes *BaseWinEventSubscriber) Read() ([]string, error) {
 		var vals []interface{}
 		vals, err = bwes.eventsQueue.Poll(
 			int64(bwes.maxNoOfEvents),
-			time.Duration(bwes.maxWaitTimeMillis) * time.Millisecond)
-		if err == queue.ErrTimeout || err == nil {
+			time.Duration(bwes.maxWaitTimeMillis)*time.Millisecond)
+		if err == nil || err == queue.ErrTimeout {
 			for _, val := range vals {
-				eventStrings = append(eventStrings, val.(string))
+				eventString := val.(string)
+				eventStrings = append(eventStrings, eventString)
 			}
+		} else {
+			log.WithError(err).Error("Error happened when polling from queue")
 		}
 	} else {
 		log.Infof("Windows Event Log Queue is empty")
 	}
 	return eventStrings, err
+}
+
+func (bwes *BaseWinEventSubscriber) GetBookmark() string {
+	return bwes.bookMark
 }
 
 func (bwes *BaseWinEventSubscriber) Close() {
@@ -159,8 +169,8 @@ func NewWinEventSubscriber(
 	maxNumberOfEvents uint32,
 	bookMark string,
 	eventReaderMode common.EventLogReaderMode,
-	bufferSize  int,
-	maxWaitTime    time.Duration,
+	bufferSize int,
+	maxWaitTime time.Duration,
 ) WinEventSubscriber {
 	bufferSizeValue := int(BufferSizeDefault)
 	if bufferSize != -1 {
@@ -172,17 +182,18 @@ func NewWinEventSubscriber(
 		eventsQueue:     queue.New(int64(maxNumberOfEvents)),
 		bookMark:        bookMark,
 		eventReaderMode: eventReaderMode,
-		bufferSize:		 bufferSize,
+		bufferSize:      bufferSize,
 		//TODO: Expose Buffer Size
 		bufferForRender: make([]byte, bufferSizeValue),
 		//TODO: Expose Wait Time Config
 		maxWaitTimeMillis: int(time.Duration(maxWaitTime / time.Microsecond)),
 	}
 
+	log.Infof("Wait time millis %d", baseEventSubscriber.maxWaitTimeMillis)
+
 	if subscriptionMode == PushSubscription {
 		return &PushWinEventSubscriber{
 			BaseWinEventSubscriber: baseEventSubscriber,
-			//eventHandlesChan:    make(chan EventHandle, maxNumberOfEvents),
 		}
 	} else {
 		return &PullWinEventSubscriber{
@@ -190,4 +201,3 @@ func NewWinEventSubscriber(
 		}
 	}
 }
-

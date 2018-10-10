@@ -20,14 +20,15 @@ import (
 
 type EventLogReader interface {
 	Open() error
-	Read(maxRecords int) ([]api.Record, error)
+	Read() ([]api.Record, error)
 	GetCurrentOffset() string
 	Close() error
 }
 
 type BaseEventLogReader struct {
-	Log  string
-	Mode EventLogReaderMode
+	Log          string
+	Mode         EventLogReaderMode
+	MaxBatchSize int
 }
 
 type EventLogReaderMode string
@@ -39,3 +40,15 @@ const (
 	ReaderAPITypeEventLogging    = EventLogReaderAPIType("EVENT_LOGGING")
 	ReaderAPITypeWindowsEventLog = EventLogReaderAPIType("WINDOWS_EVENT_LOG")
 )
+
+type CommonConf struct {
+	LogName       string  `ConfigDef:"type=STRING,required=true"`
+	ReadMode      string  `ConfigDef:"type=STRING,required=true"`
+	CustomLogName string  `ConfigDef:"type=STRING,required=true"`
+	BufferSize    float64 `ConfigDef:"type=NUMBER,required=true"`
+}
+
+type WinEventLogConf struct {
+	SubscriptionMode string  `ConfigDef:"type=STRING,required=true"`
+	MaxWaitTimeSecs  float64 `ConfigDef:"type=NUMBER,required=true"`
+}

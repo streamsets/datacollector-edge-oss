@@ -25,15 +25,15 @@ type PullWinEventSubscriber struct {
 }
 
 func (pwes *PullWinEventSubscriber) fetchEvents() error {
-	fetchedEventHandles := make([]EventHandle, int64(pwes.maxNoOfEvents) - pwes.eventsQueue.Len())
+	fetchedEventHandles := make([]EventHandle, int64(pwes.maxNoOfEvents)-pwes.eventsQueue.Len())
 	returnedHandles := uint32(0)
 	err := EvtNext(pwes.subscriptionHandle, uint32(len(fetchedEventHandles)), fetchedEventHandles, &returnedHandles)
-	log.Infof("Queried EvtNext with %d handles returned %d handles", len(fetchedEventHandles), returnedHandles)
+	log.Debugf("Queried EvtNext with %d handles returned %d handles", len(fetchedEventHandles), returnedHandles)
 	if err == nil {
 		for _, fetchedEventHandle := range fetchedEventHandles[:returnedHandles] {
 			eventString, err := pwes.renderEventXML(fetchedEventHandle)
 			if err != nil {
-				log.WithError(err).Errorf("Error Rendering XMl for event handle %d", fetchedEventHandle)
+				log.WithError(err).Errorf("Error Rendering XML for event handle %d", fetchedEventHandle)
 			} else {
 				pwes.eventsQueue.Put(eventString)
 			}
@@ -71,7 +71,7 @@ func (pwes *PullWinEventSubscriber) pollForEventHandles() error {
 }
 
 func (pwes *PullWinEventSubscriber) Subscribe() error {
-	n,_ := syscall.UTF16PtrFromString("ab123")
+	n, _ := syscall.UTF16PtrFromString("ab123")
 	var err error
 	if pwes.signalEventHandle, err = windows.CreateEvent(
 		nil,
@@ -107,6 +107,3 @@ func (pwes *PullWinEventSubscriber) Read() ([]string, error) {
 	}
 	return pwes.BaseWinEventSubscriber.Read()
 }
-
-
-

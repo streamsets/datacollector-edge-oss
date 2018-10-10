@@ -47,10 +47,10 @@ const (
 
 type WindowsEventLogSource struct {
 	*common.BaseStage
-	LogName               string `ConfigDef:"type=STRING,required=true"`
-	ReadMode              string `ConfigDef:"type=STRING,required=true"`
-	ReaderAPIType         string `ConfigDef:"type=STRING,required=true"`
-	CustomLogName         string `ConfigDef:"type=STRING,required=true"`
+	ReaderAPIType         string                    `ConfigDef:"type=STRING,required=true"`
+	CommonConf            wincommon.CommonConf      `ConfigDefBean:"name=commonConf"`
+	WinEventLogConf       wincommon.WinEventLogConf `ConfigDefBean:"name=winEventLogConf"`
+	bufferSize            int
 	resolvedLogName       string
 	eventLogReaderMode    wincommon.EventLogReaderMode
 	eventLogReaderAPIType wincommon.EventLogReaderAPIType
@@ -79,17 +79,20 @@ func (wel *WindowsEventLogSource) Init(stageContext api.StageContext) []validati
 		return issues
 	}
 
-	if !(wel.LogName == System || wel.LogName == Application || wel.LogName == Security || wel.LogName == Custom) {
-		issues = append(issues, stageContext.CreateConfigIssue("Unsupported Log Name :"+wel.LogName))
+	if !(wel.CommonConf.LogName == System || wel.CommonConf.LogName == Application ||
+		wel.CommonConf.LogName == Security || wel.CommonConf.LogName == Custom) {
+		issues = append(issues, stageContext.CreateConfigIssue("Unsupported Log Name :"+wel.CommonConf.LogName))
 		return issues
 	}
 
-	wel.resolvedLogName = wel.LogName
-	if wel.LogName == Custom {
-		wel.resolvedLogName = wel.CustomLogName
+	wel.bufferSize = int(wel.CommonConf.BufferSize)
+
+	wel.resolvedLogName = wel.CommonConf.LogName
+	if wel.CommonConf.LogName == Custom {
+		wel.resolvedLogName = wel.CommonConf.CustomLogName
 	}
 
-	wel.eventLogReaderMode = wincommon.EventLogReaderMode(wel.ReadMode)
+	wel.eventLogReaderMode = wincommon.EventLogReaderMode(wel.CommonConf.ReadMode)
 	wel.eventLogReaderAPIType = wincommon.EventLogReaderAPIType(wel.ReaderAPIType)
 	return issues
 }
@@ -99,12 +102,15 @@ func NewReader(
 	logReaderType wincommon.EventLogReaderAPIType,
 	logName string,
 	mode wincommon.EventLogReaderMode,
+	bufferSize int,
+	maxBatchSize int,
 	initialOffset string,
+	winEventLogConf wincommon.WinEventLogConf,
 ) (wincommon.EventLogReader, error) {
 	if logReaderType == wincommon.ReaderAPITypeEventLogging {
-		return eventlogging.NewEventLoggingReader(baseStage, logName, mode, initialOffset)
+		return eventlogging.NewEventLoggingReader(baseStage, logName, mode, bufferSize, maxBatchSize, initialOffset)
 	} else {
-		return wineventlog.NewWindowsEventLogReader(baseStage, logName, mode, initialOffset)
+		return wineventlog.NewWindowsEventLogReader(baseStage, logName, mode, bufferSize, maxBatchSize, initialOffset, winEventLogConf)
 	}
 }
 
@@ -123,9 +129,12 @@ func (wel *WindowsEventLogSource) Produce(
 		if wel.eventLogReader, err = NewReader(
 			wel.BaseStage,
 			wel.eventLogReaderAPIType,
-			wel.LogName,
+			wel.resolvedLogName,
 			wel.eventLogReaderMode,
+			wel.bufferSize,
+			maxBatchSize,
 			offset.Offset,
+			wel.WinEventLogConf,
 		); err == nil {
 			err = wel.eventLogReader.Open()
 		}
@@ -136,7 +145,7 @@ func (wel *WindowsEventLogSource) Produce(
 		}
 	}
 
-	if eventRecords, err := wel.eventLogReader.Read(maxBatchSize); err == nil {
+	if eventRecords, err := wel.eventLogReader.Read(); err == nil {
 		if len(eventRecords) > 0 {
 			for _, eventRecord := range eventRecords {
 				batchMaker.AddRecord(eventRecord)
