@@ -16,6 +16,8 @@
 package wineventlog
 
 import (
+	"bytes"
+	"encoding/binary"
 	//"github.com/clbanning/mxj"
 	log "github.com/sirupsen/logrus"
 	syswin "golang.org/x/sys/windows"
@@ -78,7 +80,7 @@ const (
 type EvtSubscribeNotifyAction uint32
 
 const (
-	EvtSubscribeActionError  = EvtSubscribeNotifyAction(iota)
+	EvtSubscribeActionError = EvtSubscribeNotifyAction(iota)
 	EvtSubscribeActionDeliver
 )
 
@@ -93,7 +95,6 @@ const (
 	ErrorInsufficientBuffer = syscall.Errno(0x7A)
 
 	ErrorNoMoreItems = syscall.Errno(259) //(0x103)
-
 
 	ErrorInvalidQuery        = syscall.Errno(15001)
 	ErrorEvtQueryResultStale = syscall.Errno(15011)
@@ -130,9 +131,20 @@ func convertStringToUtf16ToUintPtr(str string) (uintptr, error) {
 	return ptr, err
 }
 
+func ExtractString(byteData []byte) (string, error) {
+	wordArray := make([]uint16, len(byteData)/2)
+	err := binary.Read(bytes.NewReader(byteData), binary.LittleEndian, wordArray)
+	if err != nil {
+		log.WithError(err).Error("Error reading binary data")
+		return "", err
+	}
+	return syscall.UTF16ToString(wordArray), nil
+
+}
+
 func processSysCallReturn(r1 uintptr, e1 error) error {
 	var err error
-	if r1 & 0xff == 0 {
+	if r1&0xff == 0 {
 		if e1.(syscall.Errno) != 0 {
 			err = e1
 		} else {
@@ -245,6 +257,7 @@ func EvtClose(handle uintptr) {
 
 func EvtNext(resultSet SubscriptionHandle, eventsSize uint32, events []EventHandle, returnedHandles *uint32) error {
 	log.Debug("EvtNext Called")
+	//Don't wait in EvtNext
 	waitTime := uint32(0)
 	flags := 0
 	//BOOL EvtNext(
@@ -266,13 +279,14 @@ func EvtNext(resultSet SubscriptionHandle, eventsSize uint32, events []EventHand
 	return processSysCallReturn(r1, e1)
 }
 
-
 //https://docs.microsoft.com/en-us/windows/desktop/api/synchapi/nf-synchapi-waitforsingleobject
 type WaitReturnValue uint32
+
 const (
 	WaitObject0   = WaitReturnValue(0x00000000)
 	WaitAbandoned = WaitReturnValue(0x00000080)
 	WaitTimeout   = WaitReturnValue(0x00000102)
 	WaitFailed    = WaitReturnValue(0xFFFFFFFF)
 )
+
 //------------------------------------------------------------------------------------------------------------
