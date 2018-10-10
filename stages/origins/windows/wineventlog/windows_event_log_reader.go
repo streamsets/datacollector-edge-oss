@@ -93,10 +93,6 @@ func NewWindowsEventLogReader(
 	subscriptionMode := SubscriptionMode(winEventLogConf.SubscriptionMode)
 	query := fmt.Sprintf(`<QueryList> <Query Id="0"> <Select Path="%s">*</Select> </Query></QueryList>`, logName)
 
-	log.Debugf("Wait time seconds %d, duration %d",
-		int64(winEventLogConf.MaxWaitTimeSecs),
-		time.Duration(int64(winEventLogConf.MaxWaitTimeSecs))*time.Second)
-
 	return &WindowsEventLogReader{
 		BaseStage:          baseStage,
 		BaseEventLogReader: &wincommon.BaseEventLogReader{Log: logName, Mode: mode},
@@ -107,7 +103,7 @@ func NewWindowsEventLogReader(
 			lastSourceOffset,
 			mode,
 			bufferSize,
-			time.Duration(int64(winEventLogConf.MaxWaitTimeSecs))*time.Second,
+			time.Duration(int64(winEventLogConf.MaxWaitTimeSecs)) * time.Second,
 		),
 		offset: lastSourceOffset,
 	}, nil

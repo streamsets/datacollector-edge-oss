@@ -29,10 +29,12 @@ var (
 	//Module wevetapi not available in https://github.com/golang/sys/blob/master/windows/zsyscall_windows.go#L488
 	winEvtDLL = syscall.NewLazyDLL("wevtapi.dll")
 
-	evtSubscribe = winEvtDLL.NewProc("EvtSubscribe")
-	evtRender    = winEvtDLL.NewProc("EvtRender")
-	evtClose     = winEvtDLL.NewProc("EvtClose")
-	evtNext      = winEvtDLL.NewProc("EvtNext")
+	evtSubscribe      = winEvtDLL.NewProc("EvtSubscribe")
+	evtRender         = winEvtDLL.NewProc("EvtRender")
+	evtClose          = winEvtDLL.NewProc("EvtClose")
+	evtNext           = winEvtDLL.NewProc("EvtNext")
+	evtCreateBookmark = winEvtDLL.NewProc("EvtCreateBookmark")
+	evtUpdateBookmark = winEvtDLL.NewProc("EvtUpdateBookmark")
 )
 
 type EventHandle uintptr
@@ -162,7 +164,6 @@ func EvtSubscribe(
 	callback EvtSubscribeCallback,
 	flags EvtSubscribeFlag,
 ) (SubscriptionHandle, error) {
-	log.Debug("EvtSubscribe called")
 	var err error
 	var cpPtr, queryPtr, callbackPtr uintptr
 
@@ -216,8 +217,6 @@ func EvtRender(
 	bufferUsedPtr *uint32,
 	PropertyCountPtr *uint32,
 ) error {
-	log.Debug("EvtRender Called")
-
 	//BOOL EvtRender(
 	//  EventHandle Context,
 	//  EventHandle Fragment,
@@ -243,7 +242,6 @@ func EvtRender(
 }
 
 func EvtClose(handle uintptr) {
-	log.Debug("EvtClose Called")
 	////BOOL EvtClose(
 	////  EVT_HANDLE Object
 	////);
@@ -256,7 +254,6 @@ func EvtClose(handle uintptr) {
 }
 
 func EvtNext(resultSet SubscriptionHandle, eventsSize uint32, events []EventHandle, returnedHandles *uint32) error {
-	log.Debug("EvtNext Called")
 	//Don't wait in EvtNext
 	waitTime := uint32(0)
 	flags := 0
@@ -276,6 +273,33 @@ func EvtNext(resultSet SubscriptionHandle, eventsSize uint32, events []EventHand
 		uintptr(flags),
 		uintptr(unsafe.Pointer(returnedHandles)),
 	)
+	return processSysCallReturn(r1, e1)
+}
+
+func EvtCreateBookmark(bookmarkXML string) (BookmarkHandle, error) {
+	var bookmarkXMLPtr uintptr
+	var err error
+	var bookMarkHandle = BookmarkHandle(0)
+	if bookmarkXMLPtr, err = convertStringToUtf16ToUintPtr(bookmarkXML); err == nil {
+		//EVT_HANDLE EvtCreateBookmark(
+		//  LPCWSTR BookmarkXml
+		//);
+		//LPWSTR pointer to a null-terminated string of 16-bit Unicode characters
+		r1, _, e1 := evtCreateBookmark.Call(bookmarkXMLPtr)
+		err = processSysCallReturn(r1, e1)
+		if err == nil {
+			bookMarkHandle = BookmarkHandle(r1)
+		}
+	}
+	return bookMarkHandle, err
+}
+
+func EvtUpdateBookmark(bookmarkHandle BookmarkHandle, eventHandle EventHandle) error {
+	//BOOL EvtUpdateBookmark(
+	//  EVT_HANDLE Bookmark,
+	//  EVT_HANDLE Event
+	//);
+	r1, _, e1 := evtUpdateBookmark.Call(uintptr(bookmarkHandle), uintptr(eventHandle))
 	return processSysCallReturn(r1, e1)
 }
 

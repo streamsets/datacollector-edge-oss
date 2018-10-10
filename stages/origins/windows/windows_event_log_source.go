@@ -55,6 +55,7 @@ type WindowsEventLogSource struct {
 	eventLogReaderMode    wincommon.EventLogReaderMode
 	eventLogReaderAPIType wincommon.EventLogReaderAPIType
 	eventLogReader        wincommon.EventLogReader
+	offset                *WindowsEventLogOffset
 }
 
 type WindowsEventLogOffset struct {
@@ -119,12 +120,15 @@ func (wel *WindowsEventLogSource) Produce(
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
 ) (*string, error) {
-	offsetString := *lastSourceOffset
-	offset, err := wel.extractAndUpgradeOffsetIfNeeded(lastSourceOffset)
-	if err != nil {
-		log.WithError(err).Error("Error reading offset")
-		return &offsetString, err
+	var err error
+	// Read offset if it is not present
+	if wel.offset == nil {
+		if wel.offset, err = wel.extractAndUpgradeOffsetIfNeeded(lastSourceOffset); err != nil {
+			log.WithError(err).Error("Error reading offset")
+			return lastSourceOffset, err
+		}
 	}
+
 	if wel.eventLogReader == nil {
 		if wel.eventLogReader, err = NewReader(
 			wel.BaseStage,
@@ -133,7 +137,7 @@ func (wel *WindowsEventLogSource) Produce(
 			wel.eventLogReaderMode,
 			wel.bufferSize,
 			maxBatchSize,
-			offset.Offset,
+			wel.offset.Offset,
 			wel.WinEventLogConf,
 		); err == nil {
 			err = wel.eventLogReader.Open()
@@ -157,18 +161,14 @@ func (wel *WindowsEventLogSource) Produce(
 		return lastSourceOffset, err
 	}
 
-	offsetBytes, err := json.Marshal(WindowsEventLogOffset{
-		EventLogReaderAPIType: wel.eventLogReaderAPIType,
-		OffsetVersion:         OffsetVersion,
-		Offset:                wel.eventLogReader.GetCurrentOffset(),
-	})
+	wel.offset.Offset = wel.eventLogReader.GetCurrentOffset()
 
-	if err == nil {
+	var offsetString string
+	if offsetBytes, err := json.Marshal(wel.offset); err == nil {
 		offsetString = string(offsetBytes)
 	} else {
-		log.WithError(err).Errorf("Error Marshaling offset : {}", wel.eventLogReader.GetCurrentOffset())
+		log.WithError(err).Errorf("Error Marshaling offset : %s", wel.eventLogReader.GetCurrentOffset())
 	}
-
 	return &offsetString, nil
 }
 
@@ -191,14 +191,15 @@ func (wel *WindowsEventLogSource) extractAndUpgradeOffsetIfNeeded(offsetStringPt
 		}, nil
 	} else {
 		var welo WindowsEventLogOffset
-		err := json.Unmarshal([]byte(*offsetStringPtr), welo)
+		err := json.Unmarshal([]byte(*offsetStringPtr), &welo)
 		if err != nil {
-			log.WithError(err).Debug(
+			log.WithField("offset", *offsetStringPtr).WithError(err).Debug(
 				"Not able to deserialize the offset assuming no offset version/Event log reader type present")
 			// Try decoding the value as uint32
 			_, err := strconv.ParseUint(*offsetStringPtr, 10, 32)
 			if err != nil {
 				log.WithError(err).Error("Not able to deserialize the offset to uint32")
+				return nil, err
 			} else {
 				if wel.eventLogReaderAPIType != wincommon.ReaderAPITypeEventLogging {
 					return nil, errors.New(

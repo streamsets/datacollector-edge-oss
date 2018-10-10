@@ -18,17 +18,17 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows"
 	"syscall"
+	"time"
 )
 
 type PullWinEventSubscriber struct {
 	*BaseWinEventSubscriber
 }
 
-func (pwes *PullWinEventSubscriber) fetchEvents() error {
+func (pwes *PullWinEventSubscriber) fetchEventsImmediately() error {
 	fetchedEventHandles := make([]EventHandle, int64(pwes.maxNoOfEvents)-pwes.eventsQueue.Len())
 	returnedHandles := uint32(0)
 	err := EvtNext(pwes.subscriptionHandle, uint32(len(fetchedEventHandles)), fetchedEventHandles, &returnedHandles)
-	log.Debugf("Queried EvtNext with %d handles returned %d handles", len(fetchedEventHandles), returnedHandles)
 	if err == nil {
 		for _, fetchedEventHandle := range fetchedEventHandles[:returnedHandles] {
 			eventString, err := pwes.renderEventXML(fetchedEventHandle)
@@ -38,40 +38,48 @@ func (pwes *PullWinEventSubscriber) fetchEvents() error {
 				pwes.eventsQueue.Put(eventString)
 			}
 		}
-	} else if err.(syscall.Errno) == ErrorNoMoreItems {
-		log.Infof("No More items in the handle: %d resetting", pwes.signalEventHandle)
-		windows.ResetEvent(pwes.signalEventHandle)
+	} else if err.(syscall.Errno) == ErrorNoMoreItems || err.(syscall.Errno) == ErrorInvalidHandle {
+		if err.(syscall.Errno) == ErrorNoMoreItems {
+			log.Infof("No More items in the handle: %d resetting", pwes.signalEventHandle)
+			windows.ResetEvent(pwes.signalEventHandle)
+		} else {
+			log.WithError(err).Warn("Cannot fetch events with this handle")
+		}
 		err = nil
 	}
 	return err
 }
 
 func (pwes *PullWinEventSubscriber) pollForEventHandles() error {
-	var waitReturnVal WaitReturnValue
-	log.Info("Waiting for Events to be notified")
-	//Wait for system to signal that there are events or timeout
-	val, err := windows.WaitForSingleObject(pwes.signalEventHandle, uint32(pwes.maxWaitTimeMillis))
-	waitReturnVal = WaitReturnValue(val)
-	switch waitReturnVal {
-	case WaitFailed:
-		log.WithError(err).Error("Wait Failed")
-	case WaitAbandoned:
-		log.Info("Wait abandoned")
-	case WaitTimeout:
-		log.Infof("No Events till the wait, wait time out happened")
-	case WaitObject0:
-		err = pwes.fetchEvents()
-		if err != nil {
-			log.WithError(err).Error("Error fetching event handles")
+	//Try fetching first if this fails, try after wait
+	err := pwes.fetchEventsImmediately()
+	if err == nil && pwes.eventsQueue.Empty() {
+		//Wait for system to signal that there are events or timeout
+		waitTimeMillis := uint32(pwes.maxWaitTime / time.Millisecond)
+		log.Infof("Waiting %d milliseconds for Events to be notified", waitTimeMillis)
+		val, err := windows.WaitForSingleObject(pwes.signalEventHandle, waitTimeMillis)
+		waitReturnVal := WaitReturnValue(val)
+		switch waitReturnVal {
+		case WaitFailed:
+			log.WithError(err).Error("Wait Failed")
+		case WaitAbandoned:
+			log.Info("Wait abandoned")
+		case WaitTimeout:
+			log.Infof("No Events till the wait, wait time out happened")
+		case WaitObject0:
+			err = pwes.fetchEventsImmediately()
+			if err != nil {
+				log.WithError(err).Error("Error fetching event handles")
+			}
+		default:
+			log.Warnf("Unsupported Wait return value : %d", waitReturnVal)
 		}
-	default:
-		log.Warnf("Unsupported Wait return value : %d", waitReturnVal)
 	}
 	return err
 }
 
 func (pwes *PullWinEventSubscriber) Subscribe() error {
-	n, _ := syscall.UTF16PtrFromString("ab123")
+	n, _ := syscall.UTF16PtrFromString("edge")
 	var err error
 	if pwes.signalEventHandle, err = windows.CreateEvent(
 		nil,
@@ -83,18 +91,7 @@ func (pwes *PullWinEventSubscriber) Subscribe() error {
 		return err
 	}
 
-	err = pwes.BaseWinEventSubscriber.Subscribe()
-	if err == nil {
-		//Don't wait for the first time around, try to fetch event handles if it fails we will wait when we read.
-		err = pwes.fetchEvents()
-		if err != nil {
-			if err.(syscall.Errno) != ErrorInvalidHandle {
-				log.WithError(err).Warn("Error rendering events, may be it is stale")
-				err = nil
-			}
-		}
-	}
-	return err
+	return pwes.BaseWinEventSubscriber.Subscribe()
 }
 
 func (pwes *PullWinEventSubscriber) Read() ([]string, error) {
