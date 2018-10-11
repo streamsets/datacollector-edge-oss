@@ -14,12 +14,12 @@ package spooler
 
 import (
 	"bufio"
-	"bytes"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
+	"github.com/streamsets/datacollector-edge/container/recordio/delimitedrecord"
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io"
@@ -46,10 +46,11 @@ const (
 
 type SpoolDirSource struct {
 	*common.BaseStage
-	Conf      SpoolDirConfigBean `ConfigDefBean:"conf"`
-	spooler   *DirectorySpooler
-	bufReader *bufio.Reader
-	file      *os.File
+	Conf       SpoolDirConfigBean `ConfigDefBean:"conf"`
+	spooler    *DirectorySpooler
+	bufReader  *bufio.Reader
+	file       *os.File
+	csvHeaders []*api.Field
 }
 
 type SpoolDirConfigBean struct {
@@ -113,10 +114,46 @@ func (s *SpoolDirSource) initializeBuffReaderIfNeeded() error {
 			return err
 		}
 		s.file = f
+
+		if s.Conf.DataFormat == "DELIMITED" && s.Conf.DataFormatConfig.CsvHeader == delimitedrecord.WithHeader &&
+			(len(s.csvHeaders) == 0 || fInfo.getOffsetToRead() == 0) {
+			bufReader := bufio.NewReader(s.file)
+			headerLine, err := bufReader.ReadString('\n')
+			if err == nil {
+				columns := strings.Split(headerLine, ",")
+				s.csvHeaders = make([]*api.Field, len(columns))
+				for i, col := range columns {
+					headerField, _ := api.CreateStringField(col)
+					s.csvHeaders[i] = headerField
+				}
+			}
+		}
+
 		if _, err := s.file.Seek(fInfo.getOffsetToRead(), 0); err != nil {
 			return err
 		}
 		s.bufReader = bufio.NewReader(s.file)
+
+		if s.Conf.DataFormat == "DELIMITED" && fInfo.getOffsetToRead() == 0 {
+			bytesRead := 0
+			if s.Conf.DataFormatConfig.CsvSkipStartLines > 0 {
+				skippedLines := 0
+				for skippedLines < int(s.Conf.DataFormatConfig.CsvSkipStartLines) {
+					lineBytes, err := s.bufReader.ReadBytes('\n')
+					if err == nil {
+						bytesRead += len(lineBytes)
+					}
+					skippedLines++
+				}
+			} else if s.Conf.DataFormatConfig.CsvHeader == delimitedrecord.WithHeader ||
+				s.Conf.DataFormatConfig.CsvHeader == delimitedrecord.IgnoreHeader {
+				lineBytes, err := s.bufReader.ReadBytes('\n')
+				if err == nil {
+					bytesRead += len(lineBytes)
+				}
+			}
+			s.spooler.getCurrentFileInfo().incOffsetToRead(int64(bytesRead))
+		}
 	}
 	return nil
 }
@@ -174,47 +211,23 @@ func (s *SpoolDirSource) createRecordAndAddToBatch(
 ) error {
 	fInfo := s.spooler.getCurrentFileInfo()
 	recordId := fInfo.getFullPath() + "::" + strconv.FormatInt(fInfo.getOffsetToRead(), 10)
-	if s.Conf.DataFormat == "TEXT" {
-		recordValue := map[string]interface{}{"text": lineText}
-		record, _ := s.GetStageContext().CreateRecord(recordId, recordValue)
-
-		record.GetHeader().SetAttribute(File, fInfo.getFullPath())
-		record.GetHeader().SetAttribute(FileName, fInfo.getName())
-		record.GetHeader().SetAttribute(
-			Offset,
-			strconv.FormatInt(fInfo.getOffsetToRead(), 10),
-		)
-		batchMaker.AddRecord(record)
-	} else if s.Conf.DataFormat == "JSON" {
-		recordBuffer := bytes.NewBufferString(lineText)
-
-		recordReader, err := recordReaderFactory.CreateReader(s.GetStageContext(), recordBuffer, recordId)
-		if err != nil {
-			log.WithError(err).Error("Failed to create record reader")
-			return err
-		}
-		defer recordReader.Close()
-
-		for {
-			record, err := recordReader.ReadRecord()
-			if err != nil {
-				log.WithError(err).Error("Failed to parse raw data")
-				return err
-			}
-
-			if record == nil {
-				break
-			}
-
-			record.GetHeader().SetAttribute(File, fInfo.getFullPath())
-			record.GetHeader().SetAttribute(FileName, fInfo.getName())
-			record.GetHeader().SetAttribute(
-				Offset,
-				strconv.FormatInt(fInfo.getOffsetToRead(), 10),
-			)
-			batchMaker.AddRecord(record)
-		}
+	record, err := recordReaderFactory.CreateRecord(
+		s.GetStageContext(),
+		lineText,
+		recordId,
+		s.csvHeaders,
+	)
+	if err != nil {
+		s.GetStageContext().ReportError(err)
+		return nil
 	}
+	record.GetHeader().SetAttribute(File, fInfo.getFullPath())
+	record.GetHeader().SetAttribute(FileName, fInfo.getName())
+	record.GetHeader().SetAttribute(
+		Offset,
+		strconv.FormatInt(fInfo.getOffsetToRead(), 10),
+	)
+	batchMaker.AddRecord(record)
 
 	return nil
 }

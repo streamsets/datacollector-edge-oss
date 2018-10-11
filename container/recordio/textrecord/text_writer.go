@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	DEFAULT_TEXT_FIELD = "text"
+	DefaultTextField = "text"
 )
 
 type TextWriterFactoryImpl struct {
@@ -66,7 +66,7 @@ func (textWriter *TextWriterImpl) getTextFieldPathValue(field *api.Field) (strin
 	switch field.Type {
 	case fieldtype.MAP:
 		fieldValue := field.Value.(map[string]*api.Field)
-		textField := fieldValue[DEFAULT_TEXT_FIELD]
+		textField := fieldValue[DefaultTextField]
 		if textField.Type != fieldtype.STRING {
 			err = errors.New("Invalid Field Type for Text Field path - " + textField.Type)
 			return textFieldValue, err
@@ -75,9 +75,9 @@ func (textWriter *TextWriterImpl) getTextFieldPathValue(field *api.Field) (strin
 		return textFieldValue, err
 	case fieldtype.LIST_MAP:
 		listMapValue := field.Value.(*linkedhashmap.Map)
-		textValue, found := listMapValue.Get(DEFAULT_TEXT_FIELD)
+		textValue, found := listMapValue.Get(DefaultTextField)
 		if !found {
-			return textFieldValue, fmt.Errorf("invalid field path - %s", DEFAULT_TEXT_FIELD)
+			return textFieldValue, fmt.Errorf("invalid field path - %s", DefaultTextField)
 		}
 		textField := textValue.(*api.Field)
 		if textField.Type != fieldtype.STRING {

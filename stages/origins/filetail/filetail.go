@@ -13,7 +13,7 @@
 package filetail
 
 import (
-	"bytes"
+	"bufio"
 	"fmt"
 	"github.com/hpcloud/tail"
 	log "github.com/sirupsen/logrus"
@@ -21,6 +21,7 @@ import (
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
+	"github.com/streamsets/datacollector-edge/container/recordio/delimitedrecord"
 	"github.com/streamsets/datacollector-edge/container/util"
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
@@ -32,8 +33,8 @@ import (
 )
 
 const (
-	LIBRARY             = "streamsets-datacollector-basic-lib"
-	STAGE_NAME          = "com_streamsets_pipeline_stage_origin_logtail_FileTailDSource"
+	Library             = "streamsets-datacollector-basic-lib"
+	StageName           = "com_streamsets_pipeline_stage_origin_logtail_FileTailDSource"
 	ConfGroupFiles      = "FILES"
 	ConfFileInfos       = "conf.fileInfos"
 	ConfMaxWaitTimeSecs = "conf.maxWaitTimeSecs"
@@ -45,7 +46,8 @@ const (
 
 type FileTailOrigin struct {
 	*common.BaseStage
-	Conf FileTailConfigBean `ConfigDefBean:"name=conf"`
+	Conf       FileTailConfigBean `ConfigDefBean:"name=conf"`
+	csvHeaders []*api.Field
 }
 
 var lastLineReadAfterStop string
@@ -63,7 +65,7 @@ type FileInfo struct {
 }
 
 func init() {
-	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(Library, StageName, func() api.Stage {
 		return &FileTailOrigin{BaseStage: &common.BaseStage{}}
 	})
 }
@@ -85,6 +87,21 @@ func (f *FileTailOrigin) Init(stageContext api.StageContext) []validation.Issue 
 		return issues
 	}
 	log.WithField("file", f.Conf.FileInfos[0].FileFullPath).Debug("Reading file")
+
+	if f.Conf.DataFormat == "DELIMITED" && f.Conf.DataFormatConfig.CsvHeader == delimitedrecord.WithHeader {
+		file, _ := os.Open(f.Conf.FileInfos[0].FileFullPath)
+		bufReader := bufio.NewReader(file)
+		headerLine, err := bufReader.ReadString('\n')
+		if err == nil {
+			columns := strings.Split(headerLine, ",")
+			f.csvHeaders = make([]*api.Field, len(columns))
+			for i, col := range columns {
+				headerField, _ := api.CreateStringField(col)
+				f.csvHeaders[i] = headerField
+			}
+		}
+	}
+
 	return f.Conf.DataFormatConfig.Init(f.Conf.DataFormat, stageContext, issues)
 }
 
@@ -115,6 +132,7 @@ func (f *FileTailOrigin) Produce(
 
 	var currentOffset int64
 	recordCount := float64(0)
+	skippedLines := 0
 	timeout := time.NewTimer(time.Duration(f.Conf.MaxWaitTimeSecs) * time.Second)
 	defer timeout.Stop()
 	end := false
@@ -126,6 +144,16 @@ func (f *FileTailOrigin) Produce(
 					// Duplicate line from last batch, due to offset issue with tail library
 					log.WithField("data", line.Text).Warn("Ignoring duplicate line from last batch")
 				} else {
+					if f.Conf.DataFormat == "DELIMITED" && lastSourceOffset == nil && recordCount == 0 {
+						if skippedLines < int(f.Conf.DataFormatConfig.CsvSkipStartLines) {
+							skippedLines++
+							break
+						} else if skippedLines == 0 && (f.Conf.DataFormatConfig.CsvHeader == delimitedrecord.WithHeader ||
+							f.Conf.DataFormatConfig.CsvHeader == delimitedrecord.IgnoreHeader) {
+							skippedLines++
+							break
+						}
+					}
 					err = f.parseLine(recordReaderFactory, line.Text, batchMaker, &recordCount)
 					if err != nil {
 						f.GetStageContext().ReportError(err)
@@ -164,40 +192,19 @@ func (f *FileTailOrigin) parseLine(
 	batchMaker api.BatchMaker,
 	recordCount *float64,
 ) error {
-	if f.Conf.DataFormat == "TEXT" {
-		// file tail library already giving line by line, no need to use parse directory
-		recordValue := map[string]interface{}{"text": strings.Replace(lineText, "\n", "", 1)}
-		sourceId := common.CreateRecordId("fileTail", int(*recordCount))
-		record, err := f.GetStageContext().CreateRecord(sourceId, recordValue)
-		if err != nil {
-			log.WithError(err).Error("Failed to create data")
-			return err
-		}
-		batchMaker.AddRecord(record)
-		*recordCount++
-	} else {
-		recordBuffer := bytes.NewBufferString(lineText)
-		recordReader, err := recordReaderFactory.CreateReader(f.GetStageContext(), recordBuffer, "fileTail")
-		if err != nil {
-			log.WithError(err).Error("Failed to create record reader")
-			return err
-		}
-		defer recordReader.Close()
-
-		for {
-			record, err := recordReader.ReadRecord()
-			if err != nil {
-				log.WithError(err).Error("Failed to parse raw data")
-				return err
-			}
-
-			if record == nil {
-				break
-			}
-			batchMaker.AddRecord(record)
-			*recordCount++
-		}
+	sourceId := common.CreateRecordId("fileTail", int(*recordCount))
+	record, err := recordReaderFactory.CreateRecord(
+		f.GetStageContext(),
+		strings.Replace(lineText, "\n", "", 1),
+		sourceId,
+		f.csvHeaders,
+	)
+	if err != nil {
+		f.GetStageContext().ReportError(err)
+		return nil
 	}
+	batchMaker.AddRecord(record)
+	*recordCount++
 	return nil
 }
 

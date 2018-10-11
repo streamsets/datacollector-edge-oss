@@ -27,7 +27,7 @@ func getStageContext() (*common.StageContextImpl, *common.ErrorSink, *common.Eve
 	errorSink := common.NewErrorSink()
 	eventSink := common.NewEventSink()
 	return &common.StageContextImpl{
-		StageConfig: &stageConfig,
+		StageConfig:       &stageConfig,
 		ErrorSink:         errorSink,
 		ErrorRecordPolicy: common.ErrorRecordPolicyStage,
 		EventSink:         eventSink,
@@ -48,7 +48,6 @@ func TestDestination(t *testing.T) {
 	}
 
 	stageInstance.Init(stageContext)
-
 
 	records := make([]api.Record, 2)
 	records[0], _ = stageContext.CreateRecord(
@@ -83,4 +82,3 @@ func TestDestination(t *testing.T) {
 
 	stageInstance.Destroy()
 }
-

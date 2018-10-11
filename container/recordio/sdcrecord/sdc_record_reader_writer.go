@@ -60,6 +60,15 @@ func (srrf *SDCRecordReaderFactoryImpl) CreateReader(
 	return recordReader, err
 }
 
+func (srrf *SDCRecordReaderFactoryImpl) CreateRecord(
+	context api.StageContext,
+	lineText string,
+	messageId string,
+	headers []*api.Field,
+) (api.Record, error) {
+	return nil, errors.New("not supported")
+}
+
 type SDCRecordWriterFactoryImpl struct {
 	//TODO: Add needed configs
 }
