@@ -20,6 +20,12 @@ import (
 
 type RecordReaderFactory interface {
 	CreateReader(context api.StageContext, reader io.Reader, messageId string) (dataformats.RecordReader, error)
+	CreateRecord(
+		context api.StageContext,
+		lineText string,
+		messageId string,
+		headers []*api.Field,
+	) (api.Record, error)
 }
 
 type RecordWriterFactory interface {

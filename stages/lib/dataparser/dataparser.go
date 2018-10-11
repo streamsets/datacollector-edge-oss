@@ -4,6 +4,7 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/recordio"
+	"github.com/streamsets/datacollector-edge/container/recordio/delimitedrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/jsonrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/sdcrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/textrecord"
@@ -120,6 +121,23 @@ func (d *DataParserFormatConfig) Init(
 		d.RecordReaderFactory = &textrecord.TextReaderFactoryImpl{}
 	case "JSON":
 		d.RecordReaderFactory = &jsonrecord.JsonReaderFactoryImpl{}
+	case "DELIMITED":
+		d.RecordReaderFactory = &delimitedrecord.DelimitedReaderFactoryImpl{
+			CsvFileFormat:        d.CsvFileFormat,
+			CsvHeader:            d.CsvHeader,
+			CsvAllowExtraColumns: d.CsvAllowExtraColumns,
+			CsvExtraColumnPrefix: d.CsvExtraColumnPrefix,
+			CsvMaxObjectLen:      d.CsvMaxObjectLen,
+			CsvCustomDelimiter:   d.CsvCustomDelimiter,
+			CsvCustomEscape:      d.CsvCustomEscape,
+			CsvEnableComments:    d.CsvEnableComments,
+			CsvCommentMarker:     d.CsvCommentMarker,
+			CsvIgnoreEmptyLines:  d.CsvIgnoreEmptyLines,
+			CsvRecordType:        d.CsvRecordType,
+			CsvSkipStartLines:    d.CsvSkipStartLines,
+			ParseNull:            d.ParseNull,
+			NullConstant:         d.NullConstant,
+		}
 	case "SDC_JSON":
 		d.RecordReaderFactory = &sdcrecord.SDCRecordReaderFactoryImpl{}
 	default:

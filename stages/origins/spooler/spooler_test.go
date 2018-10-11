@@ -18,6 +18,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
+	"github.com/streamsets/datacollector-edge/container/recordio/delimitedrecord"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -36,7 +37,32 @@ const (
 	PathMatcherMode       = "conf.pathMatcherMode"
 )
 
-func createStageContext(
+const sampleCsvData1 = `policyID,statecode,county,eq_site_limit,hu_site_limit,fl_site_limit,fr_site_limit,tiv_2011,tiv_2012,eq_site_deductible,hu_site_deductible,fl_site_deductible,fr_site_deductible,point_latitude,point_longitude,line,construction,point_granularity
+119736,FL,CLAY COUNTY,498960,498960,498960,498960,498960,792148.9,0,9979.2,0,0,30.102261,-81.711777,Residential,Masonry,1
+448094,FL,CLAY COUNTY,1322376.3,1322376.3,1322376.3,1322376.3,1322376.3,1438163.57,0,0,0,0,30.063936,-81.707664,Residential,Masonry,3
+206893,FL,CLAY COUNTY,190724.4,190724.4,190724.4,190724.4,190724.4,192476.78,0,0,0,0,30.089579,-81.700455,Residential,Wood,1`
+
+const sampleCsvData2 = `policyID,statecode,county,eq_site_limit,hu_site_limit,fl_site_limit,fr_site_limit,tiv_2011,tiv_2012,eq_site_deductible,hu_site_deductible,fl_site_deductible,fr_site_deductible,point_latitude,point_longitude,line,construction,point_granularity
+119736,FL,CLAY COUNTY,498960,498960,498960,498960,498960,792148.9,0,9979.2,0,0,30.102261,-81.711777,Residential,Masonry,1
+448094,FL,CLAY COUNTY,1322376.3,1322376.3,1322376.3,1322376.3,1322376.3,1438163.57,0,0,0,0,30.063936,-81.707664,Residential,Masonry,3`
+
+const sampleCsvData3 = `policyID,statecode,county,eq_site_limit,hu_site_limit,fl_site_limit,fr_site_limit,tiv_2011,tiv_2012,eq_site_deductible,hu_site_deductible,fl_site_deductible,fr_site_deductible,point_latitude,point_longitude,line,construction,point_granularity
+119736,FL,CLAY COUNTY,498960,498960,498960,498960,498960,792148.9,0,9979.2,0,0,30.102261,-81.711777,Residential,Masonry,1`
+
+func createStageContext(config []common.Config) *common.StageContextImpl {
+	stageConfig := common.StageConfiguration{}
+	stageConfig.Library = Library
+	stageConfig.StageName = StageName
+	stageConfig.Configuration = config
+	errorSink := common.NewErrorSink()
+	return &common.StageContextImpl{
+		StageConfig: &stageConfig,
+		Parameters:  nil,
+		ErrorSink:   errorSink,
+	}
+}
+
+func getStageConfig(
 	dirPath string,
 	processSubDirectories bool,
 	pathMatherMode string,
@@ -45,28 +71,25 @@ func createStageContext(
 	initialFileToProcess string,
 	pollingTimeoutSeconds int64,
 	dataFormat string,
-) *common.StageContextImpl {
-	stageConfig := common.StageConfiguration{}
-	stageConfig.Library = Library
-	stageConfig.StageName = StageName
-	stageConfig.Configuration = make([]common.Config, 8)
+) []common.Config {
+	configuration := make([]common.Config, 8)
 
-	stageConfig.Configuration[0] = common.Config{
+	configuration[0] = common.Config{
 		Name:  SpoolDirPath,
 		Value: dirPath,
 	}
 
-	stageConfig.Configuration[1] = common.Config{
+	configuration[1] = common.Config{
 		Name:  ProcessSubdirectories,
 		Value: processSubDirectories,
 	}
 
-	stageConfig.Configuration[2] = common.Config{
+	configuration[2] = common.Config{
 		Name:  PathMatcherMode,
 		Value: pathMatherMode,
 	}
 
-	stageConfig.Configuration[3] = common.Config{
+	configuration[3] = common.Config{
 		Name:  FilePattern,
 		Value: filePattern,
 	}
@@ -77,30 +100,27 @@ func createStageContext(
 		readOrder = Timestamp
 	}
 
-	stageConfig.Configuration[4] = common.Config{
+	configuration[4] = common.Config{
 		Name:  UseLastModified,
 		Value: readOrder,
 	}
 
-	stageConfig.Configuration[5] = common.Config{
+	configuration[5] = common.Config{
 		Name:  InitialFileToProcess,
 		Value: initialFileToProcess,
 	}
 
-	stageConfig.Configuration[6] = common.Config{
+	configuration[6] = common.Config{
 		Name:  PollingTimeoutSecs,
 		Value: float64(pollingTimeoutSeconds),
 	}
 
-	stageConfig.Configuration[7] = common.Config{
+	configuration[7] = common.Config{
 		Name:  "conf.dataFormat",
 		Value: dataFormat,
 	}
 
-	return &common.StageContextImpl{
-		StageConfig: &stageConfig,
-		Parameters:  nil,
-	}
+	return configuration
 }
 
 func createTestDirectory(t *testing.T) string {
@@ -171,13 +191,14 @@ func createSpoolerAndRun(
 func checkRecord(
 	t *testing.T,
 	record api.Record,
+	fieldPath string,
 	value interface{},
 	headersToCheck map[string]string,
 ) {
 	isError := false
 	expectedValue := value.(string)
 
-	rootField, _ := record.Get("/text")
+	rootField, _ := record.Get(fieldPath)
 	actualValue := rootField.Value.(string)
 	actualHeaders := record.GetHeader().GetAttributes()
 
@@ -212,7 +233,8 @@ func checkRecord(
 
 func TestSpoolDirSource_Init_InvalidDataFormat(t *testing.T) {
 	testDir := createTestDirectory(t)
-	stageContext := createStageContext(testDir, false, Regex, "(.*)[.]txt", true, "", 1, "LOG")
+	stageConfig := getStageConfig(testDir, false, Regex, "(.*)[.]txt", true, "", 1, "LOG")
+	stageContext := createStageContext(stageConfig)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
@@ -246,7 +268,8 @@ func TestUseLastModified(t *testing.T) {
 		filepath.Join(testDir, "b.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
-	stageContext := createStageContext(testDir, false, Regex, "(.*)[.]txt", true, "", 1, "TEXT")
+	stageConfig := getStageConfig(testDir, false, Regex, "(.*)[.]txt", true, "", 1, "TEXT")
+	stageContext := createStageContext(stageConfig)
 
 	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
 
@@ -260,7 +283,7 @@ func TestUseLastModified(t *testing.T) {
 		Offset:   "0",
 	}
 
-	checkRecord(t, records[0], "123", expectedHeaders)
+	checkRecord(t, records[0], "/text", "123", expectedHeaders)
 
 	expectedHeaders = map[string]string{
 		File:     filepath.Join(testDir, "a.txt"),
@@ -268,7 +291,7 @@ func TestUseLastModified(t *testing.T) {
 		Offset:   "4",
 	}
 
-	checkRecord(t, records[1], "456", expectedHeaders)
+	checkRecord(t, records[1], "/text", "456", expectedHeaders)
 
 	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
 
@@ -282,7 +305,7 @@ func TestUseLastModified(t *testing.T) {
 		Offset:   "0",
 	}
 
-	checkRecord(t, records[0], "111112113", expectedHeaders)
+	checkRecord(t, records[0], "/text", "111112113", expectedHeaders)
 
 	expectedHeaders = map[string]string{
 		File:     filepath.Join(testDir, "c.txt"),
@@ -290,7 +313,7 @@ func TestUseLastModified(t *testing.T) {
 		Offset:   "10",
 	}
 
-	checkRecord(t, records[1], "114115116", expectedHeaders)
+	checkRecord(t, records[1], "/text", "114115116", expectedHeaders)
 
 	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
 
@@ -304,7 +327,7 @@ func TestUseLastModified(t *testing.T) {
 		Offset:   "20",
 	}
 
-	checkRecord(t, records[0], "117118119", expectedHeaders)
+	checkRecord(t, records[0], "/text", "117118119", expectedHeaders)
 
 	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
 
@@ -318,7 +341,7 @@ func TestUseLastModified(t *testing.T) {
 		Offset:   "0",
 	}
 
-	checkRecord(t, records[0], "111213", expectedHeaders)
+	checkRecord(t, records[0], "/text", "111213", expectedHeaders)
 
 	expectedHeaders = map[string]string{
 		File:     filepath.Join(testDir, "b.txt"),
@@ -326,7 +349,7 @@ func TestUseLastModified(t *testing.T) {
 		Offset:   "7",
 	}
 
-	checkRecord(t, records[1], "141516", expectedHeaders)
+	checkRecord(t, records[1], "/text", "141516", expectedHeaders)
 }
 
 func TestLexicographical(t *testing.T) {
@@ -352,7 +375,8 @@ func TestLexicographical(t *testing.T) {
 		filepath.Join(testDir, "c.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
-	stageContext := createStageContext(testDir, false, Glob, "*", false, "", 1, "TEXT")
+	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "TEXT")
+	stageContext := createStageContext(stageConfig)
 
 	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
 
@@ -366,7 +390,7 @@ func TestLexicographical(t *testing.T) {
 		Offset:   "0",
 	}
 
-	checkRecord(t, records[0], "123", expectedHeaders)
+	checkRecord(t, records[0], "/text", "123", expectedHeaders)
 
 	expectedHeaders = map[string]string{
 		File:     filepath.Join(testDir, "a.txt"),
@@ -374,7 +398,7 @@ func TestLexicographical(t *testing.T) {
 		Offset:   "4",
 	}
 
-	checkRecord(t, records[1], "456", expectedHeaders)
+	checkRecord(t, records[1], "/text", "456", expectedHeaders)
 
 	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
 
@@ -388,7 +412,7 @@ func TestLexicographical(t *testing.T) {
 		Offset:   "0",
 	}
 
-	checkRecord(t, records[0], "111213", expectedHeaders)
+	checkRecord(t, records[0], "/text", "111213", expectedHeaders)
 
 	expectedHeaders = map[string]string{
 		File:     filepath.Join(testDir, "b.txt"),
@@ -396,7 +420,7 @@ func TestLexicographical(t *testing.T) {
 		Offset:   "7",
 	}
 
-	checkRecord(t, records[1], "141516", expectedHeaders)
+	checkRecord(t, records[1], "/text", "141516", expectedHeaders)
 
 	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
 
@@ -410,7 +434,7 @@ func TestLexicographical(t *testing.T) {
 		Offset:   "0",
 	}
 
-	checkRecord(t, records[0], "111112113", expectedHeaders)
+	checkRecord(t, records[0], "/text", "111112113", expectedHeaders)
 
 	expectedHeaders = map[string]string{
 		File:     filepath.Join(testDir, "c.txt"),
@@ -418,7 +442,7 @@ func TestLexicographical(t *testing.T) {
 		Offset:   "10",
 	}
 
-	checkRecord(t, records[1], "114115116", expectedHeaders)
+	checkRecord(t, records[1], "/text", "114115116", expectedHeaders)
 
 	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
 
@@ -432,7 +456,7 @@ func TestLexicographical(t *testing.T) {
 		Offset:   "20",
 	}
 
-	checkRecord(t, records[0], "117118119", expectedHeaders)
+	checkRecord(t, records[0], "/text", "117118119", expectedHeaders)
 }
 
 func TestSubDirectories(t *testing.T) {
@@ -474,7 +498,8 @@ func TestSubDirectories(t *testing.T) {
 		createdFiles = append(createdFiles, fileToCreate)
 	}
 
-	stageContext := createStageContext(testDir, true, Glob, "*", true, "", 1, "TEXT")
+	stageConfig := getStageConfig(testDir, true, Glob, "*", true, "", 1, "TEXT")
+	stageContext := createStageContext(stageConfig)
 
 	var offset = ""
 	var records []api.Record
@@ -496,7 +521,7 @@ func TestSubDirectories(t *testing.T) {
 			Offset:   "0",
 		}
 
-		checkRecord(t, records[0], "sample text", expectedHeaders)
+		checkRecord(t, records[0], "/text", "sample text", expectedHeaders)
 	}
 }
 
@@ -523,8 +548,8 @@ func TestReadingFileAcrossBatches(t *testing.T) {
 
 	//Create a.txt,c.txt,b.txt with different mod times
 	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), contents.String())
-
-	stageInstance := createSpooler(t, createStageContext(testDir, false, Regex, ".*", true, "", 1, "TEXT"))
+	stageConfig := getStageConfig(testDir, false, Regex, ".*", true, "", 1, "TEXT")
+	stageInstance := createSpooler(t, createStageContext(stageConfig))
 	defer stageInstance.Destroy()
 
 	noOfRecords := 0
@@ -537,7 +562,7 @@ func TestReadingFileAcrossBatches(t *testing.T) {
 		lastSourceOffset, _ = stageInstance.(api.Origin).Produce(lastSourceOffset, rand.Intn(19)+1, batchMaker)
 		records := batchMaker.GetStageOutput()
 		for rIdx, record := range records {
-			checkRecord(t, record, expectedRecordContents[noOfRecords+rIdx], map[string]string{})
+			checkRecord(t, record, "/text", expectedRecordContents[noOfRecords+rIdx], map[string]string{})
 		}
 		noOfRecords += len(records)
 	}
@@ -559,7 +584,7 @@ func TestLexicographical_JSON_FORMAT(t *testing.T) {
 	//Create a.txt,c.txt,b.txt with different mod times
 	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), "{\"text\": \"123\"}\n{\"text\": \"456\"}")
 	createFileAndWriteContents(t, filepath.Join(testDir, "b.txt"), "{\"text\": \"111213\"}\n{\"text\": \"141516\"}")
-	createFileAndWriteContents(t, filepath.Join(testDir, "c.txt"), "{\"text\": \"111112113\"}{\"text\": \"114115116\"}\n{\"text\": \"117118119\"}")
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.txt"), "{\"text\": \"111112113\"}\n{\"text\": \"117118119\"}")
 
 	currentTime := time.Now()
 
@@ -572,8 +597,8 @@ func TestLexicographical_JSON_FORMAT(t *testing.T) {
 	os.Chtimes(
 		filepath.Join(testDir, "c.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
-
-	stageContext := createStageContext(testDir, false, Glob, "*", false, "", 1, "JSON")
+	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "JSON")
+	stageContext := createStageContext(stageConfig)
 
 	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
 
@@ -587,7 +612,7 @@ func TestLexicographical_JSON_FORMAT(t *testing.T) {
 		Offset:   "0",
 	}
 
-	checkRecord(t, records[0], "123", expectedHeaders)
+	checkRecord(t, records[0], "/text", "123", expectedHeaders)
 
 	expectedHeaders = map[string]string{
 		File:     filepath.Join(testDir, "a.txt"),
@@ -595,7 +620,7 @@ func TestLexicographical_JSON_FORMAT(t *testing.T) {
 		Offset:   "16",
 	}
 
-	checkRecord(t, records[1], "456", expectedHeaders)
+	checkRecord(t, records[1], "/text", "456", expectedHeaders)
 
 	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
 
@@ -609,7 +634,7 @@ func TestLexicographical_JSON_FORMAT(t *testing.T) {
 		Offset:   "0",
 	}
 
-	checkRecord(t, records[0], "111213", expectedHeaders)
+	checkRecord(t, records[0], "/text", "111213", expectedHeaders)
 
 	expectedHeaders = map[string]string{
 		File:     filepath.Join(testDir, "b.txt"),
@@ -617,35 +642,464 @@ func TestLexicographical_JSON_FORMAT(t *testing.T) {
 		Offset:   "19",
 	}
 
-	checkRecord(t, records[1], "141516", expectedHeaders)
+	checkRecord(t, records[1], "/text", "141516", expectedHeaders)
 
 	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
+
+	if len(records) != 2 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 2)
+	}
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "c.txt"),
+		FileName: "c.txt",
+		Offset:   "0",
+	}
+
+	checkRecord(t, records[0], "/text", "111112113", expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "c.txt"),
+		FileName: "c.txt",
+		Offset:   "22",
+	}
+
+	checkRecord(t, records[1], "/text", "117118119", expectedHeaders)
+}
+
+func TestLexicographical_DELIMITED_FORMAT_NO_HEADER(t *testing.T) {
+
+	testDir := createTestDirectory(t)
+
+	defer deleteTestDirectory(t, testDir)
+
+	// Create a.csv,b.csv,c.csv with different mod times
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.csv"), sampleCsvData1)
+	createFileAndWriteContents(t, filepath.Join(testDir, "b.csv"), sampleCsvData2)
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.csv"), sampleCsvData3)
+
+	currentTime := time.Now()
+
+	os.Chtimes(
+		filepath.Join(testDir, "a.csv"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
+	os.Chtimes(
+		filepath.Join(testDir, "b.csv"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(2*time.Second).Nanoseconds()))
+	os.Chtimes(
+		filepath.Join(testDir, "c.csv"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
+
+	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "DELIMITED")
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.csvRecordType",
+		Value: delimitedrecord.ListMap,
+	})
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.csvHeader",
+		Value: delimitedrecord.NoHeader,
+	})
+
+	stageContext := createStageContext(stageConfig)
+
+	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
+
+	if len(records) != 3 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 3)
+	}
+
+	expectedHeaders := map[string]string{
+		File:     filepath.Join(testDir, "a.csv"),
+		FileName: "a.csv",
+		Offset:   "0",
+	}
+
+	checkRecord(t, records[0], "/0", "policyID", expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "a.csv"),
+		FileName: "a.csv",
+		Offset:   "243",
+	}
+
+	checkRecord(t, records[1], "/0", "119736", expectedHeaders)
+
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
+
+	if len(records) != 1 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 1)
+	}
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "a.csv"),
+		FileName: "a.csv",
+		Offset:   "499",
+	}
+
+	checkRecord(t, records[0], "/0", "206893", expectedHeaders)
+
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 3)
 
 	if len(records) != 3 {
 		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 3)
 	}
 
 	expectedHeaders = map[string]string{
-		File:     filepath.Join(testDir, "c.txt"),
-		FileName: "c.txt",
+		File:     filepath.Join(testDir, "b.csv"),
+		FileName: "b.csv",
 		Offset:   "0",
 	}
 
-	checkRecord(t, records[0], "111112113", expectedHeaders)
+	checkRecord(t, records[0], "/0", "policyID", expectedHeaders)
 
 	expectedHeaders = map[string]string{
-		File:     filepath.Join(testDir, "c.txt"),
-		FileName: "c.txt",
+		File:     filepath.Join(testDir, "b.csv"),
+		FileName: "b.csv",
+		Offset:   "243",
+	}
+
+	checkRecord(t, records[1], "/0", "119736", expectedHeaders)
+
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 20)
+
+	if len(records) != 2 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 2)
+	}
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "c.csv"),
+		FileName: "c.csv",
 		Offset:   "0",
 	}
 
-	checkRecord(t, records[1], "114115116", expectedHeaders)
+	checkRecord(t, records[0], "/0", "policyID", expectedHeaders)
 
 	expectedHeaders = map[string]string{
-		File:     filepath.Join(testDir, "c.txt"),
-		FileName: "c.txt",
-		Offset:   "43",
+		File:     filepath.Join(testDir, "c.csv"),
+		FileName: "c.csv",
+		Offset:   "243",
 	}
 
-	checkRecord(t, records[2], "117118119", expectedHeaders)
+	checkRecord(t, records[1], "/0", "119736", expectedHeaders)
+}
+
+func TestLexicographical_DELIMITED_FORMAT_WITH_HEADER(t *testing.T) {
+
+	testDir := createTestDirectory(t)
+
+	defer deleteTestDirectory(t, testDir)
+
+	// Create a.csv,b.csv,c.csv with different mod times
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.csv"), sampleCsvData1)
+	createFileAndWriteContents(t, filepath.Join(testDir, "b.csv"), sampleCsvData2)
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.csv"), sampleCsvData3)
+
+	currentTime := time.Now()
+
+	os.Chtimes(
+		filepath.Join(testDir, "a.csv"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
+	os.Chtimes(
+		filepath.Join(testDir, "b.csv"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(2*time.Second).Nanoseconds()))
+	os.Chtimes(
+		filepath.Join(testDir, "c.csv"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
+
+	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "DELIMITED")
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.csvRecordType",
+		Value: delimitedrecord.ListMap,
+	})
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.csvHeader",
+		Value: delimitedrecord.WithHeader,
+	})
+
+	stageContext := createStageContext(stageConfig)
+
+	// read first header line + 2 lines from a.csv
+	offset, records := createSpoolerAndRun(t, stageContext, "", 2)
+
+	if len(records) != 2 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 2)
+	}
+
+	expectedHeaders := map[string]string{
+		File:     filepath.Join(testDir, "a.csv"),
+		FileName: "a.csv",
+		Offset:   "243",
+	}
+
+	checkRecord(t, records[0], "/policyID", "119736", expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "a.csv"),
+		FileName: "a.csv",
+		Offset:   "365",
+	}
+
+	checkRecord(t, records[1], "/statecode", "FL", expectedHeaders)
+
+	// read first last(4th) line from a.csv
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
+
+	if len(records) != 1 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 1)
+	}
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "a.csv"),
+		FileName: "a.csv",
+		Offset:   "499",
+	}
+
+	checkRecord(t, records[0], "/policyID", "206893", expectedHeaders)
+
+	// read 3 lines + header from b.csv
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 3)
+
+	if len(records) != 2 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 3)
+	}
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "b.csv"),
+		FileName: "b.csv",
+		Offset:   "243",
+	}
+
+	checkRecord(t, records[0], "/policyID", "119736", expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "b.csv"),
+		FileName: "b.csv",
+		Offset:   "365",
+	}
+
+	checkRecord(t, records[1], "/statecode", "FL", expectedHeaders)
+
+	// read 1 line (with header) from c.csv
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 20)
+
+	if len(records) != 1 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 1)
+	}
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "c.csv"),
+		FileName: "c.csv",
+		Offset:   "243",
+	}
+
+	checkRecord(t, records[0], "/policyID", "119736", expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "c.csv"),
+		FileName: "c.csv",
+		Offset:   "243",
+	}
+}
+
+func TestLexicographical_DELIMITED_FORMAT_IGNORE_HEADER(t *testing.T) {
+
+	testDir := createTestDirectory(t)
+
+	defer deleteTestDirectory(t, testDir)
+
+	// Create a.csv,b.csv,c.csv with different mod times
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.csv"), sampleCsvData1)
+	createFileAndWriteContents(t, filepath.Join(testDir, "b.csv"), sampleCsvData2)
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.csv"), sampleCsvData3)
+
+	currentTime := time.Now()
+
+	os.Chtimes(
+		filepath.Join(testDir, "a.csv"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
+	os.Chtimes(
+		filepath.Join(testDir, "b.csv"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(2*time.Second).Nanoseconds()))
+	os.Chtimes(
+		filepath.Join(testDir, "c.csv"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
+
+	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "DELIMITED")
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.csvRecordType",
+		Value: delimitedrecord.ListMap,
+	})
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.csvHeader",
+		Value: delimitedrecord.IgnoreHeader,
+	})
+
+	stageContext := createStageContext(stageConfig)
+
+	// read first header line + 2 lines from a.csv
+	offset, records := createSpoolerAndRun(t, stageContext, "", 2)
+
+	if len(records) != 2 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 2)
+	}
+
+	expectedHeaders := map[string]string{
+		File:     filepath.Join(testDir, "a.csv"),
+		FileName: "a.csv",
+		Offset:   "243",
+	}
+
+	checkRecord(t, records[0], "/0", "119736", expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "a.csv"),
+		FileName: "a.csv",
+		Offset:   "365",
+	}
+
+	checkRecord(t, records[1], "/1", "FL", expectedHeaders)
+
+	// read first last(4th) line from a.csv
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
+
+	if len(records) != 1 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 1)
+	}
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "a.csv"),
+		FileName: "a.csv",
+		Offset:   "499",
+	}
+
+	checkRecord(t, records[0], "/0", "206893", expectedHeaders)
+
+	// read 3 lines + header from b.csv
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 3)
+
+	if len(records) != 2 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 3)
+	}
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "b.csv"),
+		FileName: "b.csv",
+		Offset:   "243",
+	}
+
+	checkRecord(t, records[0], "/0", "119736", expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "b.csv"),
+		FileName: "b.csv",
+		Offset:   "365",
+	}
+
+	checkRecord(t, records[1], "/1", "FL", expectedHeaders)
+
+	// read 1 line (with header) from c.csv
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 20)
+
+	if len(records) != 1 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 1)
+	}
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "c.csv"),
+		FileName: "c.csv",
+		Offset:   "243",
+	}
+
+	checkRecord(t, records[0], "/0", "119736", expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "c.csv"),
+		FileName: "c.csv",
+		Offset:   "243",
+	}
+}
+
+func TestLexicographical_DELIMITED_FORMAT_SKIP_START_LINES(t *testing.T) {
+
+	testDir := createTestDirectory(t)
+
+	defer deleteTestDirectory(t, testDir)
+
+	// Create a.csv,b.csv,c.csv with different mod times
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.csv"), sampleCsvData1)
+	createFileAndWriteContents(t, filepath.Join(testDir, "b.csv"), sampleCsvData2)
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.csv"), sampleCsvData3)
+
+	currentTime := time.Now()
+
+	os.Chtimes(
+		filepath.Join(testDir, "a.csv"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
+	os.Chtimes(
+		filepath.Join(testDir, "b.csv"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(2*time.Second).Nanoseconds()))
+	os.Chtimes(
+		filepath.Join(testDir, "c.csv"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
+
+	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "DELIMITED")
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.csvRecordType",
+		Value: delimitedrecord.ListMap,
+	})
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.csvHeader",
+		Value: delimitedrecord.IgnoreHeader,
+	})
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.csvSkipStartLines",
+		Value: float64(2),
+	})
+
+	stageContext := createStageContext(stageConfig)
+
+	// skip 2 lines and read 3rd from a.csv
+	offset, records := createSpoolerAndRun(t, stageContext, "", 1)
+
+	if len(records) != 1 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 1)
+	}
+
+	expectedHeaders := map[string]string{
+		File:     filepath.Join(testDir, "a.csv"),
+		FileName: "a.csv",
+		Offset:   "365",
+	}
+
+	checkRecord(t, records[0], "/0", "448094", expectedHeaders)
+
+	// read last(4th) line from a.csv
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
+
+	if len(records) != 1 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 1)
+	}
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "a.csv"),
+		FileName: "a.csv",
+		Offset:   "499",
+	}
+
+	checkRecord(t, records[0], "/0", "206893", expectedHeaders)
+
+	// skip 2 lines and read 3rd line from b.csv
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 3)
+
+	if len(records) != 1 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 3)
+	}
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "b.csv"),
+		FileName: "b.csv",
+		Offset:   "365",
+	}
+
+	checkRecord(t, records[0], "/0", "448094", expectedHeaders)
 }

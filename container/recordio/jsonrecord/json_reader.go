@@ -13,6 +13,7 @@
 package jsonrecord
 
 import (
+	"bytes"
 	"encoding/json"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/dataformats"
@@ -33,6 +34,22 @@ func (j *JsonReaderFactoryImpl) CreateReader(
 	var recordReader dataformats.RecordReader
 	recordReader = newRecordReader(context, reader, messageId)
 	return recordReader, nil
+}
+
+func (j *JsonReaderFactoryImpl) CreateRecord(
+	context api.StageContext,
+	lineText string,
+	recordId string,
+	headers []*api.Field,
+) (api.Record, error) {
+	recordBuffer := bytes.NewBufferString(lineText)
+	decoder := json.NewDecoder(recordBuffer)
+	var recordValue interface{}
+	err := decoder.Decode(&recordValue)
+	if err != nil {
+		return nil, err
+	}
+	return context.CreateRecord(recordId, recordValue)
 }
 
 type JsonReaderImpl struct {
