@@ -43,28 +43,6 @@ const (
 //Windows Event Log Reader - https://docs.microsoft.com/en-us/windows/desktop/wes/windows-event-log
 
 // Event Logging - https://docs.microsoft.com/en-us/windows/desktop/EventLog/event-logging
-
-type SIDType uint32
-
-//https://docs.microsoft.com/en-us/windows/desktop/CIMWin32Prov/win32-useraccount
-var SIDTypeStringMap = map[SIDType]string{
-	SIDType(1): "User",
-	SIDType(2): "Group",
-	SIDType(3): "Alias",
-	SIDType(4): "Well Known Group",
-	SIDType(5): "Alias",
-	SIDType(6): "Deleted Account",
-	SIDType(7): "Unknown",
-	SIDType(8): "Computer",
-}
-
-func (s SIDType) getSidTypeString() string {
-	if mapping, stringMappingPresent := SIDTypeStringMap[s]; stringMappingPresent {
-		return mapping
-	}
-	return ""
-}
-
 type EventLoggingReader struct {
 	*common.BaseStage
 	*wincommon.BaseEventLogReader
@@ -75,12 +53,6 @@ type EventLoggingReader struct {
 	buffer      []byte
 }
 
-type SIDInfo struct {
-	Name    string
-	Domain  string
-	SIDType SIDType
-}
-
 type EventLoggingRecord struct {
 	w32.EVENTLOGRECORD
 	SourceName   string
@@ -88,7 +60,7 @@ type EventLoggingRecord struct {
 	MsgStrings   []string
 	Message      string
 	Category     string
-	SIDInfo      *SIDInfo
+	SIDInfo      *wincommon.SIDInfo
 }
 
 func NewEventLoggingReader(
@@ -319,7 +291,7 @@ func (elreader *EventLoggingReader) createRecord(event EventLoggingRecord) (api.
 			"domain":   event.SIDInfo.Domain,
 			"sidType": map[string]interface{}{
 				"Type":         uint32(event.SIDInfo.SIDType),
-				"MappedString": event.SIDInfo.SIDType.getSidTypeString(),
+				"MappedString": event.SIDInfo.SIDType.GetSidTypeString(),
 			},
 		}
 	}
@@ -381,21 +353,21 @@ func (elreader *EventLoggingReader) read(flags uint32, offset uint32, maxRecords
 						event.UserSidLength,
 						event.RecordNumber)
 				} else {
-					log.Debugf("SID String : %s", sidString)
 					sid, err := syswin.StringToSid(sidString)
 					if err != nil {
 						log.WithError(err).Errorf("Error extracting SID from SID String %s, record Number %d",
 							sidString,
 							event.RecordNumber)
 					} else {
-						account, domain, sidType, err := sid.LookupAccount("")
-						if err != nil {
+						sidInfo, err := wincommon.GetSidInfo(sid)
+						if err == nil {
+							event.SIDInfo = sidInfo
+						} else {
 							log.WithError(err).Errorf(
 								"Error Lookup Account Name for SID String: %s record Number %d",
 								sidString,
-								event.RecordNumber)
-						} else {
-							event.SIDInfo = &SIDInfo{Name: account, Domain: domain, SIDType: SIDType(sidType)}
+								event.RecordNumber,
+							)
 						}
 					}
 				}

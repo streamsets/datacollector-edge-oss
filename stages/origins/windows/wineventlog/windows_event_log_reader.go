@@ -17,7 +17,6 @@ package wineventlog
 import (
 	"fmt"
 	"github.com/AllenDang/w32"
-	"github.com/clbanning/mxj"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
@@ -42,34 +41,11 @@ func (welr *WindowsEventLogReader) Open() error {
 }
 
 func (welr *WindowsEventLogReader) Read() ([]api.Record, error) {
-	records := make([]api.Record, 0)
-	eventStrings, err := welr.eventSubscriber.Read()
-	if err == nil {
-		for _, eventString := range eventStrings {
-			parsedXmlMap, err := mxj.NewMapXml([]byte(eventString))
-			if err == nil {
-				//TODO
-				record, err := welr.GetStageContext().CreateRecord("random", map[string]interface{}(parsedXmlMap))
-				if err != nil {
-					log.WithError(err).Errorf("Error creating record with parsedXml : %v", parsedXmlMap)
-					welr.GetStageContext().ReportError(err)
-				}
-				records = append(records, record)
-			} else {
-				log.WithError(err).Errorf("Error converting string %s to xml", eventString)
-				record, err := welr.GetStageContext().CreateRecord("random", eventString)
-				if err != nil {
-					log.WithError(err).Errorf("Error creating record for error")
-					welr.GetStageContext().ReportError(err)
-				} else {
-					welr.GetStageContext().ToError(err, record)
-				}
-			}
-		}
-	} else {
+	eventRecords, err := welr.eventSubscriber.Read()
+	if err != nil {
 		log.WithError(err).Error("Error reading from windows event log")
 	}
-	return records, err
+	return eventRecords, err
 }
 
 func (welr *WindowsEventLogReader) GetCurrentOffset() string {
@@ -91,19 +67,21 @@ func NewWindowsEventLogReader(
 	winEventLogConf wincommon.WinEventLogConf,
 ) (*WindowsEventLogReader, error) {
 	subscriptionMode := SubscriptionMode(winEventLogConf.SubscriptionMode)
-	query := fmt.Sprintf(`<QueryList> <Query Id="0"> <Select Path="%s">*</Select> </Query></QueryList>`, logName)
 
+	query := fmt.Sprintf(`<QueryList> <Query Id="0"> <Select Path="%s">*</Select> </Query></QueryList>`, logName)
+	log.Debugf("Querying windows Event log with %s", logName)
 	return &WindowsEventLogReader{
 		BaseStage:          baseStage,
 		BaseEventLogReader: &wincommon.BaseEventLogReader{Log: logName, Mode: mode},
 		eventSubscriber: NewWinEventSubscriber(
+			baseStage.GetStageContext(),
 			subscriptionMode,
 			query,
 			uint32(maxBatchSize),
 			lastSourceOffset,
 			mode,
 			bufferSize,
-			time.Duration(int64(winEventLogConf.MaxWaitTimeSecs)) * time.Second,
+			time.Duration(int64(winEventLogConf.MaxWaitTimeSecs))*time.Second,
 		),
 		offset: lastSourceOffset,
 	}, nil

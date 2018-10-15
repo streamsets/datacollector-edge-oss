@@ -40,9 +40,9 @@ func (pwes *PushWinEventSubscriber) Subscribe() error {
 				log.WithError(syscall.Errno(eventHandle)).Error("The subscription callback received the following Win32 error")
 			}
 		case EvtSubscribeActionDeliver:
-			eventString, err := pwes.renderEventXML(eventHandle)
+			eventRecord, err := pwes.renderer.RenderEvent(pwes.stageContext, eventHandle, pwes.bookMarkHandle)
 			if err == nil {
-				pwes.eventsQueue.Put(eventString)
+				pwes.eventsQueue.Put(eventRecord)
 			} else {
 				log.WithError(err).Errorf("Error rendering from event handle %d", eventHandle)
 			}

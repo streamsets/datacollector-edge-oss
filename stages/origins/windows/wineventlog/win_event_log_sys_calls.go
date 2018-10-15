@@ -18,10 +18,14 @@ package wineventlog
 import (
 	"bytes"
 	"encoding/binary"
-	//"github.com/clbanning/mxj"
+	"errors"
+	"fmt"
+	"github.com/go-ole/go-ole"
 	log "github.com/sirupsen/logrus"
+	wincommon "github.com/streamsets/datacollector-edge/stages/origins/windows/common"
 	syswin "golang.org/x/sys/windows"
 	"syscall"
+	"time"
 	"unsafe"
 )
 
@@ -35,11 +39,37 @@ var (
 	evtNext           = winEvtDLL.NewProc("EvtNext")
 	evtCreateBookmark = winEvtDLL.NewProc("EvtCreateBookmark")
 	evtUpdateBookmark = winEvtDLL.NewProc("EvtUpdateBookmark")
+	//evtOpenPublisherEnum = winEvtDLL.NewProc("EvtOpenPublisherEnum")
+	//evtNextPublisherId = winEvtDLL.NewProc("EvtNextPublisherId")
+	evtOpenPublisherMetadata = winEvtDLL.NewProc("EvtOpenPublisherMetadata")
+	evtFormatMessage         = winEvtDLL.NewProc("EvtFormatMessage")
+	evtCreateRenderContext   = winEvtDLL.NewProc("EvtCreateRenderContext")
 )
 
 type EventHandle uintptr
 type SubscriptionHandle uintptr
 type BookmarkHandle uintptr
+type EventRenderContextHandle uintptr
+type PublisherMetadataHandle uintptr
+
+func (e EventHandle) Close() {
+	EvtClose(uintptr(e))
+}
+
+func (sh SubscriptionHandle) Close() {
+	EvtClose(uintptr(sh))
+}
+
+func (bh BookmarkHandle) Close() {
+	EvtClose(uintptr(bh))
+}
+
+func (erch EventRenderContextHandle) Close() {
+	EvtClose(uintptr(erch))
+}
+func (pmh PublisherMetadataHandle) Close() {
+	EvtClose(uintptr(pmh))
+}
 
 //https://docs.microsoft.com/en-us/windows/desktop/api/winevt/ne-winevt-_evt_subscribe_flags
 //From winevt.h
@@ -156,6 +186,7 @@ func processSysCallReturn(r1 uintptr, e1 error) error {
 	return err
 }
 
+//https://docs.microsoft.com/en-us/windows/desktop/api/winevt/nf-winevt-evtsubscribe
 func EvtSubscribe(
 	signalEventHandle syswin.Handle,
 	channelPath string,
@@ -208,12 +239,13 @@ func EvtSubscribe(
 	return SubscriptionHandle(r1), err
 }
 
+//https://docs.microsoft.com/en-us/windows/desktop/api/winevt/nf-winevt-evtrender
 func EvtRender(
-	context EventHandle,
+	context EventRenderContextHandle,
 	fragment EventHandle,
 	flags EvtRenderFlag,
 	bufferSize uint32,
-	bufferPtr unsafe.Pointer,
+	bufferPtr *byte,
 	bufferUsedPtr *uint32,
 	PropertyCountPtr *uint32,
 ) error {
@@ -234,13 +266,14 @@ func EvtRender(
 		uintptr(fragment),
 		uintptr(flags),
 		uintptr(bufferSize),
-		uintptr(bufferPtr),
+		uintptr(unsafe.Pointer(bufferPtr)),
 		uintptr(unsafe.Pointer(bufferUsedPtr)),
 		uintptr(unsafe.Pointer(PropertyCountPtr)),
 	)
 	return processSysCallReturn(r1, e1)
 }
 
+//https://docs.microsoft.com/en-us/windows/desktop/api/winevt/nf-winevt-evtclose
 func EvtClose(handle uintptr) {
 	////BOOL EvtClose(
 	////  EVT_HANDLE Object
@@ -253,6 +286,7 @@ func EvtClose(handle uintptr) {
 	}
 }
 
+//https://docs.microsoft.com/en-us/windows/desktop/api/winevt/nf-winevt-evtnext
 func EvtNext(resultSet SubscriptionHandle, eventsSize uint32, events []EventHandle, returnedHandles *uint32) error {
 	//Don't wait in EvtNext
 	waitTime := uint32(0)
@@ -276,6 +310,7 @@ func EvtNext(resultSet SubscriptionHandle, eventsSize uint32, events []EventHand
 	return processSysCallReturn(r1, e1)
 }
 
+//https://docs.microsoft.com/en-us/windows/desktop/api/winevt/nf-winevt-evtcreatebookmark
 func EvtCreateBookmark(bookmarkXML string) (BookmarkHandle, error) {
 	var bookmarkXMLPtr uintptr
 	var err error
@@ -294,6 +329,7 @@ func EvtCreateBookmark(bookmarkXML string) (BookmarkHandle, error) {
 	return bookMarkHandle, err
 }
 
+//https://docs.microsoft.com/en-us/windows/desktop/api/winevt/nf-winevt-evtupdatebookmark
 func EvtUpdateBookmark(bookmarkHandle BookmarkHandle, eventHandle EventHandle) error {
 	//BOOL EvtUpdateBookmark(
 	//  EVT_HANDLE Bookmark,
@@ -301,6 +337,426 @@ func EvtUpdateBookmark(bookmarkHandle BookmarkHandle, eventHandle EventHandle) e
 	//);
 	r1, _, e1 := evtUpdateBookmark.Call(uintptr(bookmarkHandle), uintptr(eventHandle))
 	return processSysCallReturn(r1, e1)
+}
+
+//https://docs.microsoft.com/en-us/windows/desktop/wes/formatting-event-messages
+
+//https://docs.microsoft.com/en-us/windows/desktop/api/winevt/nf-winevt-evtopenpublishermetadata
+func EvtOpenPublisherMetadata(publisherId string) (PublisherMetadataHandle, error) {
+	publisherIdPtr, err := convertStringToUtf16ToUintPtr(publisherId)
+	publisherMetadataHandle := PublisherMetadataHandle(0)
+	if err == nil {
+		//EVT_HANDLE EvtOpenPublisherMetadata(
+		//  EVT_HANDLE Session,
+		//  LPCWSTR    PublisherId,
+		//  LPCWSTR    LogFilePath,
+		//  LCID       Locale,
+		//  DWORD      Flags
+		//);
+		r1, _, e1 := evtOpenPublisherMetadata.Call(0, publisherIdPtr, 0, 0, 0)
+		err = processSysCallReturn(r1, e1)
+		publisherMetadataHandle = PublisherMetadataHandle(r1)
+	}
+	return publisherMetadataHandle, err
+}
+
+//typedef enum _EVT_FORMAT_MESSAGE_FLAGS {
+//  EvtFormatMessageEvent      = 1,
+//  EvtFormatMessageLevel      = 2,
+//  EvtFormatMessageTask       = 3,
+//  EvtFormatMessageOpcode     = 4,
+//  EvtFormatMessageKeyword    = 5,
+//  EvtFormatMessageChannel    = 6,
+//  EvtFormatMessageProvider   = 7,
+//  EvtFormatMessageId         = 8,
+//  EvtFormatMessageXml        = 9
+//} EVT_FORMAT_MESSAGE_FLAGS;
+
+type EvtFormatMessageFlag uint32
+
+const (
+	EvtFormatMessageEvent = EvtFormatMessageFlag(iota + 1)
+	EvtFormatMessageLevel
+	EvtFormatMessageTask
+	EvtFormatMessageOpcode
+	EvtFormatMessageKeyword
+	EvtFormatMessageChannel
+	EvtFormatMessageProvider
+	EvtFormatMessageId
+	EvtFormatMessageXml
+)
+
+// https://docs.microsoft.com/en-us/windows/desktop/api/winevt/nf-winevt-evtformatmessage
+func EvtFormatMessage(
+	publisherMetadataHandle PublisherMetadataHandle,
+	eventHandle EventHandle,
+	flags EvtFormatMessageFlag,
+	bufferSize uint32,
+	bufferPtr *byte,
+	bufferUsed *uint32,
+) error {
+	//BOOL EvtFormatMessage(
+	//  EVT_HANDLE   PublisherMetadata,
+	//  EVT_HANDLE   Event,
+	//  DWORD        MessageId,
+	//  DWORD        ValueCount,
+	//  PEVT_VARIANT Values,
+	//  DWORD        Flags,
+	//  DWORD        BufferSize,
+	//  LPWSTR       Buffer,
+	//  PDWORD       BufferUsed
+	//);
+
+	r1, _, e1 := evtFormatMessage.Call(
+		uintptr(publisherMetadataHandle),
+		uintptr(eventHandle),
+		0,
+		0,
+		0,
+		uintptr(flags),
+		uintptr(bufferSize),
+		uintptr(unsafe.Pointer(bufferPtr)),
+		uintptr(unsafe.Pointer(bufferUsed)),
+	)
+	return processSysCallReturn(r1, e1)
+}
+
+//typedef enum _EVT_RENDER_CONTEXT_FLAGS {
+//  EvtRenderContextValues   = 0,
+//  EvtRenderContextSystem   = 1,
+//  EvtRenderContextUser     = 2
+//} EVT_RENDER_CONTEXT_FLAGS;
+type EvtRenderContextFlag uint32
+
+const (
+	EvtRenderContextValues = EvtRenderContextFlag(iota)
+	EvtRenderContextSystem
+	EvtRenderContextUser
+)
+
+func EvtCreateRenderContext(flags EvtRenderContextFlag) (EventRenderContextHandle, error) {
+	//EVT_HANDLE EvtCreateRenderContext(
+	//  DWORD   ValuePathsCount,
+	//  LPCWSTR *ValuePaths,
+	//  DWORD   Flags
+	//);
+	eventRenderContextHandle := EventRenderContextHandle(0)
+	r1, _, e1 := evtCreateRenderContext.Call(0, 0, uintptr(flags))
+	err := processSysCallReturn(r1, e1)
+	if err == nil {
+		eventRenderContextHandle = EventRenderContextHandle(r1)
+	}
+	return eventRenderContextHandle, err
+}
+
+//typedef enum _EVT_SYSTEM_PROPERTY_ID {
+//  EvtSystemProviderName        = 0,
+//  EvtSystemProviderGuid,
+//  EvtSystemEventID,
+//  EvtSystemQualifiers,
+//  EvtSystemLevel,
+//  EvtSystemTask,
+//  EvtSystemOpcode,
+//  EvtSystemKeywords,
+//  EvtSystemTimeCreated,
+//  EvtSystemEventRecordId,
+//  EvtSystemActivityID,
+//  EvtSystemRelatedActivityID,
+//  EvtSystemProcessID,
+//  EvtSystemThreadID,
+//  EvtSystemChannel,
+//  EvtSystemComputer,
+//  EvtSystemUserID,
+//  EvtSystemVersion,
+//  EvtSystemPropertyIdEND
+//} EVT_SYSTEM_PROPERTY_ID;
+
+type EvtSystemPropertyId uint32
+
+const (
+	EvtSystemProviderName = EvtSystemPropertyId(iota)
+	EvtSystemProviderGuid
+	EvtSystemEventID
+	EvtSystemQualifiers
+	EvtSystemLevel
+	EvtSystemTask
+	EvtSystemOpcode
+	EvtSystemKeywords
+	EvtSystemTimeCreated
+	EvtSystemEventRecordId
+	EvtSystemActivityID
+	EvtSystemRelatedActivityID
+	EvtSystemProcessID
+	EvtSystemThreadID
+	EvtSystemChannel
+	EvtSystemComputer
+	EvtSystemUserID
+	EvtSystemVersion
+	EvtSystemPropertyIdEND
+)
+
+var (
+	SystemPropertyIds = []string{
+		"Provider Name",
+		"Provider Guid",
+		"Event Id",
+		"Qualifiers",
+		"Level",
+		"Task",
+		"Opcode",
+		"Keywords",
+		"TimeCreated",
+		"EventRecordId",
+		"ActivityId",
+		"RelatedActivityId",
+		"ProcessId",
+		"ThreadId",
+		"Channel",
+		"Computer",
+		"UserId",
+		"Version",
+	}
+)
+
+//typedef enum _EVT_VARIANT_TYPE {
+//  EvtVarTypeNull         = 0,
+//  EvtVarTypeString       = 1,
+//  EvtVarTypeAnsiString   = 2,
+//  EvtVarTypeSByte        = 3,
+//  EvtVarTypeByte         = 4,
+//  EvtVarTypeInt16        = 5,
+//  EvtVarTypeUInt16       = 6,
+//  EvtVarTypeInt32        = 7,
+//  EvtVarTypeUInt32       = 8,
+//  EvtVarTypeInt64        = 9,
+//  EvtVarTypeUInt64       = 10,
+//  EvtVarTypeSingle       = 11,
+//  EvtVarTypeDouble       = 12,
+//  EvtVarTypeBoolean      = 13,
+//  EvtVarTypeBinary       = 14,
+//  EvtVarTypeGuid         = 15,
+//  EvtVarTypeSizeT        = 16,
+//  EvtVarTypeFileTime     = 17,
+//  EvtVarTypeSysTime      = 18,
+//  EvtVarTypeSid          = 19,
+//  EvtVarTypeHexInt32     = 20,
+//  EvtVarTypeHexInt64     = 21,
+//  EvtVarTypeEvtHandle    = 32,
+//  EvtVarTypeEvtXml       = 35
+//} EVT_VARIANT_TYPE;
+type EvtVariantType uint32
+
+const (
+	EvtVarTypeNull = EvtVariantType(iota)
+	EvtVarTypeString
+	EvtVarTypeAnsiString
+	EvtVarTypeSByte
+	EvtVarTypeByte
+	EvtVarTypeInt16
+	EvtVarTypeUInt16
+	EvtVarTypeInt32
+	EvtVarTypeUInt32
+	EvtVarTypeInt64
+	EvtVarTypeUInt64
+	EvtVarTypeSingle
+	EvtVarTypeDouble
+	EvtVarTypeBoolean
+	EvtVarTypeBinary
+	EvtVarTypeGuid
+	EvtVarTypeSizeT
+	EvtVarTypeFileTime
+	EvtVarTypeSysTime
+	EvtVarTypeSid
+	EvtVarTypeHexInt32
+	EvtVarTypeHexInt64
+	EvtVarTypeEvtHandle = EvtVariantType(32)
+	EvtVarTypeEvtXml    = EvtVariantType(35)
+)
+
+//typedef struct _EVT_VARIANT {
+//  union {
+//    BOOL       BooleanVal;
+//    INT8       SByteVal;
+//    INT16      Int16Val;
+//    INT32      Int32Val;
+//    INT64      Int64Val;
+//    UINT8      ByteVal;
+//    UINT16     UInt16Val;
+//    UINT32     UInt32Val;
+//    UINT64     UInt64Val;
+//    float      SingleVal;
+//    double     DoubleVal;
+//    ULONGLONG  FileTimeVal;
+//    SYSTEMTIME *SysTimeVal;
+//    GUID       *GuidVal;
+//    LPCWSTR    StringVal;
+//    LPCSTR     AnsiStringVal;
+//    PBYTE      BinaryVal;
+//    PSID       SidVal;
+//    size_t     SizeTVal;
+//    BOOL       *BooleanArr;
+//    INT8       *SByteArr;
+//    INT16      *Int16Arr;
+//    INT32      *Int32Arr;
+//    INT64      *Int64Arr;
+//    UINT8      *ByteArr;
+//    UINT16     *UInt16Arr;
+//    UINT32     *UInt32Arr;
+//    UINT64     *UInt64Arr;
+//    float      *SingleArr;
+//    double     *DoubleArr;
+//    FILETIME   *FileTimeArr;
+//    SYSTEMTIME *SysTimeArr;
+//    GUID       *GuidArr;
+//    LPWSTR     *StringArr;
+//    LPSTR      *AnsiStringArr;
+//    PSID       *SidArr;
+//    size_t     *SizeTArr;
+//    EVT_HANDLE EvtHandleVal;
+//    LPCWSTR    XmlVal;
+//    LPCWSTR    *XmlValArr;
+//  };
+//  DWORD Count;
+//  DWORD Type;
+//} EVT_VARIANT, *PEVT_VARIANT;
+
+//void printSize(){
+//     printf("Size:%d\n", sizeof(struct __EVT_VARIANT));
+//}
+//
+// The above C code returns size has 16 bytes, So:
+// Union - (16 - (4 + 4)) = 8 bytes
+// Count - DWORD(uint32) - 32 bits - 4 bytes
+// Type  - DWORD(uint32) - 32 bits - 4 bytes
+
+type EvtVariant struct {
+	data           [8]byte //8 bytes
+	count          uint32
+	evtVariantType EvtVariantType
+}
+
+func (evtVariant *EvtVariant) GetData() interface{} {
+	buf := evtVariant.data
+	var err error
+	var returnVal interface{}
+	switch evtVariant.evtVariantType {
+	case EvtVarTypeNull:
+		return nil
+	case EvtVarTypeByte:
+		return evtVariant.data[0]
+	case EvtVarTypeBoolean:
+		boolVal := *(*bool)(unsafe.Pointer(&buf[0]))
+		if err == nil {
+			returnVal = boolVal
+		}
+	case EvtVarTypeUInt16:
+		returnVal = binary.LittleEndian.Uint16(buf[:])
+	case EvtVarTypeUInt32:
+		returnVal = binary.LittleEndian.Uint32(buf[:])
+	case EvtVarTypeUInt64:
+		returnVal = binary.LittleEndian.Uint64(buf[:])
+	case EvtVarTypeInt16:
+		returnVal = *(*int16)(unsafe.Pointer(&buf[0]))
+	case EvtVarTypeInt32:
+		returnVal = *(*int32)(unsafe.Pointer(&buf[0]))
+	case EvtVarTypeInt64:
+		returnVal = *(*int64)(unsafe.Pointer(&buf[0]))
+	case EvtVarTypeHexInt32:
+		uint32Val := binary.LittleEndian.Uint32(buf[:])
+		//Formatting as a hex string for display
+		returnVal = fmt.Sprintf("%#x", uint32Val)
+	case EvtVarTypeHexInt64:
+		uint64Val := binary.LittleEndian.Uint64(buf[:])
+		//Formatting as a hex string for display
+		returnVal = fmt.Sprintf("%#x", uint64Val)
+	case EvtVarTypeFileTime:
+		fileTimeVal := *(*syswin.Filetime)(unsafe.Pointer(&buf[0]))
+		returnVal = time.Unix(0, fileTimeVal.Nanoseconds())
+	case EvtVarTypeSysTime:
+		st := *(*syswin.Systemtime)(unsafe.Pointer(&buf[0]))
+		returnVal = time.Date(
+			int(st.Year),
+			time.Month(int(st.Month)),
+			int(st.Day),
+			int(st.Hour),
+			int(st.Minute),
+			int(st.Second),
+			int(st.Milliseconds*1000),
+			time.Now().Location(),
+		)
+	case EvtVarTypeSingle:
+		float32Val := *(*float32)(unsafe.Pointer(&buf[0]))
+		if err == nil {
+			returnVal = float32Val
+		}
+	case EvtVarTypeDouble:
+		float64Val := *(*float64)(unsafe.Pointer(&buf[0]))
+		if err == nil {
+			returnVal = float64Val
+		}
+	case EvtVarTypeString:
+		//LPCWSTR - ptr 2 bytes wide string
+		ptr := uintptr(binary.LittleEndian.Uint64(buf[:]))
+		byteIncrement := unsafe.Sizeof(byte(0))
+		byteData := make([]byte, int(evtVariant.count*2))
+		//Count * 2 because -> count will represent 2 bytes (as it is uint16)
+		for i := 0; i < int(evtVariant.count*2); i++ {
+			byteAddress := (*byte)(unsafe.Pointer(ptr))
+			byteData[i] = *byteAddress
+			ptr = ptr + byteIncrement
+		}
+		returnVal, err = ExtractString(byteData)
+	case EvtVarTypeBinary:
+		ptr := uintptr(binary.LittleEndian.Uint64(buf[:]))
+		byteIncrement := unsafe.Sizeof(byte(0))
+		byteData := make([]byte, int(evtVariant.count))
+		for i := 0; i < int(evtVariant.count); i++ {
+			byteAddress := (*byte)(unsafe.Pointer(ptr))
+			byteData[i] = *byteAddress
+			ptr = ptr + byteIncrement
+		}
+		returnVal = byteData
+	case EvtVarTypeSid:
+		ptr := uintptr(binary.LittleEndian.Uint64(buf[:]))
+		sidPtr := (*syswin.SID)(unsafe.Pointer(ptr))
+		var sidInfo *wincommon.SIDInfo
+		sidInfo, err = wincommon.GetSidInfo(sidPtr)
+		if err == nil {
+			returnVal = map[string]interface{}{
+				"username": sidInfo.Name,
+				"domain":   sidInfo.Domain,
+				"sidType": map[string]interface{}{
+					"Type":         uint32(sidInfo.SIDType),
+					"MappedString": sidInfo.SIDType.GetSidTypeString(),
+				},
+			}
+		} else {
+			previousError := err
+			returnVal, err = sidPtr.String()
+			if err != nil {
+				log.WithError(err).Error("Error decoding SID")
+				returnVal = nil
+			} else {
+				log.WithError(previousError).Warn("Error looking up SID info")
+			}
+		}
+	case EvtVarTypeGuid:
+		ptr := uintptr(binary.LittleEndian.Uint64(buf[:]))
+		gidPtr := (*ole.GUID)(unsafe.Pointer(ptr))
+		returnVal = gidPtr.String()
+	default:
+		err = errors.New("unsupported data type")
+		returnVal = buf[:]
+	}
+
+	if err != nil {
+		log.WithError(err).WithFields(log.Fields{
+			"type":     evtVariant.evtVariantType,
+			"count":    evtVariant.count,
+			"byteData": evtVariant.data,
+		}).Warn("Error decoding data")
+	}
+	return returnVal
 }
 
 //https://docs.microsoft.com/en-us/windows/desktop/api/synchapi/nf-synchapi-waitforsingleobject

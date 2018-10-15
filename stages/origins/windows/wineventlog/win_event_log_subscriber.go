@@ -17,19 +17,17 @@ package wineventlog
 import (
 	"github.com/Workiva/go-datastructures/queue"
 	log "github.com/sirupsen/logrus"
+	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/stages/origins/windows/common"
 	"golang.org/x/sys/windows"
-	"syscall"
 	"time"
-	"unsafe"
 )
 
 type SubscriptionMode string
 
 const (
-	PushSubscription  = SubscriptionMode("PUSH")
-	PullSubscription  = SubscriptionMode("PULL")
-	BufferSizeDefault = uint32(8 * 1024)
+	PushSubscription = SubscriptionMode("PUSH")
+	PullSubscription = SubscriptionMode("PULL")
 )
 
 type WinEventSubscriber interface {
@@ -38,7 +36,7 @@ type WinEventSubscriber interface {
 	Subscribe() error
 	/** Read a singl event
 	 */
-	Read() ([]string, error)
+	Read() ([]api.Record, error)
 
 	/** Get BookmarkXML
 	 */
@@ -50,6 +48,7 @@ type WinEventSubscriber interface {
 }
 
 type BaseWinEventSubscriber struct {
+	stageContext         api.StageContext
 	eventsQueue          *queue.Queue
 	query                string
 	maxNoOfEvents        uint32
@@ -58,64 +57,9 @@ type BaseWinEventSubscriber struct {
 	eventReaderMode      common.EventLogReaderMode
 	subscriptionCallback EvtSubscribeCallback
 	signalEventHandle    windows.Handle
-	bufferSize           int
-	bufferForRender      []byte
 	maxWaitTime          time.Duration
 	bookMarkHandle       BookmarkHandle
-}
-
-func (bwes *BaseWinEventSubscriber) renderEventXML(eventHandle EventHandle) (string, error) {
-	dwBufferUsed := uint32(0)
-	dwPropertyCount := uint32(0)
-	var eventString string
-	err := EvtRender(EventHandle(0), eventHandle, EvtRenderEventXml, uint32(len(bwes.bufferForRender)),
-		unsafe.Pointer(&bwes.bufferForRender[0]), &dwBufferUsed, &dwPropertyCount)
-	if err != nil && err == ErrorInsufficientBuffer && bwes.bufferSize == -1 {
-		log.Infof(
-			"Insufficient Buffer with length: %d. Retrying with Buffer of size: %d",
-			len(bwes.bufferForRender),
-			dwBufferUsed,
-		)
-		bwes.bufferForRender = make([]byte, dwBufferUsed+1) //Creating a new buffer of size determined by
-		err = EvtRender(EventHandle(0), eventHandle, EvtRenderEventXml, uint32(len(bwes.bufferForRender)),
-			unsafe.Pointer(&bwes.bufferForRender[0]), &dwBufferUsed, &dwPropertyCount)
-	}
-	if err != nil {
-		log.WithError(err).Errorf("Event Render Failed %d", err.(syscall.Errno))
-		return "", err
-	} else {
-		eventBytes := bwes.bufferForRender[:dwBufferUsed]
-		eventString, err = ExtractString(eventBytes)
-		//Update Bookmark
-		if err == nil {
-			err = EvtUpdateBookmark(bwes.bookMarkHandle, eventHandle)
-			if err != nil {
-				log.WithError(err).Error("Error Updating bookmark")
-			}
-		}
-	}
-	return eventString, err
-}
-
-func (bwes *BaseWinEventSubscriber) renderAndUpdateBookmark() error {
-	dwBufferUsed := uint32(0)
-	dwPropertyCount := uint32(0)
-	//Render bookmark XML
-	err := EvtRender(
-		EventHandle(0),
-		EventHandle(bwes.bookMarkHandle),
-		EvtRenderBookmark,
-		uint32(len(bwes.bufferForRender)),
-		unsafe.Pointer(&bwes.bufferForRender[0]),
-		&dwBufferUsed,
-		&dwPropertyCount,
-	)
-	if err == nil {
-		bookMarkXmlBytes := bwes.bufferForRender[:dwBufferUsed]
-		//Store bookmark xml for offset management
-		bwes.bookMark, err = ExtractString(bookMarkXmlBytes)
-	}
-	return err
+	renderer             *WinEventLogRenderer
 }
 
 func (bwes *BaseWinEventSubscriber) getBookmarkHandleAndFlags() (BookmarkHandle, EvtSubscribeFlag, error) {
@@ -168,22 +112,21 @@ func (bwes *BaseWinEventSubscriber) Subscribe() error {
 	return err
 }
 
-func (bwes *BaseWinEventSubscriber) Read() ([]string, error) {
+func (bwes *BaseWinEventSubscriber) Read() ([]api.Record, error) {
 	var err error
-	eventStrings := make([]string, 0)
+	eventRecords := make([]api.Record, 0)
 	if !bwes.eventsQueue.Empty() {
-		var vals []interface{}
-		vals, err = bwes.eventsQueue.Poll(int64(bwes.maxNoOfEvents), bwes.maxWaitTime)
+		var eventRecordsFromQueue []interface{}
+		eventRecordsFromQueue, err = bwes.eventsQueue.Poll(int64(bwes.maxNoOfEvents), bwes.maxWaitTime)
 		if err == queue.ErrTimeout {
 			log.Debugf("Windows Event Log Queue wait time out, no events")
 			err = nil
 		} else if err == nil {
-			if len(vals) > 0 {
-				for _, val := range vals {
-					eventString := val.(string)
-					eventStrings = append(eventStrings, eventString)
+			if len(eventRecordsFromQueue) > 0 {
+				for _, eventRecordFromQueue := range eventRecordsFromQueue {
+					eventRecords = append(eventRecords, eventRecordFromQueue.(api.Record))
 				}
-				err = bwes.renderAndUpdateBookmark()
+				bwes.bookMark, err = bwes.renderer.RenderBookmark(bwes.bookMarkHandle)
 				if err != nil {
 					log.WithError(err).Errorf("Error rendering bookmark xml")
 				}
@@ -194,7 +137,7 @@ func (bwes *BaseWinEventSubscriber) Read() ([]string, error) {
 	} else {
 		log.Debugf("Windows Event Log Queue is empty")
 	}
-	return eventStrings, err
+	return eventRecords, err
 }
 
 func (bwes *BaseWinEventSubscriber) GetBookmark() string {
@@ -206,20 +149,21 @@ func (bwes *BaseWinEventSubscriber) Close() {
 		bwes.eventsQueue.Dispose()
 	}
 	if bwes.signalEventHandle != 0 {
-		log.Debug("Closing Signal Handle")
 		windows.CloseHandle(bwes.signalEventHandle)
 	}
 	if bwes.subscriptionHandle != 0 {
-		log.Debug("Closing Subscription Handle")
-		EvtClose(uintptr(bwes.subscriptionHandle))
+		bwes.subscriptionHandle.Close()
 	}
 	if bwes.bookMarkHandle != 0 {
-		log.Debug("Closing Bookmark Handle")
-		EvtClose(uintptr(bwes.bookMarkHandle))
+		bwes.bookMarkHandle.Close()
+	}
+	if bwes.renderer != nil {
+		bwes.renderer.Close()
 	}
 }
 
 func NewWinEventSubscriber(
+	stageContext api.StageContext,
 	subscriptionMode SubscriptionMode,
 	query string,
 	maxNumberOfEvents uint32,
@@ -228,19 +172,15 @@ func NewWinEventSubscriber(
 	bufferSize int,
 	maxWaitTime time.Duration,
 ) WinEventSubscriber {
-	bufferSizeValue := int(BufferSizeDefault)
-	if bufferSize != -1 {
-		bufferSizeValue = bufferSize
-	}
 	baseEventSubscriber := &BaseWinEventSubscriber{
+		stageContext:    stageContext,
 		query:           query,
 		maxNoOfEvents:   maxNumberOfEvents,
 		eventsQueue:     queue.New(int64(maxNumberOfEvents)),
 		bookMark:        bookMark,
 		eventReaderMode: eventReaderMode,
-		bufferSize:      bufferSize,
-		bufferForRender: make([]byte, bufferSizeValue),
 		maxWaitTime:     maxWaitTime,
+		renderer:        NewWinEventLogRenderer(bufferSize),
 	}
 
 	if subscriptionMode == PushSubscription {
