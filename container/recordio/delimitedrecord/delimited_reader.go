@@ -22,7 +22,6 @@ import (
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"io"
-	"strings"
 )
 
 const (
@@ -68,27 +67,6 @@ func (j *DelimitedReaderFactoryImpl) CreateReader(
 	recordReader.header = j.CsvHeader
 	recordReader.skipStartLines = int(j.CsvSkipStartLines)
 	return recordReader, nil
-}
-
-func (j *DelimitedReaderFactoryImpl) CreateRecord(
-	context api.StageContext,
-	lineText string,
-	messageId string,
-	headers []*api.Field,
-) (api.Record, error) {
-	sep := ","
-	if j.CsvFileFormat == Custom && len(j.CsvCustomDelimiter) > 0 {
-		sep = j.CsvCustomDelimiter
-	}
-	columns := strings.Split(lineText, sep)
-	return createRecord(
-		context,
-		messageId,
-		1,
-		j.CsvRecordType,
-		columns,
-		headers,
-	)
 }
 
 type DelimitedReaderImpl struct {

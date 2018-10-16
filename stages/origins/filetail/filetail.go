@@ -20,7 +20,6 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
-	"github.com/streamsets/datacollector-edge/container/recordio"
 	"github.com/streamsets/datacollector-edge/container/recordio/delimitedrecord"
 	"github.com/streamsets/datacollector-edge/container/util"
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
@@ -112,8 +111,6 @@ func (f *FileTailOrigin) Produce(
 ) (*string, error) {
 	log.WithField("lastSourceOffset", lastSourceOffset).Debug("Produce called")
 
-	recordReaderFactory := f.Conf.DataFormatConfig.RecordReaderFactory
-
 	tailConfig := tail.Config{
 		MustExist: true,
 		Follow:    true,
@@ -154,7 +151,7 @@ func (f *FileTailOrigin) Produce(
 							break
 						}
 					}
-					err = f.parseLine(recordReaderFactory, line.Text, batchMaker, &recordCount)
+					err = f.parseLine(line.Text, batchMaker, &recordCount)
 					if err != nil {
 						f.GetStageContext().ReportError(err)
 					}
@@ -179,7 +176,7 @@ func (f *FileTailOrigin) Produce(
 		}
 	}
 
-	f.stopTailing(tailObj, recordReaderFactory, batchMaker, &recordCount)
+	f.stopTailing(tailObj, batchMaker, &recordCount)
 
 	stringOffset := strconv.FormatInt(currentOffset, 10)
 
@@ -187,13 +184,12 @@ func (f *FileTailOrigin) Produce(
 }
 
 func (f *FileTailOrigin) parseLine(
-	recordReaderFactory recordio.RecordReaderFactory,
 	lineText string,
 	batchMaker api.BatchMaker,
 	recordCount *float64,
 ) error {
 	sourceId := common.CreateRecordId("fileTail", int(*recordCount))
-	record, err := recordReaderFactory.CreateRecord(
+	record, err := f.Conf.DataFormatConfig.RecordCreator.CreateRecord(
 		f.GetStageContext(),
 		strings.Replace(lineText, "\n", "", 1),
 		sourceId,
@@ -210,7 +206,6 @@ func (f *FileTailOrigin) parseLine(
 
 func (f *FileTailOrigin) stopTailing(
 	tailObj *tail.Tail,
-	recordReaderFactory recordio.RecordReaderFactory,
 	batchMaker api.BatchMaker,
 	recordCount *float64,
 ) error {
@@ -224,7 +219,7 @@ func (f *FileTailOrigin) stopTailing(
 			if !ok {
 				end = true
 			} else if line != nil {
-				err := f.parseLine(recordReaderFactory, line.Text, batchMaker, recordCount)
+				err := f.parseLine(line.Text, batchMaker, recordCount)
 				if err != nil {
 					return err
 				}
