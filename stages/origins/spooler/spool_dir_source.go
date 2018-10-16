@@ -211,7 +211,7 @@ func (s *SpoolDirSource) createRecordAndAddToBatch(
 ) error {
 	fInfo := s.spooler.getCurrentFileInfo()
 	recordId := fInfo.getFullPath() + "::" + strconv.FormatInt(fInfo.getOffsetToRead(), 10)
-	record, err := recordReaderFactory.CreateRecord(
+	record, err := s.Conf.DataFormatConfig.RecordCreator.CreateRecord(
 		s.GetStageContext(),
 		lineText,
 		recordId,

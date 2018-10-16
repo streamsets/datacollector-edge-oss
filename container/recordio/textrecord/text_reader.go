@@ -36,15 +36,6 @@ func (j *TextReaderFactoryImpl) CreateReader(
 	return recordReader, nil
 }
 
-func (j *TextReaderFactoryImpl) CreateRecord(
-	context api.StageContext,
-	lineText string,
-	recordId string,
-	columns []*api.Field,
-) (api.Record, error) {
-	return context.CreateRecord(recordId, map[string]interface{}{DefaultTextField: lineText})
-}
-
 type TextReaderImpl struct {
 	context   api.StageContext
 	reader    *bufio.Reader

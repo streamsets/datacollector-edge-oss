@@ -10,38 +10,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package recordio
+package textrecord
 
 import (
 	"github.com/streamsets/datacollector-edge/api"
-	"github.com/streamsets/datacollector-edge/api/dataformats"
-	"io"
 )
 
-type RecordReaderFactory interface {
-	CreateReader(context api.StageContext, reader io.Reader, messageId string) (dataformats.RecordReader, error)
+type RecordCreator struct {
 }
 
-type RecordWriterFactory interface {
-	CreateWriter(context api.StageContext, writer io.Writer) (dataformats.RecordWriter, error)
-}
-
-type Flusher interface {
-	Flush() error
-}
-
-func Flush(v interface{}) error {
-	c, ok := v.(Flusher)
-	if ok {
-		return c.Flush()
-	}
-	return nil
-}
-
-func Close(v interface{}) error {
-	c, ok := v.(io.Closer)
-	if ok {
-		return c.Close()
-	}
-	return nil
+func (r *RecordCreator) CreateRecord(
+	context api.StageContext,
+	lineText string,
+	messageId string,
+	headers []*api.Field,
+) (api.Record, error) {
+	return context.CreateRecord(messageId, map[string]interface{}{DefaultTextField: lineText})
 }

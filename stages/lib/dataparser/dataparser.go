@@ -103,7 +103,11 @@ type DataParserFormatConfig struct {
 	RateLimit             string  `ConfigDef:"type=STRING,required=true"`
 	VerifyChecksum        bool    `ConfigDef:"type=BOOLEAN,required=true"`
 
+	// Used to parse records from input stream
 	RecordReaderFactory recordio.RecordReaderFactory
+
+	// Used to create record for origins generating single line of text - Fail Tail & Directory Spooler
+	RecordCreator recordio.RecordCreator
 }
 
 type RegExConfig struct {
@@ -119,8 +123,10 @@ func (d *DataParserFormatConfig) Init(
 	switch dataFormat {
 	case "TEXT":
 		d.RecordReaderFactory = &textrecord.TextReaderFactoryImpl{}
+		d.RecordCreator = &textrecord.RecordCreator{}
 	case "JSON":
 		d.RecordReaderFactory = &jsonrecord.JsonReaderFactoryImpl{}
+		d.RecordCreator = &jsonrecord.RecordCreator{}
 	case "DELIMITED":
 		d.RecordReaderFactory = &delimitedrecord.DelimitedReaderFactoryImpl{
 			CsvFileFormat:        d.CsvFileFormat,
@@ -138,8 +144,14 @@ func (d *DataParserFormatConfig) Init(
 			ParseNull:            d.ParseNull,
 			NullConstant:         d.NullConstant,
 		}
+		d.RecordCreator = &delimitedrecord.RecordCreator{
+			CsvFileFormat:      d.CsvFileFormat,
+			CsvCustomDelimiter: d.CsvCustomDelimiter,
+			CsvRecordType:      d.CsvRecordType,
+		}
 	case "SDC_JSON":
 		d.RecordReaderFactory = &sdcrecord.SDCRecordReaderFactoryImpl{}
+		d.RecordCreator = &sdcrecord.RecordCreator{}
 	default:
 		issues = append(issues, stageContext.CreateConfigIssue("Unsupported Data Format - "+dataFormat))
 	}
