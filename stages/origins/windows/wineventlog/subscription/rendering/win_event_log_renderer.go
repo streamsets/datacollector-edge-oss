@@ -12,12 +12,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package wineventlog
+package rendering
 
 import (
 	"github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	wincommon "github.com/streamsets/datacollector-edge/stages/origins/windows/common"
+	winevtcommon "github.com/streamsets/datacollector-edge/stages/origins/windows/wineventlog/common"
 	"strconv"
 	"time"
 	"unsafe"
@@ -28,57 +30,39 @@ const (
 )
 
 var (
-	SizeOfEvtVariant = int(unsafe.Sizeof(EvtVariant{}))
+	SizeOfEvtVariant = int(unsafe.Sizeof(winevtcommon.EvtVariant{}))
 )
-
-func ConvertTimeToLong(t time.Time) int64 {
-	return t.UnixNano() / int64(time.Millisecond) / int64(time.Nanosecond)
-}
 
 type WinEventLogRenderer struct {
 	bufferSize                   int
 	bufferForRender              []byte
-	publisherManager             *WinEventLogPublisherManager
-	evtCreateRenderContextHandle EventRenderContextHandle
+	publisherManager             *winEventLogPublisherManager
+	evtCreateRenderContextHandle winevtcommon.EventRenderContextHandle
 }
 
-func NewWinEventLogRenderer(bufferSize int) *WinEventLogRenderer {
-	bufferSizeValue := BufferSizeDefault
-	if bufferSize != -1 {
-		bufferSizeValue = uint32(bufferSize)
-	}
-	publisherManager := &WinEventLogPublisherManager{
-		providerToPublisherMetadataHandle: map[string]PublisherMetadataHandle{},
-	}
-	return &WinEventLogRenderer{
-		bufferSize:       bufferSize,
-		bufferForRender:  make([]byte, bufferSizeValue),
-		publisherManager: publisherManager,
-	}
-}
-
-func (weler *WinEventLogRenderer) RenderBookmark(bookmarkHandle BookmarkHandle) (string, error) {
+func (weler *WinEventLogRenderer) RenderBookmark(bookmarkHandle winevtcommon.BookmarkHandle) (string, error) {
 	var bookmark string
 	returnBytes, _, _, err := weler.render(
-		EventHandle(uintptr(bookmarkHandle)),
-		EventRenderContextHandle(0),
-		EvtRenderBookmark,
+		winevtcommon.EventHandle(uintptr(bookmarkHandle)),
+		winevtcommon.EventRenderContextHandle(0),
+		winevtcommon.EvtRenderBookmark,
 	)
 	if err == nil {
-		bookmark, err = ExtractString(returnBytes[:])
+		bookmark, err = wincommon.ExtractString(returnBytes[:])
 	}
 	return bookmark, err
 }
 
 func (weler *WinEventLogRenderer) RenderEvent(
 	stageContext api.StageContext,
-	eventHandle EventHandle,
-	bookmarkHandle BookmarkHandle,
+	eventHandle winevtcommon.EventHandle,
+	bookmarkHandle winevtcommon.BookmarkHandle,
 ) (api.Record, error) {
 	var err error
 	var record api.Record
 	if weler.evtCreateRenderContextHandle == 0 {
-		weler.evtCreateRenderContextHandle, err = EvtCreateRenderContext(EvtRenderContextSystem)
+		weler.evtCreateRenderContextHandle, err =
+			winevtcommon.EvtCreateRenderContext(winevtcommon.EvtRenderContextSystem)
 		if err != nil {
 			log.WithError(err).Errorf("Error creating rendering context for system")
 		}
@@ -94,11 +78,11 @@ func (weler *WinEventLogRenderer) RenderEvent(
 			if err == nil {
 				eventField["System"] = systemData
 				if systemData != nil {
-					providerName := systemData.(map[string]interface{})[SystemPropertyIds[EvtSystemProviderName]].(string)
-					recordId := systemData.(map[string]interface{})[SystemPropertyIds[EvtSystemEventRecordId]].(uint64)
-					computerName := systemData.(map[string]interface{})[SystemPropertyIds[EvtSystemComputer]].(string)
-					channel := systemData.(map[string]interface{})[SystemPropertyIds[EvtSystemChannel]].(string)
-					timeCreated := systemData.(map[string]interface{})[SystemPropertyIds[EvtSystemTimeCreated]].(time.Time)
+					providerName := getPropertyFromSystemData(systemData, winevtcommon.EvtSystemProviderName).(string)
+					recordId := getPropertyFromSystemData(systemData, winevtcommon.EvtSystemEventRecordId).(uint64)
+					computerName := getPropertyFromSystemData(systemData, winevtcommon.EvtSystemComputer).(string)
+					channel := getPropertyFromSystemData(systemData, winevtcommon.EvtSystemChannel).(string)
+					timeCreated := getPropertyFromSystemData(systemData, winevtcommon.EvtSystemTimeCreated).(time.Time)
 
 					eventField["Message"], err = weler.renderMessageStrings(eventHandle, providerName)
 					if err != nil {
@@ -107,7 +91,7 @@ func (weler *WinEventLogRenderer) RenderEvent(
 					}
 					recordIdString = computerName + "::" + channel + "::" +
 						strconv.FormatUint(recordId, 10) + "::" +
-						strconv.FormatInt(ConvertTimeToLong(timeCreated), 10)
+						strconv.FormatInt(wincommon.ConvertTimeToLong(timeCreated), 10)
 				}
 			}
 			if recordIdString == "" {
@@ -118,7 +102,7 @@ func (weler *WinEventLogRenderer) RenderEvent(
 				log.WithError(err).Error("Error creating record")
 			}
 			if err == nil {
-				EvtUpdateBookmark(bookmarkHandle, eventHandle)
+				winevtcommon.EvtUpdateBookmark(bookmarkHandle, eventHandle)
 			}
 		}
 	}
@@ -135,30 +119,33 @@ func (weler *WinEventLogRenderer) Close() {
 }
 
 //private methods
-func (weler *WinEventLogRenderer) renderMessageStrings(eventHandle EventHandle, provider string) (string, error) {
+func (weler *WinEventLogRenderer) renderMessageStrings(
+	eventHandle winevtcommon.EventHandle,
+	provider string,
+) (string, error) {
 	var message string
 	publisherHandle, err := weler.publisherManager.GetPublisherHandle(provider)
 	if err == nil {
 		dwBufferUsed := uint32(0)
-		if err = EvtFormatMessage(
+		if err = winevtcommon.EvtFormatMessage(
 			publisherHandle,
 			eventHandle,
-			EvtFormatMessageEvent,
+			winevtcommon.EvtFormatMessageEvent,
 			uint32(len(weler.bufferForRender)),
 			&weler.bufferForRender[0],
 			&dwBufferUsed,
 		); err != nil {
-			if err == ErrorInsufficientBuffer && weler.bufferSize == -1 {
+			if err == winevtcommon.ErrorInsufficientBuffer && weler.bufferSize == -1 {
 				log.Debugf(
 					"Insufficient Buffer for rendering with length: %d. Retrying with Buffer of size: %d",
 					len(weler.bufferForRender),
 					dwBufferUsed,
 				)
 				weler.bufferForRender = make([]byte, dwBufferUsed)
-				err = EvtFormatMessage(
+				err = winevtcommon.EvtFormatMessage(
 					publisherHandle,
 					eventHandle,
-					EvtFormatMessageEvent,
+					winevtcommon.EvtFormatMessageEvent,
 					uint32(len(weler.bufferForRender)),
 					&weler.bufferForRender[0],
 					&dwBufferUsed,
@@ -168,29 +155,33 @@ func (weler *WinEventLogRenderer) renderMessageStrings(eventHandle EventHandle, 
 			}
 		}
 		if err == nil {
-			message, err = ExtractString(weler.bufferForRender[:(dwBufferUsed * 2)])
+			message, err = wincommon.ExtractString(weler.bufferForRender[:])
 		}
 	}
 	return message, err
 }
 
-func (weler *WinEventLogRenderer) renderSystemData(eventHandle EventHandle) (interface{}, error) {
+func (weler *WinEventLogRenderer) renderSystemData(eventHandle winevtcommon.EventHandle) (interface{}, error) {
 	systemProperties := make(map[string]interface{})
 	var err error
 	if err == nil {
 		var buf []byte
 		var propertyCount uint32
-		buf, _, propertyCount, err = weler.render(eventHandle, weler.evtCreateRenderContextHandle, EvtRenderEventValues)
+		buf, _, propertyCount, err = weler.render(
+			eventHandle,
+			weler.evtCreateRenderContextHandle,
+			winevtcommon.EvtRenderEventValues,
+		)
 		if err == nil {
 			propertyId := 0
 			start := 0
 			end := SizeOfEvtVariant
 			for propertyId < int(propertyCount) {
 				bufSlice := buf[start:end]
-				evtVariant := (*EvtVariant)(unsafe.Pointer(&bufSlice[0]))
+				evtVariant := (*winevtcommon.EvtVariant)(unsafe.Pointer(&bufSlice[0]))
 				data := evtVariant.GetData()
 				if data != nil {
-					systemProperties[SystemPropertyIds[propertyId]] = data
+					systemProperties[winevtcommon.SystemPropertyIds[propertyId]] = data
 				}
 				start = end
 				end += SizeOfEvtVariant
@@ -204,25 +195,25 @@ func (weler *WinEventLogRenderer) renderSystemData(eventHandle EventHandle) (int
 	return systemProperties, err
 }
 
-func (weler *WinEventLogRenderer) renderEventXML(eventHandle EventHandle) (string, error) {
+func (weler *WinEventLogRenderer) renderEventXML(eventHandle winevtcommon.EventHandle) (string, error) {
 	var err error
 	var buf []byte
 	var eventXmlString string
-	buf, _, _, err = weler.render(eventHandle, 0, EvtRenderEventXml)
+	buf, _, _, err = weler.render(eventHandle, 0, winevtcommon.EvtRenderEventXml)
 	if err == nil {
-		eventXmlString, err = ExtractString(buf)
+		eventXmlString, err = wincommon.ExtractString(buf)
 	}
 	return eventXmlString, err
 }
 
 func (weler *WinEventLogRenderer) render(
-	eventHandle EventHandle,
-	eventRenderContextHandle EventRenderContextHandle,
-	flags EvtRenderFlag,
+	eventHandle winevtcommon.EventHandle,
+	eventRenderContextHandle winevtcommon.EventRenderContextHandle,
+	flags winevtcommon.EvtRenderFlag,
 ) ([]byte, uint32, uint32, error) {
 	dwBufferUsed := uint32(0)
 	dwPropertyCount := uint32(0)
-	err := EvtRender(
+	err := winevtcommon.EvtRender(
 		eventRenderContextHandle,
 		eventHandle,
 		flags,
@@ -231,14 +222,14 @@ func (weler *WinEventLogRenderer) render(
 		&dwBufferUsed,
 		&dwPropertyCount,
 	)
-	if err != nil && err == ErrorInsufficientBuffer && weler.bufferSize == -1 {
+	if err != nil && err == winevtcommon.ErrorInsufficientBuffer && weler.bufferSize == -1 {
 		log.Debugf(
 			"Insufficient Buffer for rendering with length: %d. Retrying with Buffer of size: %d",
 			len(weler.bufferForRender),
 			dwBufferUsed,
 		)
 		weler.bufferForRender = make([]byte, dwBufferUsed)
-		err = EvtRender(
+		err = winevtcommon.EvtRender(
 			eventRenderContextHandle,
 			eventHandle,
 			flags,
@@ -252,4 +243,26 @@ func (weler *WinEventLogRenderer) render(
 		log.WithError(err).Errorf("Render Failed")
 	}
 	return weler.bufferForRender, dwBufferUsed, dwPropertyCount, err
+}
+
+func getPropertyFromSystemData(
+	systemData interface{},
+	propertyId winevtcommon.EvtSystemPropertyId,
+) interface{} {
+	return systemData.(map[string]interface{})[winevtcommon.SystemPropertyIds[propertyId]]
+}
+
+func NewWinEventLogRenderer(bufferSize int) *WinEventLogRenderer {
+	bufferSizeValue := BufferSizeDefault
+	if bufferSize != -1 {
+		bufferSizeValue = uint32(bufferSize)
+	}
+	publisherManager := &winEventLogPublisherManager{
+		providerToPublisherMetadataHandle: map[string]winevtcommon.PublisherMetadataHandle{},
+	}
+	return &WinEventLogRenderer{
+		bufferSize:       bufferSize,
+		bufferForRender:  make([]byte, bufferSizeValue),
+		publisherManager: publisherManager,
+	}
 }

@@ -12,22 +12,27 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package wineventlog
+package rendering
 
-import "errors"
+import (
+	"errors"
+	winevtcommon "github.com/streamsets/datacollector-edge/stages/origins/windows/wineventlog/common"
+)
 
-type WinEventLogPublisherManager struct {
-	providerToPublisherMetadataHandle map[string]PublisherMetadataHandle
+type winEventLogPublisherManager struct {
+	providerToPublisherMetadataHandle map[string]winevtcommon.PublisherMetadataHandle
 }
 
-func (welpm *WinEventLogPublisherManager) GetPublisherHandle(provider string) (PublisherMetadataHandle, error) {
+func (welpm *winEventLogPublisherManager) GetPublisherHandle(
+	provider string,
+) (winevtcommon.PublisherMetadataHandle, error) {
 	var err error
-	providerHandle := PublisherMetadataHandle(0)
+	providerHandle := winevtcommon.PublisherMetadataHandle(0)
 	if provider != "" {
 		var ok bool
 		providerHandle, ok = welpm.providerToPublisherMetadataHandle[provider]
 		if !ok {
-			providerHandle, err = EvtOpenPublisherMetadata(provider)
+			providerHandle, err = winevtcommon.EvtOpenPublisherMetadata(provider)
 		}
 	} else {
 		err = errors.New("invalid arg - provider empty")
@@ -35,7 +40,7 @@ func (welpm *WinEventLogPublisherManager) GetPublisherHandle(provider string) (P
 	return providerHandle, err
 }
 
-func (welpm *WinEventLogPublisherManager) Close() {
+func (welpm *winEventLogPublisherManager) Close() {
 	for _, publisherMetadataHandle := range welpm.providerToPublisherMetadataHandle {
 		publisherMetadataHandle.Close()
 	}

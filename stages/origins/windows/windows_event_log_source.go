@@ -109,9 +109,24 @@ func NewReader(
 	winEventLogConf wincommon.WinEventLogConf,
 ) (wincommon.EventLogReader, error) {
 	if logReaderType == wincommon.ReaderAPITypeEventLogging {
-		return eventlogging.NewEventLoggingReader(baseStage, logName, mode, bufferSize, maxBatchSize, initialOffset)
+		return eventlogging.NewEventLoggingReader(
+			baseStage,
+			logName,
+			mode,
+			bufferSize,
+			maxBatchSize,
+			initialOffset,
+		)
 	} else {
-		return wineventlog.NewWindowsEventLogReader(baseStage, logName, mode, bufferSize, maxBatchSize, initialOffset, winEventLogConf)
+		return wineventlog.NewWindowsEventLogReader(
+			baseStage,
+			logName,
+			mode,
+			bufferSize,
+			maxBatchSize,
+			initialOffset,
+			winEventLogConf,
+		)
 	}
 }
 

@@ -21,18 +21,19 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	wincommon "github.com/streamsets/datacollector-edge/stages/origins/windows/common"
+	winevtsubscription "github.com/streamsets/datacollector-edge/stages/origins/windows/wineventlog/subscription"
 	"time"
 )
 
-type WindowsEventLogReader struct {
+type windowsEventLogReader struct {
 	*common.BaseStage
 	*wincommon.BaseEventLogReader
-	eventSubscriber WinEventSubscriber
+	eventSubscriber winevtsubscription.WinEventSubscriber
 	offset          string
 	handle          w32.HANDLE
 }
 
-func (welr *WindowsEventLogReader) Open() error {
+func (welr *windowsEventLogReader) Open() error {
 	err := welr.eventSubscriber.Subscribe()
 	if err != nil {
 		log.WithError(err).Error("Error subscribing")
@@ -40,19 +41,19 @@ func (welr *WindowsEventLogReader) Open() error {
 	return err
 }
 
-func (welr *WindowsEventLogReader) Read() ([]api.Record, error) {
-	eventRecords, err := welr.eventSubscriber.Read()
+func (welr *windowsEventLogReader) Read() ([]api.Record, error) {
+	eventRecords, err := welr.eventSubscriber.GetRecords()
 	if err != nil {
 		log.WithError(err).Error("Error reading from windows event log")
 	}
 	return eventRecords, err
 }
 
-func (welr *WindowsEventLogReader) GetCurrentOffset() string {
+func (welr *windowsEventLogReader) GetCurrentOffset() string {
 	return welr.eventSubscriber.GetBookmark()
 }
 
-func (welr *WindowsEventLogReader) Close() error {
+func (welr *windowsEventLogReader) Close() error {
 	welr.eventSubscriber.Close()
 	return nil
 }
@@ -65,15 +66,15 @@ func NewWindowsEventLogReader(
 	maxBatchSize int,
 	lastSourceOffset string,
 	winEventLogConf wincommon.WinEventLogConf,
-) (*WindowsEventLogReader, error) {
-	subscriptionMode := SubscriptionMode(winEventLogConf.SubscriptionMode)
+) (wincommon.EventLogReader, error) {
+	subscriptionMode := winevtsubscription.SubscriptionMode(winEventLogConf.SubscriptionMode)
 
 	query := fmt.Sprintf(`<QueryList> <Query Id="0"> <Select Path="%s">*</Select> </Query></QueryList>`, logName)
 	log.Debugf("Querying windows Event log with %s", logName)
-	return &WindowsEventLogReader{
+	return &windowsEventLogReader{
 		BaseStage:          baseStage,
 		BaseEventLogReader: &wincommon.BaseEventLogReader{Log: logName, Mode: mode},
-		eventSubscriber: NewWinEventSubscriber(
+		eventSubscriber: winevtsubscription.NewWinEventSubscriber(
 			baseStage.GetStageContext(),
 			subscriptionMode,
 			query,

@@ -12,13 +12,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package wineventlog
+package subscription
 
 import (
 	"github.com/Workiva/go-datastructures/queue"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/stages/origins/windows/common"
+	winevtcommon "github.com/streamsets/datacollector-edge/stages/origins/windows/wineventlog/common"
+	winevtrender "github.com/streamsets/datacollector-edge/stages/origins/windows/wineventlog/subscription/rendering"
 	"golang.org/x/sys/windows"
 	"time"
 )
@@ -36,7 +38,7 @@ type WinEventSubscriber interface {
 	Subscribe() error
 	/** Read a singl event
 	 */
-	Read() ([]api.Record, error)
+	GetRecords() ([]api.Record, error)
 
 	/** Get BookmarkXML
 	 */
@@ -47,49 +49,53 @@ type WinEventSubscriber interface {
 	Close()
 }
 
-type BaseWinEventSubscriber struct {
+type baseWinEventSubscriber struct {
 	stageContext         api.StageContext
 	eventsQueue          *queue.Queue
 	query                string
 	maxNoOfEvents        uint32
-	subscriptionHandle   SubscriptionHandle
+	subscriptionHandle   winevtcommon.SubscriptionHandle
 	bookMark             string
 	eventReaderMode      common.EventLogReaderMode
-	subscriptionCallback EvtSubscribeCallback
+	subscriptionCallback winevtcommon.EvtSubscribeCallback
 	signalEventHandle    windows.Handle
 	maxWaitTime          time.Duration
-	bookMarkHandle       BookmarkHandle
-	renderer             *WinEventLogRenderer
+	bookMarkHandle       winevtcommon.BookmarkHandle
+	renderer             *winevtrender.WinEventLogRenderer
 }
 
-func (bwes *BaseWinEventSubscriber) getBookmarkHandleAndFlags() (BookmarkHandle, EvtSubscribeFlag, error) {
+func (bwes *baseWinEventSubscriber) getBookmarkHandleAndFlags() (
+	winevtcommon.BookmarkHandle,
+	winevtcommon.EvtSubscribeFlag,
+	error,
+) {
 	var err error
 	//If offset present use the offset
 	if bwes.bookMark != "" {
 		//Create a bookmark handle for bookMarkXML and return that handle for subscription
-		bwes.bookMarkHandle, err = EvtCreateBookmark(bwes.bookMark)
+		bwes.bookMarkHandle, err = winevtcommon.EvtCreateBookmark(bwes.bookMark)
 		if err != nil {
 			log.WithError(err).Errorf("Error creating bookmark with bookmark XML: %s", bwes.bookMark)
 		}
-		return bwes.bookMarkHandle, EvtSubscribeStartAfterBookmark, err
+		return bwes.bookMarkHandle, winevtcommon.EvtSubscribeStartAfterBookmark, err
 	} else {
 		//No bookmark offset present
-		flags := EvtSubscribeToFutureEvents
+		flags := winevtcommon.EvtSubscribeToFutureEvents
 		if bwes.eventReaderMode == common.ReadAll {
 			//If no offset use Start from oldest record if ReadAll or else use Only Future Events (i.e Read New)
-			flags = EvtSubscribeStartAtOldestRecord
+			flags = winevtcommon.EvtSubscribeStartAtOldestRecord
 		}
 		//Create empty bookmark
-		bwes.bookMarkHandle, err = EvtCreateBookmark("")
+		bwes.bookMarkHandle, err = winevtcommon.EvtCreateBookmark("")
 		return 0, flags, err
 	}
 }
 
-func (bwes *BaseWinEventSubscriber) Subscribe() error {
+func (bwes *baseWinEventSubscriber) Subscribe() error {
 	var err error
 	bookmarkHandle, flags, err := bwes.getBookmarkHandleAndFlags()
 	if err == nil {
-		if bwes.subscriptionHandle, err = EvtSubscribe(
+		if bwes.subscriptionHandle, err = winevtcommon.EvtSubscribe(
 			bwes.signalEventHandle,
 			"",
 			bwes.query,
@@ -98,9 +104,9 @@ func (bwes *BaseWinEventSubscriber) Subscribe() error {
 			flags,
 		); err != nil {
 			switch err {
-			case ErrorEvtChannelNotFound:
+			case winevtcommon.ErrorEvtChannelNotFound:
 				log.WithError(err).Errorf("Channel not found %s", "Security")
-			case ErrorInvalidQuery:
+			case winevtcommon.ErrorInvalidQuery:
 				log.WithError(err).Error("Query is not valid")
 			default:
 				log.WithError(err).Error("Event subscribe failed")
@@ -112,7 +118,7 @@ func (bwes *BaseWinEventSubscriber) Subscribe() error {
 	return err
 }
 
-func (bwes *BaseWinEventSubscriber) Read() ([]api.Record, error) {
+func (bwes *baseWinEventSubscriber) GetRecords() ([]api.Record, error) {
 	var err error
 	eventRecords := make([]api.Record, 0)
 	if !bwes.eventsQueue.Empty() {
@@ -140,11 +146,11 @@ func (bwes *BaseWinEventSubscriber) Read() ([]api.Record, error) {
 	return eventRecords, err
 }
 
-func (bwes *BaseWinEventSubscriber) GetBookmark() string {
+func (bwes *baseWinEventSubscriber) GetBookmark() string {
 	return bwes.bookMark
 }
 
-func (bwes *BaseWinEventSubscriber) Close() {
+func (bwes *baseWinEventSubscriber) Close() {
 	if bwes.eventsQueue != nil {
 		bwes.eventsQueue.Dispose()
 	}
@@ -172,7 +178,7 @@ func NewWinEventSubscriber(
 	bufferSize int,
 	maxWaitTime time.Duration,
 ) WinEventSubscriber {
-	baseEventSubscriber := &BaseWinEventSubscriber{
+	baseEventSubscriber := &baseWinEventSubscriber{
 		stageContext:    stageContext,
 		query:           query,
 		maxNoOfEvents:   maxNumberOfEvents,
@@ -180,16 +186,16 @@ func NewWinEventSubscriber(
 		bookMark:        bookMark,
 		eventReaderMode: eventReaderMode,
 		maxWaitTime:     maxWaitTime,
-		renderer:        NewWinEventLogRenderer(bufferSize),
+		renderer:        winevtrender.NewWinEventLogRenderer(bufferSize),
 	}
 
 	if subscriptionMode == PushSubscription {
-		return &PushWinEventSubscriber{
-			BaseWinEventSubscriber: baseEventSubscriber,
+		return &pushWinEventSubscriber{
+			baseWinEventSubscriber: baseEventSubscriber,
 		}
 	} else {
-		return &PullWinEventSubscriber{
-			BaseWinEventSubscriber: baseEventSubscriber,
+		return &pullWinEventSubscriber{
+			baseWinEventSubscriber: baseEventSubscriber,
 		}
 	}
 }

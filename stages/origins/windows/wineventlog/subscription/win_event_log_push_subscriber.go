@@ -12,34 +12,34 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package wineventlog
+package subscription
 
 import (
 	log "github.com/sirupsen/logrus"
+	wineventsyscall "github.com/streamsets/datacollector-edge/stages/origins/windows/wineventlog/common"
 	"syscall"
 	"unsafe"
 )
 
-type PushWinEventSubscriber struct {
-	*BaseWinEventSubscriber
+type pushWinEventSubscriber struct {
+	*baseWinEventSubscriber
 }
 
-func (pwes *PushWinEventSubscriber) Subscribe() error {
+func (pwes *pushWinEventSubscriber) Subscribe() error {
 	pwes.subscriptionCallback = func(
-		action EvtSubscribeNotifyAction,
+		action wineventsyscall.EvtSubscribeNotifyAction,
 		userContext unsafe.Pointer,
-		eventHandle EventHandle,
+		eventHandle wineventsyscall.EventHandle,
 	) syscall.Errno {
 		var returnStatus syscall.Errno
 		switch action {
-		case EvtSubscribeActionError:
-			log.Errorf("Error Id %d", eventHandle)
-			if ErrorEvtQueryResultStale == returnStatus {
+		case wineventsyscall.EvtSubscribeActionError:
+			if wineventsyscall.ErrorEvtQueryResultStale == returnStatus {
 				log.Error("The subscription callback was notified that eventHandle records are missing")
 			} else {
 				log.WithError(syscall.Errno(eventHandle)).Error("The subscription callback received the following Win32 error")
 			}
-		case EvtSubscribeActionDeliver:
+		case wineventsyscall.EvtSubscribeActionDeliver:
 			eventRecord, err := pwes.renderer.RenderEvent(pwes.stageContext, eventHandle, pwes.bookMarkHandle)
 			if err == nil {
 				pwes.eventsQueue.Put(eventRecord)
@@ -49,5 +49,5 @@ func (pwes *PushWinEventSubscriber) Subscribe() error {
 		}
 		return returnStatus
 	}
-	return pwes.BaseWinEventSubscriber.Subscribe()
+	return pwes.baseWinEventSubscriber.Subscribe()
 }

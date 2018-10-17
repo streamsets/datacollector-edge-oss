@@ -13,10 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // Copied from https://github.com/streamsets/windataextractor/tree/master/dev/src/lib/win/eventlog
-package wineventlog
+package common
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -161,17 +160,6 @@ func convertStringToUtf16ToUintPtr(str string) (uintptr, error) {
 		}
 	}
 	return ptr, err
-}
-
-func ExtractString(byteData []byte) (string, error) {
-	wordArray := make([]uint16, len(byteData)/2)
-	err := binary.Read(bytes.NewReader(byteData), binary.LittleEndian, wordArray)
-	if err != nil {
-		log.WithError(err).Error("Error reading binary data")
-		return "", err
-	}
-	return syscall.UTF16ToString(wordArray), nil
-
 }
 
 func processSysCallReturn(r1 uintptr, e1 error) error {
@@ -705,7 +693,7 @@ func (evtVariant *EvtVariant) GetData() interface{} {
 			byteData[i] = *byteAddress
 			ptr = ptr + byteIncrement
 		}
-		returnVal, err = ExtractString(byteData)
+		returnVal, err = wincommon.ExtractString(byteData)
 	case EvtVarTypeBinary:
 		ptr := uintptr(binary.LittleEndian.Uint64(buf[:]))
 		byteIncrement := unsafe.Sizeof(byte(0))

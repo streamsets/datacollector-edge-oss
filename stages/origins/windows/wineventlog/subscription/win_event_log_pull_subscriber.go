@@ -12,29 +12,29 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package wineventlog
+package subscription
 
 import (
 	"github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
+	winevtcommon "github.com/streamsets/datacollector-edge/stages/origins/windows/wineventlog/common"
 	"golang.org/x/sys/windows"
 	"syscall"
 	"time"
 )
 
-type PullWinEventSubscriber struct {
-	*BaseWinEventSubscriber
+type pullWinEventSubscriber struct {
+	*baseWinEventSubscriber
 }
 
-func (pwes *PullWinEventSubscriber) fetchEventsImmediately() error {
+func (pwes *pullWinEventSubscriber) fetchEventsImmediately() error {
 	var err error
 	for pwes.eventsQueue.Len() < int64(pwes.maxNoOfEvents) {
-		fetchedEventHandles := make([]EventHandle, 1)
+		fetchedEventHandles := make([]winevtcommon.EventHandle, 1)
 		returnedHandles := uint32(0)
-		err := EvtNext(pwes.subscriptionHandle, uint32(1), fetchedEventHandles, &returnedHandles)
+		err := winevtcommon.EvtNext(pwes.subscriptionHandle, uint32(1), fetchedEventHandles, &returnedHandles)
 		if err == nil {
-			//log.Debugf("Fetched %d event handles", returnedHandles)
 			for _, fetchedEventHandle := range fetchedEventHandles[:returnedHandles] {
 				eventString, err := pwes.renderer.RenderEvent(pwes.stageContext, fetchedEventHandle, pwes.bookMarkHandle)
 				if err != nil {
@@ -44,12 +44,13 @@ func (pwes *PullWinEventSubscriber) fetchEventsImmediately() error {
 				}
 			}
 		} else {
-			if err.(syscall.Errno) == ErrorNoMoreItems {
-				log.Infof("No More items in the handle: %d resetting", pwes.signalEventHandle)
+			if err.(syscall.Errno) == winevtcommon.ErrorNoMoreItems {
+				log.Debugf("No More items in the handle: %d resetting", pwes.signalEventHandle)
 				windows.ResetEvent(pwes.signalEventHandle)
 				err = nil
-			} else if err.(syscall.Errno) == ErrorInvalidHandle {
-				log.WithError(err).Warn("Cannot fetch events with this handle")
+			} else if err.(syscall.Errno) == winevtcommon.ErrorInvalidHandle {
+				log.WithError(err).Debugf("Cannot fetch events with this handle")
+				err = nil
 			} else {
 				log.WithError(err).Error("Error fetching event handles")
 			}
@@ -59,7 +60,7 @@ func (pwes *PullWinEventSubscriber) fetchEventsImmediately() error {
 	return err
 }
 
-func (pwes *PullWinEventSubscriber) pollForEventHandles() error {
+func (pwes *pullWinEventSubscriber) pollForEventHandles() error {
 	//Try fetching first if this fails, try after wait
 	err := pwes.fetchEventsImmediately()
 	if err == nil && pwes.eventsQueue.Empty() {
@@ -67,15 +68,15 @@ func (pwes *PullWinEventSubscriber) pollForEventHandles() error {
 		waitTimeMillis := uint32(pwes.maxWaitTime / time.Millisecond)
 		log.Debugf("Waiting %d milliseconds for Events to be notified", waitTimeMillis)
 		val, err := windows.WaitForSingleObject(pwes.signalEventHandle, waitTimeMillis)
-		waitReturnVal := WaitReturnValue(val)
+		waitReturnVal := winevtcommon.WaitReturnValue(val)
 		switch waitReturnVal {
-		case WaitFailed:
+		case winevtcommon.WaitFailed:
 			log.WithError(err).Error("Wait Failed")
-		case WaitAbandoned:
+		case winevtcommon.WaitAbandoned:
 			log.Info("Wait abandoned")
-		case WaitTimeout:
+		case winevtcommon.WaitTimeout:
 			log.Infof("No Events till the wait, wait time out happened")
-		case WaitObject0:
+		case winevtcommon.WaitObject0:
 			err = pwes.fetchEventsImmediately()
 			if err != nil {
 				log.WithError(err).Error("Error fetching event handles")
@@ -83,13 +84,11 @@ func (pwes *PullWinEventSubscriber) pollForEventHandles() error {
 		default:
 			log.Warnf("Unsupported Wait return value : %d", waitReturnVal)
 		}
-	} else {
-		log.WithError(err).Error("Error fetching with subscription handle")
 	}
 	return err
 }
 
-func (pwes *PullWinEventSubscriber) Subscribe() error {
+func (pwes *pullWinEventSubscriber) Subscribe() error {
 	//Use unique event
 	eventUUID := uuid.NewV4()
 	n, err := syscall.UTF16PtrFromString(eventUUID.String())
@@ -104,13 +103,13 @@ func (pwes *PullWinEventSubscriber) Subscribe() error {
 		); err != nil {
 			log.WithError(err).Error("Error Creating Signal Event")
 		} else {
-			err = pwes.BaseWinEventSubscriber.Subscribe()
+			err = pwes.baseWinEventSubscriber.Subscribe()
 		}
 	}
 	return err
 }
 
-func (pwes *PullWinEventSubscriber) Read() ([]api.Record, error) {
+func (pwes *pullWinEventSubscriber) GetRecords() ([]api.Record, error) {
 	if pwes.eventsQueue.Empty() {
 		err := pwes.pollForEventHandles()
 		if err != nil {
@@ -118,5 +117,5 @@ func (pwes *PullWinEventSubscriber) Read() ([]api.Record, error) {
 			return []api.Record{}, err
 		}
 	}
-	return pwes.BaseWinEventSubscriber.Read()
+	return pwes.baseWinEventSubscriber.GetRecords()
 }

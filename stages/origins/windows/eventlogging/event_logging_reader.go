@@ -29,7 +29,6 @@ import (
 	syswin "golang.org/x/sys/windows"
 	"io"
 	"strconv"
-	"syscall"
 	"unsafe"
 )
 
@@ -43,7 +42,7 @@ const (
 //Windows Event Log Reader - https://docs.microsoft.com/en-us/windows/desktop/wes/windows-event-log
 
 // Event Logging - https://docs.microsoft.com/en-us/windows/desktop/EventLog/event-logging
-type EventLoggingReader struct {
+type eventLoggingReader struct {
 	*common.BaseStage
 	*wincommon.BaseEventLogReader
 	offset      uint32
@@ -53,7 +52,7 @@ type EventLoggingReader struct {
 	buffer      []byte
 }
 
-type EventLoggingRecord struct {
+type eventLoggingRecord struct {
 	w32.EVENTLOGRECORD
 	SourceName   string
 	ComputerName string
@@ -70,7 +69,7 @@ func NewEventLoggingReader(
 	bufferSize int,
 	maxBatchSize int,
 	lastSourceOffset string,
-) (*EventLoggingReader, error) {
+) (wincommon.EventLogReader, error) {
 	offset := uint32(0)
 	knownOffset := false
 
@@ -96,7 +95,7 @@ func NewEventLoggingReader(
 		knownOffset = true
 	}
 
-	return &EventLoggingReader{
+	return &eventLoggingReader{
 		BaseStage: baseStage,
 		BaseEventLogReader: &wincommon.BaseEventLogReader{
 			Log:          logName,
@@ -110,8 +109,8 @@ func NewEventLoggingReader(
 	}, nil
 }
 
-func (elreader *EventLoggingReader) Open() error {
-	log.Debugf("EventLoggingReader[%s] - Opening\n", elreader.Log)
+func (elreader *eventLoggingReader) Open() error {
+	log.Debugf("eventLoggingReader[%s] - Opening\n", elreader.Log)
 	w32Handle := w32.OpenEventLog(`\\localhost`, elreader.Log)
 	if w32Handle == 0 {
 		return errors.New(fmt.Sprintf("could not open event log reader for '%s'", elreader.Log))
@@ -121,7 +120,7 @@ func (elreader *EventLoggingReader) Open() error {
 	}
 }
 
-func (elreader *EventLoggingReader) Read() ([]api.Record, error) {
+func (elreader *eventLoggingReader) Read() ([]api.Record, error) {
 	records := make([]api.Record, 0)
 	var flags uint32
 	log.WithFields(log.Fields{
@@ -162,12 +161,12 @@ func (elreader *EventLoggingReader) Read() ([]api.Record, error) {
 }
 
 // returns -1 if unknown
-func (elreader *EventLoggingReader) GetCurrentOffset() string {
+func (elreader *eventLoggingReader) GetCurrentOffset() string {
 	return strconv.FormatUint(uint64(elreader.offset), 10)
 }
 
-func (elreader *EventLoggingReader) Close() error {
-	log.Debug("EventLoggingReader[%s] - Closing\n", elreader.Log)
+func (elreader *eventLoggingReader) Close() error {
+	log.Debug("eventLoggingReader[%s] - Closing\n", elreader.Log)
 	if w32.CloseEventLog(elreader.handle) {
 		return nil
 	} else {
@@ -179,7 +178,7 @@ func (elreader *EventLoggingReader) Close() error {
 
 // Private Methods
 
-func (elreader *EventLoggingReader) determineFirstEventToRead() error {
+func (elreader *eventLoggingReader) determineFirstEventToRead() error {
 	elReaderLogger := log.WithFields(log.Fields{"log": elreader.Log})
 	if !elreader.knownOffset {
 		elReaderLogger.Debug("First event record number to read not known, locating...")
@@ -258,7 +257,7 @@ func (elreader *EventLoggingReader) determineFirstEventToRead() error {
 	}
 }
 
-func (elreader *EventLoggingReader) createRecord(event EventLoggingRecord) (api.Record, error) {
+func (elreader *eventLoggingReader) createRecord(event eventLoggingRecord) (api.Record, error) {
 	recordId := event.ComputerName + "::" + elreader.Log + "::" +
 		strconv.FormatUint(uint64(event.RecordNumber), 10) + "::" +
 		strconv.FormatUint(uint64(event.TimeGenerated), 10)
@@ -300,8 +299,8 @@ func (elreader *EventLoggingReader) createRecord(event EventLoggingRecord) (api.
 }
 
 // we don't return EOF, we just return an empty slice
-func (elreader *EventLoggingReader) read(flags uint32, offset uint32, maxRecords int) ([]EventLoggingRecord, error) {
-	events := make([]EventLoggingRecord, 0, maxRecords)
+func (elreader *eventLoggingReader) read(flags uint32, offset uint32, maxRecords int) ([]eventLoggingRecord, error) {
+	events := make([]eventLoggingRecord, 0, maxRecords)
 	buffer := elreader.buffer
 	var read, needs uint32
 	if w32.ReadEventLog(elreader.handle, flags, offset, buffer, uint32(len(buffer)), &read, &needs) {
@@ -314,7 +313,7 @@ func (elreader *EventLoggingReader) read(flags uint32, offset uint32, maxRecords
 			if maxRecords > -1 && len(events) >= maxRecords {
 				break
 			}
-			event := EventLoggingRecord{}
+			event := eventLoggingRecord{}
 			w32EventPtr := (*w32.EVENTLOGRECORD)(unsafe.Pointer(&event))
 			err := binary.Read(reader, binary.LittleEndian, w32EventPtr)
 			if err == io.EOF {
@@ -331,7 +330,7 @@ func (elreader *EventLoggingReader) read(flags uint32, offset uint32, maxRecords
 			}
 
 			// extract source name and computer name
-			strs := extractStrings(eventData, uint16(2))
+			strs := wincommon.ExtractStrings(eventData, uint16(2))
 			event.SourceName = strs[0]
 			event.ComputerName = strs[1]
 
@@ -380,7 +379,7 @@ func (elreader *EventLoggingReader) read(flags uint32, offset uint32, maxRecords
 			if event.NumStrings > 0 {
 				strOffset := event.StringOffset - EventSize
 				eventData := eventData[strOffset:]
-				event.MsgStrings = extractStrings(eventData, uint16(event.NumStrings))
+				event.MsgStrings = wincommon.ExtractStrings(eventData, uint16(event.NumStrings))
 			}
 			event.Message = messageF(findEventMessageTemplate(elreader.Log, &event), event.MsgStrings)
 			event.Category = findEventCategory(elreader.Log, &event)
@@ -388,26 +387,4 @@ func (elreader *EventLoggingReader) read(flags uint32, offset uint32, maxRecords
 		}
 	}
 	return events, nil
-}
-
-func extractStrings(byteData []byte, stringCount uint16) (strs []string) {
-	strs = make([]string, 0, stringCount)
-	wordArray := make([]uint16, len(byteData)/2)
-	err := binary.Read(bytes.NewReader(byteData), binary.LittleEndian, wordArray)
-	if err != nil {
-		log.WithError(err).Fatal()
-	}
-	pos := 0
-	for idx, value := range wordArray {
-		if value == 0 {
-			str := syscall.UTF16ToString(wordArray[pos:idx])
-			strs = append(strs, str)
-			pos = idx + 1
-			stringCount--
-			if stringCount == 0 {
-				break
-			}
-		}
-	}
-	return strs
 }
