@@ -166,6 +166,7 @@ func (s *StageContextImpl) Evaluate(
 				&el.MapListEL{},
 				&el.PipelineEL{Context: s.ElContext},
 				&el.JobEL{Context: s.ElContext},
+				&el.SdcEL{},
 			},
 		)
 		return evaluator.Evaluate(value)

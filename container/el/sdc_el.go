@@ -13,36 +13,28 @@
 package el
 
 import (
-	"context"
-	"strings"
+	"errors"
+	"fmt"
+	"github.com/madhukard/govaluate"
+	"os"
 )
 
-const (
-	NAMESPACE_FN_SEPARATOR = ":"
-)
-
-func IsElString(configValue string) bool {
-	return strings.HasPrefix(configValue, PARAMETER_PREFIX) &&
-		strings.HasSuffix(configValue, PARAMETER_SUFFIX)
+type SdcEL struct {
 }
 
-func Evaluate(
-	value string,
-	configName string,
-	parameters map[string]interface{},
-	elContext context.Context,
-) (interface{}, error) {
-	evaluator, _ := NewEvaluator(
-		configName,
-		parameters,
-		[]Definitions{
-			&StringEL{},
-			&MathEL{},
-			&MapListEL{},
-			&PipelineEL{Context: elContext},
-			&JobEL{Context: elContext},
-			&SdcEL{},
-		},
-	)
-	return evaluator.Evaluate(value)
+func (j *SdcEL) GetHostName(args ...interface{}) (interface{}, error) {
+	if len(args) != 0 {
+		return "", errors.New(
+			fmt.Sprintf("The function 'sdc:hostname' requires 0 arguments but was passed %d", len(args)),
+		)
+	}
+
+	return os.Hostname()
+}
+
+func (j *SdcEL) GetELFunctionDefinitions() map[string]govaluate.ExpressionFunction {
+	functions := map[string]govaluate.ExpressionFunction{
+		"sdc:hostname": j.GetHostName,
+	}
+	return functions
 }
