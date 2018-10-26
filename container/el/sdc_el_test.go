@@ -13,36 +13,24 @@
 package el
 
 import (
-	"context"
-	"strings"
+	"os"
+	"testing"
 )
 
-const (
-	NAMESPACE_FN_SEPARATOR = ":"
-)
-
-func IsElString(configValue string) bool {
-	return strings.HasPrefix(configValue, PARAMETER_PREFIX) &&
-		strings.HasSuffix(configValue, PARAMETER_SUFFIX)
-}
-
-func Evaluate(
-	value string,
-	configName string,
-	parameters map[string]interface{},
-	elContext context.Context,
-) (interface{}, error) {
-	evaluator, _ := NewEvaluator(
-		configName,
-		parameters,
-		[]Definitions{
-			&StringEL{},
-			&MathEL{},
-			&MapListEL{},
-			&PipelineEL{Context: elContext},
-			&JobEL{Context: elContext},
-			&SdcEL{},
+func TestSdcEL(test *testing.T) {
+	hostName, _ := os.Hostname()
+	evaluationTests := []EvaluationTest{
+		{
+			Name:       "Test sdc:hostname()",
+			Expression: "${sdc:hostname()}",
+			Expected:   hostName,
 		},
-	)
-	return evaluator.Evaluate(value)
+		{
+			Name:       "Test function sdc:hostname() - Error 1",
+			Expression: "${sdc:hostname('invalid param')}",
+			Expected:   "The function 'sdc:hostname' requires 0 arguments but was passed 1",
+			ErrorCase:  true,
+		},
+	}
+	RunEvaluationTests(evaluationTests, []Definitions{&SdcEL{}}, test)
 }
