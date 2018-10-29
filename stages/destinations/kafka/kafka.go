@@ -57,21 +57,21 @@ const (
 	MessageMaxBytes                    = "message.max.bytes"
 	RequestRequiredACKs                = "request.required.acks"
 	RequestTimeoutMS                   = "request.timeout.ms"
-	CompressionCodec                   = "compression.codec"
+	CompressionType                    = "compression.type"
 	QueueBufferingMaxMS                = "queue.buffering.max.ms"
 	QueueBufferingMaxMessages          = "queue.buffering.max.messages"
 	MessageSendMaxRetries              = "message.send.max.retries"
 	RetryBackoffMS                     = "retry.backoff.ms"
 
-	ClientId               = "SDCEdge"
-	HTTPS                  = "https"
-	SASLPlainText          = "SASL_PLAINTEXT"
-	SASLSSL                = "SASL_SSL"
-	SSSLJaasConfigRegex    = `.*username="(.*)".*password="(.*)"`
-	CompressionCodecNone   = "none"
-	CompressionCodecGzip   = "gzip"
-	CompressionCodecSnappy = "snappy"
-	CompressionCodecLz4    = "lz4"
+	ClientId              = "SDCEdge"
+	HTTPS                 = "https"
+	SASLPlainText         = "SASL_PLAINTEXT"
+	SASLSSL               = "SASL_SSL"
+	SSSLJaasConfigRegex   = `.*username="(.*)".*password="(.*)"`
+	CompressionTypeNone   = "none"
+	CompressionTypeGzip   = "gzip"
+	CompressionTypeSnappy = "snappy"
+	CompressionTypeLz4    = "lz4"
 )
 
 type KafkaDestination struct {
@@ -330,15 +330,15 @@ func (dest *KafkaDestination) mapJVMConfigsToSaramaConfig() error {
 			if i, err := strconv.Atoi(value); err == nil {
 				config.Producer.Timeout = time.Duration(i) * time.Millisecond
 			}
-		case CompressionCodec:
+		case CompressionType:
 			switch value {
-			case CompressionCodecNone:
+			case CompressionTypeNone:
 				config.Producer.Compression = sarama.CompressionNone
-			case CompressionCodecGzip:
+			case CompressionTypeGzip:
 				config.Producer.Compression = sarama.CompressionGZIP
-			case CompressionCodecSnappy:
+			case CompressionTypeSnappy:
 				config.Producer.Compression = sarama.CompressionSnappy
-			case CompressionCodecLz4:
+			case CompressionTypeLz4:
 				config.Producer.Compression = sarama.CompressionLZ4
 			}
 		case QueueBufferingMaxMS:
