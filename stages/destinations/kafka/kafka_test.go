@@ -185,7 +185,7 @@ func getTestConfig() []common.Config {
 	}
 
 	kafkaProducerConfigs[7] = map[string]interface{}{
-		"key":   "compression.codec",
+		"key":   "compression.type",
 		"value": "snappy",
 	}
 
