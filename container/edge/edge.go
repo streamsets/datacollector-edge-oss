@@ -131,7 +131,7 @@ func newDataCollectorEdge(
 	}
 
 	webServerTask, _ := http.NewWebServerTask(config.Http, buildInfo, pipelineManager, pipelineStoreTask, processManager)
-	controlhub.RegisterWithDPM(config.SCH, buildInfo, runtimeInfo)
+	controlhub.RegisterWithControlHub(config.SCH, buildInfo, runtimeInfo)
 
 	var messagingEventHandler *controlhub.MessageEventHandler
 	if runtimeInfo.DPMEnabled {
