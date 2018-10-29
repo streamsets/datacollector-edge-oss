@@ -13,35 +13,54 @@
 package httpserver
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
+	"github.com/streamsets/datacollector-edge/container/execution/runner"
+	"github.com/streamsets/datacollector-edge/stages/lib"
+	"net/http"
 	"testing"
 )
 
-func getStageContext(portNumber float64, appId string, parameters map[string]interface{}) *common.StageContextImpl {
+func getStageContext(
+	configs []common.Config,
+	parameters map[string]interface{},
+) (*common.StageContextImpl, *common.ErrorSink) {
 	stageConfig := common.StageConfiguration{}
-	stageConfig.Library = LIBRARY
-	stageConfig.StageName = STAGE_NAME
-	stageConfig.Configuration = make([]common.Config, 2)
-	stageConfig.Configuration[0] = common.Config{
-		Name:  "httpConfigs.port",
-		Value: portNumber,
-	}
-	stageConfig.Configuration[1] = common.Config{
-		Name:  "httpConfigs.appId",
-		Value: appId,
-	}
+	stageConfig.Library = Library
+	stageConfig.StageName = StageName
+	stageConfig.Configuration = configs
+	errorSink := common.NewErrorSink()
 	return &common.StageContextImpl{
 		StageConfig: &stageConfig,
 		Parameters:  parameters,
-	}
+		ErrorSink:   errorSink,
+	}, errorSink
 }
 
 func TestHttpServerOrigin_Init(t *testing.T) {
 	portNumber := float64(500)
 	appId := "edge"
 
-	stageContext := getStageContext(portNumber, appId, nil)
+	configs := []common.Config{
+		{
+			Name:  "httpConfigs.port",
+			Value: portNumber,
+		},
+		{
+			Name:  "httpConfigs.appId",
+			Value: appId,
+		},
+		{
+			Name:  "dataFormat",
+			Value: "JSON",
+		},
+	}
+
+	stageContext, _ := getStageContext(configs, nil)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
@@ -52,11 +71,200 @@ func TestHttpServerOrigin_Init(t *testing.T) {
 		t.Error("Failed to create stage instance")
 	}
 
-	if stageInstance.(*HttpServerOrigin).HttpConfigs.Port != portNumber {
+	if stageInstance.(*Origin).HttpConfigs.Port != portNumber {
 		t.Error("Failed to inject config value for port number")
 	}
 
-	if stageInstance.(*HttpServerOrigin).HttpConfigs.AppId != appId {
+	if stageInstance.(*Origin).HttpConfigs.AppId != appId {
 		t.Error("Failed to inject config value for port number")
+	}
+
+	issues := stageInstance.Init(stageContext)
+	if len(issues) > 0 {
+		t.Error(issues[0].Message)
+	}
+
+	err = stageInstance.Destroy()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestOrigin_Produce_JSON(t *testing.T) {
+	freePort, _ := lib.GetFreePort()
+	configs := []common.Config{
+		{
+			Name:  "httpConfigs.port",
+			Value: float64(freePort),
+		},
+		{
+			Name:  "httpConfigs.appId",
+			Value: "edge",
+		},
+		{
+			Name:  "dataFormat",
+			Value: "JSON",
+		},
+	}
+
+	stageContext, _ := getStageContext(configs, nil)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	stageInstance := stageBean.Stage
+
+	issues := stageInstance.Init(stageContext)
+	if len(issues) > 0 {
+		t.Fatal(issues[0].Message)
+	}
+	defer stageInstance.Destroy()
+
+	go func() {
+		httpServerUrl := fmt.Sprintf("http://localhost:%d", freePort)
+		message := map[string]interface{}{
+			"hello": "world",
+			"life":  42,
+			"embedded": map[string]string{
+				"yes": "of course!",
+			},
+		}
+
+		bytesRepresentation, err := json.Marshal(message)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		httpClient := http.Client{}
+		req, err := http.NewRequest("POST", httpServerUrl, bytes.NewBuffer(bytesRepresentation))
+		req.Header.Set(X_SDC_APPLICATION_ID_HEADER, "edge")
+		_, err = httpClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+	_, err = stageInstance.(api.Origin).Produce(&stringOffset, 1, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+		return
+	}
+
+	records := batchMaker.GetStageOutput()
+	if len(records) != 1 {
+		t.Fatal("Expected 1 records but got - ", len(records))
+	}
+
+	helloField, _ := records[0].Get("/hello")
+	if helloField.Value != "world" {
+		t.Error("Expected 'world' but got - ", helloField.Value)
+	}
+}
+
+func TestOrigin_Produce_Text_WithQueryAppId(t *testing.T) {
+	freePort, _ := lib.GetFreePort()
+	configs := []common.Config{
+		{
+			Name:  "httpConfigs.port",
+			Value: float64(freePort),
+		},
+		{
+			Name:  "httpConfigs.appId",
+			Value: "edge",
+		},
+		{
+			Name:  "httpConfigs.appIdViaQueryParamAllowed",
+			Value: true,
+		},
+		{
+			Name:  "dataFormat",
+			Value: "TEXT",
+		},
+	}
+
+	stageContext, _ := getStageContext(configs, nil)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	stageInstance := stageBean.Stage
+
+	issues := stageInstance.Init(stageContext)
+	if len(issues) > 0 {
+		t.Fatal(issues[0].Message)
+	}
+	defer stageInstance.Destroy()
+
+	go func() {
+		httpServerUrl := fmt.Sprintf("http://localhost:%d?sdcApplicationId=edge", freePort)
+		message := "Hello World"
+		httpClient := http.Client{}
+		req, err := http.NewRequest("POST", httpServerUrl, bytes.NewBufferString(message))
+		_, err = httpClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+	_, err = stageInstance.(api.Origin).Produce(&stringOffset, 1, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+		return
+	}
+
+	records := batchMaker.GetStageOutput()
+	if len(records) != 1 {
+		t.Fatal("Expected 1 records but got - ", len(records))
+	}
+
+	textField, _ := records[0].Get("/text")
+	if textField.Value != "Hello World" {
+		t.Error("Expected 'Hello World' but got - ", textField.Value)
+	}
+}
+
+func TestOrigin_Produce_InvalidAppId(t *testing.T) {
+	freePort, _ := lib.GetFreePort()
+	configs := []common.Config{
+		{
+			Name:  "httpConfigs.port",
+			Value: float64(freePort),
+		},
+		{
+			Name:  "httpConfigs.appId",
+			Value: "edge",
+		},
+		{
+			Name:  "dataFormat",
+			Value: "TEXT",
+		},
+	}
+
+	stageContext, _ := getStageContext(configs, nil)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	stageInstance := stageBean.Stage
+
+	issues := stageInstance.Init(stageContext)
+	if len(issues) > 0 {
+		t.Fatal(issues[0].Message)
+	}
+	defer stageInstance.Destroy()
+
+	httpServerUrl := fmt.Sprintf("http://localhost:%d", freePort)
+	message := "Hello World"
+	httpClient := http.Client{}
+	req, err := http.NewRequest("POST", httpServerUrl, bytes.NewBufferString(message))
+	req.Header.Set(X_SDC_APPLICATION_ID_HEADER, "invalidAppID")
+	resp, err := httpClient.Do(req)
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatal("Excepted 403 status code for invalid app Id")
 	}
 }
