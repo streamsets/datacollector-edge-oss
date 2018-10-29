@@ -15,14 +15,26 @@ package controlhub
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"runtime"
+	"strings"
 )
 
 const (
-	REGISTRATION_URL_PATH = "/security/public-rest/v1/components/registration"
+	RegistrationUrlPath    = "/security/public-rest/v1/components/registration"
+	LoginUrlPath           = "/security/public-rest/v1/authentication/login"
+	CreateComponentUrlPath = "/security/rest/v1/organization/%s/components"
+	EdgeComponentType      = "dc-edge"
+	FullAuthTokenProp      = "fullAuthToken"
+	PostRequest            = "POST"
+	PutRequest             = "PUT"
 )
 
 type Attributes struct {
@@ -41,7 +53,7 @@ type RegistrationData struct {
 	Attributes  Attributes `json:"attributes"`
 }
 
-func RegisterWithDPM(
+func RegisterWithControlHub(
 	schConfig Config,
 	buildInfo *common.BuildInfo,
 	runtimeInfo *common.RuntimeInfo,
@@ -68,10 +80,10 @@ func RegisterWithDPM(
 			log.Println(err)
 		}
 
-		var registrationUrl = schConfig.BaseUrl + REGISTRATION_URL_PATH
+		var registrationUrl = schConfig.BaseUrl + RegistrationUrlPath
 
-		req, err := http.NewRequest("POST", registrationUrl, bytes.NewBuffer(jsonValue))
-		req.Header.Set(common.HEADER_X_REST_CALL, "SDC Edge")
+		req, err := http.NewRequest(PostRequest, registrationUrl, bytes.NewBuffer(jsonValue))
+		req.Header.Set(common.HEADER_X_REST_CALL, EdgeComponentType)
 		req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
 
 		client := &http.Client{}
@@ -90,4 +102,123 @@ func RegisterWithDPM(
 	} else {
 		runtimeInfo.DPMEnabled = false
 	}
+}
+
+func EnableControlHub(
+	controlHubUrl string,
+	controlHubUser string,
+	controlHubPassword string,
+	controlHubUserToken string,
+) (string, error) {
+	var err error
+
+	if len(controlHubPassword) > 0 && len(controlHubUserToken) > 0 {
+		return "", errors.New("provide either Control Hub password or user token, but not both")
+	}
+
+	if len(controlHubUserToken) == 0 {
+		controlHubUserToken, err = retrieveUserToken(controlHubUrl, controlHubUser, controlHubPassword)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	orgId := getControlHubOrgId(controlHubUser)
+	newComponentJson := map[string]interface{}{
+		"organization":       orgId,
+		"componentType":      EdgeComponentType,
+		"numberOfComponents": 1,
+		"active":             true,
+	}
+
+	jsonValue, err := json.Marshal(newComponentJson)
+	if err != nil {
+		return "", err
+	}
+
+	var createComponentUrl = controlHubUrl + fmt.Sprintf(CreateComponentUrlPath, orgId)
+
+	req, err := http.NewRequest(PutRequest, createComponentUrl, bytes.NewBuffer(jsonValue))
+	req.Header.Set(common.HEADER_X_REST_CALL, EdgeComponentType)
+	req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
+	req.Header.Set(common.HEADER_X_USER_AUTH_TOKEN, controlHubUserToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	log.WithField("status", resp.Status).Info("Control Hub token creation status")
+	if resp.StatusCode != 201 {
+		bodyBytes, _ := ioutil.ReadAll(resp.Body)
+		err = fmt.Errorf("control hub token creation failed: %s", string(bodyBytes))
+		return "", err
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	var responseList []map[string]interface{}
+	err = decoder.Decode(&responseList)
+	if err != nil {
+		switch {
+		case err == io.EOF:
+			// empty body
+		case err != nil:
+			// other error
+			return "", fmt.Errorf("parsing Control Hub response failed: %s", err)
+		}
+	}
+
+	if len(responseList) != 1 {
+		return "", errors.New("invalid response from Control Hub")
+	}
+
+	fullAuthToken := responseList[0][FullAuthTokenProp]
+
+	return cast.ToString(fullAuthToken), err
+}
+
+func getControlHubOrgId(controlHubUser string) string {
+	strArr := strings.Split(controlHubUser, "@")
+	return strArr[0]
+}
+
+func retrieveUserToken(
+	controlHubUrl string,
+	controlHubUser string,
+	controlHubPassword string,
+) (string, error) {
+	var err error
+
+	loginJson := map[string]string{
+		"userName": controlHubUser,
+		"password": controlHubPassword,
+	}
+
+	jsonValue, err := json.Marshal(loginJson)
+	if err != nil {
+		return "", err
+	}
+
+	var loginUrl = controlHubUrl + LoginUrlPath
+
+	req, err := http.NewRequest(PostRequest, loginUrl, bytes.NewBuffer(jsonValue))
+	req.Header.Set(common.HEADER_X_REST_CALL, EdgeComponentType)
+	req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	bodyBytes, _ := ioutil.ReadAll(resp.Body)
+
+	log.WithField("status", resp.Status).Info("Control Hub authentication status")
+	if resp.StatusCode != 200 {
+		err = fmt.Errorf("control hub authentication failed: %s", string(bodyBytes))
+		return "", err
+	}
+	return resp.Header.Get(common.HEADER_X_USER_AUTH_TOKEN), nil
 }

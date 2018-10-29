@@ -1,3 +1,15 @@
+// Copyright 2018 StreamSets Inc.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package main
 
 import (
@@ -6,7 +18,9 @@ import (
 	"fmt"
 	"github.com/kardianos/service"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/controlhub"
 	"github.com/streamsets/datacollector-edge/container/edge"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations"
 	_ "github.com/streamsets/datacollector-edge/stages/origins"
@@ -36,6 +50,50 @@ var serviceArg = flag.String(
 	"Manage service commands - install, uninstall, start, stop and restart",
 )
 
+var enableControlHubArg = flag.Bool(
+	"enableControlHub",
+	false,
+	"Enable Control Hub",
+)
+
+var disableControlHubArg = flag.Bool(
+	"disableControlHub",
+	false,
+	"Disable Control Hub",
+)
+
+var controlHubUrlArg = flag.String(
+	"controlHubUrl",
+	"https://cloud.streamsets.com",
+	"Control Hub URl, For Control Hub cloud, use https://cloud.streamsets.com. "+
+		"For Control Hub on-premises, use the URL provided by your system administrator. "+
+		"For example, https://<hostname>:18631",
+)
+
+var controlHubUserTokenArg = flag.String(
+	"controlHubUserToken",
+	"",
+	"Enter your Control Hub user auth token",
+)
+
+var controlHubUserArg = flag.String(
+	"controlHubUser",
+	"",
+	"Enter your Control Hub user ID using the following format: <ID>@<organization ID>",
+)
+
+var controlHubPasswordArg = flag.String(
+	"controlHubPassword",
+	"",
+	"Enter the password for your Control Hub user account",
+)
+
+var controlHubLabelsArg = flag.String(
+	"controlHubLabels",
+	"",
+	"Enter labels to report to Control Hub",
+)
+
 type program struct {
 	dataCollectorEdge *edge.DataCollectorEdgeMain
 }
@@ -46,12 +104,6 @@ func (p *program) Start(s service.Service) error {
 }
 
 func (p *program) run() {
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	baseDir := strings.TrimSuffix(filepath.Dir(ex), "/bin")
-	baseDir = strings.TrimSuffix(baseDir, "\\bin") // for windows
 
 	fmt.Println("StreamSets Data Collector Edge (SDC Edge): ")
 	fmt.Printf("OS: %s\nArchitecture: %s\n", runtime.GOOS, runtime.GOARCH)
@@ -66,7 +118,7 @@ func (p *program) run() {
 	}
 
 	p.dataCollectorEdge, _ = edge.DoMain(
-		baseDir,
+		getBaseDir(),
 		*debugFlag,
 		*logToConsoleFlag,
 		*startFlag,
@@ -103,6 +155,48 @@ func main() {
 		} else {
 			fmt.Printf("Action '%s' for service 'datacollector-edge' ran successfully", *serviceArg)
 		}
+	} else if *enableControlHubArg {
+		if fullAuthToken, err := controlhub.EnableControlHub(
+			*controlHubUrlArg,
+			*controlHubUserArg,
+			*controlHubPasswordArg,
+			*controlHubUserTokenArg,
+		); err != nil {
+			fmt.Println(err.Error())
+		} else {
+			edgeConfigFile := getBaseDir() + edge.DefaultConfigFilePath
+			config := edge.NewConfig()
+			err = config.FromTomlFile(edgeConfigFile)
+			if err != nil {
+				panic(err)
+			}
+			config.SCH.Enabled = true
+			config.SCH.BaseUrl = *controlHubUrlArg
+			config.SCH.AppAuthToken = cast.ToString(fullAuthToken)
+			if len(*controlHubLabelsArg) > 0 {
+				labels := strings.Split(*controlHubLabelsArg, ",")
+				if len(labels) > 0 {
+					config.SCH.JobLabels = labels
+				}
+			}
+
+			if err = config.ToTomlFile(edgeConfigFile); err != nil {
+				panic(err)
+			}
+			fmt.Print("Control Hub enabled successfully")
+		}
+	} else if *disableControlHubArg {
+		edgeConfigFile := getBaseDir() + edge.DefaultConfigFilePath
+		config := edge.NewConfig()
+		err = config.FromTomlFile(edgeConfigFile)
+		if err != nil {
+			panic(err)
+		}
+		config.SCH.Enabled = false
+		if err = config.ToTomlFile(edgeConfigFile); err != nil {
+			panic(err)
+		}
+		fmt.Print("Control Hub disabled successfully")
 	} else {
 		err = newService.Run()
 		if err != nil {
@@ -132,4 +226,14 @@ func shutdownHook(dataCollectorEdge *edge.DataCollectorEdgeMain) {
 		dataCollectorEdge.DPMMessageEventHandler.Shutdown()
 	}
 	log.Info("Data Collector Edge shutting down")
+}
+
+func getBaseDir() string {
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	baseDir := strings.TrimSuffix(filepath.Dir(ex), "/bin")
+	baseDir = strings.TrimSuffix(baseDir, "\\bin") // for windows
+	return baseDir
 }
