@@ -18,6 +18,11 @@ repositories {
 golang {
   goVersion = '1.11'
   packagePath = gitPath
+  ignoredPackages = [
+          'github.com/golang/protobuf',
+          'a',
+          'cloud.google.com'
+  ]
 }
 
 dependencies {
@@ -46,9 +51,9 @@ dependencies {
     build name: 'github.com/shirou/w32', commit: 'bb4de0191aa41b5507caa14b0650cdbddcd9280b'
     build name: 'github.com/icrowley/fake', commit: '4178557ae428460c3780a381c824a1f3aceb6325'
     build name: 'github.com/kardianos/service', commit: '615a14ed75099c9eaac6949e22ac2341bf9d3197'
-    build name: 'github.com/tensorflow/tensorflow/tensorflow/go', tag: '1.10.0'
-    build name: 'github.com/spf13/cast', tag: 'v1.2.0'
-    build name: 'github.com/Workiva/go-datastructures', tag: 'v1.0.50'
+    build name: 'github.com/tensorflow/tensorflow/tensorflow/go', tag: '1.10.0', transitive: false
+    build name: 'github.com/spf13/cast', tag: 'v1.2.0', transitive: false
+    build name: 'github.com/Workiva/go-datastructures', tag: 'v1.0.50', transitive: false
   }
 }
 
