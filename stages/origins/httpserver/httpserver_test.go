@@ -119,7 +119,6 @@ func TestOrigin_Produce_JSON(t *testing.T) {
 	if len(issues) > 0 {
 		t.Fatal(issues[0].Message)
 	}
-	defer stageInstance.Destroy()
 
 	go func() {
 		httpServerUrl := fmt.Sprintf("http://localhost:%d", freePort)
@@ -161,6 +160,8 @@ func TestOrigin_Produce_JSON(t *testing.T) {
 	if helloField.Value != "world" {
 		t.Error("Expected 'world' but got - ", helloField.Value)
 	}
+
+	stageInstance.Destroy()
 }
 
 func TestOrigin_Produce_Text_WithQueryAppId(t *testing.T) {
@@ -196,7 +197,6 @@ func TestOrigin_Produce_Text_WithQueryAppId(t *testing.T) {
 	if len(issues) > 0 {
 		t.Fatal(issues[0].Message)
 	}
-	defer stageInstance.Destroy()
 
 	go func() {
 		httpServerUrl := fmt.Sprintf("http://localhost:%d?sdcApplicationId=edge", freePort)
@@ -225,6 +225,8 @@ func TestOrigin_Produce_Text_WithQueryAppId(t *testing.T) {
 	if textField.Value != "Hello World" {
 		t.Error("Expected 'Hello World' but got - ", textField.Value)
 	}
+
+	stageInstance.Destroy()
 }
 
 func TestOrigin_Produce_InvalidAppId(t *testing.T) {
@@ -256,7 +258,6 @@ func TestOrigin_Produce_InvalidAppId(t *testing.T) {
 	if len(issues) > 0 {
 		t.Fatal(issues[0].Message)
 	}
-	defer stageInstance.Destroy()
 
 	httpServerUrl := fmt.Sprintf("http://localhost:%d", freePort)
 	message := "Hello World"
@@ -264,7 +265,9 @@ func TestOrigin_Produce_InvalidAppId(t *testing.T) {
 	req, err := http.NewRequest("POST", httpServerUrl, bytes.NewBufferString(message))
 	req.Header.Set(X_SDC_APPLICATION_ID_HEADER, "invalidAppID")
 	resp, err := httpClient.Do(req)
-	if resp.StatusCode != http.StatusForbidden {
+	if resp != nil && resp.StatusCode != http.StatusForbidden {
 		t.Fatal("Excepted 403 status code for invalid app Id")
 	}
+
+	stageInstance.Destroy()
 }
