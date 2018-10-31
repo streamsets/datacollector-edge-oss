@@ -42,6 +42,7 @@ const (
 	CDH_KAFKA_2_0_LIBRARY = "streamsets-datacollector-cdh_kafka_2_0-lib"
 	CDH_KAFKA_2_1_LIBRARY = "streamsets-datacollector-cdh_kafka_2_1-lib"
 	CDH_KAFKA_3_0_LIBRARY = "streamsets-datacollector-cdh_kafka_3_0-lib"
+	CDH_KAFKA_3_1_LIBRARY = "streamsets-datacollector-cdh_kafka_3_1-lib"
 	CDH_6_0_LIBRARY       = "streamsets-datacollector-cdh_6_0-lib"
 
 	HDP_KAFKA_2_4_LIBRARY = "streamsets-datacollector-hdp_2_4-lib"
@@ -77,6 +78,7 @@ const (
 type KafkaDestination struct {
 	*common.BaseStage
 	Conf            KafkaTargetConfig `ConfigDefBean:"conf"`
+	kafkaVersion    sarama.KafkaVersion
 	kafkaClientConf *sarama.Config
 	brokerList      []string
 	kafkaClient     sarama.Client
@@ -98,42 +100,45 @@ type KafkaTargetConfig struct {
 
 func init() {
 	stagelibrary.SetCreator(APACHE_KAFKA_0_10_LIBRARY, StageName, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+		return &KafkaDestination{BaseStage: &common.BaseStage{}, kafkaVersion: sarama.V0_10_0_0}
 	})
 	stagelibrary.SetCreator(APACHE_KAFKA_0_11_LIBRARY, StageName, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+		return &KafkaDestination{BaseStage: &common.BaseStage{}, kafkaVersion: sarama.V0_11_0_0}
 	})
 	stagelibrary.SetCreator(APACHE_KAFKA_1_0_LIBRARY, StageName, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+		return &KafkaDestination{BaseStage: &common.BaseStage{}, kafkaVersion: sarama.V1_0_0_0}
 	})
 	stagelibrary.SetCreator(APACHE_KAFKA_1_1_LIBRARY, StageName, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+		return &KafkaDestination{BaseStage: &common.BaseStage{}, kafkaVersion: sarama.V1_1_0_0}
 	})
 	stagelibrary.SetCreator(APACHE_KAFKA_2_0_LIBRARY, StageName, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+		return &KafkaDestination{BaseStage: &common.BaseStage{}, kafkaVersion: sarama.V1_1_0_0}
 	})
 
 	stagelibrary.SetCreator(CDH_KAFKA_2_0_LIBRARY, StageName, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+		return &KafkaDestination{BaseStage: &common.BaseStage{}, kafkaVersion: sarama.V0_9_0_0}
 	})
 	stagelibrary.SetCreator(CDH_KAFKA_2_1_LIBRARY, StageName, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+		return &KafkaDestination{BaseStage: &common.BaseStage{}, kafkaVersion: sarama.V0_10_0_0}
 	})
 	stagelibrary.SetCreator(CDH_KAFKA_3_0_LIBRARY, StageName, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+		return &KafkaDestination{BaseStage: &common.BaseStage{}, kafkaVersion: sarama.V0_11_0_0}
+	})
+	stagelibrary.SetCreator(CDH_KAFKA_3_1_LIBRARY, StageName, func() api.Stage {
+		return &KafkaDestination{BaseStage: &common.BaseStage{}, kafkaVersion: sarama.V1_0_0_0}
 	})
 	stagelibrary.SetCreator(CDH_6_0_LIBRARY, StageName, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+		return &KafkaDestination{BaseStage: &common.BaseStage{}, kafkaVersion: sarama.V1_1_0_0}
 	})
 
 	stagelibrary.SetCreator(HDP_KAFKA_2_4_LIBRARY, StageName, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+		return &KafkaDestination{BaseStage: &common.BaseStage{}, kafkaVersion: sarama.V0_10_0_0}
 	})
 	stagelibrary.SetCreator(HDP_KAFKA_2_5_LIBRARY, StageName, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+		return &KafkaDestination{BaseStage: &common.BaseStage{}, kafkaVersion: sarama.V0_10_0_0}
 	})
 	stagelibrary.SetCreator(HDP_KAFKA_2_6_LIBRARY, StageName, func() api.Stage {
-		return &KafkaDestination{BaseStage: &common.BaseStage{}}
+		return &KafkaDestination{BaseStage: &common.BaseStage{}, kafkaVersion: sarama.V1_0_0_0}
 	})
 }
 
@@ -284,6 +289,7 @@ func (dest *KafkaDestination) Destroy() error {
 func (dest *KafkaDestination) mapJVMConfigsToSaramaConfig() error {
 	config := sarama.NewConfig()
 	config.ClientID = ClientId
+	config.Version = dest.kafkaVersion
 
 	for name, value := range dest.Conf.KafkaProducerConfigs {
 		switch name {
