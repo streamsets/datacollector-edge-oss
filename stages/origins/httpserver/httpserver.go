@@ -13,6 +13,7 @@
 package httpserver
 
 import (
+	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
@@ -62,11 +63,15 @@ func (h *Origin) Init(stageContext api.StageContext) []validation.Issue {
 }
 
 func (h *Origin) Destroy() error {
-	close(h.incomingRecords)
-	if err := h.httpServer.Shutdown(nil); err != nil {
-		return err
+	if h.incomingRecords != nil {
+		close(h.incomingRecords)
 	}
-	log.Debug("HTTP Server - server shutdown successfully")
+	if h.httpServer != nil {
+		if err := h.httpServer.Shutdown(context.Background()); err != nil {
+			return err
+		}
+		log.Debug("HTTP Server - server shutdown successfully")
+	}
 	return nil
 }
 
