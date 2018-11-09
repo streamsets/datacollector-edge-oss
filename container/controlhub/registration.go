@@ -181,7 +181,10 @@ func EnableControlHub(
 
 func getControlHubOrgId(controlHubUser string) string {
 	strArr := strings.Split(controlHubUser, "@")
-	return strArr[0]
+	if len(strArr) < 2 {
+		panic("Invalid Control Hub User Id")
+	}
+	return strArr[1]
 }
 
 func retrieveUserToken(
