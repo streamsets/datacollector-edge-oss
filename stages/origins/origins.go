@@ -17,6 +17,7 @@ import (
 	_ "github.com/streamsets/datacollector-edge/stages/origins/dev_random"
 	_ "github.com/streamsets/datacollector-edge/stages/origins/dev_rawdata"
 	_ "github.com/streamsets/datacollector-edge/stages/origins/filetail"
+	_ "github.com/streamsets/datacollector-edge/stages/origins/grpc_client"
 	_ "github.com/streamsets/datacollector-edge/stages/origins/httpclient"
 	_ "github.com/streamsets/datacollector-edge/stages/origins/httpserver"
 	_ "github.com/streamsets/datacollector-edge/stages/origins/mqtt"
