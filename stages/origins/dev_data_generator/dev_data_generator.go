@@ -92,6 +92,7 @@ type Origin struct {
 	*common.BaseStage
 	DataGenConfigs []DataGeneratorConfig `ConfigDef:"type=MODEL" ListBeanModel:"name=dataGenConfigs"`
 	Delay          float64               `ConfigDef:"type=NUMBER,required=true"`
+	BatchSize      float64               `ConfigDef:"type=NUMBER,required=true"`
 	EventName      string                `ConfigDef:"type=STRING,required=true"`
 	RootFieldType  string                `ConfigDef:"type=STRING,required=true"`
 }
@@ -124,7 +125,7 @@ func (d *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 	max := time.Date(2018, 1, 0, 0, 0, 0, 0, time.UTC).Unix()
 	delta := max - min
 
-	for i := 0; i < maxBatchSize; i++ {
+	for i := 0; i < int(d.BatchSize); i++ {
 		var rootField *api.Field
 		if d.RootFieldType == MapRootType {
 			rootField, _ = d.createMapTypeField(r, delta, min)

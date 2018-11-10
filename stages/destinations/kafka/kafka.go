@@ -29,6 +29,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -169,6 +170,7 @@ func (dest *KafkaDestination) Init(context api.StageContext) []validation.Issue 
 
 func (dest *KafkaDestination) Write(batch api.Batch) error {
 	var err error
+	var wg sync.WaitGroup
 
 	kafkaProducer, err := sarama.NewAsyncProducerFromClient(dest.kafkaClient)
 	if err != nil {
@@ -176,9 +178,8 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 	}
 
 	defer func() {
-		if err := kafkaProducer.Close(); err != nil {
-			log.WithError(err).Error("Failed to close Kafka Producer")
-		}
+		kafkaProducer.AsyncClose()
+		wg.Wait()
 	}()
 
 	recordWriterFactory := dest.Conf.DataGeneratorFormatConfig.RecordWriterFactory
@@ -186,7 +187,9 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 		return err
 	}
 
+	wg.Add(2)
 	go func() {
+		defer wg.Done()
 		for msg := range kafkaProducer.Successes() {
 			log.WithFields(log.Fields{
 				"key":       msg.Key,
@@ -198,6 +201,7 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 	}()
 
 	go func() {
+		defer wg.Done()
 		for err := range kafkaProducer.Errors() {
 			log.WithFields(log.Fields{
 				"key":       err.Msg.Key,
@@ -205,6 +209,14 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 				"partition": err.Msg.Partition,
 				"offset":    err.Msg.Offset,
 			}).WithError(err.Err).Error("Message delivery failed!")
+
+			if dest.Conf.SingleMessagePerBatch {
+				for _, record := range batch.GetRecords() {
+					dest.GetStageContext().ToError(err, record)
+				}
+			} else {
+				dest.GetStageContext().ToError(err, err.Msg.Metadata.(api.Record))
+			}
 		}
 	}()
 
@@ -266,9 +278,10 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 
 			dest.keyCounter++
 			kafkaProducer.Input() <- &sarama.ProducerMessage{
-				Key:   sarama.StringEncoder(dest.Conf.Topic + strconv.Itoa(dest.keyCounter)),
-				Topic: *topic,
-				Value: sarama.ByteEncoder(recordBuffer.Bytes()),
+				Key:      sarama.StringEncoder(dest.Conf.Topic + strconv.Itoa(dest.keyCounter)),
+				Topic:    *topic,
+				Value:    sarama.ByteEncoder(recordBuffer.Bytes()),
+				Metadata: record,
 			}
 		}
 	}
