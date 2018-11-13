@@ -14,6 +14,7 @@ package execution
 
 import (
 	"github.com/rcrowley/go-metrics"
+	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 )
 
@@ -28,4 +29,6 @@ type Runner interface {
 	CommitOffset(sourceOffset common.SourceOffset) error
 	GetOffset() (common.SourceOffset, error)
 	IsRemotePipeline() bool
+	GetErrorRecords(stageInstanceName string, size int) ([]api.Record, error)
+	GetErrorMessages(stageInstanceName string, size int) ([]api.ErrorMessage, error)
 }

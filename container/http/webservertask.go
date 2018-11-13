@@ -65,6 +65,8 @@ func (webServerTask *WebServerTask) Init() error {
 	router.GET("/rest/v1/pipeline/:pipelineId/history", webServerTask.historyHandler)
 	router.GET("/rest/v1/pipeline/:pipelineId/metrics", webServerTask.metricsHandler)
 	router.GET("/rest/v1/pipeline/:pipelineId/committedOffsets", webServerTask.getOffsetHandler)
+	router.GET("/rest/v1/pipeline/:pipelineId/errorRecords", webServerTask.getErrorRecords)
+	router.GET("/rest/v1/pipeline/:pipelineId/errorMessages", webServerTask.getErrorMessages)
 
 	// Pipeline Store APIs
 	router.GET("/rest/v1/pipelines", webServerTask.getPipelines)

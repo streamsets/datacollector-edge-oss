@@ -55,6 +55,14 @@ func (e *ErrorSink) GetTotalErrorRecords() int64 {
 	return e.totalErrorRecords
 }
 
+func (e *ErrorSink) GetErrorRecords() map[string][]api.Record {
+	return e.stageErrorRecords
+}
+
+func (e *ErrorSink) GetErrorMessages() map[string][]api.ErrorMessage {
+	return e.stageErrorMessages
+}
+
 func (e *ErrorSink) ReportError(stageIns string, errorMessage api.ErrorMessage) {
 	var errorMessages []api.ErrorMessage
 	var keyExists bool

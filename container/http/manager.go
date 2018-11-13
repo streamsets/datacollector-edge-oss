@@ -16,10 +16,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/container/common"
+	"github.com/streamsets/datacollector-edge/container/recordio/sdcrecord"
 	"github.com/streamsets/datacollector-edge/container/util"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 func (webServerTask *WebServerTask) startHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -142,5 +145,53 @@ func (webServerTask *WebServerTask) metricsHandler(w http.ResponseWriter, r *htt
 		encoder.Encode(util.FormatMetricsRegistry(metricRegistry))
 	} else {
 		serverErrorReq(w, fmt.Sprintf("Failed to get metrics:  %s! ", err))
+	}
+}
+
+// Path - GET /rest/v1/pipeline/{pipelineId}/errorRecords
+func (webServerTask *WebServerTask) getErrorRecords(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	pipelineId := ps.ByName("pipelineId")
+	stageInstanceName := r.URL.Query().Get("stageInstanceName")
+	size := 10
+	if i, err := strconv.Atoi(r.URL.Query().Get("size")); err == nil {
+		size = i
+	}
+
+	errorRecords, err := webServerTask.manager.GetRunner(pipelineId).GetErrorRecords(stageInstanceName, size)
+	w.Header().Set(ContentType, ApplicationJson)
+	if err == nil {
+		sdcRecords := make([]sdcrecord.SDCRecord, len(errorRecords))
+		for i, record := range errorRecords {
+			sdcRecord, err := sdcrecord.NewSdcRecordFromRecord(record)
+			if err != nil {
+				logrus.WithError(err).Error("failed to create sdc record")
+			} else {
+				sdcRecords[i] = *sdcRecord
+			}
+		}
+		encoder := json.NewEncoder(w)
+		encoder.SetIndent("", "\t")
+		encoder.Encode(sdcRecords)
+	} else {
+		serverErrorReq(w, fmt.Sprintf("Failed to get error records:  %s! ", err))
+	}
+}
+
+// Path - GET /rest/v1/pipeline/{pipelineId}/errorMessages
+func (webServerTask *WebServerTask) getErrorMessages(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	pipelineId := ps.ByName("pipelineId")
+	stageInstanceName := r.URL.Query().Get("stageInstanceName")
+	size := 10
+	if i, err := strconv.Atoi(r.URL.Query().Get("size")); err == nil {
+		size = i
+	}
+	errorMessages, err := webServerTask.manager.GetRunner(pipelineId).GetErrorMessages(stageInstanceName, size)
+	w.Header().Set(ContentType, ApplicationJson)
+	if err == nil {
+		encoder := json.NewEncoder(w)
+		encoder.SetIndent("", "\t")
+		encoder.Encode(errorMessages)
+	} else {
+		serverErrorReq(w, fmt.Sprintf("Failed to get error messages:  %s! ", err))
 	}
 }

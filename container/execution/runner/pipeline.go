@@ -52,6 +52,9 @@ type Pipeline struct {
 	batchOutputRecordsHistogram metrics.Histogram
 	batchErrorRecordsHistogram  metrics.Histogram
 	batchErrorMessagesHistogram metrics.Histogram
+
+	stageToErrorRecordsMap  map[string][]api.Record
+	stageToErrorMessagesMap map[string][]api.ErrorMessage
 }
 
 const (
@@ -67,6 +70,7 @@ const (
 	PipelineOutputRecordsPerBatch = "pipeline.outputRecordsPerBatch"
 	PipelineErrorRecordsPerBatch  = "pipeline.errorRecordsPerBatch"
 	PipelineErrorsPerBatch        = "pipeline.errorsPerBatch"
+	MaxCountInCache               = 10
 )
 
 func (p *Pipeline) Init() []validation.Issue {
@@ -167,7 +171,51 @@ func (p *Pipeline) runBatch() error {
 	p.batchErrorMessagesHistogram.Update(pipeBatch.GetErrorMessages())
 	p.batchErrorRecordsHistogram.Update(pipeBatch.GetErrorRecords())
 
+	// Retain X number of error records and error messages per stage
+	p.retainErrorRecordsInMemory(pipeBatch.GetErrorSink().GetErrorRecords())
+	p.retainErrorMessagesInMemory(pipeBatch.GetErrorSink().GetErrorMessages())
+
 	return nil
+}
+
+func (p *Pipeline) retainErrorRecordsInMemory(stageErrorRecords map[string][]api.Record) {
+	for stageInstanceName, errorRecords := range stageErrorRecords {
+		if _, keyExists := p.stageToErrorRecordsMap[stageInstanceName]; !keyExists {
+			p.stageToErrorRecordsMap[stageInstanceName] = make([]api.Record, 0, MaxCountInCache)
+		}
+
+		for _, record := range errorRecords {
+			if len(p.stageToErrorRecordsMap[stageInstanceName]) >= MaxCountInCache {
+				p.stageToErrorRecordsMap[stageInstanceName] = append(p.stageToErrorRecordsMap[stageInstanceName][1:], record)
+			} else {
+				p.stageToErrorRecordsMap[stageInstanceName] = append(p.stageToErrorRecordsMap[stageInstanceName], record)
+			}
+		}
+	}
+}
+
+func (p *Pipeline) retainErrorMessagesInMemory(stageErrorMessages map[string][]api.ErrorMessage) {
+	for stageInstanceName, errorMessages := range stageErrorMessages {
+		if _, keyExists := p.stageToErrorMessagesMap[stageInstanceName]; !keyExists {
+			p.stageToErrorMessagesMap[stageInstanceName] = make([]api.ErrorMessage, 0, MaxCountInCache)
+		}
+
+		for _, errorMessage := range errorMessages {
+			if len(p.stageToErrorMessagesMap[stageInstanceName]) >= MaxCountInCache {
+				p.stageToErrorMessagesMap[stageInstanceName] = append(p.stageToErrorMessagesMap[stageInstanceName][1:], errorMessage)
+			} else {
+				p.stageToErrorMessagesMap[stageInstanceName] = append(p.stageToErrorMessagesMap[stageInstanceName], errorMessage)
+			}
+		}
+	}
+}
+
+func (p *Pipeline) GetErrorRecords(stageInstanceName string, size int) ([]api.Record, error) {
+	return p.stageToErrorRecordsMap[stageInstanceName], nil
+}
+
+func (p *Pipeline) GetErrorMessages(stageInstanceName string, size int) ([]api.ErrorMessage, error) {
+	return p.stageToErrorMessagesMap[stageInstanceName], nil
 }
 
 func (p *Pipeline) Stop() {
@@ -293,6 +341,9 @@ func NewPipeline(
 	p.batchOutputRecordsHistogram = util.CreateHistogram5Min(metricRegistry, PipelineOutputRecordsPerBatch)
 	p.batchErrorRecordsHistogram = util.CreateHistogram5Min(metricRegistry, PipelineErrorRecordsPerBatch)
 	p.batchErrorMessagesHistogram = util.CreateHistogram5Min(metricRegistry, PipelineErrorsPerBatch)
+
+	p.stageToErrorRecordsMap = make(map[string][]api.Record)
+	p.stageToErrorMessagesMap = make(map[string][]api.ErrorMessage)
 
 	return p, issues
 }

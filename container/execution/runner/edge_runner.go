@@ -16,6 +16,7 @@ import (
 	"errors"
 	"github.com/rcrowley/go-metrics"
 	log "github.com/sirupsen/logrus"
+	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/execution"
@@ -230,6 +231,14 @@ func (edgeRunner *EdgeRunner) checkState(toState string) error {
 func (edgeRunner *EdgeRunner) IsRemotePipeline() bool {
 	attributes := edgeRunner.pipelineState.Attributes
 	return attributes != nil && attributes[store.IS_REMOTE_PIPELINE] == true
+}
+
+func (edgeRunner *EdgeRunner) GetErrorRecords(stageInstanceName string, size int) ([]api.Record, error) {
+	return edgeRunner.prodPipeline.Pipeline.GetErrorRecords(stageInstanceName, size)
+}
+
+func (edgeRunner *EdgeRunner) GetErrorMessages(stageInstanceName string, size int) ([]api.ErrorMessage, error) {
+	return edgeRunner.prodPipeline.Pipeline.GetErrorMessages(stageInstanceName, size)
 }
 
 func NewEdgeRunner(
