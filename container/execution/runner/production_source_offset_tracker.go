@@ -29,7 +29,7 @@ type ProductionSourceOffsetTracker struct {
 var emptyOffset = ""
 
 func (o *ProductionSourceOffsetTracker) IsFinished() bool {
-	return false
+	return o.finished
 }
 
 func (o *ProductionSourceOffsetTracker) SetOffset(newOffset *string) {
@@ -38,7 +38,7 @@ func (o *ProductionSourceOffsetTracker) SetOffset(newOffset *string) {
 
 func (o *ProductionSourceOffsetTracker) CommitOffset() error {
 	o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY] = o.newOffset
-	o.finished = o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY] == &emptyOffset
+	o.finished = o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY] == nil
 	o.newOffset = &emptyOffset
 	return store.SaveOffset(o.pipelineId, o.currentOffset)
 }

@@ -85,6 +85,13 @@ func (p *Pipeline) Init() []validation.Issue {
 func (p *Pipeline) Run() {
 	log.Debug("Pipeline Run()")
 
+	defer func() {
+		for _, stagePipe := range p.pipes {
+			stagePipe.Destroy()
+		}
+		p.errorStageRuntime.Destroy()
+	}()
+
 	for !p.offsetTracker.IsFinished() && !p.stop {
 		err := p.runBatch()
 		if err != nil {
@@ -165,10 +172,6 @@ func (p *Pipeline) runBatch() error {
 
 func (p *Pipeline) Stop() {
 	log.Debug("Pipeline Stop()")
-	for _, stagePipe := range p.pipes {
-		stagePipe.Destroy()
-	}
-	p.errorStageRuntime.Destroy()
 	p.stop = true
 }
 

@@ -128,7 +128,17 @@ func (edgeRunner *EdgeRunner) StartPipeline(
 		return edgeRunner.setStateToStartError(issues)
 	}
 
-	go edgeRunner.prodPipeline.Run()
+	go func() {
+		edgeRunner.prodPipeline.Run()
+		if edgeRunner.prodPipeline.Pipeline.offsetTracker.IsFinished() {
+			edgeRunner.pipelineState.Status = common.FINISHED
+			edgeRunner.pipelineState.TimeStamp = util.ConvertTimeToLong(time.Now())
+			err = store.SaveState(edgeRunner.pipelineId, edgeRunner.pipelineState)
+			if err != nil {
+				log.WithError(err).Error("Failed to save pipeline state to finished")
+			}
+		}
+	}()
 
 	if edgeRunner.runtimeInfo.DPMEnabled && edgeRunner.IsRemotePipeline() {
 		edgeRunner.metricsEventRunnable = NewMetricsEventRunnable(
