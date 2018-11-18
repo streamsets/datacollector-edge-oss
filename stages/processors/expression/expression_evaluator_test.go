@@ -303,6 +303,10 @@ func TestExpressionProcessor_ListMap(t *testing.T) {
 		FIELD_TO_SET: "/",
 		EXPRESSION:   "${record:value('/')}",
 	})
+	fieldValueConfigs = append(fieldValueConfigs, map[string]interface{}{
+		FIELD_TO_SET: "/copyOfA",
+		EXPRESSION:   "${record:value('/a')}",
+	})
 	stageContext.StageConfig.Configuration[0].Value = fieldValueConfigs
 
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
@@ -340,14 +344,20 @@ func TestExpressionProcessor_ListMap(t *testing.T) {
 
 	record := records[0]
 
-	dValue, err := record.Get("/a")
-
+	aValue, err := record.Get("/a")
 	if err != nil {
 		t.Error("Error when getting value of /a " + err.Error())
 	}
+	if aValue.Value.(float64) != float64(2.55) {
+		t.Errorf("Error in expression processor when evaluating /a, Expected : 2.55. Actual:%d", aValue.Value)
+	}
 
-	if dValue.Value.(float64) != float64(2.55) {
-		t.Errorf("Error in expression processor when evaluating /d, Expected : 6. Actual:%d", dValue.Value)
+	copyOfAValue, err := record.Get("/copyOfA")
+	if err != nil {
+		t.Error("Error when getting value of /copyOfA " + err.Error())
+	}
+	if copyOfAValue.Value.(float64) != float64(2.55) {
+		t.Errorf("Error in expression processor when evaluating /a, Expected : 2.55. Actual:%d", copyOfAValue.Value)
 	}
 
 	if errSink.GetTotalErrorRecords() != 0 {

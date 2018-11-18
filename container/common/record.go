@@ -185,9 +185,20 @@ func (r *RecordImpl) doSet(fieldPos int, newField *api.Field, pathElements []Pat
 		elem := pathElements[fieldPos]
 		switch elem.Type {
 		case MAP:
-			parent := fields[fieldPos-1].Value.(map[string]*api.Field)
-			fieldToReplace, _ = parent[elem.Name]
-			parent[elem.Name] = newField
+			field := fields[fieldPos-1]
+			if field.Value != nil {
+				if field.Type == fieldtype.MAP {
+					parent := field.Value.(map[string]*api.Field)
+					fieldToReplace, _ = parent[elem.Name]
+					parent[elem.Name] = newField
+				} else if field.Type == fieldtype.LIST_MAP {
+					parent := field.Value.(*linkedhashmap.Map)
+					if listMapField, ok := parent.Get(elem.Name); ok {
+						fieldToReplace = listMapField.(*api.Field)
+					}
+					parent.Put(elem.Name, newField)
+				}
+			}
 		case LIST:
 			parent := fields[fieldPos-1].Value.([]*api.Field)
 			if elem.Idx > len(parent) {

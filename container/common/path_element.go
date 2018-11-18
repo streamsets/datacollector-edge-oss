@@ -23,13 +23,13 @@ const (
 	MAP  = "MAP"
 	LIST = "LIST"
 
-	INVALID_FIELD_PATH        = "Invalid fieldPath '%s' at char '%d'"
-	INVALID_FIELD_PATH_REASON = "Invalid fieldPath '%s' at char position '%d' (%s)"
-	REASON_EMPTY_FIELD_NAME   = "field name can't be empty"
-	REASON_INVALID_START      = "field path needs to start with '[' or '/'"
-	REASON_NOT_A_NUMBER       = "only numbers and '*' allowed between '[' and ']'"
-	REASON_QUOTES             = "quotes are not properly closed"
-	INVALID_FIELD_PATH_NUMBER = "Invalid fieldPath '%s' at char '%d' ('%s' needs to be a number or '*')"
+	InvalidFieldPath       = "Invalid fieldPath '%s' at char '%d'"
+	InvalidFieldPathReason = "Invalid fieldPath '%s' at char position '%d' (%s)"
+	ReasonEmptyFieldName   = "field name can't be empty"
+	ReasonInvalidStart     = "field path needs to start with '[' or '/'"
+	ReasonNotANumber       = "only numbers and '*' allowed between '[' and ']'"
+	ReasonQuotes           = "quotes are not properly closed"
+	InvalidFieldPathNumber = "Invalid fieldPath '%s' at char '%d' ('%s' needs to be a number or '*')"
 )
 
 type PathElement struct {
@@ -38,7 +38,7 @@ type PathElement struct {
 	Idx  int
 }
 
-var ROOT_PATH_ELEMENT = &PathElement{
+var RootPathElement = &PathElement{
 	Type: ROOT,
 	Name: "",
 	Idx:  0,
@@ -62,7 +62,7 @@ func CreateListElement(idx int) PathElement {
 
 func ParseFieldPath(fieldPath string, isSingleQuoteEscaped bool) ([]PathElement, error) {
 	pathElementList := make([]PathElement, 0)
-	pathElementList = append(pathElementList, *ROOT_PATH_ELEMENT)
+	pathElementList = append(pathElementList, *RootPathElement)
 
 	if len(fieldPath) > 0 {
 		requiresStart := true
@@ -87,7 +87,7 @@ func ParseFieldPath(fieldPath string, isSingleQuoteEscaped bool) ([]PathElement,
 					requiresIndex = true
 					break
 				default:
-					return nil, errors.New(fmt.Sprintf(INVALID_FIELD_PATH_REASON, fieldPath, 0, REASON_INVALID_START))
+					return nil, errors.New(fmt.Sprintf(InvalidFieldPathReason, fieldPath, 0, ReasonInvalidStart))
 				}
 			} else {
 				if requiresName {
@@ -124,7 +124,7 @@ func ParseFieldPath(fieldPath string, isSingleQuoteEscaped bool) ([]PathElement,
 						} else {
 							if len(fieldPath) <= pos+1 {
 								return nil, errors.New(
-									fmt.Sprintf(INVALID_FIELD_PATH_REASON, fieldPath, pos, REASON_EMPTY_FIELD_NAME),
+									fmt.Sprintf(InvalidFieldPathReason, fieldPath, pos, ReasonEmptyFieldName),
 								)
 							}
 							if fieldPath[pos] == fieldPath[pos+1] {
@@ -174,7 +174,7 @@ func ParseFieldPath(fieldPath string, isSingleQuoteEscaped bool) ([]PathElement,
 							idx, err = strconv.Atoi(indexString)
 							if err != nil {
 								return nil, errors.New(
-									fmt.Sprintf(INVALID_FIELD_PATH_NUMBER, fieldPath, pos, err.Error()),
+									fmt.Sprintf(InvalidFieldPathNumber, fieldPath, pos, err.Error()),
 								)
 							}
 						}
@@ -185,13 +185,13 @@ func ParseFieldPath(fieldPath string, isSingleQuoteEscaped bool) ([]PathElement,
 							collector = ""
 						} else {
 							return nil, errors.New(
-								fmt.Sprintf(INVALID_FIELD_PATH, fieldPath, pos),
+								fmt.Sprintf(InvalidFieldPath, fieldPath, pos),
 							)
 						}
 
 					default:
 						return nil, errors.New(
-							fmt.Sprintf(INVALID_FIELD_PATH_REASON, fieldPath, pos, REASON_NOT_A_NUMBER),
+							fmt.Sprintf(InvalidFieldPathReason, fieldPath, pos, ReasonNotANumber),
 						)
 					}
 				}
@@ -200,9 +200,9 @@ func ParseFieldPath(fieldPath string, isSingleQuoteEscaped bool) ([]PathElement,
 
 		if singleQuote || doubleQuote {
 			// If there is no matching quote
-			return nil, errors.New(fmt.Sprintf(INVALID_FIELD_PATH_REASON, fieldPath, 0, REASON_QUOTES))
+			return nil, errors.New(fmt.Sprintf(InvalidFieldPathReason, fieldPath, 0, ReasonQuotes))
 		} else if pos < len(fieldPath) {
-			return nil, errors.New(fmt.Sprintf(INVALID_FIELD_PATH, fieldPath, pos))
+			return nil, errors.New(fmt.Sprintf(InvalidFieldPath, fieldPath, pos))
 		} else if len(collector) > 0 {
 			// the last path element was a map entry, we need to create it.
 			pathElementList = append(pathElementList, CreateMapElement(collector))
