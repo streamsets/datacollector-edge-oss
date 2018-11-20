@@ -84,9 +84,9 @@ type Config struct {
 }
 
 type ServiceConfiguration struct {
-	Service        string   `json:"service"`
-	ServiceVersion int      `json:"serviceVersion"`
-	Configuration  []Config `json:"configuration"`
+	Service        string      `json:"service"`
+	ServiceVersion interface{} `json:"serviceVersion"` // interface{} is for backward compatible - SDC-10526
+	Configuration  []Config    `json:"configuration"`
 }
 
 func (s ServiceConfiguration) GetConfigurationMap() map[string]Config {
