@@ -34,4 +34,6 @@ type StageContext interface {
 	GetService(serviceName string) (Service, error)
 	IsPreview() bool
 	GetPipelineParameters() map[string]interface{}
+	SetStop()
+	IsStopped() bool
 }

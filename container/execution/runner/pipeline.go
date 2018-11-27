@@ -221,6 +221,9 @@ func (p *Pipeline) GetErrorMessages(stageInstanceName string, size int) ([]api.E
 func (p *Pipeline) Stop() {
 	log.Debug("Pipeline Stop()")
 	p.stop = true
+	for _, pipe := range p.pipes {
+		pipe.GetStageContext().SetStop()
+	}
 }
 
 func NewPipeline(

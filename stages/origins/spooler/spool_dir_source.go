@@ -57,6 +57,7 @@ type SpoolDirConfigBean struct {
 	SpoolDir              string                            `ConfigDef:"type=STRING,required=true"`
 	UseLastModified       string                            `ConfigDef:"type=STRING,required=true"`
 	PoolingTimeoutSecs    float64                           `ConfigDef:"type=NUMBER,required=true"`
+	SpoolingPeriod        float64                           `ConfigDef:"type=NUMBER,required=true"`
 	InitialFileToProcess  string                            `ConfigDef:"type=STRING,required=true"`
 	ProcessSubdirectories bool                              `ConfigDef:"type=BOOLEAN,required=true"`
 	FilePattern           string                            `ConfigDef:"type=STRING,required=true"`
@@ -74,12 +75,14 @@ func init() {
 func (s *SpoolDirSource) Init(stageContext api.StageContext) []validation.Issue {
 	issues := s.BaseStage.Init(stageContext)
 	s.spooler = &DirectorySpooler{
-		dirPath:           s.Conf.SpoolDir,
-		readOrder:         s.Conf.UseLastModified,
-		pathMatcherMode:   s.Conf.PathMatcherMode,
-		filePattern:       s.Conf.FilePattern,
-		processSubDirs:    s.Conf.ProcessSubdirectories,
-		spoolWaitDuration: time.Duration(int64(s.Conf.PoolingTimeoutSecs) * 1000 * 1000),
+		dirPath:                s.Conf.SpoolDir,
+		readOrder:              s.Conf.UseLastModified,
+		pathMatcherMode:        s.Conf.PathMatcherMode,
+		filePattern:            s.Conf.FilePattern,
+		processSubDirs:         s.Conf.ProcessSubdirectories,
+		spoolingPeriodDuration: time.Duration(s.Conf.SpoolingPeriod) * time.Second,
+		poolingTimeoutDuration: time.Duration(s.Conf.PoolingTimeoutSecs) * time.Second,
+		stageContext:           stageContext,
 	}
 
 	if s.spooler.pathMatcherMode != Glob && s.spooler.pathMatcherMode != Regex {
@@ -195,7 +198,7 @@ func (s *SpoolDirSource) initCurrentFileIfNeeded(lastSourceOffset *string) (bool
 	//End of the file or empty offset, let's get a new file
 	if currentFilePath == "" || currentStartOffset == -1 {
 		nextFileInfoToProcess := s.spooler.NextFile()
-		//No more files to process at the moment
+		// No more files to process at the moment
 		if nextFileInfoToProcess == nil {
 			log.Debug("No more files to process")
 			return false, nil

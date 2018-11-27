@@ -40,6 +40,7 @@ type StageContextImpl struct {
 	Services          map[string]api.Service
 	ElContext         context.Context
 	previewMode       bool
+	stop              bool
 }
 
 func (s *StageContextImpl) GetResolvedValue(configValue interface{}) (interface{}, error) {
@@ -212,6 +213,14 @@ func (s *StageContextImpl) IsPreview() bool {
 
 func (s *StageContextImpl) GetPipelineParameters() map[string]interface{} {
 	return s.Parameters
+}
+
+func (s *StageContextImpl) SetStop() {
+	s.stop = true
+}
+
+func (s *StageContextImpl) IsStopped() bool {
+	return s.stop
 }
 
 func constructErrorRecord(instanceName string, err error, errorRecordPolicy string, record api.Record) api.Record {

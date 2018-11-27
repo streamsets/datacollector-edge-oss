@@ -30,7 +30,8 @@ import (
 const (
 	SpoolDirPath          = "conf.spoolDir"
 	UseLastModified       = "conf.useLastModified"
-	PollingTimeoutSecs    = "conf.poolingTimeoutSecs"
+	SpoolingPeriod        = "conf.spoolingPeriod"
+	PoolingTimeoutSecs    = "conf.poolingTimeoutSecs"
 	InitialFileToProcess  = "conf.initialFileToProcess"
 	ProcessSubdirectories = "conf.processSubdirectories"
 	FilePattern           = "conf.filePattern"
@@ -69,10 +70,10 @@ func getStageConfig(
 	filePattern string,
 	useLastModified bool,
 	initialFileToProcess string,
-	pollingTimeoutSeconds int64,
+	spoolingPeriod int64,
 	dataFormat string,
 ) []common.Config {
-	configuration := make([]common.Config, 8)
+	configuration := make([]common.Config, 9)
 
 	configuration[0] = common.Config{
 		Name:  SpoolDirPath,
@@ -111,13 +112,18 @@ func getStageConfig(
 	}
 
 	configuration[6] = common.Config{
-		Name:  PollingTimeoutSecs,
-		Value: float64(pollingTimeoutSeconds),
+		Name:  SpoolingPeriod,
+		Value: float64(spoolingPeriod),
 	}
 
 	configuration[7] = common.Config{
 		Name:  "conf.dataFormat",
 		Value: dataFormat,
+	}
+
+	configuration[8] = common.Config{
+		Name:  PoolingTimeoutSecs,
+		Value: float64(1),
 	}
 
 	return configuration
@@ -258,13 +264,13 @@ func TestUseLastModified(t *testing.T) {
 
 	currentTime := time.Now()
 
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "a.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "c.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(2*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "b.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
@@ -365,13 +371,13 @@ func TestLexicographical(t *testing.T) {
 
 	currentTime := time.Now()
 
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "a.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "b.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(2*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "c.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
@@ -491,7 +497,7 @@ func TestSubDirectories(t *testing.T) {
 			pathToCreate,
 			string(allLetters[rand.Intn(len(allLetters)-1)]))
 		createFileAndWriteContents(t, fileToCreate, "sample text")
-		os.Chtimes(
+		_ = os.Chtimes(
 			fileToCreate, currentTime,
 			time.Unix(0, currentTime.UnixNano()+
 				(int64(len(createdFiles))*time.Second.Nanoseconds())))
@@ -588,13 +594,13 @@ func TestLexicographical_JSON_FORMAT(t *testing.T) {
 
 	currentTime := time.Now()
 
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "a.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "b.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(2*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "c.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "JSON")
@@ -680,13 +686,13 @@ func TestLexicographical_DELIMITED_FORMAT_NO_HEADER(t *testing.T) {
 
 	currentTime := time.Now()
 
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "a.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "b.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(2*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "c.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
@@ -796,13 +802,13 @@ func TestLexicographical_DELIMITED_FORMAT_WITH_HEADER(t *testing.T) {
 
 	currentTime := time.Now()
 
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "a.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "b.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(2*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "c.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
@@ -914,13 +920,13 @@ func TestLexicographical_DELIMITED_FORMAT_IGNORE_HEADER(t *testing.T) {
 
 	currentTime := time.Now()
 
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "a.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "b.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(2*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "c.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
@@ -1032,13 +1038,13 @@ func TestLexicographical_DELIMITED_FORMAT_SKIP_START_LINES(t *testing.T) {
 
 	currentTime := time.Now()
 
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "a.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "b.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(2*time.Second).Nanoseconds()))
-	os.Chtimes(
+	_ = os.Chtimes(
 		filepath.Join(testDir, "c.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 

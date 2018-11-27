@@ -14,6 +14,7 @@ package spooler
 
 import (
 	log "github.com/sirupsen/logrus"
+	"github.com/streamsets/datacollector-edge/api"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -29,11 +30,13 @@ type DirectorySpooler struct {
 	maxNumberOfFiles        int
 	destroyNotificationChan chan bool
 	filesQueue              *SynchronizedFilesHeap
-	spoolWaitDuration       time.Duration
+	spoolingPeriodDuration  time.Duration
+	poolingTimeoutDuration  time.Duration
 	readOrder               string
 	filePattern             string
 	pathMatcherMode         string
 	currentFileChange       chan *AtomicFileInformation
+	stageContext            api.StageContext
 }
 
 func isFileEligible(
@@ -139,13 +142,13 @@ func (d *DirectorySpooler) Init() {
 		d.dirPath = strings.TrimRight(d.dirPath, "/")
 	}
 	//Starting Spooler immediately and after that at regular intervals
-	d.walkDirectoryPath(d.currentFileInfo)
+	_ = d.walkDirectoryPath(d.currentFileInfo)
 	go func(currentFileInfo *AtomicFileInformation) {
 		end := false
 		for !end {
 			select {
-			case <-time.After(d.spoolWaitDuration):
-				d.walkDirectoryPath(currentFileInfo)
+			case <-time.After(d.spoolingPeriodDuration):
+				_ = d.walkDirectoryPath(currentFileInfo)
 			case fInfo := <-d.currentFileChange:
 				currentFileInfo = fInfo
 			case <-d.destroyNotificationChan:
@@ -165,14 +168,21 @@ func (d *DirectorySpooler) getCurrentFileInfo() *AtomicFileInformation {
 }
 
 func (d *DirectorySpooler) NextFile() *AtomicFileInformation {
-	fi := d.filesQueue.Pop()
-	for fi != nil {
-		if isFileEligible(fi.getFullPath(), fi.getModTime(), d.currentFileInfo, d.readOrder) {
-			log.WithField("File Name", fi.getFullPath()).Debug("File picked for ingestion")
-			d.setCurrentFileInfo(fi)
-			return fi
+	initial := time.Now()
+	var fi *AtomicFileInformation
+	log.Debugf("polling for file, waiting '%d' ", d.poolingTimeoutDuration)
+	for fi == nil && time.Since(initial) < d.poolingTimeoutDuration && !d.stageContext.IsStopped() {
+		fi := d.filesQueue.Pop()
+		for fi != nil {
+			if isFileEligible(fi.getFullPath(), fi.getModTime(), d.currentFileInfo, d.readOrder) {
+				log.WithField("File Name", fi.getFullPath()).Debug("File picked for ingestion")
+				d.setCurrentFileInfo(fi)
+				return fi
+			}
+			fi = d.filesQueue.Pop()
 		}
-		fi = d.filesQueue.Pop()
+		log.Debugf("Sleeping for %d", d.spoolingPeriodDuration)
+		time.Sleep(d.spoolingPeriodDuration)
 	}
 	return nil
 }
