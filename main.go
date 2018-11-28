@@ -35,6 +35,10 @@ import (
 	"syscall"
 )
 
+const (
+	ServiceStatus = "status"
+)
+
 var debugFlag = flag.Bool("debug", false, "Debug flag")
 var logToConsoleFlag = flag.Bool("logToConsole", false, "Log to console flag")
 var startFlag = flag.String("start", "", "Start Pipeline ID")
@@ -147,11 +151,27 @@ func main() {
 	}
 
 	if *serviceArg != "" {
-		err := service.Control(newService, *serviceArg)
-		if err != nil {
-			fmt.Println(err.Error())
+		if *serviceArg == ServiceStatus {
+			status, err := newService.Status()
+			if err != nil {
+				fmt.Println(err)
+			} else {
+				switch status {
+				case service.StatusRunning:
+					fmt.Println("Data Collector Edge service is running")
+				case service.StatusStopped:
+					fmt.Println("Data Collector Edge service is stopped")
+				default:
+					fmt.Println("Data Collector Edge service is not installed")
+				}
+			}
 		} else {
-			fmt.Printf("Action '%s' for service 'datacollector-edge' ran successfully", *serviceArg)
+			err := service.Control(newService, *serviceArg)
+			if err != nil {
+				fmt.Println(err.Error())
+			} else {
+				fmt.Printf("Action '%s' for service 'Data Collector Edge' ran successfully", *serviceArg)
+			}
 		}
 	} else if *enableControlHubArg {
 		if fullAuthToken, err := controlhub.EnableControlHub(

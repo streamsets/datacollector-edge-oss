@@ -49,7 +49,7 @@ dependencies {
     build name: 'github.com/go-ole/go-ole', commit: 'a1ec82a652ebc7e784d7df887cfb31061aeabbcc'
     build name: 'github.com/shirou/w32', commit: 'bb4de0191aa41b5507caa14b0650cdbddcd9280b'
     build name: 'github.com/icrowley/fake', commit: '4178557ae428460c3780a381c824a1f3aceb6325'
-    build name: 'github.com/kardianos/service', commit: '615a14ed75099c9eaac6949e22ac2341bf9d3197'
+    build name: 'github.com/kardianos/service', commit: '4c239ee84e7bb93441b1b6a3f2db62d40e0e6cbd'
     build name: 'github.com/tensorflow/tensorflow/tensorflow/go', tag: '1.10.0', transitive: false
     build name: 'github.com/spf13/cast', tag: 'v1.2.0', transitive: false
     build name: 'github.com/Workiva/go-datastructures', tag: 'v1.0.50', transitive: false

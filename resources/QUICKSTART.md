@@ -57,11 +57,12 @@
 
     Service Name - datacollector-edge
 
-| Command                                | Description                               |
-|----------------------------------------|-------------------------------------------|
-| `bin/edge -service install`            | Install Data Collector Edge as a service  |
-| `bin/edge -service uninstall`          | Uninstall the Data Collector Edge service |
-| `bin/edge -service start`              | Start the Data Collector Edge service     |
-| `bin/edge -service stop`               | Stop the Data Collector Edge service      |
-| `bin/edge -service restart`            | Restart the Data Collector Edge service   |
+| Command                                | Description                                        |
+|----------------------------------------|----------------------------------------------------|
+| `bin/edge -service install`            | Install Data Collector Edge as a service           |
+| `bin/edge -service uninstall`          | Uninstall the Data Collector Edge service          |
+| `bin/edge -service start`              | Start the Data Collector Edge service              |
+| `bin/edge -service stop`               | Stop the Data Collector Edge service               |
+| `bin/edge -service restart`            | Restart the Data Collector Edge service            |
+| `bin/edge -service status`             | Displays status of the Data Collector Edge service |
 
