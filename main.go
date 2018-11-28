@@ -39,7 +39,6 @@ var debugFlag = flag.Bool("debug", false, "Debug flag")
 var logToConsoleFlag = flag.Bool("logToConsole", false, "Log to console flag")
 var startFlag = flag.String("start", "", "Start Pipeline ID")
 var runtimeParametersArg = flag.String("runtimeParameters", "", "Runtime Parameters")
-var logDirArg = flag.String("logDir", "", "SDC Edge log directory")
 var insecureSkipVerifyArg = flag.Bool(
 	"insecureSkipVerify",
 	false,
@@ -123,7 +122,6 @@ func (p *program) run() {
 		*logToConsoleFlag,
 		*startFlag,
 		*runtimeParametersArg,
-		*logDirArg,
 	)
 	go shutdownHook(p.dataCollectorEdge)
 	p.dataCollectorEdge.WebServerTask.Run()

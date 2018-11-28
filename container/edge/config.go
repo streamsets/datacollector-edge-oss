@@ -24,6 +24,7 @@ import (
 
 // Config represents the configuration format for the Data Collector Edge binary.
 type Config struct {
+	LogDir    string `toml:"log-dir"`
 	Execution execution.Config
 	Http      http.Config
 	SCH       controlhub.Config
@@ -43,7 +44,6 @@ func NewConfig() *Config {
 // FromTomlFile loads the config from a TOML file.
 func (c *Config) FromTomlFile(fPath string) error {
 	if _, err := toml.DecodeFile(fPath, c); err != nil {
-		log.WithError(err).Error()
 		return err
 	}
 	return nil

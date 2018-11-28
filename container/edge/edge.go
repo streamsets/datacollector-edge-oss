@@ -56,9 +56,8 @@ func DoMain(
 	logToConsoleFlag bool,
 	startFlag string,
 	runtimeParametersArg string,
-	logDirArg string,
 ) (*DataCollectorEdgeMain, error) {
-	dataCollectorEdge, err := newDataCollectorEdge(baseDir, debugFlag, logToConsoleFlag, logDirArg)
+	dataCollectorEdge, err := newDataCollectorEdge(baseDir, debugFlag, logToConsoleFlag)
 	if err != nil {
 		panic(err)
 	}
@@ -95,15 +94,14 @@ func newDataCollectorEdge(
 	baseDir string,
 	debugFlag bool,
 	logToConsoleFlag bool,
-	logDirArg string,
 ) (*DataCollectorEdgeMain, error) {
-	err := initializeLog(debugFlag, logToConsoleFlag, baseDir, logDirArg)
+	config := NewConfig()
+	err := config.FromTomlFile(baseDir + DefaultConfigFilePath)
 	if err != nil {
 		return nil, err
 	}
 
-	config := NewConfig()
-	err = config.FromTomlFile(baseDir + DefaultConfigFilePath)
+	err = initializeLog(debugFlag, logToConsoleFlag, baseDir, config.LogDir)
 	if err != nil {
 		return nil, err
 	}
