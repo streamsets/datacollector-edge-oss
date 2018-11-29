@@ -170,7 +170,7 @@ func main() {
 			if err != nil {
 				fmt.Println(err.Error())
 			} else {
-				fmt.Printf("Action '%s' for service 'Data Collector Edge' ran successfully", *serviceArg)
+				fmt.Printf("Action '%s' for service 'Data Collector Edge' ran successfully. \n", *serviceArg)
 			}
 		}
 	} else if *enableControlHubArg {
@@ -201,7 +201,7 @@ func main() {
 			if err = config.ToTomlFile(edgeConfigFile); err != nil {
 				panic(err)
 			}
-			fmt.Print("Control Hub enabled successfully")
+			fmt.Println("Control Hub enabled successfully")
 		}
 	} else if *disableControlHubArg {
 		edgeConfigFile := getBaseDir() + edge.DefaultConfigFilePath
@@ -214,7 +214,7 @@ func main() {
 		if err = config.ToTomlFile(edgeConfigFile); err != nil {
 			panic(err)
 		}
-		fmt.Print("Control Hub disabled successfully")
+		fmt.Println("Control Hub disabled successfully")
 	} else {
 		err = newService.Run()
 		if err != nil {

@@ -99,7 +99,7 @@ func SaveState(pipelineId string, pipelineState *common.PipelineState) error {
 
 			//save in history file as well.
 			if historyFile, err = os.OpenFile(getPipelineStateHistoryFile(pipelineId), openFlag, 0666); err == nil {
-				defer historyFile.Close()
+				defer util.CloseFile(historyFile)
 				_, err = historyFile.Write(pipelineStateJson)
 				if err == nil {
 					_, err = historyFile.WriteString("\n")

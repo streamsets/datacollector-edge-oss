@@ -26,9 +26,9 @@ func getPipelineStoreTask(t *testing.T, path string) PipelineStoreTask {
 		t.Fatal(err)
 	}
 
-	err = os.MkdirAll(baseDir+PIPELINES_FOLDER, 0777)
+	err = os.MkdirAll(baseDir+PipelinesFolder, 0777)
 	if err != nil {
-		t.Fatalf("MkdirAll %q: %s", baseDir+PIPELINES_FOLDER, err)
+		t.Fatalf("MkdirAll %q: %s", baseDir+PipelinesFolder, err)
 	}
 
 	runtimeInfo := common.RuntimeInfo{

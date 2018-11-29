@@ -20,6 +20,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
 	pipelineStateStore "github.com/streamsets/datacollector-edge/container/execution/store"
+	"github.com/streamsets/datacollector-edge/container/util"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -27,10 +28,10 @@ import (
 )
 
 const (
-	PIPELINE_FILE             = "pipeline.json"
-	PIPELINE_INFO_FILE        = "info.json"
-	PIPELINES_FOLDER          = "/data/pipelines/"
-	PIPELINES_RUN_INFO_FOLDER = "/data/runInfo/"
+	PipelineFile           = "pipeline.json"
+	PipelineInfoFile       = "info.json"
+	PipelinesFolder        = "/data/pipelines/"
+	PipelinesRunInfoFolder = "/data/runInfo/"
 )
 
 type FilePipelineStoreTask struct {
@@ -39,12 +40,12 @@ type FilePipelineStoreTask struct {
 
 func (store *FilePipelineStoreTask) GetPipelines() ([]common.PipelineInfo, error) {
 	var pipelineInfoList []common.PipelineInfo
-	_, err := os.Stat(store.runtimeInfo.BaseDir + PIPELINES_FOLDER)
+	_, err := os.Stat(store.runtimeInfo.BaseDir + PipelinesFolder)
 	if os.IsNotExist(err) {
 		return pipelineInfoList, nil
 	}
 
-	files, err := ioutil.ReadDir(store.runtimeInfo.BaseDir + PIPELINES_FOLDER)
+	files, err := ioutil.ReadDir(store.runtimeInfo.BaseDir + PipelinesFolder)
 
 	if err != nil {
 		return nil, err
@@ -59,11 +60,12 @@ func (store *FilePipelineStoreTask) GetPipelines() ([]common.PipelineInfo, error
 			}
 
 			decoder := json.NewDecoder(file)
-			err = decoder.Decode(&pipelineInfo)
-			if err != nil {
-				return nil, err
+			if err = decoder.Decode(&pipelineInfo); err == nil {
+				pipelineInfoList = append(pipelineInfoList, pipelineInfo)
+			} else {
+				log.WithError(err).Error("failed to parse pipeline info file")
 			}
-			pipelineInfoList = append(pipelineInfoList, pipelineInfo)
+			util.CloseFile(file)
 		}
 	}
 
@@ -80,6 +82,8 @@ func (store *FilePipelineStoreTask) GetInfo(pipelineId string) (common.PipelineI
 	if err != nil {
 		return pipelineInfo, err
 	}
+
+	defer util.CloseFile(file)
 
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&pipelineInfo)
@@ -214,6 +218,8 @@ func (store *FilePipelineStoreTask) LoadPipelineConfig(pipelineId string) (commo
 		return pipelineConfiguration, err
 	}
 
+	defer util.CloseFile(file)
+
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(&pipelineConfiguration)
 	if err != nil {
@@ -255,21 +261,21 @@ func (store *FilePipelineStoreTask) hasPipeline(pipelineId string) bool {
 }
 
 func (store *FilePipelineStoreTask) getPipelineFile(pipelineId string) string {
-	return store.getPipelineDir(pipelineId) + PIPELINE_FILE
+	return store.getPipelineDir(pipelineId) + PipelineFile
 }
 
 func (store *FilePipelineStoreTask) getPipelineInfoFile(pipelineId string) string {
-	return store.getPipelineDir(pipelineId) + PIPELINE_INFO_FILE
+	return store.getPipelineDir(pipelineId) + PipelineInfoFile
 }
 
 func (store *FilePipelineStoreTask) getPipelineDir(pipelineId string) string {
 	validPipelineId := strings.Replace(pipelineId, ":", "", -1)
-	return store.runtimeInfo.BaseDir + PIPELINES_FOLDER + validPipelineId + "/"
+	return store.runtimeInfo.BaseDir + PipelinesFolder + validPipelineId + "/"
 }
 
 func (store *FilePipelineStoreTask) getPipelineRunInfoDir(pipelineId string) string {
 	validPipelineId := strings.Replace(pipelineId, ":", "", -1)
-	return store.runtimeInfo.BaseDir + PIPELINES_RUN_INFO_FOLDER + validPipelineId + "/"
+	return store.runtimeInfo.BaseDir + PipelinesRunInfoFolder + validPipelineId + "/"
 }
 
 func NewFilePipelineStoreTask(runtimeInfo common.RuntimeInfo) PipelineStoreTask {

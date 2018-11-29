@@ -89,6 +89,7 @@ func (f *FileTailOrigin) Init(stageContext api.StageContext) []validation.Issue 
 
 	if f.Conf.DataFormat == "DELIMITED" && f.Conf.DataFormatConfig.CsvHeader == delimitedrecord.WithHeader {
 		file, _ := os.Open(f.Conf.FileInfos[0].FileFullPath)
+		defer util.CloseFile(file)
 		bufReader := bufio.NewReader(file)
 		headerLine, err := bufReader.ReadString('\n')
 		if err == nil {

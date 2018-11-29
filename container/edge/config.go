@@ -19,6 +19,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/execution"
 	"github.com/streamsets/datacollector-edge/container/http"
 	"github.com/streamsets/datacollector-edge/container/process"
+	"github.com/streamsets/datacollector-edge/container/util"
 	"os"
 )
 
@@ -55,7 +56,7 @@ func (c *Config) ToTomlFile(fPath string) error {
 		return err
 	}
 	fi.Truncate(0)
-	defer fi.Close()
+	defer util.CloseFile(fi)
 
 	if err := toml.NewEncoder(fi).Encode(c); err != nil {
 		log.WithError(err).Error()

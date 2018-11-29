@@ -13,6 +13,8 @@
 package util
 
 import (
+	"github.com/sirupsen/logrus"
+	"os"
 	"strings"
 	"time"
 	"unicode"
@@ -88,4 +90,11 @@ func CastToFloat64(value interface{}) interface{} {
 func GetLastFieldNameFromPath(path string) string {
 	pathArr := strings.Split(path, "/")
 	return pathArr[len(pathArr)-1]
+}
+
+func CloseFile(file *os.File) {
+	if err := file.Close(); err != nil {
+		logrus.WithError(err).WithField("file", file.Name()).Error("Error During file close")
+	}
+
 }
