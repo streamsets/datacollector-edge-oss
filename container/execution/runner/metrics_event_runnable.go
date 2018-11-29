@@ -53,6 +53,7 @@ type MetricsEventRunnable struct {
 	waitTimeBetweenUpdates  int64
 	timeSeriesAnalysis      bool
 	metadata                map[string]string
+	httpClient              *http.Client
 }
 
 type SDCMetrics struct {
@@ -114,11 +115,15 @@ func (m *MetricsEventRunnable) sendMetricsToDPM() error {
 	req.Header.Set(common.HEADER_X_REST_CALL, common.HEADER_X_REST_CALL_VALUE)
 	req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := m.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.WithError(err).Error("Error while closing the response body")
+		}
+	}()
 
 	log.WithField("status", resp.Status).Debug("Control Hub Send Metrics Status")
 	if resp.StatusCode != 200 {
@@ -182,5 +187,6 @@ func NewMetricsEventRunnable(
 		metricRegistry:          metricRegistry,
 		runtimeInfo:             runtimeInfo,
 		quitSendingMetricsToDPM: make(chan bool),
+		httpClient:              &http.Client{},
 	}
 }

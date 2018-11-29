@@ -45,6 +45,7 @@ type MessageEventHandler struct {
 	quitSendingEventToDPM            chan bool
 	ackEventList                     []*ClientEvent
 	sendingPipelineStatusElapsedTime time.Time
+	httpClient                       *http.Client
 }
 
 func (m *MessageEventHandler) Init() {
@@ -197,11 +198,15 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 	req.Header.Set(common.HEADER_X_REST_CALL, "true")
 	req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := m.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.WithError(err).Error("Error while closing the response body")
+		}
+	}()
 
 	log.WithField("status", resp.Status).Debug("Control Hub Event Status")
 	if resp.StatusCode != 200 {
@@ -220,8 +225,6 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 			return errors.New(fmt.Sprintf("Parsing Control Hub event failed: %s", err))
 		}
 	}
-
-	defer resp.Body.Close()
 
 	ackClientEventList := make([]*ClientEvent, 0)
 	for _, serverEvent := range serverEventList {
@@ -465,6 +468,7 @@ func NewMessageEventHandler(
 		runtimeInfo:       runtimeInfo,
 		manager:           manager,
 		pipelineStoreTask: pipelineStoreTask,
+		httpClient:        &http.Client{},
 	}
 	return messagingEventHandler
 }
