@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -35,20 +36,21 @@ const (
 )
 
 type FilePipelineStoreTask struct {
-	runtimeInfo common.RuntimeInfo
+	runtimeInfo     common.RuntimeInfo
+	pipelineInfoMap sync.Map
 }
 
-func (store *FilePipelineStoreTask) GetPipelines() ([]common.PipelineInfo, error) {
-	var pipelineInfoList []common.PipelineInfo
+func (store *FilePipelineStoreTask) init() {
 	_, err := os.Stat(store.runtimeInfo.BaseDir + PipelinesFolder)
 	if os.IsNotExist(err) {
-		return pipelineInfoList, nil
+		return
 	}
 
 	files, err := ioutil.ReadDir(store.runtimeInfo.BaseDir + PipelinesFolder)
 
 	if err != nil {
-		return nil, err
+		log.WithError(err).Error("Failed to read data directory")
+		return
 	}
 
 	for _, f := range files {
@@ -56,19 +58,27 @@ func (store *FilePipelineStoreTask) GetPipelines() ([]common.PipelineInfo, error
 			pipelineInfo := common.PipelineInfo{}
 			file, err := os.Open(store.getPipelineInfoFile(f.Name()))
 			if err != nil {
-				return nil, err
+				log.WithError(err).Error("Failed to open pipeline info file")
+				return
 			}
 
 			decoder := json.NewDecoder(file)
 			if err = decoder.Decode(&pipelineInfo); err == nil {
-				pipelineInfoList = append(pipelineInfoList, pipelineInfo)
+				store.pipelineInfoMap.Store(pipelineInfo.PipelineId, pipelineInfo)
 			} else {
 				log.WithError(err).Error("failed to parse pipeline info file")
 			}
 			util.CloseFile(file)
 		}
 	}
+}
 
+func (store *FilePipelineStoreTask) GetPipelines() ([]common.PipelineInfo, error) {
+	pipelineInfoList := make([]common.PipelineInfo, 0)
+	store.pipelineInfoMap.Range(func(key, value interface{}) bool {
+		pipelineInfoList = append(pipelineInfoList, value.(common.PipelineInfo))
+		return true
+	});
 	return pipelineInfoList, nil
 }
 
@@ -170,6 +180,8 @@ func (store *FilePipelineStoreTask) Create(
 
 	log.WithField("id", pipelineInfo.PipelineId).Info("Created pipeline")
 
+	store.pipelineInfoMap.Store(pipelineInfo.PipelineId, pipelineInfo)
+
 	return pipelineConfiguration, err
 }
 
@@ -246,6 +258,7 @@ func (store *FilePipelineStoreTask) Delete(pipelineId string) error {
 	}
 	err = os.RemoveAll(store.getPipelineRunInfoDir(pipelineId))
 	log.WithField("id", pipelineId).Info("Deleted pipeline")
+	store.pipelineInfoMap.Delete(pipelineId)
 	return err
 }
 
@@ -280,5 +293,9 @@ func (store *FilePipelineStoreTask) getPipelineRunInfoDir(pipelineId string) str
 
 func NewFilePipelineStoreTask(runtimeInfo common.RuntimeInfo) PipelineStoreTask {
 	pipelineStateStore.BaseDir = runtimeInfo.BaseDir
-	return &FilePipelineStoreTask{runtimeInfo: runtimeInfo}
+	storeTask := &FilePipelineStoreTask{
+		runtimeInfo:     runtimeInfo,
+	}
+	storeTask.init()
+	return storeTask
 }

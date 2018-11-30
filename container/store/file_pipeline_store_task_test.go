@@ -177,6 +177,16 @@ func TestFilePipelineStoreTask_Delete(t *testing.T) {
 		t.Error("Excepted error from GetInfo after pipeline is deleted")
 	}
 
+	pipelineInfoList, err := pipelineStoreTask.GetPipelines()
+	if err != nil {
+		t.Error("Error from GetPipelines: ", err)
+		return
+	}
+
+	if len(pipelineInfoList) != 0 {
+		t.Error("Excepted pipelineInfoList with length 0, but got: ", len(pipelineInfoList))
+	}
+
 	// try deleting non existing pipeline
 	err = pipelineStoreTask.Delete("notAValidPipelineId")
 	if err == nil {
