@@ -78,7 +78,7 @@ func (store *FilePipelineStoreTask) GetPipelines() ([]common.PipelineInfo, error
 	store.pipelineInfoMap.Range(func(key, value interface{}) bool {
 		pipelineInfoList = append(pipelineInfoList, value.(common.PipelineInfo))
 		return true
-	});
+	})
 	return pipelineInfoList, nil
 }
 
@@ -294,7 +294,7 @@ func (store *FilePipelineStoreTask) getPipelineRunInfoDir(pipelineId string) str
 func NewFilePipelineStoreTask(runtimeInfo common.RuntimeInfo) PipelineStoreTask {
 	pipelineStateStore.BaseDir = runtimeInfo.BaseDir
 	storeTask := &FilePipelineStoreTask{
-		runtimeInfo:     runtimeInfo,
+		runtimeInfo: runtimeInfo,
 	}
 	storeTask.init()
 	return storeTask

@@ -25,6 +25,7 @@ import (
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -112,6 +113,8 @@ func (f *FileTailOrigin) Produce(
 ) (*string, error) {
 	log.WithField("lastSourceOffset", lastSourceOffset).Debug("Produce called")
 
+	batchSize := math.Min(float64(maxBatchSize), f.Conf.BatchSize)
+
 	tailConfig := tail.Config{
 		MustExist: true,
 		Follow:    true,
@@ -157,7 +160,7 @@ func (f *FileTailOrigin) Produce(
 						f.GetStageContext().ReportError(err)
 					}
 
-					if recordCount >= f.Conf.BatchSize {
+					if recordCount >= batchSize {
 						currentOffset, err = tailObj.Tell()
 						if err != nil {
 							log.WithError(err).Error("Failed to get file offset information")

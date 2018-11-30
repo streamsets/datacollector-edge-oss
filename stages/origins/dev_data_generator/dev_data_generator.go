@@ -19,6 +19,7 @@ import (
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
+	"math"
 	"math/big"
 	"math/rand"
 	"strconv"
@@ -125,7 +126,9 @@ func (d *Origin) Produce(lastSourceOffset *string, maxBatchSize int, batchMaker 
 	max := time.Date(2018, 1, 0, 0, 0, 0, 0, time.UTC).Unix()
 	delta := max - min
 
-	for i := 0; i < int(d.BatchSize); i++ {
+	batchSize := math.Min(float64(maxBatchSize), d.BatchSize)
+
+	for i := 0; i < int(batchSize); i++ {
 		var rootField *api.Field
 		if d.RootFieldType == MapRootType {
 			rootField, _ = d.createMapTypeField(r, delta, min)
