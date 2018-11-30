@@ -56,6 +56,7 @@ dependencies {
     build name: 'github.com/grpc/grpc-go', tag: 'v1.16.0', transitive: false
     build name: 'github.com/golang/protobuf', tag: 'v1.2.0', transitive: false
     build name: 'github.com/fullstorydev/grpcurl', commit: '1e8e50f4f86c755c1a1147a929d9d51058f3bd1d'
+    build name: 'github.com/aws/aws-sdk-go', tag: 'v1.15.81'
   }
 }
 

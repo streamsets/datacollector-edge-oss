@@ -14,6 +14,7 @@ package util
 
 import (
 	"github.com/sirupsen/logrus"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
@@ -96,5 +97,14 @@ func CloseFile(file *os.File) {
 	if err := file.Close(); err != nil {
 		logrus.WithError(err).WithField("file", file.Name()).Error("Error During file close")
 	}
+}
 
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func RandString(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
 }

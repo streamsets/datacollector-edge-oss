@@ -16,6 +16,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/configtype"
 	"github.com/streamsets/datacollector-edge/container/common"
@@ -154,12 +155,12 @@ func injectStageConfigs(
 						case configtype.BOOLEAN:
 							if reflect.TypeOf(resolvedValue).Kind() == reflect.String {
 								var err error
-								resolvedValue, err = strconv.ParseBool(resolvedValue.(string))
+								resolvedValue, err = strconv.ParseBool(cast.ToString(resolvedValue))
 								if err != nil {
 									return errors.New(fmt.Sprintf("Error when processing value '%v' as BOOLEAN", resolvedValue))
 								}
 							}
-							stageInstanceField.SetBool(resolvedValue.(bool))
+							stageInstanceField.SetBool(cast.ToBool(resolvedValue))
 						case configtype.NUMBER:
 							if reflect.TypeOf(resolvedValue).Kind() == reflect.String {
 								var err error
@@ -168,9 +169,9 @@ func injectStageConfigs(
 									return errors.New(fmt.Sprintf("Error when processing value '%v' as NUMBER", resolvedValue))
 								}
 							}
-							stageInstanceField.SetFloat(resolvedValue.(float64))
+							stageInstanceField.SetFloat(cast.ToFloat64(resolvedValue))
 						case configtype.STRING:
-							stageInstanceField.SetString(resolvedValue.(string))
+							stageInstanceField.SetString(cast.ToString(resolvedValue))
 						case configtype.LIST:
 							switch resolvedValue.(type) {
 							case []interface{}:
@@ -178,7 +179,7 @@ func injectStageConfigs(
 									if stageInstanceField.Type() == reflect.TypeOf([]string{}) {
 										newValue := make([]string, len(resolvedValue.([]interface{})))
 										for i, val := range resolvedValue.([]interface{}) {
-											newValue[i] = val.(string)
+											newValue[i] = cast.ToString(val)
 										}
 										stageInstanceField.Set(reflect.ValueOf(newValue))
 									} else {
@@ -194,8 +195,8 @@ func injectStageConfigs(
 							listOfMap := resolvedValue.([]interface{})
 							mapFieldValue := make(map[string]string)
 							for _, mapValue := range listOfMap {
-								key := mapValue.(map[string]interface{})["key"].(string)
-								value := mapValue.(map[string]interface{})["value"].(string)
+								key := cast.ToString(mapValue.(map[string]interface{})["key"])
+								value := cast.ToString(mapValue.(map[string]interface{})["value"])
 								mapFieldValue[key] = value
 							}
 							stageInstanceField.Set(reflect.ValueOf(mapFieldValue))
@@ -238,8 +239,8 @@ func injectStageConfigs(
 										for _, predicateValue := range predicateValueList {
 											predicateValueMap := predicateValue.(map[string]interface{})
 											valueMap := map[string]string{
-												"outputLane": predicateValueMap["outputLane"].(string),
-												"predicate":  predicateValueMap["predicate"].(string),
+												"outputLane": cast.ToString(predicateValueMap["outputLane"]),
+												"predicate":  cast.ToString(predicateValueMap["predicate"]),
 											}
 											predicateValueListOfMap = append(predicateValueListOfMap, valueMap)
 										}
@@ -305,11 +306,11 @@ func injectListBeanStageConfigs(
 					if stageInstanceField.CanSet() {
 						switch configDef.Type {
 						case configtype.BOOLEAN:
-							stageInstanceField.SetBool(resolvedValue.(bool))
+							stageInstanceField.SetBool(cast.ToBool(resolvedValue))
 						case configtype.NUMBER:
-							stageInstanceField.SetFloat(resolvedValue.(float64))
+							stageInstanceField.SetFloat(cast.ToFloat64(resolvedValue))
 						case configtype.STRING:
-							stageInstanceField.SetString(resolvedValue.(string))
+							stageInstanceField.SetString(cast.ToString(resolvedValue))
 						case configtype.LIST:
 							switch resolvedValue.(type) {
 							case []interface{}:
@@ -317,7 +318,7 @@ func injectListBeanStageConfigs(
 									if stageInstanceField.Type() == reflect.TypeOf([]string{}) {
 										newValue := make([]string, len(resolvedValue.([]interface{})))
 										for i, val := range resolvedValue.([]interface{}) {
-											newValue[i] = val.(string)
+											newValue[i] = cast.ToString(val)
 										}
 										stageInstanceField.Set(reflect.ValueOf(newValue))
 									} else if stageInstanceField.Type() == reflect.TypeOf([]float64{}) {
@@ -345,8 +346,8 @@ func injectListBeanStageConfigs(
 							listOfMap := resolvedValue.([]interface{})
 							mapFieldValue := make(map[string]string)
 							for _, mapValue := range listOfMap {
-								key := mapValue.(map[string]interface{})["key"].(string)
-								value := mapValue.(map[string]interface{})["value"].(string)
+								key := cast.ToString(mapValue.(map[string]interface{})["key"])
+								value := cast.ToString(mapValue.(map[string]interface{})["value"])
 								mapFieldValue[key] = value
 							}
 							stageInstanceField.Set(reflect.ValueOf(mapFieldValue))
@@ -376,7 +377,7 @@ func getResolvedValue(
 	}
 	switch t := configValue.(type) {
 	case string:
-		return resolveIfImplicitEL(configValue.(string), runtimeParameters, elContext)
+		return resolveIfImplicitEL(cast.ToString(configValue), runtimeParameters, elContext)
 	case []interface{}:
 		for i, val := range t {
 			t[i], err = getResolvedValue(configDef, val, runtimeParameters, elContext)
