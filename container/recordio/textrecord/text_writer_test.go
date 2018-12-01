@@ -19,15 +19,20 @@ import (
 )
 
 func TestWriteTextRecord(t *testing.T) {
+	testWriteTextRecord(t, DefaultTextField)
+	testWriteTextRecord(t, "newTextFieldName")
+}
+
+func testWriteTextRecord(t *testing.T, textFieldName string) {
 	stageContext := CreateStageContext()
-	record1, err := stageContext.CreateRecord("Id1", map[string]interface{}{"text": "log line 1"})
-	record2, err := stageContext.CreateRecord("Id2", map[string]interface{}{"text": "log line 2"})
+	record1, err := stageContext.CreateRecord("Id1", map[string]interface{}{textFieldName: "log line 1"})
+	record2, err := stageContext.CreateRecord("Id2", map[string]interface{}{textFieldName: "log line 2"})
 	listMapValue := linkedhashmap.New()
-	listMapValue.Put("text", "log line 3")
+	listMapValue.Put(textFieldName, "log line 3")
 	record3, err := stageContext.CreateRecord("Id3", listMapValue)
 
 	bufferWriter := bytes.NewBuffer([]byte{})
-	recordWriterFactory := &TextWriterFactoryImpl{}
+	recordWriterFactory := &TextWriterFactoryImpl{TextFieldPath: "/" + textFieldName}
 	recordWriter, err := recordWriterFactory.CreateWriter(stageContext, bufferWriter)
 	if err != nil {
 		t.Fatal(err)
@@ -48,8 +53,8 @@ func TestWriteTextRecord(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	recordWriter.Flush()
-	recordWriter.Close()
+	_ = recordWriter.Flush()
+	_ = recordWriter.Close()
 
 	testData := "log line 1\nlog line 2\nlog line 3\n"
 	if bufferWriter.String() != "log line 1\nlog line 2\nlog line 3\n" {

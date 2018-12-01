@@ -84,7 +84,8 @@ func (d *DataGeneratorFormatConfig) Init(
 ) []validation.Issue {
 	switch dataFormat {
 	case "TEXT":
-		d.RecordWriterFactory = &textrecord.TextWriterFactoryImpl{}
+
+		d.RecordWriterFactory = &textrecord.TextWriterFactoryImpl{TextFieldPath: d.TextFieldPath}
 	case "JSON":
 		d.RecordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{Mode: d.JsonMode}
 	case "SDC_JSON":

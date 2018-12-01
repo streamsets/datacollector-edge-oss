@@ -16,6 +16,11 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 )
 
+const (
+	DefaultTextField     = "text"
+	DefaultTextFieldPath = "/text"
+)
+
 type RecordCreator struct {
 }
 

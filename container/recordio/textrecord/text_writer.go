@@ -14,23 +14,16 @@ package textrecord
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/dataformats"
-	"github.com/streamsets/datacollector-edge/api/fieldtype"
-	"github.com/streamsets/datacollector-edge/api/linkedhashmap"
 	"github.com/streamsets/datacollector-edge/container/recordio"
 	"io"
 )
 
-const (
-	DefaultTextField = "text"
-)
-
 type TextWriterFactoryImpl struct {
-	// TODO: Add needed configs
+	TextFieldPath string
 }
 
 func (t *TextWriterFactoryImpl) CreateWriter(
@@ -38,58 +31,23 @@ func (t *TextWriterFactoryImpl) CreateWriter(
 	writer io.Writer,
 ) (dataformats.RecordWriter, error) {
 	var recordWriter dataformats.RecordWriter
-	recordWriter = newRecordWriter(context, writer)
+	recordWriter = newRecordWriter(context, writer, t.TextFieldPath)
 	return recordWriter, nil
 }
 
 type TextWriterImpl struct {
-	context api.StageContext
-	writer  *bufio.Writer
+	context       api.StageContext
+	writer        *bufio.Writer
+	textFieldPath string
 }
 
 func (textWriter *TextWriterImpl) WriteRecord(r api.Record) error {
-	recordValue, _ := r.Get()
-	textFieldValue, err := textWriter.getTextFieldPathValue(recordValue)
-	if err != nil {
+	if textFieldValue, err := r.Get(textWriter.textFieldPath); err != nil {
+		return err
+	} else if _, err = fmt.Fprintln(textWriter.writer, cast.ToString(textFieldValue.Value)); err != nil {
 		return err
 	}
-	fmt.Fprintln(textWriter.writer, textFieldValue)
 	return nil
-}
-
-func (textWriter *TextWriterImpl) getTextFieldPathValue(field *api.Field) (string, error) {
-	var textFieldValue string
-	if field.Value == nil {
-		return textFieldValue, nil
-	}
-	var err error = nil
-	switch field.Type {
-	case fieldtype.MAP:
-		fieldValue := field.Value.(map[string]*api.Field)
-		textField := fieldValue[DefaultTextField]
-		if textField.Type != fieldtype.STRING {
-			err = errors.New("Invalid Field Type for Text Field path - " + textField.Type)
-			return textFieldValue, err
-		}
-		textFieldValue = cast.ToString(textField.Value)
-		return textFieldValue, err
-	case fieldtype.LIST_MAP:
-		listMapValue := field.Value.(*linkedhashmap.Map)
-		textValue, found := listMapValue.Get(DefaultTextField)
-		if !found {
-			return textFieldValue, fmt.Errorf("invalid field path - %s", DefaultTextField)
-		}
-		textField := textValue.(*api.Field)
-		if textField.Type != fieldtype.STRING {
-			err = errors.New("Invalid Field Type for Text Field path - " + textField.Type)
-			return textFieldValue, err
-		}
-		textFieldValue = cast.ToString(textField.Value)
-		return textFieldValue, err
-	default:
-		err = errors.New("unsupported Field Type")
-	}
-	return textFieldValue, err
 }
 
 func (textWriter *TextWriterImpl) Flush() error {
@@ -100,9 +58,17 @@ func (textWriter *TextWriterImpl) Close() error {
 	return recordio.Close(textWriter.writer)
 }
 
-func newRecordWriter(context api.StageContext, writer io.Writer) *TextWriterImpl {
+func newRecordWriter(
+	context api.StageContext,
+	writer io.Writer,
+	textFieldPath string,
+) *TextWriterImpl {
+	if len(textFieldPath) == 0 {
+		textFieldPath = DefaultTextFieldPath
+	}
 	return &TextWriterImpl{
-		context: context,
-		writer:  bufio.NewWriter(writer),
+		context:       context,
+		writer:        bufio.NewWriter(writer),
+		textFieldPath: textFieldPath,
 	}
 }
