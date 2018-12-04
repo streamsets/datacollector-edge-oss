@@ -22,6 +22,7 @@ import (
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	mqttlib "github.com/streamsets/datacollector-edge/stages/lib/mqtt"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
+	"time"
 )
 
 const (
@@ -92,9 +93,19 @@ func (ms *Origin) Produce(
 	batchMaker api.BatchMaker,
 ) (*string, error) {
 	log.Debug("MQTT Subscriber - Produce method")
-	record := <-ms.incomingRecords
-	if record != nil {
-		batchMaker.AddRecord(record)
+	timeout := time.NewTimer(time.Duration(5) * time.Second)
+	defer timeout.Stop()
+	end := false
+	for !end && !ms.GetStageContext().IsStopped() {
+		select {
+		case record := <-ms.incomingRecords:
+			if record != nil {
+				batchMaker.AddRecord(record)
+			}
+			return &defaultOffset, nil
+		case <-timeout.C:
+			end = true
+		}
 	}
 	return &defaultOffset, nil
 }

@@ -59,10 +59,10 @@ func (s *StageRuntime) Execute(
 func (s *StageRuntime) Destroy() {
 	if s.stageBean.Services != nil {
 		for _, serviceBean := range s.stageBean.Services {
-			serviceBean.Service.Destroy()
+			_ = serviceBean.Service.Destroy()
 		}
 	}
-	s.stageBean.Stage.Destroy()
+	_ = s.stageBean.Stage.Destroy()
 }
 
 func (s *StageRuntime) GetInstanceName() string {
