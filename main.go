@@ -233,7 +233,7 @@ func shutdownHook(dataCollectorEdge *edge.DataCollectorEdgeMain) {
 			if pipelineState, er := runner.GetStatus(); er == nil &&
 				(pipelineState.Status == common.RUNNING || pipelineState.Status == common.STARTING) {
 				log.WithField("id", pipelineInfo.PipelineId).Info("Stopping pipeline")
-				if runner.StopPipeline(); er != nil {
+				if _, err := runner.StopPipeline(); err != nil {
 					log.WithField("id", pipelineInfo.PipelineId).Error("Error stopping pipeline")
 				}
 			}
