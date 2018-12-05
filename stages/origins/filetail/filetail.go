@@ -14,6 +14,7 @@ package filetail
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"github.com/hpcloud/tail"
 	log "github.com/sirupsen/logrus"
@@ -27,8 +28,10 @@ import (
 	"io"
 	"math"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -42,15 +45,32 @@ const (
 	ConfDataFormat      = "conf.dataFormat"
 	ErrorTail20         = "File path cannot be null or empty"
 	ErrorTail02         = "File path doesn't exist: %s"
+	Pattern             = "PATTERN"
+	ELPattern           = "${PATTERN}"
+	FileAttribute       = "file"
+	FileNameAttribute   = "filename"
+	MTimeAttribute      = "mtime"
 )
 
 type FileTailOrigin struct {
 	*common.BaseStage
-	Conf       FileTailConfigBean `ConfigDefBean:"name=conf"`
-	csvHeaders []*api.Field
+	Conf         FileTailConfigBean `ConfigDefBean:"name=conf"`
+	fileTailList []*fileTail
+	currentIndex int
 }
 
-var lastLineReadAfterStop string
+type fileTail struct {
+	fileFullPath string
+	filename     string
+	tailObj      *tail.Tail
+	lastOffset   int64
+	skippedLines int
+	csvHeaders   []*api.Field
+}
+
+func (f *fileTail) getOffsetKey() string {
+	return f.fileFullPath
+}
 
 type FileTailConfigBean struct {
 	BatchSize        float64                           `ConfigDef:"type=NUMBER,required=true"`
@@ -61,7 +81,9 @@ type FileTailConfigBean struct {
 }
 
 type FileInfo struct {
-	FileFullPath string `ConfigDef:"type=STRING,required=true"`
+	FileFullPath    string `ConfigDef:"type=STRING,required=true"`
+	FileRollMode    string `ConfigDef:"type=STRING,required=true"`
+	PatternForToken string `ConfigDef:"type=STRING,required=true"`
 }
 
 func init() {
@@ -72,35 +94,58 @@ func init() {
 
 func (f *FileTailOrigin) Init(stageContext api.StageContext) []validation.Issue {
 	issues := f.BaseStage.Init(stageContext)
-	// validate file path
 	if len(f.Conf.FileInfos) == 0 || f.Conf.FileInfos[0].FileFullPath == "" {
 		issues = append(issues, stageContext.CreateConfigIssue(ErrorTail20, ConfGroupFiles, ConfFileInfos))
 		return issues
 	}
 
-	if _, err := os.Stat(f.Conf.FileInfos[0].FileFullPath); os.IsNotExist(err) {
-		issues = append(issues, stageContext.CreateConfigIssue(
-			fmt.Sprintf(ErrorTail02, f.Conf.FileInfos[0].FileFullPath),
-			ConfGroupFiles,
-			ConfFileInfos,
-		))
-		return issues
-	}
-	log.WithField("file", f.Conf.FileInfos[0].FileFullPath).Debug("Reading file")
+	f.fileTailList = make([]*fileTail, 0)
 
-	if f.Conf.DataFormat == "DELIMITED" && f.Conf.DataFormatConfig.CsvHeader == delimitedrecord.WithHeader {
-		file, _ := os.Open(f.Conf.FileInfos[0].FileFullPath)
-		defer util.CloseFile(file)
-		bufReader := bufio.NewReader(file)
-		headerLine, err := bufReader.ReadString('\n')
-		if err == nil {
-			columns := strings.Split(headerLine, ",")
-			f.csvHeaders = make([]*api.Field, len(columns))
-			for i, col := range columns {
-				headerField, _ := api.CreateStringField(col)
-				f.csvHeaders[i] = headerField
-			}
+	fileFullPathList := make([]string, 0)
+	fileNameList := make([]string, 0)
+
+	for _, fileInfo := range f.Conf.FileInfos {
+		if fileInfo.FileFullPath == "" {
+			issues = append(issues, stageContext.CreateConfigIssue(ErrorTail20, ConfGroupFiles, ConfFileInfos))
+			return issues
 		}
+		filePaths, fileNames, err := getFilesPaths(fileInfo)
+		if err != nil || len(filePaths) == 0 {
+			issues = append(issues, stageContext.CreateConfigIssue(
+				fmt.Sprintf(ErrorTail02, fileInfo.FileFullPath),
+				ConfGroupFiles,
+				ConfFileInfos,
+			))
+			return issues
+		}
+		fileFullPathList = append(fileFullPathList, filePaths...)
+		fileNameList = append(fileNameList, fileNames...)
+	}
+
+	for i, fileFullPath := range fileFullPathList {
+		log.WithField("file", fileFullPath).Debug("Reading file")
+
+		fileTail := &fileTail{
+			fileFullPath: fileFullPath,
+			filename:     fileNameList[i],
+		}
+
+		if f.Conf.DataFormat == "DELIMITED" && f.Conf.DataFormatConfig.CsvHeader == delimitedrecord.WithHeader {
+			file, _ := os.Open(fileFullPath)
+			bufReader := bufio.NewReader(file)
+			headerLine, err := bufReader.ReadString('\n')
+			if err == nil {
+				columns := strings.Split(headerLine, ",")
+				fileTail.csvHeaders = make([]*api.Field, len(columns))
+				for i, col := range columns {
+					headerField, _ := api.CreateStringField(col)
+					fileTail.csvHeaders[i] = headerField
+				}
+			}
+			util.CloseFile(file)
+		}
+
+		f.fileTailList = append(f.fileTailList, fileTail)
 	}
 
 	return f.Conf.DataFormatConfig.Init(f.Conf.DataFormat, stageContext, issues)
@@ -111,127 +156,253 @@ func (f *FileTailOrigin) Produce(
 	maxBatchSize int,
 	batchMaker api.BatchMaker,
 ) (*string, error) {
-	log.WithField("lastSourceOffset", lastSourceOffset).Debug("Produce called")
+	var err error
+	var offsetMap map[string]int64
+
+	if offsetMap, err = f.reinitializeIfNeeded(lastSourceOffset); err != nil {
+		log.WithError(err).Error("Failed to start tailing")
+		return lastSourceOffset, err
+	}
 
 	batchSize := math.Min(float64(maxBatchSize), f.Conf.BatchSize)
+	recordCount := float64(0)
 
+	fileTailObj := f.fileTailList[f.currentIndex]
+
+	timeout := time.NewTimer(time.Duration(f.Conf.MaxWaitTimeSecs) * time.Second)
+	defer timeout.Stop()
+	end := false
+	for !end {
+		select {
+		case line := <-fileTailObj.tailObj.Lines:
+			if line != nil {
+				if line.Err != nil {
+					log.WithError(line.Err).Errorf("error when tailing file: %s", fileTailObj.fileFullPath)
+					f.GetStageContext().ReportError(err)
+					break
+				}
+				if f.Conf.DataFormat == "DELIMITED" && lastSourceOffset == nil && recordCount == 0 {
+					if fileTailObj.skippedLines < int(f.Conf.DataFormatConfig.CsvSkipStartLines) {
+						fileTailObj.skippedLines++
+						break
+					} else if fileTailObj.skippedLines == 0 &&
+						(f.Conf.DataFormatConfig.CsvHeader == delimitedrecord.WithHeader ||
+							f.Conf.DataFormatConfig.CsvHeader == delimitedrecord.IgnoreHeader) {
+						fileTailObj.skippedLines++
+						break
+					}
+				}
+				err = f.parseLine(line, batchMaker, &recordCount, fileTailObj)
+				if err != nil {
+					f.GetStageContext().ReportError(err)
+				}
+
+				if recordCount >= batchSize {
+					end = true
+				}
+			}
+		case <-timeout.C:
+			end = true
+		}
+	}
+
+	currentOffset, err := fileTailObj.tailObj.Tell()
+	if err != nil {
+		log.WithError(err).Error("Failed to get file offset information")
+		f.GetStageContext().ReportError(err)
+	}
+	fileTailObj.lastOffset = currentOffset
+	offsetMap[fileTailObj.getOffsetKey()] = currentOffset
+
+	return f.serializeOffsetMap(offsetMap)
+}
+
+func (f *FileTailOrigin) Destroy() error {
+	return f.stopAll()
+}
+
+func (f *FileTailOrigin) reinitializeIfNeeded(lastSourceOffset *string) (map[string]int64, error) {
+	offsetMap, err := f.deserializeOffsetMap(lastSourceOffset)
+	if err != nil {
+		return offsetMap, err
+	}
+
+	stopRequired := false
+	startRequired := false
+
+	for _, fileTail := range f.fileTailList {
+		if fileTail.tailObj == nil {
+			fileTail.lastOffset = offsetMap[fileTail.getOffsetKey()]
+			startRequired = true
+		} else if fileTail.lastOffset != offsetMap[fileTail.getOffsetKey()] {
+			log.WithField("old", fileTail.lastOffset).
+				WithField("new", offsetMap[fileTail.getOffsetKey()]).
+				Debug("Restart file tail because offset is different")
+			fileTail.lastOffset = offsetMap[fileTail.getOffsetKey()]
+			stopRequired = true
+			startRequired = true
+		}
+	}
+
+	if stopRequired {
+		if err := f.stopAll(); err != nil {
+			return offsetMap, err
+		}
+	}
+
+	if startRequired {
+		return offsetMap, f.startAll()
+	} else {
+		// Update round robin file tail
+		f.currentIndex = (f.currentIndex + 1) % len(f.fileTailList)
+	}
+
+	return offsetMap, nil
+}
+
+func (f *FileTailOrigin) stopAll() error {
+	log.Debug("Stopping all file tail process")
+	var err error
+	var wg sync.WaitGroup
+	for _, fileTail := range f.fileTailList {
+		if fileTail.tailObj != nil {
+			wg.Add(1)
+			go func(t *tail.Tail) {
+				t.Kill(nil)
+				wg.Done()
+			}(fileTail.tailObj)
+		}
+	}
+	wg.Wait()
+	return err
+}
+
+func (f *FileTailOrigin) startAll() error {
+	log.Debug("Starting all file tail process")
+	var err error
+	linesChannelList := make([]<-chan *tail.Line, len(f.fileTailList))
+
+	for i, fileTail := range f.fileTailList {
+		if err = f.startTailing(fileTail); err != nil {
+			log.WithError(err).Errorf("Failed to stop File Tail Origin for file: %s", fileTail.fileFullPath)
+			break
+		}
+		linesChannelList[i] = fileTail.tailObj.Lines
+	}
+
+	if err != nil {
+		// if one of them failed to start, stop all to avoid any leakage
+		_ = f.stopAll()
+		return err
+	}
+
+	// start from first file
+	f.currentIndex = 0
+	return err
+}
+
+func (f *FileTailOrigin) startTailing(fileTail *fileTail) error {
 	tailConfig := tail.Config{
 		MustExist: true,
 		Follow:    true,
 		Logger:    tail.DiscardingLogger,
 	}
 
-	if util.IsStringEmpty(lastSourceOffset) {
-		intOffset, _ := strconv.ParseInt(*lastSourceOffset, 10, 64)
-		tailConfig.Location = &tail.SeekInfo{Offset: intOffset, Whence: io.SeekStart}
+	if fileTail.lastOffset > 0 {
+		tailConfig.Location = &tail.SeekInfo{Offset: fileTail.lastOffset, Whence: io.SeekStart}
 	}
 
-	tailObj, err := tail.TailFile(f.Conf.FileInfos[0].FileFullPath, tailConfig)
+	var err error
+	fileTail.tailObj, err = tail.TailFile(fileTail.fileFullPath, tailConfig)
 	if err != nil {
-		return lastSourceOffset, err
+		return err
 	}
 
-	var currentOffset int64
-	recordCount := float64(0)
-	skippedLines := 0
-	timeout := time.NewTimer(time.Duration(f.Conf.MaxWaitTimeSecs) * time.Second)
-	defer timeout.Stop()
-	end := false
-	for !end {
-		select {
-		case line := <-tailObj.Lines:
-			if line != nil {
-				if recordCount == 0 && lastLineReadAfterStop == line.Text {
-					// Duplicate line from last batch, due to offset issue with tail library
-					log.WithField("data", line.Text).Warn("Ignoring duplicate line from last batch")
-				} else {
-					if f.Conf.DataFormat == "DELIMITED" && lastSourceOffset == nil && recordCount == 0 {
-						if skippedLines < int(f.Conf.DataFormatConfig.CsvSkipStartLines) {
-							skippedLines++
-							break
-						} else if skippedLines == 0 && (f.Conf.DataFormatConfig.CsvHeader == delimitedrecord.WithHeader ||
-							f.Conf.DataFormatConfig.CsvHeader == delimitedrecord.IgnoreHeader) {
-							skippedLines++
-							break
-						}
-					}
-					err = f.parseLine(line.Text, batchMaker, &recordCount)
-					if err != nil {
-						f.GetStageContext().ReportError(err)
-					}
-
-					if recordCount >= batchSize {
-						currentOffset, err = tailObj.Tell()
-						if err != nil {
-							log.WithError(err).Error("Failed to get file offset information")
-							f.GetStageContext().ReportError(err)
-						}
-						end = true
-					}
-				}
-			}
-		case <-timeout.C:
-			currentOffset, err = tailObj.Tell()
-			if err != nil {
-				log.WithError(err).Error("Failed to get file offset information")
-				f.GetStageContext().ReportError(err)
-			}
-			end = true
-		}
-	}
-
-	f.stopTailing(tailObj, batchMaker, &recordCount)
-
-	stringOffset := strconv.FormatInt(currentOffset, 10)
-
-	return &stringOffset, err
+	return err
 }
 
 func (f *FileTailOrigin) parseLine(
-	lineText string,
+	line *tail.Line,
 	batchMaker api.BatchMaker,
 	recordCount *float64,
+	fileTail *fileTail,
 ) error {
 	sourceId := common.CreateRecordId("fileTail", int(*recordCount))
 	record, err := f.Conf.DataFormatConfig.RecordCreator.CreateRecord(
 		f.GetStageContext(),
-		strings.Replace(lineText, "\n", "", 1),
+		strings.Replace(line.Text, "\n", "", 1),
 		sourceId,
-		f.csvHeaders,
+		fileTail.csvHeaders,
 	)
 	if err != nil {
 		f.GetStageContext().ReportError(err)
 		return nil
 	}
+
+	record.GetHeader().SetAttribute(FileAttribute, fileTail.fileFullPath)
+	record.GetHeader().SetAttribute(FileNameAttribute, fileTail.filename)
+	record.GetHeader().SetAttribute(MTimeAttribute, fmt.Sprintf("%v", util.ConvertTimeToLong(line.Time)))
+
 	batchMaker.AddRecord(record)
 	*recordCount++
 	return nil
 }
 
-func (f *FileTailOrigin) stopTailing(
-	tailObj *tail.Tail,
-	batchMaker api.BatchMaker,
-	recordCount *float64,
-) error {
-	lastLineReadAfterStop = ""
-	tailObj.Kill(nil)
-	time.Sleep(time.Microsecond)
-	end := false
-	for !end {
-		select {
-		case line, ok := <-tailObj.Lines:
-			if !ok {
-				end = true
-			} else if line != nil {
-				err := f.parseLine(line.Text, batchMaker, recordCount)
-				if err != nil {
-					return err
-				}
-				lastLineReadAfterStop = line.Text
-			}
-		default:
-			end = true
+func (f *FileTailOrigin) deserializeOffsetMap(lastSourceOffset *string) (map[string]int64, error) {
+	offsetMap := make(map[string]int64)
+	if lastSourceOffset == nil {
+		offsetMap = make(map[string]int64)
+	} else if strings.HasPrefix(*lastSourceOffset, "{") {
+		// new format
+		err := json.Unmarshal([]byte(*lastSourceOffset), &offsetMap)
+		if err != nil {
+			log.Error(err.Error())
+			f.GetStageContext().ReportError(err)
+			return offsetMap, err
+		}
+	} else {
+		// old format
+		intOffset, err := strconv.ParseInt(*lastSourceOffset, 10, 64)
+		if len(f.fileTailList) > 0 && err == nil {
+			offsetMap[f.fileTailList[0].getOffsetKey()] = intOffset
 		}
 	}
-	return nil
+	return offsetMap, nil
+}
+
+func (f *FileTailOrigin) serializeOffsetMap(offsetMap map[string]int64) (*string, error) {
+	b, err := json.Marshal(offsetMap)
+	if err != nil {
+		log.WithError(err).Error("Failed to get file offset information")
+		f.GetStageContext().ReportError(err)
+		return nil, err
+	}
+
+	lastSourceOffset := string(b)
+
+	return &lastSourceOffset, nil
+}
+
+func getFilesPaths(fileInfo FileInfo) ([]string, []string, error) {
+	fileFullPath := fileInfo.FileFullPath
+
+	if fileInfo.FileRollMode == Pattern {
+		fileFullPath = strings.Replace(fileFullPath, ELPattern, fileInfo.PatternForToken, -1)
+	}
+
+	allFilePaths, err := filepath.Glob(fileFullPath)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	filePaths := make([]string, 0)
+	fileNames := make([]string, 0)
+	for _, filePath := range allFilePaths {
+		if fileInfo, err := os.Stat(filePath); err == nil && !fileInfo.IsDir() {
+			filePaths = append(filePaths, filePath)
+			fileNames = append(fileNames, fileInfo.Name())
+		}
+	}
+
+	return filePaths, fileNames, err
 }
