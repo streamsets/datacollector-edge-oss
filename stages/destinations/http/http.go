@@ -28,8 +28,8 @@ import (
 )
 
 const (
-	LIBRARY    = "streamsets-datacollector-basic-lib"
-	STAGE_NAME = "com_streamsets_pipeline_stage_destination_http_HttpClientDTarget"
+	Library   = "streamsets-datacollector-basic-lib"
+	StageName = "com_streamsets_pipeline_stage_destination_http_HttpClientDTarget"
 )
 
 type HttpClientDestination struct {
@@ -48,7 +48,7 @@ type HttpClientTargetConfig struct {
 }
 
 func init() {
-	stagelibrary.SetCreator(LIBRARY, STAGE_NAME, func() api.Stage {
+	stagelibrary.SetCreator(Library, StageName, func() api.Stage {
 		return &HttpClientDestination{BaseStage: &common.BaseStage{}, HttpCommon: &httpcommon.HttpCommon{}}
 	})
 }
@@ -87,8 +87,8 @@ func (h *HttpClientDestination) writeSingleRequestPerBatch(batch api.Batch) erro
 			h.GetStageContext().ToError(err, record)
 		}
 	}
-	recordWriter.Flush()
-	recordWriter.Close()
+	_ = recordWriter.Flush()
+	_ = recordWriter.Close()
 	err = h.sendToSDC(batchBuffer.Bytes())
 
 	if err != nil {
@@ -117,8 +117,8 @@ func (h *HttpClientDestination) writeSingleRequestPerRecord(batch api.Batch) err
 			h.GetStageContext().ReportError(err)
 			continue
 		}
-		recordWriter.Flush()
-		recordWriter.Close()
+		_ = recordWriter.Flush()
+		_ = recordWriter.Close()
 		err = h.sendToSDC(recordBuffer.Bytes())
 		if err != nil {
 			log.Error(err.Error())
@@ -136,7 +136,7 @@ func (h *HttpClientDestination) sendToSDC(jsonValue []byte) error {
 		if _, err := gz.Write(jsonValue); err != nil {
 			return err
 		}
-		gz.Close()
+		_ = gz.Close()
 	} else {
 		buf = *bytes.NewBuffer(jsonValue)
 	}

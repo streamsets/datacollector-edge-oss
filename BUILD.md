@@ -149,6 +149,13 @@ Getting inside the container
     curl http://localhost:18633/debug/pprof/goroutine > goroutine.pb.gz
     curl http://localhost:18633/debug/pprof/block > block.pb.gz
 
+or
+
+    go tool pprof http://localhost:18633/debug/pprof/profile
+    go tool pprof http://localhost:18633/debug/pprof/heap
+    go tool pprof http://localhost:18633/debug/pprof/goroutine
+    go tool pprof http://localhost:18633/debug/pprof/block
+    
 
 ### Running StreamSets Data Collector Edge as service
 ####( Currently supports Windows XP+, Linux/(systemd | Upstart | SysV), and OSX/Launchd.)

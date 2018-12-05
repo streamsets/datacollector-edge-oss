@@ -28,8 +28,8 @@ func getStageContext(
 	parameters map[string]interface{},
 ) *common.StageContextImpl {
 	stageConfig := common.StageConfiguration{}
-	stageConfig.Library = LIBRARY
-	stageConfig.StageName = STAGE_NAME
+	stageConfig.Library = Library
+	stageConfig.StageName = StageName
 	stageConfig.Configuration = stageConfigurationList
 	errorSink := common.NewErrorSink()
 	return &common.StageContextImpl{
