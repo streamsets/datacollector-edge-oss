@@ -17,8 +17,10 @@ package kafka
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/Shopify/sarama"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/api/validation"
@@ -74,6 +76,8 @@ const (
 	CompressionTypeGzip   = "gzip"
 	CompressionTypeSnappy = "snappy"
 	CompressionTypeLz4    = "lz4"
+
+	topicResolutionError = "topic expression '%s' generated a null or empty topic"
 )
 
 type KafkaDestination struct {
@@ -226,15 +230,15 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 
 		for _, record := range batch.GetRecords() {
 			recordContext := context.WithValue(context.Background(), el.RecordContextVar, record)
-			topic, err := resolveTopic(dest.GetStageContext(), recordContext, &dest.Conf)
-			if err != nil {
-				return err
+			if topic, err := resolveTopic(dest.GetStageContext(), recordContext, &dest.Conf); err != nil {
+				dest.GetStageContext().ToError(err, record)
+				log.WithError(err).Error("resolve topic error")
+			} else {
+				if topicToRecordsMap[topic] == nil {
+					topicToRecordsMap[topic] = make([]api.Record, 0)
+				}
+				topicToRecordsMap[topic] = append(topicToRecordsMap[topic], record)
 			}
-
-			if topicToRecordsMap[topic] == nil {
-				topicToRecordsMap[topic] = make([]api.Record, 0)
-			}
-			topicToRecordsMap[topic] = append(topicToRecordsMap[topic], record)
 		}
 
 		for topicName, records := range topicToRecordsMap {
@@ -244,7 +248,7 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 			for _, record := range records {
 				err = recordWriter.WriteRecord(record)
 				if err != nil {
-					return err
+					dest.GetStageContext().ReportError(err)
 				}
 			}
 
@@ -261,27 +265,27 @@ func (dest *KafkaDestination) Write(batch api.Batch) error {
 	} else {
 		for _, record := range batch.GetRecords() {
 			recordContext := context.WithValue(context.Background(), el.RecordContextVar, record)
-			topic, err := resolveTopic(dest.GetStageContext(), recordContext, &dest.Conf)
-			if err != nil {
-				return err
-			}
+			if topic, err := resolveTopic(dest.GetStageContext(), recordContext, &dest.Conf); err != nil {
+				dest.GetStageContext().ToError(err, record)
+				log.WithError(err).Error("resolve topic error")
+			} else {
+				recordBuffer := bytes.NewBuffer([]byte{})
+				recordWriter, err := recordWriterFactory.CreateWriter(dest.GetStageContext(), recordBuffer)
 
-			recordBuffer := bytes.NewBuffer([]byte{})
-			recordWriter, err := recordWriterFactory.CreateWriter(dest.GetStageContext(), recordBuffer)
+				err = recordWriter.WriteRecord(record)
+				if err != nil {
+					dest.GetStageContext().ReportError(err)
+				}
 
-			err = recordWriter.WriteRecord(record)
-			if err != nil {
-				return err
-			}
+				flushAndCloseWriter(recordWriter)
 
-			flushAndCloseWriter(recordWriter)
-
-			dest.keyCounter++
-			kafkaProducer.Input() <- &sarama.ProducerMessage{
-				Key:      sarama.StringEncoder(dest.Conf.Topic + strconv.Itoa(dest.keyCounter)),
-				Topic:    *topic,
-				Value:    sarama.ByteEncoder(recordBuffer.Bytes()),
-				Metadata: record,
+				dest.keyCounter++
+				kafkaProducer.Input() <- &sarama.ProducerMessage{
+					Key:      sarama.StringEncoder(dest.Conf.Topic + strconv.Itoa(dest.keyCounter)),
+					Topic:    *topic,
+					Value:    sarama.ByteEncoder(recordBuffer.Bytes()),
+					Metadata: record,
+				}
 			}
 		}
 	}
@@ -397,7 +401,11 @@ func resolveTopic(
 		return nil, err
 	}
 
-	topic := result.(string)
+	if result == nil || cast.ToString(result) == "" {
+		return nil, fmt.Errorf(topicResolutionError, config.TopicExpression)
+	}
+
+	topic := cast.ToString(result)
 	return &topic, nil
 }
 
