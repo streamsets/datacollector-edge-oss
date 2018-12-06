@@ -13,6 +13,7 @@
 package filetail
 
 import (
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
@@ -51,6 +52,7 @@ func getStageConfig(
 	maxWaitTimeSecs float64,
 	batchSize float64,
 	dataFormat string,
+	fileRollMode string,
 ) []common.Config {
 
 	configuration := make([]common.Config, 4)
@@ -59,7 +61,7 @@ func getStageConfig(
 	for i, filePath := range filePathArr {
 		fileInfoSlice[i] = map[string]interface{}{
 			"fileFullPath":    filePath,
-			"fileRollMode":    "PATTERN",
+			"fileRollMode":    fileRollMode,
 			"patternForToken": ".*",
 		}
 	}
@@ -85,7 +87,7 @@ func getStageConfig(
 }
 
 func TestInvalidFilePath(t *testing.T) {
-	stageContext := getStageContext(getStageConfig([]string{"/no/such/file"}, 2, 1000, "TEXT"))
+	stageContext := getStageContext(getStageConfig([]string{"/no/such/file"}, 2, 1000, "TEXT", FileRollModeReverseCounter))
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
@@ -103,6 +105,39 @@ func TestInvalidFilePath(t *testing.T) {
 	}
 }
 
+func TestPatternFileRollModeWithoutPatternToken(t *testing.T) {
+	fileInfoSlice := []interface{}{
+		map[string]interface{}{
+			"fileFullPath":    "/var/log/sample.log",
+			"fileRollMode":    "PATTERN",
+			"patternForToken": "",
+		},
+	}
+	configuration := []common.Config{
+		{
+			Name:  ConfFileInfos,
+			Value: fileInfoSlice,
+		},
+	}
+
+	stageContext := getStageContext(configuration)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	stageInstance := stageBean.Stage
+	issues := stageInstance.Init(stageContext)
+	if len(issues) == 0 {
+		t.Error("Expected File path doesn't exist error")
+		return
+	}
+
+	if !strings.Contains(issues[0].Message, "requires the '${PATTERN}' token in the") {
+		t.Errorf("Expected 'requires the '${PATTERN}' token in the ', but got: %s", issues[0].Message)
+	}
+}
+
 func TestValidFilePath(t *testing.T) {
 	content := []byte("test data 1\ntest data 2\ntest data 3\ntest data 4\n")
 	dir, err := ioutil.TempDir("", "TestValidFilePath")
@@ -117,7 +152,7 @@ func TestValidFilePath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stageContext := getStageContext(getStageConfig([]string{filePath}, 2, 4, "TEXT"))
+	stageContext := getStageContext(getStageConfig([]string{filePath}, 2, 4, "TEXT", FileRollModeReverseCounter))
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
@@ -216,7 +251,7 @@ func TestMultipleFilePath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stageContext := getStageContext(getStageConfig([]string{filePath1, filePath2}, 2, 4, "TEXT"))
+	stageContext := getStageContext(getStageConfig([]string{filePath1, filePath2}, 2, 4, "TEXT", FileRollModeReverseCounter))
 
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
@@ -292,7 +327,7 @@ func TestMultipleFilePath(t *testing.T) {
 	rootField, _ = records[0].Get()
 	mapFieldValue = rootField.Value.(map[string]*api.Field)
 	if mapFieldValue["text"].Value != "sample data 1" {
-		t.Error("Excepted 'sample data 1' but got - ", rootField.Value)
+		t.Error("Excepted 'sample data 1' but got - ", mapFieldValue["text"].Value)
 	}
 
 	_ = stageInstance.Destroy()
@@ -321,7 +356,7 @@ func TestFilePathRegexWithPattern(t *testing.T) {
 	regexPath := filepath.Join(dir1, "tmpFile*${PATTERN}")
 	regexPath = strings.Replace(regexPath, "dir1", "*", 1)
 
-	stageContext := getStageContext(getStageConfig([]string{regexPath}, 2, 500, "TEXT"))
+	stageContext := getStageContext(getStageConfig([]string{regexPath}, 2, 500, "TEXT", FileRollModePattern))
 
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
@@ -355,7 +390,19 @@ func TestFilePathRegexWithPattern(t *testing.T) {
 		t.Error("Excepted 'test data 1' but got - ", rootField.Value)
 	}
 
-	// second batch should get lines from second file
+	// second batch should get lines from first file with 0 records
+	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+	lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 20, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+	}
+
+	records = batchMaker.GetStageOutput()
+	if len(records) != 0 {
+		t.Fatal("Excepted 0 records but got - ", len(records))
+	}
+
+	// third batch should get lines from second file
 	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{}, false)
 	lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 20, batchMaker)
 	if err != nil {
@@ -394,7 +441,7 @@ func TestFileTailOrigin_Produce_JSON(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stageContext := getStageContext(getStageConfig([]string{filePath}, 2, 4, "JSON"))
+	stageContext := getStageContext(getStageConfig([]string{filePath}, 2, 4, "JSON", FileRollModeReverseCounter))
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
@@ -452,7 +499,7 @@ func TestFileTailOrigin_Produce_DELIMITED_NO_HEADER(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stageConfig := getStageConfig([]string{filePath}, 2, 4, "DELIMITED")
+	stageConfig := getStageConfig([]string{filePath}, 2, 4, "DELIMITED", FileRollModeReverseCounter)
 	stageConfig = append(stageConfig, common.Config{
 		Name:  "conf.dataFormatConfig.csvRecordType",
 		Value: delimitedrecord.ListMap,
@@ -521,7 +568,7 @@ func TestFileTailOrigin_Produce_DELIMITED_With_HEADER(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stageConfig := getStageConfig([]string{filePath}, 2, 5, "DELIMITED")
+	stageConfig := getStageConfig([]string{filePath}, 2, 5, "DELIMITED", FileRollModeReverseCounter)
 	stageConfig = append(stageConfig, common.Config{
 		Name:  "conf.dataFormatConfig.csvRecordType",
 		Value: delimitedrecord.ListMap,
@@ -590,7 +637,7 @@ func TestFileTailOrigin_Produce_DELIMITED_IGNORE_HEADER(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stageConfig := getStageConfig([]string{filePath}, 2, 5, "DELIMITED")
+	stageConfig := getStageConfig([]string{filePath}, 2, 5, "DELIMITED", FileRollModeReverseCounter)
 	stageConfig = append(stageConfig, common.Config{
 		Name:  "conf.dataFormatConfig.csvRecordType",
 		Value: delimitedrecord.ListMap,
@@ -659,7 +706,7 @@ func TestFileTailOrigin_Produce_DELIMITED_SKIP_LINES(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stageConfig := getStageConfig([]string{filePath}, 2, 5, "DELIMITED")
+	stageConfig := getStageConfig([]string{filePath}, 2, 5, "DELIMITED", FileRollModeReverseCounter)
 	stageConfig = append(stageConfig, common.Config{
 		Name:  "conf.dataFormatConfig.csvRecordType",
 		Value: delimitedrecord.ListMap,
@@ -721,7 +768,7 @@ func TestFileTailOrigin_Produce_DELIMITED_SKIP_LINES(t *testing.T) {
 func _TestChannelDeadlockIssue(t *testing.T) {
 	filePath1 := "/Users/test/dpm.log"
 
-	stageContext := getStageContext(getStageConfig([]string{filePath1}, 2, 1000, "TEXT"))
+	stageContext := getStageContext(getStageConfig([]string{filePath1}, 2, 1000, "TEXT", FileRollModeReverseCounter))
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
@@ -767,7 +814,7 @@ func TestFileTailOrigin_offsetIssue(t *testing.T) {
 		_, _ = f.WriteString("{\"count\": \"34\", \"total\": \"45\", \"page\": \"" + strconv.Itoa(i) + "\"}\n")
 	}
 
-	stageContext := getStageContext(getStageConfig([]string{filePath}, 2, 10, "JSON"))
+	stageContext := getStageContext(getStageConfig([]string{filePath}, 2, 10, "JSON", FileRollModeReverseCounter))
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
@@ -797,6 +844,160 @@ func TestFileTailOrigin_offsetIssue(t *testing.T) {
 	_ = stageInstance.Destroy()
 }
 
+func TestFilesMatchingAPattern(t *testing.T) {
+	testTempDir, err := ioutil.TempDir("", "TestFilesMatchingAPattern")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer os.RemoveAll(testTempDir) // clean up
+
+	numberOfLines := 4
+
+	dirNameArr := []string{"W3SVC40", "W3SVC50"}
+	fil1NameArr := []string{"ex_181126.log", "ex_181127.log", "ex_181128.log", "ex_181125.log"}
+
+	for _, dirName := range dirNameArr {
+		dirPath := filepath.Join(testTempDir, dirName)
+		if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+			log.Fatal("Cannot create directory", err)
+		}
+
+		for _, fileName := range fil1NameArr {
+			filePath := filepath.Join(dirPath, fileName)
+			file, err := os.Create(filePath)
+			if err != nil {
+				log.Fatal("Cannot create file", err)
+			}
+
+			for i := 1; i <= numberOfLines; i++ {
+				_, _ = fmt.Fprintf(file, "%s sample data %d\n", filePath, i)
+			}
+
+			_ = file.Close()
+		}
+	}
+
+	regexFilePath := filepath.Join(testTempDir, "W3SVC*", "ex_*.log")
+
+	allFilePaths, _ := filepath.Glob(regexFilePath)
+	for _, filePath := range allFilePaths {
+		fmt.Println(filePath)
+	}
+
+	stageContext := getStageContext(getStageConfig([]string{regexFilePath}, 2, 500, "TEXT", FileRollModePattern))
+
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		t.Error(err)
+	}
+	stageInstance := stageBean.Stage
+	issues := stageInstance.Init(stageContext)
+	if len(issues) != 0 {
+		t.Error(issues[0].Message)
+	}
+
+	// first batch should read 4 records from W3SVC40/ex_181125.log
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+	lastSourceOffset, err := stageInstance.(api.Origin).Produce(nil, 1000, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+	}
+
+	if lastSourceOffset == nil {
+		t.Error("No offset returned :")
+	}
+	log.Println("offset - " + *lastSourceOffset)
+
+	records := batchMaker.GetStageOutput()
+	if len(records) != 4 {
+		t.Fatal("Excepted 4 records but got - ", len(records))
+	}
+
+	rootField, _ := records[0].Get()
+	mapFieldValue := rootField.Value.(map[string]*api.Field)
+	if mapFieldValue["text"].Value != allFilePaths[0]+" sample data 1" {
+		t.Fatalf("Excepted '%s' but got '%s ", allFilePaths[0]+" sample data 1", mapFieldValue["text"].Value)
+	}
+
+	// second batch should read 4 records from W3SVC50/ex_181125.log
+	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+	lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 20, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+	}
+
+	records = batchMaker.GetStageOutput()
+	if len(records) != 4 {
+		t.Fatal("Excepted 4 records but got - ", len(records))
+	}
+
+	rootField, _ = records[0].Get()
+	mapFieldValue = rootField.Value.(map[string]*api.Field)
+	if mapFieldValue["text"].Value != allFilePaths[4]+" sample data 1" {
+		t.Fatalf("Excepted '%s' but got '%s ", allFilePaths[4]+" sample data 1", mapFieldValue["text"].Value)
+	}
+
+	// third batch should read 0 records from W3SVC40/ex_181125.log
+	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+	lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 20, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+	}
+
+	records = batchMaker.GetStageOutput()
+	if len(records) != 0 {
+		t.Fatal("Excepted 0 records but got - ", len(records))
+	}
+
+	// fourth batch should read 0 records from W3SVC50/ex_181125.log
+	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+	lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 1000, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+	}
+
+	if lastSourceOffset == nil {
+		t.Error("No offset returned :")
+	}
+	log.Println("offset - " + *lastSourceOffset)
+
+	records = batchMaker.GetStageOutput()
+	if len(records) != 4 {
+		t.Fatal("Excepted 4 records but got - ", len(records))
+	}
+
+	rootField, _ = records[0].Get()
+	mapFieldValue = rootField.Value.(map[string]*api.Field)
+	if mapFieldValue["text"].Value != allFilePaths[1]+" sample data 1" {
+		t.Fatalf("Excepted '%s' but got '%s ", allFilePaths[1]+" sample data 1", mapFieldValue["text"].Value)
+	}
+
+	// sixth batch should read 4 records from W3SVC40/ex_181126.log
+	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+	lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 20, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+	}
+
+	batchMaker = runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+	lastSourceOffset, err = stageInstance.(api.Origin).Produce(lastSourceOffset, 20, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+	}
+
+	records = batchMaker.GetStageOutput()
+	if len(records) != 4 {
+		t.Fatal("Excepted 4 records but got - ", len(records))
+	}
+
+	rootField, _ = records[0].Get()
+	mapFieldValue = rootField.Value.(map[string]*api.Field)
+	if mapFieldValue["text"].Value != allFilePaths[5]+" sample data 1" {
+		t.Fatalf("Excepted '%s' but got '%s ", allFilePaths[5]+" sample data 1", mapFieldValue["text"].Value)
+	}
+}
+
 // Run below command to create test data before running benchmark tests
 // for ((i=1;i<=200000;i++)) ; do echo "Hello World" + $i >> /tmp/testforloop.txt ;  done
 // Run Benchmark Tests
@@ -808,7 +1009,7 @@ func TestFileTailOrigin_offsetIssue(t *testing.T) {
 func BenchmarkFileTailOrigin_Produce(b *testing.B) {
 	filePath1 := "/tmp/testforloop.txt"
 
-	stageContext := getStageContext(getStageConfig([]string{filePath1}, 2, 1000, "TEXT"))
+	stageContext := getStageContext(getStageConfig([]string{filePath1}, 2, 1000, "TEXT", FileRollModeReverseCounter))
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		panic(err)
