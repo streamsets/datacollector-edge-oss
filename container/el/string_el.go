@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/madhukard/govaluate"
+	"github.com/satori/go.uuid"
 	"github.com/spf13/cast"
 	"net/url"
 	"regexp"
@@ -262,6 +263,15 @@ func (stringEL *StringEL) Split(args ...interface{}) (interface{}, error) {
 	return strings.Split(str, separator), nil
 }
 
+func (stringEL *StringEL) Uuid(args ...interface{}) (interface{}, error) {
+	if len(args) != 0 {
+		return "", errors.New(
+			fmt.Sprintf("The function 'uuid:uuid' requires 0 arguments but was passed %d", len(args)),
+		)
+	}
+	return uuid.NewV4().String(), nil
+}
+
 func (stringEL *StringEL) GetELFunctionDefinitions() map[string]govaluate.ExpressionFunction {
 	functions := map[string]govaluate.ExpressionFunction{
 		"str:substring":    stringEL.Substring,
@@ -284,6 +294,7 @@ func (stringEL *StringEL) GetELFunctionDefinitions() map[string]govaluate.Expres
 		"str:unescapeXML":  stringEL.UnescapeXML,
 		"str:unescapeJava": stringEL.UnescapeJava,
 		"str:split":        stringEL.Split,
+		"uuid:uuid":        stringEL.Uuid,
 	}
 	return functions
 }

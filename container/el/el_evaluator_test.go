@@ -20,11 +20,12 @@ import (
 )
 
 type EvaluationTest struct {
-	Name       string
-	Expression string
-	Parameters map[string]interface{}
-	Expected   interface{}
-	ErrorCase  bool
+	Name        string
+	Expression  string
+	Parameters  map[string]interface{}
+	Expected    interface{}
+	ErrorCase   bool
+	NonNilCheck bool
 }
 
 func TestSimpleExpression(test *testing.T) {
@@ -95,7 +96,9 @@ func RunEvaluationTests(evaluationTests []EvaluationTest, definitionsList []Defi
 			continue
 		}
 
-		if !reflect.DeepEqual(result, evaluationTest.Expected) {
+		if evaluationTest.NonNilCheck && result != nil {
+			continue
+		} else if !reflect.DeepEqual(result, evaluationTest.Expected) {
 			test.Logf("Test '%s' failed", evaluationTest.Name)
 			test.Logf("Evaluation result '%v' does not match expected: '%v'", result, evaluationTest.Expected)
 			test.Fail()

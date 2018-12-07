@@ -281,6 +281,18 @@ func TestStringEL(test *testing.T) {
 			Expected:   "The function 'str:split' requires 2 arguments but was passed 3",
 			ErrorCase:  true,
 		},
+
+		{
+			Name:        "Test function uuid:uuid",
+			Expression:  "${uuid:uuid()}",
+			NonNilCheck: true,
+		},
+		{
+			Name:       "Test function uuid:uuid() - Error 1",
+			Expression: "${uuid:uuid('424')}",
+			Expected:   "The function 'uuid:uuid' requires 0 arguments but was passed 1",
+			ErrorCase:  true,
+		},
 	}
 	RunEvaluationTests(evaluationTests, []Definitions{&StringEL{}}, test)
 }
