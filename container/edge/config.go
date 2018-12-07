@@ -55,7 +55,7 @@ func (c *Config) ToTomlFile(fPath string) error {
 	if err != nil {
 		return err
 	}
-	fi.Truncate(0)
+	_ = fi.Truncate(0)
 	defer util.CloseFile(fi)
 
 	if err := toml.NewEncoder(fi).Encode(c); err != nil {

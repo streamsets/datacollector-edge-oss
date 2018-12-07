@@ -109,6 +109,10 @@ func newDataCollectorEdge(
 	hostName, _ := os.Hostname()
 	var httpUrl = "http://" + hostName + config.Http.BindAddress
 
+	if len(config.Http.BaseHttpUrl) > 0 {
+		httpUrl = config.Http.BaseHttpUrl
+	}
+
 	buildInfo, _ := common.NewBuildInfo()
 	fmt.Println("Version: ", buildInfo.Version)
 	fmt.Println("Base Dir: ", baseDir)
