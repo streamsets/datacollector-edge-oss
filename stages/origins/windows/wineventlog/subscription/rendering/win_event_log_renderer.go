@@ -17,16 +17,20 @@ package rendering
 import (
 	"github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	wincommon "github.com/streamsets/datacollector-edge/stages/origins/windows/common"
 	winevtcommon "github.com/streamsets/datacollector-edge/stages/origins/windows/wineventlog/common"
 	"strconv"
-	"time"
 	"unsafe"
 )
 
+type RawEventPopulationStrategy string
+
 const (
-	BufferSizeDefault = uint32(8 * 1024)
+	BufferSizeDefault          = uint32(8 * 1024)
+	PopulateRawEventXMLAlways  = "ALWAYS"
+	PopulateRawEventXMLOnError = "ON_ERROR"
 )
 
 var (
@@ -35,6 +39,7 @@ var (
 
 type WinEventLogRenderer struct {
 	bufferSize                   int
+	rawEventPopulationStrategy   RawEventPopulationStrategy
 	bufferForRender              []byte
 	publisherManager             *winEventLogPublisherManager
 	evtCreateRenderContextHandle winevtcommon.EventRenderContextHandle
@@ -68,35 +73,45 @@ func (weler *WinEventLogRenderer) RenderEvent(
 		}
 	}
 	if err == nil {
-		var eventXMLString, recordIdString string
+		var recordIdString string
+		populateRawEventXML := weler.rawEventPopulationStrategy == PopulateRawEventXMLAlways
+		log.Infof("Populating Raw Event XML : %s %v", weler.rawEventPopulationStrategy, populateRawEventXML)
 		var systemData interface{}
 		eventField := make(map[string]interface{})
-		eventXMLString, err = weler.renderEventXML(eventHandle)
 		if err == nil {
-			eventField["rawEventXML"] = eventXMLString
 			systemData, err = weler.renderSystemData(eventHandle)
 			if err == nil {
 				eventField["System"] = systemData
 				if systemData != nil {
-					providerName := getPropertyFromSystemData(systemData, winevtcommon.EvtSystemProviderName).(string)
-					recordId := getPropertyFromSystemData(systemData, winevtcommon.EvtSystemEventRecordId).(uint64)
-					computerName := getPropertyFromSystemData(systemData, winevtcommon.EvtSystemComputer).(string)
-					channel := getPropertyFromSystemData(systemData, winevtcommon.EvtSystemChannel).(string)
-					timeCreated := getPropertyFromSystemData(systemData, winevtcommon.EvtSystemTimeCreated).(time.Time)
-
-					eventField["Message"], err = weler.renderMessageStrings(eventHandle, providerName)
-					if err != nil {
-						log.WithError(err).Warn("Error rendering message strings")
-						err = nil
+					var providerName string
+					recordIdString, providerName, err = getRecordIdAndProviderName(systemData)
+					if err == nil {
+						eventField["Message"], err = weler.renderMessageStrings(eventHandle, providerName)
+						if err != nil {
+							log.WithError(err).Warn("Error rendering message strings")
+							populateRawEventXML = true
+							err = nil
+						}
 					}
-					recordIdString = computerName + "::" + channel + "::" +
-						strconv.FormatUint(recordId, 10) + "::" +
-						strconv.FormatInt(wincommon.ConvertTimeToLong(timeCreated), 10)
 				}
 			}
+
+			//Populate the raw event xml field if the populate raw event xml flag was set or if there was an error
+			log.Infof("Populating Raw Event XML : %v %v", populateRawEventXML, err != nil)
+
+			if populateRawEventXML || err != nil {
+				eventXMLString, err := weler.renderEventXML(eventHandle)
+				if err == nil {
+					eventField["rawEventXML"] = eventXMLString
+				} else {
+					log.WithError(err).Error("Error rendering raw event XML")
+				}
+			}
+
 			if recordIdString == "" {
 				recordIdString = uuid.NewV4().String()
 			}
+
 			record, err = stageContext.CreateRecord(recordIdString, eventField)
 			if err != nil {
 				log.WithError(err).Error("Error creating record")
@@ -245,14 +260,27 @@ func (weler *WinEventLogRenderer) render(
 	return weler.bufferForRender, dwBufferUsed, dwPropertyCount, err
 }
 
+
+func getRecordIdAndProviderName(systemData interface{}) (string, string, error) {
+	providerName := cast.ToString(getPropertyFromSystemData(systemData, winevtcommon.EvtSystemProviderName))
+	recordId := cast.ToUint64(getPropertyFromSystemData(systemData, winevtcommon.EvtSystemEventRecordId))
+	computerName := cast.ToString(getPropertyFromSystemData(systemData, winevtcommon.EvtSystemComputer))
+	channel := cast.ToString(getPropertyFromSystemData(systemData, winevtcommon.EvtSystemChannel))
+	timeCreated := cast.ToTime(getPropertyFromSystemData(systemData, winevtcommon.EvtSystemTimeCreated))
+	recordIdString := computerName + "::" + channel + "::" +
+		strconv.FormatUint(recordId, 10) + "::" +
+		strconv.FormatInt(wincommon.ConvertTimeToLong(timeCreated), 10)
+	return recordIdString, providerName, nil
+}
+
 func getPropertyFromSystemData(
 	systemData interface{},
 	propertyId winevtcommon.EvtSystemPropertyId,
 ) interface{} {
-	return systemData.(map[string]interface{})[winevtcommon.SystemPropertyIds[propertyId]]
+	return cast.ToStringMap(systemData)[winevtcommon.SystemPropertyIds[propertyId]]
 }
 
-func NewWinEventLogRenderer(bufferSize int) *WinEventLogRenderer {
+func NewWinEventLogRenderer(bufferSize int, rawEventPopulationStrategy RawEventPopulationStrategy) *WinEventLogRenderer {
 	bufferSizeValue := BufferSizeDefault
 	if bufferSize != -1 {
 		bufferSizeValue = uint32(bufferSize)
@@ -261,8 +289,9 @@ func NewWinEventLogRenderer(bufferSize int) *WinEventLogRenderer {
 		providerToPublisherMetadataHandle: map[string]winevtcommon.PublisherMetadataHandle{},
 	}
 	return &WinEventLogRenderer{
-		bufferSize:       bufferSize,
-		bufferForRender:  make([]byte, bufferSizeValue),
-		publisherManager: publisherManager,
+		bufferSize:                 bufferSize,
+		rawEventPopulationStrategy: rawEventPopulationStrategy,
+		bufferForRender:            make([]byte, bufferSizeValue),
+		publisherManager:           publisherManager,
 	}
 }

@@ -171,6 +171,7 @@ func (bwes *baseWinEventSubscriber) Close() {
 func NewWinEventSubscriber(
 	stageContext api.StageContext,
 	subscriptionMode SubscriptionMode,
+	rawEventPopulationStrategy winevtrender.RawEventPopulationStrategy,
 	query string,
 	maxNumberOfEvents uint32,
 	bookMark string,
@@ -186,7 +187,7 @@ func NewWinEventSubscriber(
 		bookMark:        bookMark,
 		eventReaderMode: eventReaderMode,
 		maxWaitTime:     maxWaitTime,
-		renderer:        winevtrender.NewWinEventLogRenderer(bufferSize),
+		renderer:        winevtrender.NewWinEventLogRenderer(bufferSize, rawEventPopulationStrategy),
 	}
 
 	if subscriptionMode == PushSubscription {

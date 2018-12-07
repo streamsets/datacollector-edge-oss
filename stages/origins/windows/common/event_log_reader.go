@@ -49,6 +49,7 @@ type CommonConf struct {
 }
 
 type WinEventLogConf struct {
-	SubscriptionMode string  `ConfigDef:"type=STRING,required=true"`
-	MaxWaitTimeSecs  float64 `ConfigDef:"type=NUMBER,required=true"`
+	SubscriptionMode           string  `ConfigDef:"type=STRING,required=true"`
+	MaxWaitTimeSecs            float64 `ConfigDef:"type=NUMBER,required=true"`
+	RawEventPopulationStrategy string  `ConfigDef:"type=STRING,required=true"`
 }

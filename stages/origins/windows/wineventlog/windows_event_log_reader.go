@@ -22,6 +22,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/common"
 	wincommon "github.com/streamsets/datacollector-edge/stages/origins/windows/common"
 	winevtsubscription "github.com/streamsets/datacollector-edge/stages/origins/windows/wineventlog/subscription"
+	winevtrender "github.com/streamsets/datacollector-edge/stages/origins/windows/wineventlog/subscription/rendering"
 	"time"
 )
 
@@ -68,6 +69,7 @@ func NewWindowsEventLogReader(
 	winEventLogConf wincommon.WinEventLogConf,
 ) (wincommon.EventLogReader, error) {
 	subscriptionMode := winevtsubscription.SubscriptionMode(winEventLogConf.SubscriptionMode)
+	rawEventPopulationStrategy := winevtrender.RawEventPopulationStrategy(winEventLogConf.RawEventPopulationStrategy)
 
 	query := fmt.Sprintf(`<QueryList> <Query Id="0"> <Select Path="%s">*</Select> </Query></QueryList>`, logName)
 	log.Debugf("Querying windows Event log with %s", logName)
@@ -77,6 +79,7 @@ func NewWindowsEventLogReader(
 		eventSubscriber: winevtsubscription.NewWinEventSubscriber(
 			baseStage.GetStageContext(),
 			subscriptionMode,
+			rawEventPopulationStrategy,
 			query,
 			uint32(maxBatchSize),
 			lastSourceOffset,
