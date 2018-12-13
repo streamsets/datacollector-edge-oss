@@ -109,11 +109,11 @@ func (m *MetricsEventRunnable) sendMetricsToDPM() error {
 		return err
 	}
 
-	req, err := http.NewRequest(common.HTTP_POST, m.remoteTimeSeriesUrl, bytes.NewBuffer(jsonValue))
-	req.Header.Set(common.HEADER_X_APP_AUTH_TOKEN, m.runtimeInfo.AppAuthToken)
-	req.Header.Set(common.HEADER_X_APP_COMPONENT_ID, m.runtimeInfo.ID)
-	req.Header.Set(common.HEADER_X_REST_CALL, common.HEADER_X_REST_CALL_VALUE)
-	req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
+	req, err := http.NewRequest(common.HttpPost, m.remoteTimeSeriesUrl, bytes.NewBuffer(jsonValue))
+	req.Header.Set(common.HeaderXAppAuthToken, m.runtimeInfo.AppAuthToken)
+	req.Header.Set(common.HeaderXAppComponentId, m.runtimeInfo.ID)
+	req.Header.Set(common.HeaderXRestCall, common.HeaderXRestCallValue)
+	req.Header.Set(common.HeaderContentType, common.ApplicationJson)
 
 	resp, err := m.httpClient.Do(req)
 	if err != nil {

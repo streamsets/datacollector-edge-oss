@@ -13,12 +13,12 @@
 package common
 
 const (
-	CONFIG_DEF_TAG_NAME      = "ConfigDef"
-	CONFIG_DEF_BEAN_TAG_NAME = "ConfigDefBean"
-	LIST_BEAN_MODEL_TAG_NAME = "ListBeanModel"
-	PREDICATE_MODEL_TAG_NAME = "PredicateModel"
-	EVALUATION_EXPLICIT      = "EXPLICIT"
-	EVALUATION_IMPLICIT      = "IMPLICIT"
+	ConfigDefTagName      = "ConfigDef"
+	ConfigDefBeanTagName  = "ConfigDefBean"
+	ListBeanModelTagName  = "ListBeanModel"
+	PredicateModelTagName = "PredicateModel"
+	EvaluationExplicit    = "EXPLICIT"
+	EvaluationImplicit    = "IMPLICIT"
 )
 
 type StageDefinition struct {

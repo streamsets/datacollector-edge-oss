@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	EDGE_ID_FILE = "/data/edge.id"
+	EdgeIdFile = "/data/edge.id"
 )
 
 type RuntimeInfo struct {
@@ -44,7 +44,7 @@ func (r *RuntimeInfo) getSdeId() string {
 
 		defer f.Close()
 		edgeId = uuid.NewV4().String()
-		f.WriteString(edgeId)
+		_, _ = f.WriteString(edgeId)
 	} else {
 		buf, err := ioutil.ReadFile(r.getSdeIdFilePath())
 		if err != nil {
@@ -57,7 +57,7 @@ func (r *RuntimeInfo) getSdeId() string {
 }
 
 func (r *RuntimeInfo) getSdeIdFilePath() string {
-	return r.BaseDir + EDGE_ID_FILE
+	return r.BaseDir + EdgeIdFile
 }
 
 func check(e error) {

@@ -87,11 +87,11 @@ func extractConfigDefinitions(
 ) {
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		configDefTag := field.Tag.Get(common.CONFIG_DEF_TAG_NAME)
+		configDefTag := field.Tag.Get(common.ConfigDefTagName)
 		if len(configDefTag) > 0 {
 			extractConfigDefinition(field, configDefTag, configPrefix, configDefinitionsMap)
 		} else {
-			configDefBeanTag := field.Tag.Get(common.CONFIG_DEF_BEAN_TAG_NAME)
+			configDefBeanTag := field.Tag.Get(common.ConfigDefBeanTagName)
 			if len(configDefBeanTag) > 0 {
 				newConfigPrefix := configPrefix + util.LcFirst(field.Name) + "."
 				extractConfigDefinitions(field.Type, newConfigPrefix, configDefinitionsMap)
@@ -106,7 +106,7 @@ func extractConfigDefinition(
 	configPrefix string,
 	configDefinitionsMap map[string]*common.ConfigDefinition,
 ) {
-	configDef := &common.ConfigDefinition{Evaluation: common.EVALUATION_IMPLICIT}
+	configDef := &common.ConfigDefinition{Evaluation: common.EvaluationImplicit}
 	configDefTagValues := strings.Split(configDefTag, ",")
 	for _, tagValue := range configDefTagValues {
 		args := strings.Split(tagValue, "=")
@@ -122,7 +122,7 @@ func extractConfigDefinition(
 	configDef.Name = configPrefix + util.LcFirst(field.Name)
 	configDef.FieldName = field.Name
 
-	listBeanModelTag := field.Tag.Get(common.LIST_BEAN_MODEL_TAG_NAME)
+	listBeanModelTag := field.Tag.Get(common.ListBeanModelTagName)
 	if len(listBeanModelTag) > 0 {
 		configDefinitionsMap := make(map[string]*common.ConfigDefinition)
 		extractConfigDefinitions(field.Type.Elem(), "", configDefinitionsMap)

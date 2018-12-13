@@ -193,10 +193,10 @@ func (m *MessageEventHandler) SendEvent(sendInfoEvent bool) error {
 
 	var eventsUrl = baseUrl.ResolveReference(messagingUrl)
 	req, err := http.NewRequest("POST", eventsUrl.String(), bytes.NewBuffer(jsonValue))
-	req.Header.Set(common.HEADER_X_APP_AUTH_TOKEN, m.schConfig.AppAuthToken)
-	req.Header.Set(common.HEADER_X_APP_COMPONENT_ID, m.runtimeInfo.ID)
-	req.Header.Set(common.HEADER_X_REST_CALL, "true")
-	req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
+	req.Header.Set(common.HeaderXAppAuthToken, m.schConfig.AppAuthToken)
+	req.Header.Set(common.HeaderXAppComponentId, m.runtimeInfo.ID)
+	req.Header.Set(common.HeaderXRestCall, "true")
+	req.Header.Set(common.HeaderContentType, common.ApplicationJson)
 
 	resp, err := m.httpClient.Do(req)
 	if err != nil {

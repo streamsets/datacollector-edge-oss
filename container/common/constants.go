@@ -13,12 +13,12 @@
 package common
 
 const (
-	HEADER_X_APP_AUTH_TOKEN   = "X-SS-App-Auth-Token"
-	HEADER_X_APP_COMPONENT_ID = "X-SS-App-Component-Id"
-	HEADER_X_USER_AUTH_TOKEN  = "X-SS-User-Auth-Token"
-	HEADER_X_REST_CALL        = "X-Requested-By"
-	HEADER_CONTENT_TYPE       = "Content-Type"
-	APPLICATION_JSON          = "application/json"
-	HEADER_X_REST_CALL_VALUE  = "true"
-	HTTP_POST                 = "POST"
+	HeaderXAppAuthToken   = "X-SS-App-Auth-Token"
+	HeaderXAppComponentId = "X-SS-App-Component-Id"
+	HeaderXUserAuthToken  = "X-SS-User-Auth-Token"
+	HeaderXRestCall       = "X-Requested-By"
+	HeaderContentType     = "Content-Type"
+	ApplicationJson       = "application/json"
+	HeaderXRestCallValue  = "true"
+	HttpPost              = "POST"
 )

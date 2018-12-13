@@ -83,8 +83,8 @@ func RegisterWithControlHub(
 		var registrationUrl = schConfig.BaseUrl + RegistrationUrlPath
 
 		req, err := http.NewRequest(PostRequest, registrationUrl, bytes.NewBuffer(jsonValue))
-		req.Header.Set(common.HEADER_X_REST_CALL, EdgeComponentType)
-		req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
+		req.Header.Set(common.HeaderXRestCall, EdgeComponentType)
+		req.Header.Set(common.HeaderContentType, common.ApplicationJson)
 
 		client := &http.Client{}
 		resp, err := client.Do(req)
@@ -139,9 +139,9 @@ func EnableControlHub(
 	var createComponentUrl = controlHubUrl + fmt.Sprintf(CreateComponentUrlPath, orgId)
 
 	req, err := http.NewRequest(PutRequest, createComponentUrl, bytes.NewBuffer(jsonValue))
-	req.Header.Set(common.HEADER_X_REST_CALL, EdgeComponentType)
-	req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
-	req.Header.Set(common.HEADER_X_USER_AUTH_TOKEN, controlHubUserToken)
+	req.Header.Set(common.HeaderXRestCall, EdgeComponentType)
+	req.Header.Set(common.HeaderContentType, common.ApplicationJson)
+	req.Header.Set(common.HeaderXUserAuthToken, controlHubUserToken)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -207,8 +207,8 @@ func retrieveUserToken(
 	var loginUrl = controlHubUrl + LoginUrlPath
 
 	req, err := http.NewRequest(PostRequest, loginUrl, bytes.NewBuffer(jsonValue))
-	req.Header.Set(common.HEADER_X_REST_CALL, EdgeComponentType)
-	req.Header.Set(common.HEADER_CONTENT_TYPE, common.APPLICATION_JSON)
+	req.Header.Set(common.HeaderXRestCall, EdgeComponentType)
+	req.Header.Set(common.HeaderContentType, common.ApplicationJson)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -223,5 +223,5 @@ func retrieveUserToken(
 		err = fmt.Errorf("control hub authentication failed: %s", string(bodyBytes))
 		return "", err
 	}
-	return resp.Header.Get(common.HEADER_X_USER_AUTH_TOKEN), nil
+	return resp.Header.Get(common.HeaderXUserAuthToken), nil
 }

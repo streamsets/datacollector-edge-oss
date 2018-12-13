@@ -139,7 +139,7 @@ func injectStageConfigs(
 		stageInstanceField := reflectValue.Field(i)
 		stageInstanceFieldType := reflectType.Field(i)
 
-		configDefTag := stageInstanceFieldType.Tag.Get(common.CONFIG_DEF_TAG_NAME)
+		configDefTag := stageInstanceFieldType.Tag.Get(common.ConfigDefTagName)
 		if len(configDefTag) > 0 {
 			configName := configPrefix + util.LcFirst(stageInstanceFieldType.Name)
 			configDef := configDefinitionsMap[configName]
@@ -201,7 +201,7 @@ func injectStageConfigs(
 							}
 							stageInstanceField.Set(reflect.ValueOf(mapFieldValue))
 						case configtype.MODEL:
-							listBeanModelTag := stageInstanceFieldType.Tag.Get(common.LIST_BEAN_MODEL_TAG_NAME)
+							listBeanModelTag := stageInstanceFieldType.Tag.Get(common.ListBeanModelTagName)
 							if len(listBeanModelTag) > 0 {
 								listBeanModelType := stageInstanceFieldType.Type.Elem()
 
@@ -230,7 +230,7 @@ func injectStageConfigs(
 									}
 								}
 							} else {
-								predicateModelTag := stageInstanceFieldType.Tag.Get(common.PREDICATE_MODEL_TAG_NAME)
+								predicateModelTag := stageInstanceFieldType.Tag.Get(common.PredicateModelTagName)
 								if len(predicateModelTag) > 0 {
 									predicateValueListOfMap := make([]map[string]string, 0)
 									switch reflect.TypeOf(resolvedValue).Kind() {
@@ -258,7 +258,7 @@ func injectStageConfigs(
 				}
 			}
 		} else {
-			configDefBeanTag := stageInstanceFieldType.Tag.Get(common.CONFIG_DEF_BEAN_TAG_NAME)
+			configDefBeanTag := stageInstanceFieldType.Tag.Get(common.ConfigDefBeanTagName)
 			if len(configDefBeanTag) > 0 {
 				newConfigPrefix := configPrefix + util.LcFirst(stageInstanceFieldType.Name) + "."
 				err := injectStageConfigs(
@@ -292,7 +292,7 @@ func injectListBeanStageConfigs(
 		stageInstanceField := reflectValue.Field(i)
 		stageInstanceFieldType := reflectType.Field(i)
 
-		configDefTag := stageInstanceFieldType.Tag.Get(common.CONFIG_DEF_TAG_NAME)
+		configDefTag := stageInstanceFieldType.Tag.Get(common.ConfigDefTagName)
 		if len(configDefTag) > 0 {
 			configName := configPrefix + util.LcFirst(stageInstanceFieldType.Name)
 			configDef := configDefinitionsMap[configName]
@@ -372,7 +372,7 @@ func getResolvedValue(
 	elContext context.Context,
 ) (interface{}, error) {
 	var err error
-	if configDef.Evaluation == common.EVALUATION_EXPLICIT {
+	if configDef.Evaluation == common.EvaluationExplicit {
 		return configValue, nil
 	}
 	switch t := configValue.(type) {

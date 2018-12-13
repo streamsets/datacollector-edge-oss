@@ -37,14 +37,14 @@ func (o *PreviewSourceOffsetTracker) SetOffset(newOffset *string) {
 }
 
 func (o *PreviewSourceOffsetTracker) CommitOffset() error {
-	o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY] = o.newOffset
-	o.finished = o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY] == &emptyOffset
+	o.currentOffset.Offset[common.PollSourceOffsetKey] = o.newOffset
+	o.finished = o.currentOffset.Offset[common.PollSourceOffsetKey] == &emptyOffset
 	o.newOffset = &emptyOffset
 	return nil
 }
 
 func (o *PreviewSourceOffsetTracker) GetOffset() *string {
-	return o.currentOffset.Offset[common.POLL_SOURCE_OFFSET_KEY]
+	return o.currentOffset.Offset[common.PollSourceOffsetKey]
 }
 
 func (o *PreviewSourceOffsetTracker) GetLastBatchTime() time.Time {
