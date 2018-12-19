@@ -29,7 +29,7 @@ func CreateStageContext() api.StageContext {
 }
 
 func TestReadTextRecord(t *testing.T) {
-	sampleTextData := bytes.NewBuffer([]byte("test data 1\ntest data 2\ntest data 3"))
+	sampleTextData := bytes.NewBuffer([]byte("test data 1\r\ntest data 2\ntest data 3"))
 
 	stageContext := CreateStageContext()
 	readerFactoryImpl := &TextReaderFactoryImpl{}
@@ -66,5 +66,5 @@ func TestReadTextRecord(t *testing.T) {
 		t.Errorf("Excpeted 3 records, but received: %d", recordCount)
 	}
 
-	recordReader.Close()
+	_ = recordReader.Close()
 }

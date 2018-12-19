@@ -260,7 +260,6 @@ func (weler *WinEventLogRenderer) render(
 	return weler.bufferForRender, dwBufferUsed, dwPropertyCount, err
 }
 
-
 func getRecordIdAndProviderName(systemData interface{}) (string, string, error) {
 	providerName := cast.ToString(getPropertyFromSystemData(systemData, winevtcommon.EvtSystemProviderName))
 	recordId := cast.ToUint64(getPropertyFromSystemData(systemData, winevtcommon.EvtSystemEventRecordId))

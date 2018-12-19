@@ -425,9 +425,9 @@ func TestFilePathRegexWithPattern(t *testing.T) {
 
 func TestFileTailOrigin_Produce_JSON(t *testing.T) {
 	content := []byte(
-		"{\"temperature_C\": \"12.34\", \"pressure_KPa\": \"567.89\", \"humidity\": \"534.44\"}" + "\n" +
-			"{\"temperature_C\": \"13.34\", \"pressure_KPa\": \"667.89\", \"humidity\": \"634.44\"}" + "\n" +
-			"{\"temperature_C\": \"14.34\", \"pressure_KPa\": \"767.89\", \"humidity\": \"734.44\"}" + "\n",
+		"{\"temperature_C\": \"12.34\", \"pressure_KPa\": \"567.89\", \"humidity\": \"534.44\"}" + "\r\n" +
+			"{\"temperature_C\": \"13.34\", \"pressure_KPa\": \"667.89\", \"humidity\": \"634.44\"}" + "\r\n" +
+			"{\"temperature_C\": \"14.34\", \"pressure_KPa\": \"767.89\", \"humidity\": \"734.44\"}" + "\r\n",
 	)
 	dir, err := ioutil.TempDir("", "TestFileTailOrigin_Produce_JSON")
 	if err != nil {

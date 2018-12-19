@@ -258,7 +258,7 @@ func TestUseLastModified(t *testing.T) {
 	defer deleteTestDirectory(t, testDir)
 
 	//Create a.txt,c.txt,b.txt with different mod times
-	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), "123\n456")
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), "123\r\n456")
 	createFileAndWriteContents(t, filepath.Join(testDir, "c.txt"), "111112113\n114115116\n117118119")
 	createFileAndWriteContents(t, filepath.Join(testDir, "b.txt"), "111213\n141516")
 
@@ -294,7 +294,7 @@ func TestUseLastModified(t *testing.T) {
 	expectedHeaders = map[string]string{
 		File:     filepath.Join(testDir, "a.txt"),
 		FileName: "a.txt",
-		Offset:   "4",
+		Offset:   "5",
 	}
 
 	checkRecord(t, records[1], "/text", "456", expectedHeaders)
