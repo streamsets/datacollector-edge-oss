@@ -119,7 +119,7 @@ targetPlatforms.findAll { !it.contains('windows') }.each { platform ->
   def distTask = task "${camelPlatform}DistTar"(type: Tar) {
     group 'Distribution'
     description "Creates a distribution tarball for $platform"
-    baseName project.name
+    baseName appName + "-" + project.version
     classifier platform
     extension 'tgz'
     destinationDir file('dist')
@@ -147,7 +147,7 @@ targetPlatforms.findAll { it.contains('windows') }.each { platform ->
   def distTask = task "${camelPlatform}DistZip"(type: Zip) {
     group 'Distribution'
     description "Creates a distribution zip for $platform"
-    baseName project.name
+    baseName appName + "-" + project.version
     classifier platform
     extension 'zip'
     destinationDir file('dist')
