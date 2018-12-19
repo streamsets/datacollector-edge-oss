@@ -50,7 +50,7 @@ func (textReader *TextReaderImpl) ReadRecord() (api.Record, error) {
 		return nil, err
 	}
 	if len(line) > 0 {
-		recordValue := map[string]interface{}{"text": strings.Replace(line, "\n", "", 1)}
+		recordValue := map[string]interface{}{"text": strings.TrimRight(line, "\r\n")}
 		textReader.counter++
 		sourceId := common.CreateRecordId(textReader.messageId, textReader.counter)
 		return textReader.context.CreateRecord(sourceId, recordValue)

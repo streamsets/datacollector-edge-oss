@@ -440,7 +440,7 @@ func (f *FileTailOrigin) parseLine(
 	sourceId := common.CreateRecordId("fileTail", int(*recordCount))
 	record, err := f.Conf.DataFormatConfig.RecordCreator.CreateRecord(
 		f.GetStageContext(),
-		strings.Replace(line.Text, "\n", "", 1),
+		strings.TrimRight(line.Text, "\r\n"),
 		sourceId,
 		fileTail.csvHeaders,
 	)

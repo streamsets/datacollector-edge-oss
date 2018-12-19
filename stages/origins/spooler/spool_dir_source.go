@@ -262,7 +262,7 @@ func (s *SpoolDirSource) readAndCreateRecords(
 		if bytesRead > 0 {
 			err = s.createRecordAndAddToBatch(
 				recordReaderFactory,
-				strings.Replace(string(lineBytes), "\n", "", 1),
+				strings.TrimRight(string(lineBytes), "\r\n"),
 				batchMaker,
 			)
 
