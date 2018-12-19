@@ -210,7 +210,8 @@ func (f *FileTailOrigin) Produce(
 
 	if offsetMap, err = f.reinitializeIfNeeded(lastSourceOffset); err != nil {
 		log.WithError(err).Error("Failed to start tailing")
-		return lastSourceOffset, err
+		f.GetStageContext().ReportError(err)
+		return lastSourceOffset, nil
 	}
 
 	batchSize := math.Min(float64(maxBatchSize), f.Conf.BatchSize)
@@ -218,6 +219,8 @@ func (f *FileTailOrigin) Produce(
 
 	fileInfoRuntime := f.fileInfoRuntimeList[f.currentFileInfoIndex]
 	fileTailObj := fileInfoRuntime.fileTailList[fileInfoRuntime.currentFileTailIndex]
+
+	log.WithField("filepath", fileTailObj.fileFullPath).Debug("In Produce method")
 
 	timeout := time.NewTimer(time.Duration(f.Conf.MaxWaitTimeSecs) * time.Second)
 	defer timeout.Stop()
@@ -574,7 +577,11 @@ func (f *FileTailOrigin) getPatternNextFile(fileInfo FileInfo, dirPath string, c
 
 	if len(currentFileName) == 0 {
 		if len(fileInfo.FirstFile) != 0 {
-			return fileInfo.FirstFile, nil
+			if _, err := os.Stat(filepath.Join(dirPath, fileInfo.FirstFile)); os.IsNotExist(err) {
+				return allFileNames[len(allFileNames)-1], nil
+			} else if len(allFileNames) > 0 {
+				return fileInfo.FirstFile, nil
+			}
 		} else {
 			return allFileNames[0], nil
 		}
