@@ -30,7 +30,7 @@
 ## SDC Edge commands via REST API
 
 ### List all pipelines
-    curl -X POST http://localhost:18633/rest/v1/pipelines
+    curl -X GET http://localhost:18633/rest/v1/pipelines
 
 ### Start Pipeline
     curl -X POST http://localhost:18633/rest/v1/pipeline/:pipelineId/start
