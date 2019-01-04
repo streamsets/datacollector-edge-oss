@@ -44,7 +44,7 @@ e.g. `./gradlew installDarwinAmd64`
 
 ## Publishing Binaries to Maven Repo for all platforms
 
-    ./gradlew publish
+    ./gradlew clean dist publishToMavenLocal
 
 ## Building Docker image
 
@@ -131,7 +131,7 @@ or use TensorFlow Docker build
 
 To run a container from the resulting image:
 
-    docker run --publish 18633:18633 --name edge --rm streamsets/datacollector-edge:latest
+    docker run -d --publish 18633:18633 --name edge --rm streamsets/datacollector-edge:latest
 
 Getting inside the container
 

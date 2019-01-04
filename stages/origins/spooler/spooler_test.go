@@ -14,11 +14,13 @@ package spooler
 
 import (
 	"bytes"
+	"compress/gzip"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
 	"github.com/streamsets/datacollector-edge/container/recordio/delimitedrecord"
+	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -72,8 +74,9 @@ func getStageConfig(
 	initialFileToProcess string,
 	spoolingPeriod int64,
 	dataFormat string,
+	compressionType string,
 ) []common.Config {
-	configuration := make([]common.Config, 9)
+	configuration := make([]common.Config, 10)
 
 	configuration[0] = common.Config{
 		Name:  SpoolDirPath,
@@ -122,6 +125,11 @@ func getStageConfig(
 	}
 
 	configuration[8] = common.Config{
+		Name:  ConfCompression,
+		Value: compressionType,
+	}
+
+	configuration[9] = common.Config{
 		Name:  PoolingTimeoutSecs,
 		Value: float64(1),
 	}
@@ -148,7 +156,31 @@ func deleteTestDirectory(t *testing.T, testDir string) {
 	}
 }
 
-func createFileAndWriteContents(t *testing.T, filePath string, data string) {
+func createFileAndWriteContents(t *testing.T, filePath string, data string, compression string) {
+	if compression == dataparser.CompressedFile {
+		createCompressionFiles(t, filePath, data)
+	} else {
+		createNonCompressionFiles(t, filePath, data)
+	}
+}
+
+func createCompressionFiles(t *testing.T, filePath string, data string) {
+	f, err := os.Create(filePath)
+	defer f.Close()
+	w := gzip.NewWriter(f)
+	defer w.Close()
+	if err != nil {
+		t.Fatalf("Error Creating file '%s'", filePath)
+	}
+	t.Logf("Successfully created File : %s", filePath)
+	_, err = w.Write([]byte(data))
+	if err != nil {
+		t.Fatalf("Error Writing to file '%s'", filePath)
+	}
+	_ = f.Sync()
+}
+
+func createNonCompressionFiles(t *testing.T, filePath string, data string) {
 	f, err := os.Create(filePath)
 	if err != nil {
 		t.Fatalf("Error Creating file '%s'", filePath)
@@ -189,7 +221,7 @@ func createSpoolerAndRun(
 		t.Fatal("Err :", err)
 	}
 
-	stageInstance.Destroy()
+	_ = stageInstance.Destroy()
 
 	return *offset, batchMaker.GetStageOutput()
 }
@@ -239,7 +271,7 @@ func checkRecord(
 
 func TestSpoolDirSource_Init_InvalidDataFormat(t *testing.T) {
 	testDir := createTestDirectory(t)
-	stageConfig := getStageConfig(testDir, false, Regex, "(.*)[.]txt", true, "", 1, "LOG")
+	stageConfig := getStageConfig(testDir, false, Regex, "(.*)[.]txt", true, "", 1, "LOG", dataparser.CompressedNone)
 	stageContext := createStageContext(stageConfig)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
@@ -253,14 +285,19 @@ func TestSpoolDirSource_Init_InvalidDataFormat(t *testing.T) {
 }
 
 func TestUseLastModified(t *testing.T) {
+	testUseLastModified(t, dataparser.CompressedNone)
+	testUseLastModified(t, dataparser.CompressedFile)
+}
+
+func testUseLastModified(t *testing.T, compression string) {
 	testDir := createTestDirectory(t)
 
 	defer deleteTestDirectory(t, testDir)
 
 	//Create a.txt,c.txt,b.txt with different mod times
-	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), "123\r\n456")
-	createFileAndWriteContents(t, filepath.Join(testDir, "c.txt"), "111112113\n114115116\n117118119")
-	createFileAndWriteContents(t, filepath.Join(testDir, "b.txt"), "111213\n141516")
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), "123\r\n456", compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.txt"), "111112113\n114115116\n117118119", compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "b.txt"), "111213\n141516", compression)
 
 	currentTime := time.Now()
 
@@ -274,7 +311,7 @@ func TestUseLastModified(t *testing.T) {
 		filepath.Join(testDir, "b.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
-	stageConfig := getStageConfig(testDir, false, Regex, "(.*)[.]txt", true, "", 1, "TEXT")
+	stageConfig := getStageConfig(testDir, false, Regex, "(.*)[.]txt", true, "", 1, "TEXT", compression)
 	stageContext := createStageContext(stageConfig)
 
 	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
@@ -359,15 +396,20 @@ func TestUseLastModified(t *testing.T) {
 }
 
 func TestLexicographical(t *testing.T) {
+	testLexicographical(t, dataparser.CompressedNone)
+	testLexicographical(t, dataparser.CompressedFile)
+}
+
+func testLexicographical(t *testing.T, compression string) {
 
 	testDir := createTestDirectory(t)
 
 	defer deleteTestDirectory(t, testDir)
 
 	//Create a.txt,c.txt,b.txt with different mod times
-	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), "123\n456")
-	createFileAndWriteContents(t, filepath.Join(testDir, "b.txt"), "111213\n141516")
-	createFileAndWriteContents(t, filepath.Join(testDir, "c.txt"), "111112113\n114115116\n117118119")
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), "123\n456", compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "b.txt"), "111213\n141516", compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.txt"), "111112113\n114115116\n117118119", compression)
 
 	currentTime := time.Now()
 
@@ -381,7 +423,7 @@ func TestLexicographical(t *testing.T) {
 		filepath.Join(testDir, "c.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
-	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "TEXT")
+	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "TEXT", compression)
 	stageContext := createStageContext(stageConfig)
 
 	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
@@ -466,6 +508,11 @@ func TestLexicographical(t *testing.T) {
 }
 
 func TestSubDirectories(t *testing.T) {
+	testSubDirectories(t, dataparser.CompressedNone)
+	testSubDirectories(t, dataparser.CompressedFile)
+}
+
+func testSubDirectories(t *testing.T, compression string) {
 	testDir := createTestDirectory(t)
 	defer deleteTestDirectory(t, testDir)
 
@@ -496,7 +543,7 @@ func TestSubDirectories(t *testing.T) {
 		fileToCreate := filepath.Join(
 			pathToCreate,
 			string(allLetters[rand.Intn(len(allLetters)-1)]))
-		createFileAndWriteContents(t, fileToCreate, "sample text")
+		createFileAndWriteContents(t, fileToCreate, "sample text", compression)
 		_ = os.Chtimes(
 			fileToCreate, currentTime,
 			time.Unix(0, currentTime.UnixNano()+
@@ -504,7 +551,7 @@ func TestSubDirectories(t *testing.T) {
 		createdFiles = append(createdFiles, fileToCreate)
 	}
 
-	stageConfig := getStageConfig(testDir, true, Glob, "*", true, "", 1, "TEXT")
+	stageConfig := getStageConfig(testDir, true, Glob, "*", true, "", 1, "TEXT", compression)
 	stageContext := createStageContext(stageConfig)
 
 	var offset = ""
@@ -532,6 +579,11 @@ func TestSubDirectories(t *testing.T) {
 }
 
 func TestReadingFileAcrossBatches(t *testing.T) {
+	testReadingFileAcrossBatches(t, dataparser.CompressedNone)
+	testReadingFileAcrossBatches(t, dataparser.CompressedFile)
+}
+
+func testReadingFileAcrossBatches(t *testing.T, compression string) {
 	testDir := createTestDirectory(t)
 	defer deleteTestDirectory(t, testDir)
 
@@ -553,8 +605,8 @@ func TestReadingFileAcrossBatches(t *testing.T) {
 	}
 
 	//Create a.txt,c.txt,b.txt with different mod times
-	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), contents.String())
-	stageConfig := getStageConfig(testDir, false, Regex, ".*", true, "", 1, "TEXT")
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), contents.String(), compression)
+	stageConfig := getStageConfig(testDir, false, Regex, ".*", true, "", 1, "TEXT", compression)
 	stageInstance := createSpooler(t, createStageContext(stageConfig))
 	defer stageInstance.Destroy()
 
@@ -582,15 +634,20 @@ func TestReadingFileAcrossBatches(t *testing.T) {
 }
 
 func TestLexicographical_JSON_FORMAT(t *testing.T) {
+	testLexicographical_JSON_FORMAT(t, dataparser.CompressedNone)
+	testLexicographical_JSON_FORMAT(t, dataparser.CompressedFile)
+}
+
+func testLexicographical_JSON_FORMAT(t *testing.T, compression string) {
 
 	testDir := createTestDirectory(t)
 
 	defer deleteTestDirectory(t, testDir)
 
 	//Create a.txt,c.txt,b.txt with different mod times
-	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), "{\"text\": \"123\"}\n{\"text\": \"456\"}")
-	createFileAndWriteContents(t, filepath.Join(testDir, "b.txt"), "{\"text\": \"111213\"}\n{\"text\": \"141516\"}")
-	createFileAndWriteContents(t, filepath.Join(testDir, "c.txt"), "{\"text\": \"111112113\"}\n{\"text\": \"117118119\"}")
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), "{\"text\": \"123\"}\n{\"text\": \"456\"}", compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "b.txt"), "{\"text\": \"111213\"}\n{\"text\": \"141516\"}", compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.txt"), "{\"text\": \"111112113\"}\n{\"text\": \"117118119\"}", compression)
 
 	currentTime := time.Now()
 
@@ -603,7 +660,7 @@ func TestLexicographical_JSON_FORMAT(t *testing.T) {
 	_ = os.Chtimes(
 		filepath.Join(testDir, "c.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
-	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "JSON")
+	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "JSON", compression)
 	stageContext := createStageContext(stageConfig)
 
 	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
@@ -674,15 +731,20 @@ func TestLexicographical_JSON_FORMAT(t *testing.T) {
 }
 
 func TestLexicographical_DELIMITED_FORMAT_NO_HEADER(t *testing.T) {
+	testLexicographical_DELIMITED_FORMAT_NO_HEADER(t, dataparser.CompressedNone)
+	testLexicographical_DELIMITED_FORMAT_NO_HEADER(t, dataparser.CompressedFile)
+}
+
+func testLexicographical_DELIMITED_FORMAT_NO_HEADER(t *testing.T, compression string) {
 
 	testDir := createTestDirectory(t)
 
 	defer deleteTestDirectory(t, testDir)
 
 	// Create a.csv,b.csv,c.csv with different mod times
-	createFileAndWriteContents(t, filepath.Join(testDir, "a.csv"), sampleCsvData1)
-	createFileAndWriteContents(t, filepath.Join(testDir, "b.csv"), sampleCsvData2)
-	createFileAndWriteContents(t, filepath.Join(testDir, "c.csv"), sampleCsvData3)
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.csv"), sampleCsvData1, compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "b.csv"), sampleCsvData2, compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.csv"), sampleCsvData3, compression)
 
 	currentTime := time.Now()
 
@@ -696,7 +758,7 @@ func TestLexicographical_DELIMITED_FORMAT_NO_HEADER(t *testing.T) {
 		filepath.Join(testDir, "c.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
-	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "DELIMITED")
+	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "DELIMITED", compression)
 	stageConfig = append(stageConfig, common.Config{
 		Name:  "conf.dataFormatConfig.csvRecordType",
 		Value: delimitedrecord.ListMap,
@@ -790,15 +852,20 @@ func TestLexicographical_DELIMITED_FORMAT_NO_HEADER(t *testing.T) {
 }
 
 func TestLexicographical_DELIMITED_FORMAT_WITH_HEADER(t *testing.T) {
+	testLexicographical_DELIMITED_FORMAT_WITH_HEADER(t, dataparser.CompressedNone)
+	testLexicographical_DELIMITED_FORMAT_WITH_HEADER(t, dataparser.CompressedFile)
+}
+
+func testLexicographical_DELIMITED_FORMAT_WITH_HEADER(t *testing.T, compression string) {
 
 	testDir := createTestDirectory(t)
 
 	defer deleteTestDirectory(t, testDir)
 
 	// Create a.csv,b.csv,c.csv with different mod times
-	createFileAndWriteContents(t, filepath.Join(testDir, "a.csv"), sampleCsvData1)
-	createFileAndWriteContents(t, filepath.Join(testDir, "b.csv"), sampleCsvData2)
-	createFileAndWriteContents(t, filepath.Join(testDir, "c.csv"), sampleCsvData3)
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.csv"), sampleCsvData1, compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "b.csv"), sampleCsvData2, compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.csv"), sampleCsvData3, compression)
 
 	currentTime := time.Now()
 
@@ -812,7 +879,7 @@ func TestLexicographical_DELIMITED_FORMAT_WITH_HEADER(t *testing.T) {
 		filepath.Join(testDir, "c.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
-	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "DELIMITED")
+	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "DELIMITED", compression)
 	stageConfig = append(stageConfig, common.Config{
 		Name:  "conf.dataFormatConfig.csvRecordType",
 		Value: delimitedrecord.ListMap,
@@ -908,15 +975,20 @@ func TestLexicographical_DELIMITED_FORMAT_WITH_HEADER(t *testing.T) {
 }
 
 func TestLexicographical_DELIMITED_FORMAT_IGNORE_HEADER(t *testing.T) {
+	testLexicographical_DELIMITED_FORMAT_IGNORE_HEADER(t, dataparser.CompressedNone)
+	testLexicographical_DELIMITED_FORMAT_IGNORE_HEADER(t, dataparser.CompressedFile)
+}
+
+func testLexicographical_DELIMITED_FORMAT_IGNORE_HEADER(t *testing.T, compression string) {
 
 	testDir := createTestDirectory(t)
 
 	defer deleteTestDirectory(t, testDir)
 
 	// Create a.csv,b.csv,c.csv with different mod times
-	createFileAndWriteContents(t, filepath.Join(testDir, "a.csv"), sampleCsvData1)
-	createFileAndWriteContents(t, filepath.Join(testDir, "b.csv"), sampleCsvData2)
-	createFileAndWriteContents(t, filepath.Join(testDir, "c.csv"), sampleCsvData3)
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.csv"), sampleCsvData1, compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "b.csv"), sampleCsvData2, compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.csv"), sampleCsvData3, compression)
 
 	currentTime := time.Now()
 
@@ -930,7 +1002,7 @@ func TestLexicographical_DELIMITED_FORMAT_IGNORE_HEADER(t *testing.T) {
 		filepath.Join(testDir, "c.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
-	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "DELIMITED")
+	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "DELIMITED", compression)
 	stageConfig = append(stageConfig, common.Config{
 		Name:  "conf.dataFormatConfig.csvRecordType",
 		Value: delimitedrecord.ListMap,
@@ -1026,15 +1098,20 @@ func TestLexicographical_DELIMITED_FORMAT_IGNORE_HEADER(t *testing.T) {
 }
 
 func TestLexicographical_DELIMITED_FORMAT_SKIP_START_LINES(t *testing.T) {
+	testLexicographical_DELIMITED_FORMAT_SKIP_START_LINES(t, dataparser.CompressedNone)
+	testLexicographical_DELIMITED_FORMAT_SKIP_START_LINES(t, dataparser.CompressedFile)
+}
+
+func testLexicographical_DELIMITED_FORMAT_SKIP_START_LINES(t *testing.T, compression string) {
 
 	testDir := createTestDirectory(t)
 
 	defer deleteTestDirectory(t, testDir)
 
 	// Create a.csv,b.csv,c.csv with different mod times
-	createFileAndWriteContents(t, filepath.Join(testDir, "a.csv"), sampleCsvData1)
-	createFileAndWriteContents(t, filepath.Join(testDir, "b.csv"), sampleCsvData2)
-	createFileAndWriteContents(t, filepath.Join(testDir, "c.csv"), sampleCsvData3)
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.csv"), sampleCsvData1, compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "b.csv"), sampleCsvData2, compression)
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.csv"), sampleCsvData3, compression)
 
 	currentTime := time.Now()
 
@@ -1048,7 +1125,7 @@ func TestLexicographical_DELIMITED_FORMAT_SKIP_START_LINES(t *testing.T) {
 		filepath.Join(testDir, "c.csv"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
-	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "DELIMITED")
+	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "DELIMITED", compression)
 	stageConfig = append(stageConfig, common.Config{
 		Name:  "conf.dataFormatConfig.csvRecordType",
 		Value: delimitedrecord.ListMap,
