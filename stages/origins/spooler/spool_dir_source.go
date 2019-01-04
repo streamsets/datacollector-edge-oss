@@ -14,6 +14,7 @@ package spooler
 
 import (
 	"bufio"
+	"compress/gzip"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
@@ -23,6 +24,7 @@ import (
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -31,17 +33,19 @@ import (
 )
 
 const (
-	Library         = "streamsets-datacollector-basic-lib"
-	StageName       = "com_streamsets_pipeline_stage_origin_spooldir_SpoolDirDSource"
-	Timestamp       = "TIMESTAMP"
-	Lexicographical = "LEXICOGRAPHICAL"
-	EOFOffset       = int64(-1)
-	InvalidOffset   = int64(-2)
-	File            = "file"
-	FileName        = "filename"
-	Offset          = "offset"
-	Glob            = "GLOB"
-	Regex           = "REGEX"
+	Library             = "streamsets-datacollector-basic-lib"
+	StageName           = "com_streamsets_pipeline_stage_origin_spooldir_SpoolDirDSource"
+	Timestamp           = "TIMESTAMP"
+	Lexicographical     = "LEXICOGRAPHICAL"
+	EOFOffset           = int64(-1)
+	InvalidOffset       = int64(-2)
+	File                = "file"
+	FileName            = "filename"
+	Offset              = "offset"
+	Glob                = "GLOB"
+	Regex               = "REGEX"
+	ConfGroupDataFormat = "DATA_FORMAT"
+	ConfCompression     = "conf.dataFormatConfig.compression"
 )
 
 type SpoolDirSource struct {
@@ -50,6 +54,7 @@ type SpoolDirSource struct {
 	spooler    *DirectorySpooler
 	bufReader  *bufio.Reader
 	file       *os.File
+	cmpReader  *gzip.Reader
 	csvHeaders []*api.Field
 }
 
@@ -92,6 +97,16 @@ func (s *SpoolDirSource) Init(stageContext api.StageContext) []validation.Issue 
 		return issues
 	}
 
+	if s.Conf.DataFormatConfig.Compression != dataparser.CompressedNone &&
+		s.Conf.DataFormatConfig.Compression != dataparser.CompressedFile {
+		issues = append(issues, stageContext.CreateConfigIssue(
+			"Unsupported Compression mode :"+s.Conf.DataFormatConfig.Compression,
+			ConfGroupDataFormat,
+			ConfCompression,
+		))
+		return issues
+	}
+
 	s.spooler.Init()
 	if s.Conf.InitialFileToProcess != "" {
 		fileMatches, err := filepath.Glob(s.Conf.InitialFileToProcess)
@@ -118,24 +133,21 @@ func (s *SpoolDirSource) initializeBuffReaderIfNeeded() error {
 		}
 		s.file = f
 
-		if s.Conf.DataFormat == "DELIMITED" && s.Conf.DataFormatConfig.CsvHeader == delimitedrecord.WithHeader &&
-			(len(s.csvHeaders) == 0 || fInfo.getOffsetToRead() == 0) {
-			bufReader := bufio.NewReader(s.file)
-			headerLine, err := bufReader.ReadString('\n')
-			if err == nil {
-				columns := strings.Split(headerLine, ",")
-				s.csvHeaders = make([]*api.Field, len(columns))
-				for i, col := range columns {
-					headerField, _ := api.CreateStringField(col)
-					s.csvHeaders[i] = headerField
-				}
+		if s.Conf.DataFormatConfig.Compression == dataparser.CompressedFile {
+			s.cmpReader, err = gzip.NewReader(f)
+			if err != nil {
+				return err
 			}
 		}
 
-		if _, err := s.file.Seek(fInfo.getOffsetToRead(), 0); err != nil {
+		if s.Conf.DataFormat == "DELIMITED" && s.Conf.DataFormatConfig.CsvHeader == delimitedrecord.WithHeader &&
+			(len(s.csvHeaders) == 0 || fInfo.getOffsetToRead() == 0) {
+			s.initializeCSVHeaders(fInfo)
+		}
+
+		if err = s.seekAndInitializeBufferedReader(fInfo); err != nil {
 			return err
 		}
-		s.bufReader = bufio.NewReader(s.file)
 
 		if s.Conf.DataFormat == "DELIMITED" && fInfo.getOffsetToRead() == 0 {
 			bytesRead := 0
@@ -195,7 +207,7 @@ func (s *SpoolDirSource) initCurrentFileIfNeeded(lastSourceOffset *string) (bool
 		log.WithField("File Name", currentFilePath).Debug("Using Initial File To Process")
 	}
 
-	//End of the file or empty offset, let's get a new file
+	// End of the file or empty offset, let's get a new file
 	if currentFilePath == "" || currentStartOffset == -1 {
 		nextFileInfoToProcess := s.spooler.NextFile()
 		// No more files to process at the moment
@@ -325,7 +337,7 @@ func (s *SpoolDirSource) Produce(
 
 		if err != nil {
 			s.GetStageContext().ReportError(err)
-			return lastSourceOffset, err
+			return lastSourceOffset, nil
 		}
 
 		offset, err := s.readAndCreateRecords(maxBatchSize, batchMaker)
@@ -335,12 +347,19 @@ func (s *SpoolDirSource) Produce(
 			return lastSourceOffset, err
 		}
 		newOffset := s.spooler.getCurrentFileInfo().createOffset()
-		return &newOffset, err
+		return &newOffset, nil
 	}
-	return lastSourceOffset, err
+	return lastSourceOffset, nil
 }
 
 func (s *SpoolDirSource) resetFileAndBuffReader() {
+	if s.cmpReader != nil {
+		// Close Quietly
+		if err := s.cmpReader.Close(); err != nil {
+			log.WithError(err).WithField("file", s.file.Name()).Error("Error During file close")
+		}
+		s.cmpReader = nil
+	}
 	if s.file != nil {
 		// Close Quietly
 		if err := s.file.Close(); err != nil {
@@ -349,6 +368,53 @@ func (s *SpoolDirSource) resetFileAndBuffReader() {
 		s.file = nil
 	}
 	s.bufReader = nil
+}
+
+func (s *SpoolDirSource) seekAndInitializeBufferedReader(fInfo *AtomicFileInformation) error {
+	if s.cmpReader != nil {
+		// gzip has no Seek function because the file format simply does not allow it.
+		// The only way to find byte N is to decompress and discard N bytes.
+		s.bufReader = bufio.NewReader(s.cmpReader)
+		_, err := io.Copy(ioutil.Discard, &io.LimitedReader{R: s.bufReader, N: fInfo.getOffsetToRead()})
+		if err != nil {
+			return err
+		}
+	} else {
+		if _, err := s.file.Seek(fInfo.getOffsetToRead(), 0); err != nil {
+			return err
+		}
+		s.bufReader = bufio.NewReader(s.file)
+	}
+	return nil
+}
+
+func (s *SpoolDirSource) initializeCSVHeaders(fInfo *AtomicFileInformation) {
+	var bufReader *bufio.Reader
+	f, err := os.Open(fInfo.getFullPath())
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	if s.Conf.DataFormatConfig.Compression == dataparser.CompressedFile {
+		gzipReader, err := gzip.NewReader(f)
+		if err != nil {
+			return
+		}
+		defer gzipReader.Close()
+		bufReader = bufio.NewReader(gzipReader)
+	} else {
+		bufReader = bufio.NewReader(f)
+	}
+
+	headerLine, err := bufReader.ReadBytes('\n')
+	if err == nil {
+		columns := strings.Split(string(headerLine), ",")
+		s.csvHeaders = make([]*api.Field, len(columns))
+		for i, col := range columns {
+			headerField, _ := api.CreateStringField(col)
+			s.csvHeaders[i] = headerField
+		}
+	}
 }
 
 func (s *SpoolDirSource) Destroy() error {

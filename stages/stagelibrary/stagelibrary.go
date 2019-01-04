@@ -112,11 +112,11 @@ func extractConfigDefinition(
 		args := strings.Split(tagValue, "=")
 		switch args[0] {
 		case "type":
-			fmt.Sscanf(tagValue, "type=%s", &configDef.Type)
+			_, _ = fmt.Sscanf(tagValue, "type=%s", &configDef.Type)
 		case "required":
-			fmt.Sscanf(tagValue, "required=%t", &configDef.Required)
+			_, _ = fmt.Sscanf(tagValue, "required=%t", &configDef.Required)
 		case "evaluation":
-			fmt.Sscanf(tagValue, "evaluation=%s", &configDef.Evaluation)
+			_, _ = fmt.Sscanf(tagValue, "evaluation=%s", &configDef.Evaluation)
 		}
 	}
 	configDef.Name = configPrefix + util.LcFirst(field.Name)
