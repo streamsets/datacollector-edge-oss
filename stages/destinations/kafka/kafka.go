@@ -173,123 +173,124 @@ func (dest *KafkaDestination) Init(context api.StageContext) []validation.Issue 
 }
 
 func (dest *KafkaDestination) Write(batch api.Batch) error {
-	var err error
-	var wg sync.WaitGroup
+	if len(batch.GetRecords()) > 0 {
+		var err error
+		var wg sync.WaitGroup
 
-	kafkaProducer, err := sarama.NewAsyncProducerFromClient(dest.kafkaClient)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		kafkaProducer.AsyncClose()
-		wg.Wait()
-	}()
-
-	recordWriterFactory := dest.Conf.DataGeneratorFormatConfig.RecordWriterFactory
-	if err != nil {
-		return err
-	}
-
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		for msg := range kafkaProducer.Successes() {
-			log.WithFields(log.Fields{
-				"key":       msg.Key,
-				"topic":     msg.Topic,
-				"partition": msg.Partition,
-				"offset":    msg.Offset,
-			}).Debug("Message delivered")
+		kafkaProducer, err := sarama.NewAsyncProducerFromClient(dest.kafkaClient)
+		if err != nil {
+			return err
 		}
-	}()
 
-	go func() {
-		defer wg.Done()
-		for err := range kafkaProducer.Errors() {
-			log.WithFields(log.Fields{
-				"key":       err.Msg.Key,
-				"topic":     err.Msg.Topic,
-				"partition": err.Msg.Partition,
-				"offset":    err.Msg.Offset,
-			}).WithError(err.Err).Error("Message delivery failed!")
+		defer func() {
+			kafkaProducer.AsyncClose()
+			wg.Wait()
+		}()
 
-			if dest.Conf.SingleMessagePerBatch {
-				for _, record := range batch.GetRecords() {
+		recordWriterFactory := dest.Conf.DataGeneratorFormatConfig.RecordWriterFactory
+		if err != nil {
+			return err
+		}
+
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			for msg := range kafkaProducer.Successes() {
+				log.WithFields(log.Fields{
+					"key":       msg.Key,
+					"topic":     msg.Topic,
+					"partition": msg.Partition,
+					"offset":    msg.Offset,
+				}).Debug("Message delivered")
+			}
+		}()
+
+		go func() {
+			defer wg.Done()
+			for err := range kafkaProducer.Errors() {
+				log.WithFields(log.Fields{
+					"key":       err.Msg.Key,
+					"topic":     err.Msg.Topic,
+					"partition": err.Msg.Partition,
+					"offset":    err.Msg.Offset,
+				}).WithError(err.Err).Error("Message delivery failed!")
+
+				if dest.Conf.SingleMessagePerBatch {
+					for _, record := range batch.GetRecords() {
+						dest.GetStageContext().ToError(err, record)
+					}
+				} else {
+					dest.GetStageContext().ToError(err, err.Msg.Metadata.(api.Record))
+				}
+			}
+		}()
+
+		if dest.Conf.SingleMessagePerBatch {
+
+			topicToRecordsMap := make(map[*string][]api.Record)
+
+			for _, record := range batch.GetRecords() {
+				recordContext := context.WithValue(context.Background(), el.RecordContextVar, record)
+				if topic, err := resolveTopic(dest.GetStageContext(), recordContext, &dest.Conf); err != nil {
 					dest.GetStageContext().ToError(err, record)
-				}
-			} else {
-				dest.GetStageContext().ToError(err, err.Msg.Metadata.(api.Record))
-			}
-		}
-	}()
-
-	if dest.Conf.SingleMessagePerBatch {
-
-		topicToRecordsMap := make(map[*string][]api.Record)
-
-		for _, record := range batch.GetRecords() {
-			recordContext := context.WithValue(context.Background(), el.RecordContextVar, record)
-			if topic, err := resolveTopic(dest.GetStageContext(), recordContext, &dest.Conf); err != nil {
-				dest.GetStageContext().ToError(err, record)
-				log.WithError(err).Error("resolve topic error")
-			} else {
-				if topicToRecordsMap[topic] == nil {
-					topicToRecordsMap[topic] = make([]api.Record, 0)
-				}
-				topicToRecordsMap[topic] = append(topicToRecordsMap[topic], record)
-			}
-		}
-
-		for topicName, records := range topicToRecordsMap {
-			recordBuffer := bytes.NewBuffer([]byte{})
-			recordWriter, err := recordWriterFactory.CreateWriter(dest.GetStageContext(), recordBuffer)
-
-			for _, record := range records {
-				err = recordWriter.WriteRecord(record)
-				if err != nil {
-					dest.GetStageContext().ReportError(err)
+					log.WithError(err).Error("resolve topic error")
+				} else {
+					if topicToRecordsMap[topic] == nil {
+						topicToRecordsMap[topic] = make([]api.Record, 0)
+					}
+					topicToRecordsMap[topic] = append(topicToRecordsMap[topic], record)
 				}
 			}
 
-			flushAndCloseWriter(recordWriter)
-
-			dest.keyCounter++
-			kafkaProducer.Input() <- &sarama.ProducerMessage{
-				Key:   sarama.StringEncoder(dest.Conf.Topic + strconv.Itoa(dest.keyCounter)),
-				Topic: *topicName,
-				Value: sarama.ByteEncoder(recordBuffer.Bytes()),
-			}
-		}
-
-	} else {
-		for _, record := range batch.GetRecords() {
-			recordContext := context.WithValue(context.Background(), el.RecordContextVar, record)
-			if topic, err := resolveTopic(dest.GetStageContext(), recordContext, &dest.Conf); err != nil {
-				dest.GetStageContext().ToError(err, record)
-				log.WithError(err).Error("resolve topic error")
-			} else {
+			for topicName, records := range topicToRecordsMap {
 				recordBuffer := bytes.NewBuffer([]byte{})
 				recordWriter, err := recordWriterFactory.CreateWriter(dest.GetStageContext(), recordBuffer)
 
-				err = recordWriter.WriteRecord(record)
-				if err != nil {
-					dest.GetStageContext().ReportError(err)
+				for _, record := range records {
+					err = recordWriter.WriteRecord(record)
+					if err != nil {
+						dest.GetStageContext().ReportError(err)
+					}
 				}
 
 				flushAndCloseWriter(recordWriter)
 
 				dest.keyCounter++
 				kafkaProducer.Input() <- &sarama.ProducerMessage{
-					Key:      sarama.StringEncoder(dest.Conf.Topic + strconv.Itoa(dest.keyCounter)),
-					Topic:    *topic,
-					Value:    sarama.ByteEncoder(recordBuffer.Bytes()),
-					Metadata: record,
+					Key:   sarama.StringEncoder(dest.Conf.Topic + strconv.Itoa(dest.keyCounter)),
+					Topic: *topicName,
+					Value: sarama.ByteEncoder(recordBuffer.Bytes()),
+				}
+			}
+
+		} else {
+			for _, record := range batch.GetRecords() {
+				recordContext := context.WithValue(context.Background(), el.RecordContextVar, record)
+				if topic, err := resolveTopic(dest.GetStageContext(), recordContext, &dest.Conf); err != nil {
+					dest.GetStageContext().ToError(err, record)
+					log.WithError(err).Error("resolve topic error")
+				} else {
+					recordBuffer := bytes.NewBuffer([]byte{})
+					recordWriter, err := recordWriterFactory.CreateWriter(dest.GetStageContext(), recordBuffer)
+
+					err = recordWriter.WriteRecord(record)
+					if err != nil {
+						dest.GetStageContext().ReportError(err)
+					}
+
+					flushAndCloseWriter(recordWriter)
+
+					dest.keyCounter++
+					kafkaProducer.Input() <- &sarama.ProducerMessage{
+						Key:      sarama.StringEncoder(dest.Conf.Topic + strconv.Itoa(dest.keyCounter)),
+						Topic:    *topic,
+						Value:    sarama.ByteEncoder(recordBuffer.Bytes()),
+						Metadata: record,
+					}
 				}
 			}
 		}
 	}
-
 	return nil
 }
 

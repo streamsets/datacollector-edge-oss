@@ -89,8 +89,8 @@ func (c *CoapClientDestination) sendRecordToSDC(record api.Record) error {
 	if err != nil {
 		return err
 	}
-	recordWriter.Flush()
-	recordWriter.Close()
+	_ = recordWriter.Flush()
+	_ = recordWriter.Close()
 
 	parsedURL, err := url.Parse(c.Conf.ResourceUrl)
 	if err != nil {
