@@ -79,6 +79,11 @@ func (m *MetricsEventRunnable) Run() {
 				}
 			case <-m.quitSendingMetricsToDPM:
 				ticker.Stop()
+				// send latest metrics to control hub before stopping
+				err := m.sendMetricsToDPM()
+				if err != nil {
+					log.WithError(err).Error()
+				}
 				log.Debug("Sending metrics to Control Hub is stopped")
 				return
 			}
