@@ -30,9 +30,17 @@ func CreateStageContext() api.StageContext {
 
 func TestReadTextRecord(t *testing.T) {
 	sampleTextData := bytes.NewBuffer([]byte("test data 1\r\ntest data 2\ntest data 3"))
+	testReadTextRecord(t, sampleTextData)
+}
 
+func TestReadTextRecordMaxLen(t *testing.T) {
+	sampleTextData := bytes.NewBuffer([]byte("test data 1 extra texta\r\ntest data 2 extra\ntest data 3 extra"))
+	testReadTextRecord(t, sampleTextData)
+}
+
+func testReadTextRecord(t *testing.T, sampleTextData *bytes.Buffer) {
 	stageContext := CreateStageContext()
-	readerFactoryImpl := &TextReaderFactoryImpl{}
+	readerFactoryImpl := &TextReaderFactoryImpl{TextMaxLineLen: 11}
 	recordReader, err := readerFactoryImpl.CreateReader(stageContext, sampleTextData, "m")
 	if err != nil {
 		t.Fatal(err.Error())

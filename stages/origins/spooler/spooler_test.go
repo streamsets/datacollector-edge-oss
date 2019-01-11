@@ -76,7 +76,7 @@ func getStageConfig(
 	dataFormat string,
 	compressionType string,
 ) []common.Config {
-	configuration := make([]common.Config, 10)
+	configuration := make([]common.Config, 11)
 
 	configuration[0] = common.Config{
 		Name:  SpoolDirPath,
@@ -132,6 +132,11 @@ func getStageConfig(
 	configuration[9] = common.Config{
 		Name:  PoolingTimeoutSecs,
 		Value: float64(1),
+	}
+
+	configuration[10] = common.Config{
+		Name:  "conf.dataFormatConfig.textMaxLineLen",
+		Value: float64(1024),
 	}
 
 	return configuration

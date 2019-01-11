@@ -248,6 +248,10 @@ func TestHttpClientOrigin_Produce_Polling_TEXT(t *testing.T) {
 			Name:  "conf.httpMethod",
 			Value: GET,
 		},
+		{
+			Name:  "conf.dataFormatConfig.textMaxLineLen",
+			Value: float64(1024),
+		},
 	}
 	stageContext := getStageContext(configuration, nil)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
@@ -282,7 +286,7 @@ func TestHttpClientOrigin_Produce_Polling_TEXT(t *testing.T) {
 	rootField, _ := records[0].Get()
 	mapFieldValue := rootField.Value.(map[string]*api.Field)
 	if mapFieldValue["text"].Value != "line1" {
-		t.Error("Expected 'line1' but got - ", rootField.Value)
+		t.Error("Expected 'line1' but got - ", mapFieldValue["text"].Value)
 	}
 
 	stageInstance.Destroy()

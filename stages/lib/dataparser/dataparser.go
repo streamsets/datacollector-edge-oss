@@ -13,6 +13,7 @@
 package dataparser
 
 import (
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/recordio"
@@ -139,8 +140,12 @@ func (d *DataParserFormatConfig) Init(
 ) []validation.Issue {
 	switch dataFormat {
 	case "TEXT":
-		d.RecordReaderFactory = &textrecord.TextReaderFactoryImpl{}
-		d.RecordCreator = &textrecord.RecordCreator{}
+		d.RecordReaderFactory = &textrecord.TextReaderFactoryImpl{
+			TextMaxLineLen: cast.ToInt(d.TextMaxLineLen),
+		}
+		d.RecordCreator = &textrecord.RecordCreator{
+			TextMaxLineLen: cast.ToInt(d.TextMaxLineLen),
+		}
 	case "JSON":
 		d.RecordReaderFactory = &jsonrecord.JsonReaderFactoryImpl{}
 		d.RecordCreator = &jsonrecord.RecordCreator{}

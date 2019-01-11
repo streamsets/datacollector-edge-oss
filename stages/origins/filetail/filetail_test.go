@@ -139,7 +139,7 @@ func TestPatternFileRollModeWithoutPatternToken(t *testing.T) {
 }
 
 func TestValidFilePath(t *testing.T) {
-	content := []byte("test data 1\ntest data 2\ntest data 3\ntest data 4\n")
+	content := []byte("test data 1 extra text\ntest data 2\ntest data 3\ntest data 4\n")
 	dir, err := ioutil.TempDir("", "TestValidFilePath")
 	if err != nil {
 		t.Fatal(err)
@@ -152,7 +152,13 @@ func TestValidFilePath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stageContext := getStageContext(getStageConfig([]string{filePath}, 2, 4, "TEXT", FileRollModeReverseCounter))
+	stageConfig := getStageConfig([]string{filePath}, 2, 4, "TEXT", FileRollModeReverseCounter)
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.textMaxLineLen",
+		Value: float64(11),
+	})
+
+	stageContext := getStageContext(stageConfig)
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
 		t.Error(err)
@@ -251,7 +257,13 @@ func TestMultipleFilePath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stageContext := getStageContext(getStageConfig([]string{filePath1, filePath2}, 2, 4, "TEXT", FileRollModeReverseCounter))
+	stageConfig := getStageConfig([]string{filePath1, filePath2}, 2, 4, "TEXT", FileRollModeReverseCounter)
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.textMaxLineLen",
+		Value: float64(1024),
+	})
+
+	stageContext := getStageContext(stageConfig)
 
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
@@ -356,7 +368,12 @@ func TestFilePathRegexWithPattern(t *testing.T) {
 	regexPath := filepath.Join(dir1, "tmpFile*${PATTERN}")
 	regexPath = strings.Replace(regexPath, "dir1", "*", 1)
 
-	stageContext := getStageContext(getStageConfig([]string{regexPath}, 2, 500, "TEXT", FileRollModePattern))
+	stageConfig := getStageConfig([]string{regexPath}, 2, 500, "TEXT", FileRollModePattern)
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.textMaxLineLen",
+		Value: float64(1024),
+	})
+	stageContext := getStageContext(stageConfig)
 
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {
@@ -885,7 +902,12 @@ func TestFilesMatchingAPattern(t *testing.T) {
 		fmt.Println(filePath)
 	}
 
-	stageContext := getStageContext(getStageConfig([]string{regexFilePath}, 2, 500, "TEXT", FileRollModePattern))
+	stageConfig := getStageConfig([]string{regexFilePath}, 2, 500, "TEXT", FileRollModePattern)
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.textMaxLineLen",
+		Value: float64(1024),
+	})
+	stageContext := getStageContext(stageConfig)
 
 	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
 	if err != nil {

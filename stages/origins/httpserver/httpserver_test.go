@@ -183,6 +183,10 @@ func TestOrigin_Produce_Text_WithQueryAppId(t *testing.T) {
 			Name:  "dataFormat",
 			Value: "TEXT",
 		},
+		{
+			Name:  "dataFormatConfig.textMaxLineLen",
+			Value: float64(1024),
+		},
 	}
 
 	stageContext, _ := getStageContext(configs, nil)

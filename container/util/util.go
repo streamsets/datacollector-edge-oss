@@ -117,3 +117,11 @@ func IndexOf(word string, data []string) int {
 	}
 	return -1
 }
+
+func TruncateString(str string, num int) string {
+	s := str
+	if len(str) > num {
+		s = str[0:num]
+	}
+	return s
+}

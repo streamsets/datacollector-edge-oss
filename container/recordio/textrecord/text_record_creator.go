@@ -14,6 +14,7 @@ package textrecord
 
 import (
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/container/util"
 )
 
 const (
@@ -22,6 +23,7 @@ const (
 )
 
 type RecordCreator struct {
+	TextMaxLineLen int
 }
 
 func (r *RecordCreator) CreateRecord(
@@ -30,5 +32,7 @@ func (r *RecordCreator) CreateRecord(
 	messageId string,
 	headers []*api.Field,
 ) (api.Record, error) {
-	return context.CreateRecord(messageId, map[string]interface{}{DefaultTextField: lineText})
+	return context.CreateRecord(messageId, map[string]interface{}{
+		DefaultTextField: util.TruncateString(lineText, r.TextMaxLineLen),
+	})
 }

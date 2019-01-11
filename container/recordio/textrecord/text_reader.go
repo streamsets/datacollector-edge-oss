@@ -18,12 +18,13 @@ import (
 	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/recordio"
+	"github.com/streamsets/datacollector-edge/container/util"
 	"io"
 	"strings"
 )
 
 type TextReaderFactoryImpl struct {
-	// TODO: Add needed configs
+	TextMaxLineLen int
 }
 
 func (j *TextReaderFactoryImpl) CreateReader(
@@ -32,15 +33,16 @@ func (j *TextReaderFactoryImpl) CreateReader(
 	messageId string,
 ) (dataformats.RecordReader, error) {
 	var recordReader dataformats.RecordReader
-	recordReader = newRecordReader(context, reader, messageId)
+	recordReader = newRecordReader(context, reader, messageId, j.TextMaxLineLen)
 	return recordReader, nil
 }
 
 type TextReaderImpl struct {
-	context   api.StageContext
-	reader    *bufio.Reader
-	messageId string
-	counter   int
+	context        api.StageContext
+	reader         *bufio.Reader
+	messageId      string
+	counter        int
+	textMaxLineLen int
 }
 
 func (textReader *TextReaderImpl) ReadRecord() (api.Record, error) {
@@ -50,7 +52,8 @@ func (textReader *TextReaderImpl) ReadRecord() (api.Record, error) {
 		return nil, err
 	}
 	if len(line) > 0 {
-		recordValue := map[string]interface{}{"text": strings.TrimRight(line, "\r\n")}
+		line = util.TruncateString(strings.TrimRight(line, "\r\n"), textReader.textMaxLineLen)
+		recordValue := map[string]interface{}{"text": line}
 		textReader.counter++
 		sourceId := common.CreateRecordId(textReader.messageId, textReader.counter)
 		return textReader.context.CreateRecord(sourceId, recordValue)
@@ -62,11 +65,12 @@ func (textReader *TextReaderImpl) Close() error {
 	return recordio.Close(textReader.reader)
 }
 
-func newRecordReader(context api.StageContext, reader io.Reader, messageId string) *TextReaderImpl {
+func newRecordReader(context api.StageContext, reader io.Reader, messageId string, textMaxLineLen int) *TextReaderImpl {
 	return &TextReaderImpl{
-		context:   context,
-		reader:    bufio.NewReader(reader),
-		messageId: messageId,
-		counter:   0,
+		context:        context,
+		reader:         bufio.NewReader(reader),
+		messageId:      messageId,
+		counter:        0,
+		textMaxLineLen: textMaxLineLen,
 	}
 }
