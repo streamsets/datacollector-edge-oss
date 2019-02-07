@@ -17,6 +17,9 @@ package kafka
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"fmt"
 	"github.com/Shopify/sarama"
 	log "github.com/sirupsen/logrus"
@@ -28,6 +31,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/el"
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
+	"io/ioutil"
 	"regexp"
 	"strconv"
 	"strings"
@@ -58,6 +62,7 @@ const (
 	SslEndpointIdentificationAlgorithm = "ssl.endpoint.identification.algorithm"
 	SecurityProtocol                   = "security.protocol"
 	SASLJaasConfig                     = "sasl.jaas.config"
+	SslTruststoreLocation              = "ssl.truststore.location"
 	MessageMaxBytes                    = "message.max.bytes"
 	RequestRequiredACKs                = "request.required.acks"
 	RequestTimeoutMS                   = "request.timeout.ms"
@@ -67,10 +72,16 @@ const (
 	MessageSendMaxRetries              = "message.send.max.retries"
 	RetryBackoffMS                     = "retry.backoff.ms"
 
-	ClientId              = "SDCEdge"
-	HTTPS                 = "https"
-	SASLPlainText         = "SASL_PLAINTEXT"
-	SASLSSL               = "SASL_SSL"
+	ClientId = "SDCEdge"
+	HTTPS    = "https"
+
+	SecurityProtocolPlainText     = "PLAINTEXT"
+	SecurityProtocolSSL           = "SSL"
+	SecurityProtocolSASLPlainText = "SASL_PLAINTEXT"
+	SecurityProtocolSASLSSL       = "SASL_SSL"
+
+	InsecureSkipVerify = "insecureSkipVerify"
+
 	SSSLJaasConfigRegex   = `.*username="(.*)".*password="(.*)"`
 	CompressionTypeNone   = "none"
 	CompressionTypeGzip   = "gzip"
@@ -154,6 +165,10 @@ func (dest *KafkaDestination) Init(context api.StageContext) []validation.Issue 
 	var err error
 
 	err = dest.mapJVMConfigsToSaramaConfig()
+	if err != nil {
+		issues = append(issues, context.CreateConfigIssue(err.Error()))
+		return issues
+	}
 
 	dest.kafkaClientConf.Producer.Partitioner, err = getPartitionerConstructor(dest.Conf.PartitionStrategy)
 	if err != nil {
@@ -309,6 +324,9 @@ func (dest *KafkaDestination) mapJVMConfigsToSaramaConfig() error {
 	config.ClientID = ClientId
 	config.Version = dest.kafkaVersion
 
+	var trustStoreFilePath string
+	insecureSkipVerify := false
+
 	for name, value := range dest.Conf.KafkaProducerConfigs {
 		switch name {
 		// NET Config
@@ -323,15 +341,29 @@ func (dest *KafkaDestination) mapJVMConfigsToSaramaConfig() error {
 				config.Net.TLS.Enable = true
 			}
 		case SecurityProtocol:
-			if value == SASLPlainText || value == SASLSSL {
+			if value == SecurityProtocolSASLPlainText || value == SecurityProtocolSASLSSL {
 				config.Net.SASL.Enable = true
+			} else if value == SecurityProtocolSSL {
+				config.Net.TLS.Enable = true
 			}
+
 		case SASLJaasConfig:
 			re := regexp.MustCompile(SSSLJaasConfigRegex)
 			match := re.FindStringSubmatch(value)
 			if len(match) > 2 {
 				config.Net.SASL.User = match[1]
 				config.Net.SASL.Password = match[2]
+			}
+
+		case SslTruststoreLocation:
+			if !strings.HasSuffix(value, ".pem") {
+				return errors.New("Data Collector edge requires truststore certificate in PEM format")
+			}
+			trustStoreFilePath = value
+
+		case InsecureSkipVerify:
+			if value == "true" {
+				insecureSkipVerify = true
 			}
 
 		// Producer Config
@@ -382,6 +414,31 @@ func (dest *KafkaDestination) mapJVMConfigsToSaramaConfig() error {
 				config.Producer.Retry.Backoff = time.Duration(i) * time.Millisecond
 			}
 		}
+	}
+
+	if config.Net.TLS.Enable {
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: insecureSkipVerify,
+		}
+
+		if len(trustStoreFilePath) > 0 {
+			var caCertPool *x509.CertPool // nil CertPool will use system CA certs
+			caCert, err := ioutil.ReadFile(trustStoreFilePath)
+			if err != nil {
+				return err
+			}
+
+			// appending to the system cert pool rather than replacing it
+			caCertPool, err = x509.SystemCertPool()
+			if err != nil {
+				return err
+			}
+			caCertPool.AppendCertsFromPEM(caCert)
+
+			tlsConfig.RootCAs = caCertPool
+		}
+
+		config.Net.TLS.Config = tlsConfig
 	}
 
 	dest.kafkaClientConf = config
