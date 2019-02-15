@@ -75,7 +75,7 @@ func (weler *WinEventLogRenderer) RenderEvent(
 	if err == nil {
 		var recordIdString string
 		populateRawEventXML := weler.rawEventPopulationStrategy == PopulateRawEventXMLAlways
-		log.Infof("Populating Raw Event XML : %s %v", weler.rawEventPopulationStrategy, populateRawEventXML)
+		log.Debugf("Populating Raw Event XML : %s %v", weler.rawEventPopulationStrategy, populateRawEventXML)
 		var systemData interface{}
 		eventField := make(map[string]interface{})
 		if err == nil {
@@ -97,7 +97,7 @@ func (weler *WinEventLogRenderer) RenderEvent(
 			}
 
 			//Populate the raw event xml field if the populate raw event xml flag was set or if there was an error
-			log.Infof("Populating Raw Event XML : %v %v", populateRawEventXML, err != nil)
+			log.Debugf("Populating Raw Event XML : %v %v", populateRawEventXML, err != nil)
 
 			if populateRawEventXML || err != nil {
 				eventXMLString, err := weler.renderEventXML(eventHandle)
