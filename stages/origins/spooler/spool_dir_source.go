@@ -55,6 +55,7 @@ type SpoolDirSource struct {
 	*common.BaseStage
 	Conf       SpoolDirConfigBean `ConfigDefBean:"conf"`
 	spooler    *DirectorySpooler
+	filePurger *filePurger
 	bufReader  *bufio.Reader
 	file       *os.File
 	cmpReader  *gzip.Reader
@@ -127,6 +128,12 @@ func (s *SpoolDirSource) Init(stageContext api.StageContext) []validation.Issue 
 			s.Conf.InitialFileToProcess = fileMatches[0]
 		}
 	}
+
+	if s.Conf.PostProcessing == Archive && s.Conf.RetentionTimeMins > 0 {
+		s.filePurger = NewFilePurger(s.Conf)
+		s.filePurger.run()
+	}
+
 	return s.Conf.DataFormatConfig.Init(s.Conf.DataFormat, stageContext, issues)
 }
 
@@ -449,5 +456,8 @@ func (s *SpoolDirSource) postProcessFile(fileInfo *AtomicFileInformation) {
 func (s *SpoolDirSource) Destroy() error {
 	s.resetFileAndBuffReader()
 	s.spooler.Destroy()
+	if s.filePurger != nil {
+		s.filePurger.destroy()
+	}
 	return nil
 }
