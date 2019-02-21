@@ -46,6 +46,9 @@ const (
 	Regex               = "REGEX"
 	ConfGroupDataFormat = "DATA_FORMAT"
 	ConfCompression     = "conf.dataFormatConfig.compression"
+	None                = "NONE"
+	Archive             = "ARCHIVE"
+	Delete              = "DELETE"
 )
 
 type SpoolDirSource struct {
@@ -67,6 +70,9 @@ type SpoolDirConfigBean struct {
 	ProcessSubdirectories bool                              `ConfigDef:"type=BOOLEAN,required=true"`
 	FilePattern           string                            `ConfigDef:"type=STRING,required=true"`
 	PathMatcherMode       string                            `ConfigDef:"type=STRING,required=true"`
+	PostProcessing        string                            `ConfigDef:"type=STRING,required=true"`
+	ArchiveDir            string                            `ConfigDef:"type=STRING,required=true"`
+	RetentionTimeMins     float64                           `ConfigDef:"type=NUMBER,required=true"`
 	DataFormat            string                            `ConfigDef:"type=STRING,required=true"`
 	DataFormatConfig      dataparser.DataParserFormatConfig `ConfigDefBean:"dataFormatConfig"`
 }
@@ -289,6 +295,9 @@ func (s *SpoolDirSource) readAndCreateRecords(
 		if isEof {
 			log.WithField("File Name", s.spooler.getCurrentFileInfo().getFullPath()).
 				Debug("Reached End of File")
+			if s.Conf.PostProcessing != None {
+				s.postProcessFile(s.spooler.getCurrentFileInfo())
+			}
 			s.spooler.getCurrentFileInfo().setOffsetToRead(EOFOffset)
 			s.resetFileAndBuffReader()
 			break
@@ -413,6 +422,26 @@ func (s *SpoolDirSource) initializeCSVHeaders(fInfo *AtomicFileInformation) {
 		for i, col := range columns {
 			headerField, _ := api.CreateStringField(col)
 			s.csvHeaders[i] = headerField
+		}
+	}
+}
+
+func (s *SpoolDirSource) postProcessFile(fileInfo *AtomicFileInformation) {
+	log.WithField("File Name", s.spooler.getCurrentFileInfo().getFullPath()).
+		WithField("option", s.Conf.PostProcessing).
+		Debug("post processing file")
+	if s.Conf.PostProcessing == Archive {
+		archiveFilePath := filepath.Join(s.Conf.ArchiveDir, s.spooler.getCurrentFileInfo().getName())
+		err := os.Rename(s.spooler.getCurrentFileInfo().getFullPath(), archiveFilePath)
+		if err != nil {
+			log.WithError(err).Error("failed to archive file")
+			s.GetStageContext().ReportError(err)
+		}
+	} else if s.Conf.PostProcessing == Delete {
+		err := os.Remove(s.spooler.getCurrentFileInfo().getFullPath())
+		if err != nil {
+			log.WithError(err).Error("failed to delete file")
+			s.GetStageContext().ReportError(err)
 		}
 	}
 }

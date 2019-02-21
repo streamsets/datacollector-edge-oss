@@ -429,6 +429,10 @@ func testLexicographical(t *testing.T, compression string) {
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 
 	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "TEXT", compression)
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.postProcessing",
+		Value: Delete,
+	})
 	stageContext := createStageContext(stageConfig)
 
 	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
@@ -510,6 +514,12 @@ func testLexicographical(t *testing.T, compression string) {
 	}
 
 	checkRecord(t, records[0], "/text", "117118119", expectedHeaders)
+
+	// validate post processing
+	files, _ := ioutil.ReadDir(testDir)
+	if len(files) != 0 {
+		t.Error("Failed to post process files - delete option")
+	}
 }
 
 func TestSubDirectories(t *testing.T) {
@@ -646,6 +656,7 @@ func TestLexicographical_JSON_FORMAT(t *testing.T) {
 func testLexicographical_JSON_FORMAT(t *testing.T, compression string) {
 
 	testDir := createTestDirectory(t)
+	archiveDir := createTestDirectory(t)
 
 	defer deleteTestDirectory(t, testDir)
 
@@ -666,6 +677,14 @@ func testLexicographical_JSON_FORMAT(t *testing.T, compression string) {
 		filepath.Join(testDir, "c.txt"),
 		currentTime, time.Unix(0, currentTime.UnixNano()-(time.Second).Nanoseconds()))
 	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "JSON", compression)
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.postProcessing",
+		Value: Archive,
+	})
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.archiveDir",
+		Value: archiveDir,
+	})
 	stageContext := createStageContext(stageConfig)
 
 	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
@@ -733,6 +752,17 @@ func testLexicographical_JSON_FORMAT(t *testing.T, compression string) {
 	}
 
 	checkRecord(t, records[1], "/text", "117118119", expectedHeaders)
+
+	// validate post processing
+	files, _ := ioutil.ReadDir(testDir)
+	if len(files) != 0 {
+		t.Error("Failed to post process files - archive option")
+	}
+
+	archivedFiles, _ := ioutil.ReadDir(archiveDir)
+	if len(archivedFiles) != 3 {
+		t.Error("Failed to post process files - archive option")
+	}
 }
 
 func TestLexicographical_DELIMITED_FORMAT_NO_HEADER(t *testing.T) {
