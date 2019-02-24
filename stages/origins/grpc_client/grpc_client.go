@@ -71,7 +71,6 @@ type ClientConfig struct {
 	ConnectTimeout   float64                           `ConfigDef:"type=NUMBER,required=true"`
 	KeepaliveTime    float64                           `ConfigDef:"type=NUMBER,required=true"`
 	AddlHeaders      map[string]string                 `ConfigDef:"type=MAP,required=true"`
-	RpcHeaders       map[string]string                 `ConfigDef:"type=MAP,required=true"`
 	EmitDefaults     bool                              `ConfigDef:"type=BOOLEAN,required=true"`
 	TlsConfig        TlsConfigBean                     `ConfigDefBean:"tlsConfig"`
 	Insecure         bool                              `ConfigDef:"type=BOOLEAN,required=true"`
@@ -182,10 +181,6 @@ func (o *Origin) connectToServer() error {
 
 	headers := make([]string, 0)
 	for key, value := range o.Conf.AddlHeaders {
-		headers = append(headers, fmt.Sprintf("%s: %s", key, value))
-	}
-
-	for key, value := range o.Conf.RpcHeaders {
 		headers = append(headers, fmt.Sprintf("%s: %s", key, value))
 	}
 
