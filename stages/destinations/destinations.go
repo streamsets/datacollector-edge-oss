@@ -19,6 +19,7 @@ import (
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/kafka"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/kinesis"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/mqtt"
+	_ "github.com/streamsets/datacollector-edge/stages/destinations/s3"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/toerror"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/toevent"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/trash"

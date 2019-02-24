@@ -1,4 +1,4 @@
-// Copyright 2018 StreamSets Inc.
+// Copyright 2019 StreamSets Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -10,23 +10,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package dataformats
 
-import (
-	"github.com/streamsets/datacollector-edge/api"
-	"io"
-)
+package s3
 
-const (
-	DataFormatGeneratorServiceName = "com.streamsets.pipeline.api.service.dataformats.DataFormatGeneratorService"
-)
-
-type DataFormatGeneratorService interface {
-	GetGenerator(writer io.Writer) (RecordWriter, error)
-}
-
-type RecordWriter interface {
-	WriteRecord(r api.Record) error
-	Flush() error
-	Close() error
-}
+// Place holder so as not to fail builds when aws tag is not passed (-PincludeStage=aws)

@@ -166,7 +166,12 @@ func injectStageConfigs(
 								var err error
 								resolvedValue, err = strconv.ParseFloat(resolvedValue.(string), 64)
 								if err != nil {
-									return errors.New(fmt.Sprintf("Error when processing value '%v' as NUMBER", resolvedValue))
+									return errors.New(fmt.Sprintf(
+										"Error when processing value '%v' as NUMBER for config '%s' : %s",
+										resolvedValue,
+										configDef.Name,
+										err.Error(),
+									))
 								}
 							}
 							stageInstanceField.SetFloat(cast.ToFloat64(resolvedValue))

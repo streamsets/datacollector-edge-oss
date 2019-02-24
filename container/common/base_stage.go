@@ -48,3 +48,11 @@ func (b *BaseStage) GetDataParserService() (dataformats.DataFormatParserService,
 	}
 	return dataParserService.(dataformats.DataFormatParserService), err
 }
+
+func (b *BaseStage) GetDataGeneratorService() (dataformats.DataFormatGeneratorService, error) {
+	dataGeneratorService, err := b.GetStageContext().GetService(dataformats.DataFormatGeneratorServiceName)
+	if err != nil {
+		return nil, err
+	}
+	return dataGeneratorService.(dataformats.DataFormatGeneratorService), err
+}

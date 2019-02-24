@@ -69,6 +69,7 @@ func (dest *Destination) Init(stageContext api.StageContext) []validation.Issue 
 		dest.KinesisConfig.AwsConfig,
 		dest.KinesisConfig.Region,
 		dest.KinesisConfig.Endpoint,
+		nil,
 	)
 	if err != nil {
 		issues = append(issues, stageContext.CreateConfigIssue(err.Error()))

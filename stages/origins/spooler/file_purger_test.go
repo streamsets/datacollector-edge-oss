@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-func TestFilePurger_purge(t *testing.T)  {
+func TestFilePurger_purge(t *testing.T) {
 	testDir := createTestDirectory(t)
 
 	defer deleteTestDirectory(t, testDir)
