@@ -457,7 +457,7 @@ func testLexicographical(t *testing.T, compression string) {
 
 	checkRecord(t, records[1], "/text", "456", expectedHeaders)
 
-	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 3)
 
 	if len(records) != 2 {
 		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 2)
@@ -709,7 +709,7 @@ func testLexicographical_JSON_FORMAT(t *testing.T, compression string) {
 
 	checkRecord(t, records[1], "/text", "456", expectedHeaders)
 
-	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 3)
 
 	if len(records) != 2 {
 		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 2)
@@ -731,7 +731,7 @@ func testLexicographical_JSON_FORMAT(t *testing.T, compression string) {
 
 	checkRecord(t, records[1], "/text", "141516", expectedHeaders)
 
-	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 3)
 
 	if len(records) != 2 {
 		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 2)
@@ -841,7 +841,7 @@ func testLexicographical_DELIMITED_FORMAT_NO_HEADER(t *testing.T, compression st
 
 	checkRecord(t, records[0], "/0", "206893", expectedHeaders)
 
-	offset, records = createSpoolerAndRun(t, stageContext, offset, 3)
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 4)
 
 	if len(records) != 3 {
 		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 3)
@@ -1220,4 +1220,167 @@ func testLexicographical_DELIMITED_FORMAT_SKIP_START_LINES(t *testing.T, compres
 	}
 
 	checkRecord(t, records[0], "/0", "448094", expectedHeaders)
+}
+
+func TestCustomDelimiter1(t *testing.T) {
+	testCustomDelimiter1(t, dataparser.CompressedNone)
+	testCustomDelimiter1(t, dataparser.CompressedFile)
+}
+
+func testCustomDelimiter1(t *testing.T, compression string) {
+	testDir := createTestDirectory(t)
+
+	defer deleteTestDirectory(t, testDir)
+
+	testData := `a: This is attribute 1 record of record 1
+b: This is attribute 2 record of record 1
+c: This is attribute 3 record of record 1
+d: This is attribute 4 record of record 1
+e: This is attribute 5 record of record 1
+
+a: This is attribute 1 record of record 2
+b: This is attribute 2 record of record 2
+c: This is attribute 3 record of record 2
+d: This is attribute 4 record of record 2
+e: This is attribute 5 record of record 2
+
+a: This is attribute 1 record of record 3
+b: This is attribute 2 record of record 3
+c: This is attribute 3 record of record 3
+d: This is attribute 4 record of record 3
+e: This is attribute 5 record of record 3
+`
+
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), testData, compression)
+	currentTime := time.Now()
+
+	_ = os.Chtimes(
+		filepath.Join(testDir, "a.txt"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
+
+	stageConfig := getStageConfig(testDir, false, Regex, "(.*)[.]txt", true, "", 1, "TEXT", compression)
+
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.useCustomDelimiter",
+		Value: "true",
+	})
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.customDelimiter",
+		Value: "\\n\\n",
+	})
+
+	stageContext := createStageContext(stageConfig)
+
+	_, records := createSpoolerAndRun(t, stageContext, "", 3)
+
+	if len(records) != 3 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 2)
+	}
+
+	expectedHeaders := map[string]string{
+		File:     filepath.Join(testDir, "a.txt"),
+		FileName: "a.txt",
+		Offset:   "0",
+	}
+
+	checkRecord(t, records[0], "/text", `a: This is attribute 1 record of record 1
+b: This is attribute 2 record of record 1
+c: This is attribute 3 record of record 1
+d: This is attribute 4 record of record 1
+e: This is attribute 5 record of record 1`, expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "a.txt"),
+		FileName: "a.txt",
+		Offset:   "210",
+	}
+
+	checkRecord(t, records[1], "/text", `
+a: This is attribute 1 record of record 2
+b: This is attribute 2 record of record 2
+c: This is attribute 3 record of record 2
+d: This is attribute 4 record of record 2
+e: This is attribute 5 record of record 2`, expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "a.txt"),
+		FileName: "a.txt",
+		Offset:   "421",
+	}
+
+	checkRecord(t, records[2], "/text", `
+a: This is attribute 1 record of record 3
+b: This is attribute 2 record of record 3
+c: This is attribute 3 record of record 3
+d: This is attribute 4 record of record 3
+e: This is attribute 5 record of record 3`, expectedHeaders)
+}
+
+func TestCustomDelimiter2(t *testing.T) {
+	testCustomDelimiter2(t, dataparser.CompressedNone)
+	testCustomDelimiter2(t, dataparser.CompressedFile)
+}
+
+func testCustomDelimiter2(t *testing.T, compression string) {
+	testDir := createTestDirectory(t)
+
+	defer deleteTestDirectory(t, testDir)
+
+	testData := `# Line1
+# Line2
+Continued line2
+Continued line2
+# line3
+`
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), testData, compression)
+	currentTime := time.Now()
+
+	_ = os.Chtimes(
+		filepath.Join(testDir, "a.txt"),
+		currentTime, time.Unix(0, currentTime.UnixNano()-(3*time.Second).Nanoseconds()))
+
+	stageConfig := getStageConfig(testDir, false, Regex, "(.*)[.]txt", true, "", 1, "TEXT", compression)
+
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.useCustomDelimiter",
+		Value: "true",
+	})
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.dataFormatConfig.customDelimiter",
+		Value: "\\n#",
+	})
+
+	stageContext := createStageContext(stageConfig)
+
+	_, records := createSpoolerAndRun(t, stageContext, "", 3)
+
+	if len(records) != 3 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 2)
+	}
+
+	expectedHeaders := map[string]string{
+		File:     filepath.Join(testDir, "a.txt"),
+		FileName: "a.txt",
+		Offset:   "0",
+	}
+
+	checkRecord(t, records[0], "/text", `# Line1`, expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "a.txt"),
+		FileName: "a.txt",
+		Offset:   "8",
+	}
+
+	checkRecord(t, records[1], "/text", `# Line2
+Continued line2
+Continued line2`, expectedHeaders)
+
+	expectedHeaders = map[string]string{
+		File:     filepath.Join(testDir, "a.txt"),
+		FileName: "a.txt",
+		Offset:   "48",
+	}
+
+	checkRecord(t, records[2], "/text", `# line3`, expectedHeaders)
 }

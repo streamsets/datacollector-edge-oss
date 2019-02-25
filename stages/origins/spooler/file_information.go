@@ -27,7 +27,8 @@ type FileInformation struct {
 }
 
 type AtomicFileInformation struct {
-	fInfoStore *atomic.Value
+	fInfoStore  *atomic.Value
+	customDelim string
 }
 
 type FileInfos []*AtomicFileInformation

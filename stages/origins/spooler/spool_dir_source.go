@@ -24,7 +24,6 @@ import (
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -53,13 +52,15 @@ const (
 
 type SpoolDirSource struct {
 	*common.BaseStage
-	Conf       SpoolDirConfigBean `ConfigDefBean:"conf"`
-	spooler    *DirectorySpooler
-	filePurger *filePurger
-	bufReader  *bufio.Reader
-	file       *os.File
-	cmpReader  *gzip.Reader
-	csvHeaders []*api.Field
+	Conf           SpoolDirConfigBean `ConfigDefBean:"conf"`
+	spooler        *DirectorySpooler
+	filePurger     *filePurger
+	bufScanner     *bufio.Scanner
+	file           *os.File
+	cmpReader      *gzip.Reader
+	csvHeaders     []*api.Field
+	scannerAdvance int
+	customDelim    string
 }
 
 type SpoolDirConfigBean struct {
@@ -134,6 +135,11 @@ func (s *SpoolDirSource) Init(stageContext api.StageContext) []validation.Issue 
 		s.filePurger.run()
 	}
 
+	if s.Conf.DataFormatConfig.UseCustomDelimiter && len(s.Conf.DataFormatConfig.CustomDelimiter) > 0 {
+		s.customDelim, _ = strconv.Unquote(`"` + s.Conf.DataFormatConfig.CustomDelimiter + `"`)
+
+	}
+
 	return s.Conf.DataFormatConfig.Init(s.Conf.DataFormat, stageContext, issues)
 }
 
@@ -164,23 +170,22 @@ func (s *SpoolDirSource) initializeBuffReaderIfNeeded() error {
 
 		if s.Conf.DataFormat == "DELIMITED" && fInfo.getOffsetToRead() == 0 {
 			bytesRead := 0
+			currentFileInfo := s.spooler.getCurrentFileInfo()
 			if s.Conf.DataFormatConfig.CsvSkipStartLines > 0 {
 				skippedLines := 0
 				for skippedLines < int(s.Conf.DataFormatConfig.CsvSkipStartLines) {
-					lineBytes, err := s.bufReader.ReadBytes('\n')
-					if err == nil {
-						bytesRead += len(lineBytes)
+					if ok := s.bufScanner.Scan(); ok {
+						bytesRead += s.scannerAdvance
 					}
 					skippedLines++
 				}
 			} else if s.Conf.DataFormatConfig.CsvHeader == delimitedrecord.WithHeader ||
 				s.Conf.DataFormatConfig.CsvHeader == delimitedrecord.IgnoreHeader {
-				lineBytes, err := s.bufReader.ReadBytes('\n')
-				if err == nil {
-					bytesRead += len(lineBytes)
+				if ok := s.bufScanner.Scan(); ok {
+					bytesRead += s.scannerAdvance
 				}
 			}
-			s.spooler.getCurrentFileInfo().incOffsetToRead(int64(bytesRead))
+			currentFileInfo.incOffsetToRead(int64(bytesRead))
 		}
 	}
 	return nil
@@ -268,24 +273,25 @@ func (s *SpoolDirSource) readAndCreateRecords(
 	startOffsetForBatch := s.spooler.getCurrentFileInfo().getOffsetToRead()
 	recordReaderFactory := s.Conf.DataFormatConfig.RecordReaderFactory
 	for recordCnt := 0; recordCnt < maxBatchSize; recordCnt++ {
-		if s.bufReader == nil {
+		if s.bufScanner == nil {
 			// if pipeline stopped
 			break
 		}
-		lineBytes, err := s.bufReader.ReadBytes('\n')
-		if err != nil {
-			if err != io.EOF {
+
+		if ok := s.bufScanner.Scan(); !ok {
+			err := s.bufScanner.Err()
+			if err != nil && err != io.EOF {
 				// TODO Try Error Archiving for file?
-				log.WithError(err).Error("Error while reading file")
-				s.GetStageContext().ReportError(err)
+				log.WithError(s.bufScanner.Err()).Error("Error while reading file")
+				s.GetStageContext().ReportError(s.bufScanner.Err())
 				return startOffsetForBatch, nil
 			}
 			isEof = true
 		}
-
+		lineBytes := s.bufScanner.Bytes()
 		bytesRead := len(lineBytes)
 		if bytesRead > 0 {
-			err = s.createRecordAndAddToBatch(
+			err := s.createRecordAndAddToBatch(
 				recordReaderFactory,
 				strings.TrimRight(string(lineBytes), "\r\n"),
 				batchMaker,
@@ -309,7 +315,7 @@ func (s *SpoolDirSource) readAndCreateRecords(
 			s.resetFileAndBuffReader()
 			break
 		}
-		s.spooler.getCurrentFileInfo().incOffsetToRead(int64(bytesRead))
+		s.spooler.getCurrentFileInfo().incOffsetToRead(int64(s.scannerAdvance))
 	}
 
 	return s.spooler.getCurrentFileInfo().getOffsetToRead(), nil
@@ -383,23 +389,31 @@ func (s *SpoolDirSource) resetFileAndBuffReader() {
 		}
 		s.file = nil
 	}
-	s.bufReader = nil
+	s.bufScanner = nil
 }
 
 func (s *SpoolDirSource) seekAndInitializeBufferedReader(fInfo *AtomicFileInformation) error {
+	s.scannerAdvance = 0
 	if s.cmpReader != nil {
 		// gzip has no Seek function because the file format simply does not allow it.
 		// The only way to find byte N is to decompress and discard N bytes.
-		s.bufReader = bufio.NewReader(s.cmpReader)
-		_, err := io.Copy(ioutil.Discard, &io.LimitedReader{R: s.bufReader, N: fInfo.getOffsetToRead()})
-		if err != nil {
-			return err
+		s.bufScanner = bufio.NewScanner(s.cmpReader)
+		s.bufScanner.Split(s.scannerSplitFunc)
+		bytesDiscarded := int64(0)
+		offsetRead := fInfo.getOffsetToRead()
+		for bytesDiscarded < offsetRead {
+			if ok := s.bufScanner.Scan(); !ok {
+				log.WithError(s.bufScanner.Err()).Error("failed to seek")
+				break
+			}
+			bytesDiscarded += int64(s.scannerAdvance)
 		}
 	} else {
 		if _, err := s.file.Seek(fInfo.getOffsetToRead(), 0); err != nil {
 			return err
 		}
-		s.bufReader = bufio.NewReader(s.file)
+		s.bufScanner = bufio.NewScanner(s.file)
+		s.bufScanner.Split(s.scannerSplitFunc)
 	}
 	return nil
 }
@@ -431,6 +445,31 @@ func (s *SpoolDirSource) initializeCSVHeaders(fInfo *AtomicFileInformation) {
 			s.csvHeaders[i] = headerField
 		}
 	}
+}
+
+func (s *SpoolDirSource) scannerSplitFunc(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	if len(s.customDelim) > 0 {
+		// Return nothing if at end of file and no data passed
+		if atEOF && len(data) == 0 {
+			s.scannerAdvance = 0
+			return 0, nil, nil
+		}
+
+		if i := strings.Index(string(data), s.customDelim); i >= 0 {
+			s.scannerAdvance = i + 1
+			return i + 1, data[0:i], nil
+		}
+
+		// If at end of file with data return the data
+		if atEOF {
+			s.scannerAdvance = len(data)
+			return len(data), data, nil
+		}
+	} else {
+		advance, token, err = bufio.ScanLines(data, atEOF)
+		s.scannerAdvance = advance
+	}
+	return
 }
 
 func (s *SpoolDirSource) postProcessFile(fileInfo *AtomicFileInformation) {
