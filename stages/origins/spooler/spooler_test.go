@@ -1384,3 +1384,52 @@ Continued line2`, expectedHeaders)
 
 	checkRecord(t, records[2], "/text", `# line3`, expectedHeaders)
 }
+
+func TestErrorArchiving(t *testing.T) {
+	testDir := createTestDirectory(t)
+	errorArchiveDir := createTestDirectory(t)
+
+	defer deleteTestDirectory(t, testDir)
+
+	//Create a.txt,c.txt,b.txt with different mod times
+	createFileAndWriteContents(t, filepath.Join(testDir, "a.txt"), "{\"text\": \"123\"}\n{\"text\": \"456\"}", dataparser.CompressedNone)
+	createFileAndWriteContents(t, filepath.Join(testDir, "b.txt"), "{\"text\": \"111213\"}\n{\"text\": \"141516\"}", dataparser.CompressedFile)
+	createFileAndWriteContents(t, filepath.Join(testDir, "c.txt"), "{\"text\": \"111112113\"}\n{\"text\": \"117118119\"}", dataparser.CompressedNone)
+
+	stageConfig := getStageConfig(testDir, false, Glob, "*", false, "", 1, "JSON", dataparser.CompressedFile)
+	stageConfig = append(stageConfig, common.Config{
+		Name:  "conf.errorArchiveDir",
+		Value: errorArchiveDir,
+	})
+	stageContext := createStageContext(stageConfig)
+
+	offset, records := createSpoolerAndRun(t, stageContext, "", 3)
+
+	if len(records) != 0 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 0)
+	}
+
+	// since first file is not compressed one, it should go to error archive directory
+	archivedFiles, _ := ioutil.ReadDir(errorArchiveDir)
+	if len(archivedFiles) != 1 {
+		t.Error("Failed to send 1 error files to error archive directory")
+	}
+
+	// second batch
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 3)
+	if len(records) != 2 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 2)
+	}
+
+	// third batch
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 3)
+	if len(records) != 0 {
+		t.Fatalf("Wrong number of records, Actual : %d, Expected : %d ", len(records), 0)
+	}
+	// since third file is not compressed one, it should go to error archive directory
+	archivedFiles, _ = ioutil.ReadDir(errorArchiveDir)
+	if len(archivedFiles) != 2 {
+		t.Error("Failed to send 2 error files to error archive directory")
+	}
+
+}

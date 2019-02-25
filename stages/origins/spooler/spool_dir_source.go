@@ -72,6 +72,7 @@ type SpoolDirConfigBean struct {
 	ProcessSubdirectories bool                              `ConfigDef:"type=BOOLEAN,required=true"`
 	FilePattern           string                            `ConfigDef:"type=STRING,required=true"`
 	PathMatcherMode       string                            `ConfigDef:"type=STRING,required=true"`
+	ErrorArchiveDir       string                            `ConfigDef:"type=STRING,required=true"`
 	PostProcessing        string                            `ConfigDef:"type=STRING,required=true"`
 	ArchiveDir            string                            `ConfigDef:"type=STRING,required=true"`
 	RetentionTimeMins     float64                           `ConfigDef:"type=NUMBER,required=true"`
@@ -281,7 +282,9 @@ func (s *SpoolDirSource) readAndCreateRecords(
 		if ok := s.bufScanner.Scan(); !ok {
 			err := s.bufScanner.Err()
 			if err != nil && err != io.EOF {
-				// TODO Try Error Archiving for file?
+				if len(s.Conf.ErrorArchiveDir) > 0 {
+					s.handleErrorFile(s.spooler.getCurrentFileInfo())
+				}
 				log.WithError(s.bufScanner.Err()).Error("Error while reading file")
 				s.GetStageContext().ReportError(s.bufScanner.Err())
 				return startOffsetForBatch, nil
@@ -298,7 +301,9 @@ func (s *SpoolDirSource) readAndCreateRecords(
 			)
 
 			if err != nil {
-				// TODO Try Error Archiving for file?
+				if len(s.Conf.ErrorArchiveDir) > 0 {
+					s.handleErrorFile(s.spooler.getCurrentFileInfo())
+				}
 				log.WithError(err).Error("Error while reading file")
 				s.GetStageContext().ReportError(err)
 				return startOffsetForBatch, nil
@@ -359,6 +364,9 @@ func (s *SpoolDirSource) Produce(
 
 		if err != nil {
 			s.GetStageContext().ReportError(err)
+			if len(s.Conf.ErrorArchiveDir) > 0 {
+				s.handleErrorFile(s.spooler.getCurrentFileInfo())
+			}
 			return lastSourceOffset, nil
 		}
 
@@ -489,6 +497,20 @@ func (s *SpoolDirSource) postProcessFile(fileInfo *AtomicFileInformation) {
 			log.WithError(err).Error("failed to delete file")
 			s.GetStageContext().ReportError(err)
 		}
+	}
+}
+
+func (s *SpoolDirSource) handleErrorFile(fileInfo *AtomicFileInformation) {
+	log.WithField("File Name", s.spooler.getCurrentFileInfo().getFullPath()).
+		WithField("option", s.Conf.PostProcessing).
+		Debug("error handling file")
+	archiveFilePath := filepath.Join(s.Conf.ErrorArchiveDir, s.spooler.getCurrentFileInfo().getName())
+	err := os.Rename(s.spooler.getCurrentFileInfo().getFullPath(), archiveFilePath)
+	s.spooler.getCurrentFileInfo().setOffsetToRead(EOFOffset)
+	s.resetFileAndBuffReader()
+	if err != nil {
+		log.WithError(err).Error("failed to archive error file")
+		s.GetStageContext().ReportError(err)
 	}
 }
 
