@@ -18,6 +18,11 @@ import (
 	"io"
 )
 
+const (
+	CompressedNone = "NONE"
+	CompressedFile = "COMPRESSED_FILE"
+)
+
 type RecordReaderFactory interface {
 	CreateReader(context api.StageContext, reader io.Reader, messageId string) (dataformats.RecordReader, error)
 }

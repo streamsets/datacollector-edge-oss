@@ -16,6 +16,7 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/recordio"
+	"github.com/streamsets/datacollector-edge/container/recordio/binaryrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/jsonrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/sdcrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/textrecord"
@@ -84,10 +85,11 @@ func (d *DataGeneratorFormatConfig) Init(
 ) []validation.Issue {
 	switch dataFormat {
 	case "TEXT":
-
 		d.RecordWriterFactory = &textrecord.TextWriterFactoryImpl{TextFieldPath: d.TextFieldPath}
 	case "JSON":
 		d.RecordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{Mode: d.JsonMode}
+	case "BINARY":
+		d.RecordWriterFactory = &binaryrecord.BinaryWriterFactoryImpl{BinaryFieldPath: d.BinaryFieldPath}
 	case "SDC_JSON":
 		d.RecordWriterFactory = &sdcrecord.SDCRecordWriterFactoryImpl{}
 	default:

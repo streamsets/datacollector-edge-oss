@@ -17,6 +17,7 @@ import (
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/recordio"
+	"github.com/streamsets/datacollector-edge/container/recordio/binaryrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/delimitedrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/jsonrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/sdcrecord"
@@ -170,6 +171,11 @@ func (d *DataParserFormatConfig) Init(
 			CsvFileFormat:      d.CsvFileFormat,
 			CsvCustomDelimiter: d.CsvCustomDelimiter,
 			CsvRecordType:      d.CsvRecordType,
+		}
+	case "BINARY":
+		d.RecordReaderFactory = &binaryrecord.BinaryReaderFactoryImpl{
+			BinaryMaxObjectLen: cast.ToInt(d.TextMaxLineLen),
+			Compression:        d.Compression,
 		}
 	case "SDC_JSON":
 		d.RecordReaderFactory = &sdcrecord.SDCRecordReaderFactoryImpl{}
