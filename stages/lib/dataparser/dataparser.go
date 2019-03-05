@@ -22,6 +22,7 @@ import (
 	"github.com/streamsets/datacollector-edge/container/recordio/jsonrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/sdcrecord"
 	"github.com/streamsets/datacollector-edge/container/recordio/textrecord"
+	"github.com/streamsets/datacollector-edge/container/recordio/wholefilerecord"
 )
 
 const (
@@ -176,6 +177,12 @@ func (d *DataParserFormatConfig) Init(
 		d.RecordReaderFactory = &binaryrecord.BinaryReaderFactoryImpl{
 			BinaryMaxObjectLen: cast.ToInt(d.TextMaxLineLen),
 			Compression:        d.Compression,
+		}
+	case "WHOLE_FILE":
+		d.RecordReaderFactory = &wholefilerecord.WholeFileReaderFactoryImpl{
+			WholeFileMaxObjectLen: cast.ToInt(d.WholeFileMaxObjectLen),
+			RateLimit:             d.RateLimit,
+			VerifyChecksum:        d.VerifyChecksum,
 		}
 	case "SDC_JSON":
 		d.RecordReaderFactory = &sdcrecord.SDCRecordReaderFactoryImpl{}

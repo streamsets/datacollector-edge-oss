@@ -30,10 +30,13 @@ import (
 )
 
 const (
-	Library               = "streamsets-datacollector-aws-lib"
-	StageName             = "com_streamsets_pipeline_stage_destination_s3_AmazonS3DTarget"
-	GzipExtension         = ".gz"
-	bucketResolutionError = "bucket name is empty for record %s"
+	Library                   = "streamsets-datacollector-aws-lib"
+	StageName                 = "com_streamsets_pipeline_stage_destination_s3_AmazonS3DTarget"
+	GzipExtension             = ".gz"
+	bucketResolutionError     = "bucket name is empty for record %s"
+	compressionWholeFileError = "Compression Option not supported for Whole file Data format"
+	ConfGroupS3               = "S3"
+	ConfCompress              = "s3TargetConfigBean.compress"
 )
 
 type Destination struct {
@@ -114,11 +117,29 @@ func (dest *Destination) Init(stageContext api.StageContext) []validation.Issue 
 		u.MaxUploadParts = cast.ToInt(dest.S3TargetConfigBean.TmConfig.MultipartUploadThreshold)
 	})
 	dataGeneratorService, _ := dest.GetDataGeneratorService()
-	dest.fileHelper = &DefaultFileHelper{
-		stageContext:         dest.GetStageContext(),
-		dataGeneratorService: dataGeneratorService,
-		uploader:             uploader,
-		s3TargetConfigBean:   dest.S3TargetConfigBean,
+
+	if dataGeneratorService.IsWholeFileFormat() {
+		if dest.S3TargetConfigBean.Compress {
+			issues = append(issues, stageContext.CreateConfigIssue(
+				compressionWholeFileError,
+				ConfGroupS3,
+				ConfCompress,
+			))
+			return issues
+		}
+		dest.fileHelper = &WholeFileHelper{
+			stageContext:         dest.GetStageContext(),
+			dataGeneratorService: dataGeneratorService,
+			uploader:             uploader,
+			s3TargetConfigBean:   dest.S3TargetConfigBean,
+		}
+	} else {
+		dest.fileHelper = &DefaultFileHelper{
+			stageContext:         dest.GetStageContext(),
+			dataGeneratorService: dataGeneratorService,
+			uploader:             uploader,
+			s3TargetConfigBean:   dest.S3TargetConfigBean,
+		}
 	}
 
 	return issues
@@ -133,7 +154,7 @@ func (dest *Destination) Write(batch api.Batch) error {
 			for _, record := range pRecords {
 				dest.GetStageContext().ToError(err, record)
 			}
-		} else {
+		} else if result != nil {
 			logrus.Debug(result)
 		}
 	}

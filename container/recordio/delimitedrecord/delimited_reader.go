@@ -34,6 +34,7 @@ const (
 )
 
 type DelimitedReaderFactoryImpl struct {
+	recordio.AbstractRecordReaderFactory
 	CsvFileFormat        string
 	CsvHeader            string
 	CsvAllowExtraColumns bool

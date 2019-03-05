@@ -24,6 +24,7 @@ import (
 )
 
 type TextReaderFactoryImpl struct {
+	recordio.AbstractRecordReaderFactory
 	TextMaxLineLen int
 }
 

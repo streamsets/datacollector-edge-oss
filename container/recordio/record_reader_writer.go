@@ -13,6 +13,7 @@
 package recordio
 
 import (
+	"errors"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"io"
@@ -25,6 +26,32 @@ const (
 
 type RecordReaderFactory interface {
 	CreateReader(context api.StageContext, reader io.Reader, messageId string) (dataformats.RecordReader, error)
+	CreateWholeFileReader(
+		context api.StageContext,
+		messageId string,
+		metadata map[string]interface{},
+		fileRef api.FileRef,
+	) (dataformats.RecordReader, error)
+}
+
+type AbstractRecordReaderFactory struct {
+}
+
+func (*AbstractRecordReaderFactory) CreateWholeFileReader(
+	context api.StageContext,
+	messageId string,
+	metadata map[string]interface{},
+	fileRef api.FileRef,
+) (dataformats.RecordReader, error) {
+	return nil, errors.New("not supported operation")
+}
+
+func (*AbstractRecordReaderFactory) CreateReader(
+	context api.StageContext,
+	reader io.Reader,
+	messageId string,
+) (dataformats.RecordReader, error) {
+	return nil, errors.New("not supported operation")
 }
 
 type RecordWriterFactory interface {

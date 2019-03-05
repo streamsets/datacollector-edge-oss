@@ -13,10 +13,13 @@
 package services
 
 import (
+	"context"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/dataformats"
 	"github.com/streamsets/datacollector-edge/api/validation"
+	"github.com/streamsets/datacollector-edge/container/el"
 	"github.com/streamsets/datacollector-edge/stages/lib/datagenerator"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
 	"io"
@@ -47,6 +50,31 @@ func (d *DataGeneratorServiceImpl) GetGenerator(writer io.Writer) (dataformats.R
 	return recordWriterFactory.CreateWriter(d.stageContext, writer)
 }
 
-func (b *DataGeneratorServiceImpl) Destroy() error {
+func (d *DataGeneratorServiceImpl) Destroy() error {
 	return nil
+}
+
+func (d *DataGeneratorServiceImpl) IsWholeFileFormat() bool {
+	return d.DataFormat == "WHOLE_FILE"
+}
+
+func (d *DataGeneratorServiceImpl) GetWholeFileName(record api.Record) (string, error) {
+	recordContext := context.WithValue(context.Background(), el.RecordContextVar, record)
+	result, err := d.stageContext.Evaluate(d.DataGeneratorFormatConfig.FileNameEL, "fileNameEl", recordContext)
+	if err != nil {
+		return "", err
+	}
+	return cast.ToString(result), nil
+}
+
+func (d *DataGeneratorServiceImpl) GetWholeFileExistsAction() string {
+	return d.DataGeneratorFormatConfig.WholeFileExistsAction
+}
+
+func (d *DataGeneratorServiceImpl) GetIncludeChecksumInTheEvents() bool {
+	return d.DataGeneratorFormatConfig.IncludeChecksumInTheEvents
+}
+
+func (d *DataGeneratorServiceImpl) GetChecksumAlgorithm() string {
+	return d.DataGeneratorFormatConfig.ChecksumAlgorithm
 }

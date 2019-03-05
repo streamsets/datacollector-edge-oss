@@ -1,4 +1,4 @@
-// Copyright 2018 StreamSets Inc.
+// Copyright 2019 StreamSets Inc.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -11,22 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package fieldtype
+package api
 
-const (
-	BOOLEAN    = "BOOLEAN"
-	BYTE_ARRAY = "BYTE_ARRAY"
-	BYTE       = "BYTE"
-	SHORT      = "SHORT"
-	INTEGER    = "INTEGER"
-	LONG       = "LONG"
-	FLOAT      = "FLOAT"
-	DATETIME   = "DATETIME"
-	DOUBLE     = "DOUBLE"
-	DECIMAL    = "DECIMAL"
-	STRING     = "STRING"
-	MAP        = "MAP"
-	LIST       = "LIST"
-	LIST_MAP   = "LIST_MAP"
-	FILE_REF   = "FILE_REF"
+import (
+	"io"
 )
+
+type FileRef interface {
+	CreateInputStream() (io.Reader, error)
+	CloseInputStream(reader io.Reader) error
+}
