@@ -62,7 +62,7 @@ func (f *WholeFileHelper) Handle(
 		if err != nil {
 			return nil, err
 		}
-		defer fileRef.CloseInputStream()
+		defer fileRef.CloseInputStream(is)
 
 		// TODO: create event
 		// SDCE-458 Whole File Data Generator - generate event record after transferring file
