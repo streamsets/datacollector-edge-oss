@@ -32,7 +32,7 @@ func (s *SpoolDirSource) produceWholeFileRecord(batchMaker api.BatchMaker) {
 	fileRef := wholefilerecord.NewLocalFileRef(
 		fInfo.getFullPath(),
 		cast.ToInt64(s.Conf.DataFormatConfig.WholeFileMaxObjectLen),
-		cast.ToFloat64(s.Conf.DataFormatConfig.RateLimit),
+		cast.ToInt(s.Conf.DataFormatConfig.RateLimit),
 	)
 
 	recordReaderFactory := s.Conf.DataFormatConfig.RecordReaderFactory

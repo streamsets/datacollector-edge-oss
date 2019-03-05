@@ -13,6 +13,7 @@
 package wholefilerecord
 
 import (
+	"github.com/spf13/cast"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"io/ioutil"
@@ -50,7 +51,7 @@ func testReadWholeFileRecord(t *testing.T, rateLimit float64) {
 	fileRef := NewLocalFileRef(
 		testWholeFilePath,
 		1024,
-		rateLimit,
+		cast.ToInt(rateLimit),
 	)
 
 	readerFactoryImpl := &WholeFileReaderFactoryImpl{}
