@@ -14,16 +14,17 @@
 package wholefilerecord
 
 import (
-	"github.com/juju/ratelimit"
+	"github.com/andrewstuart/limio"
 	"github.com/streamsets/datacollector-edge/api"
 	"io"
 	"os"
+	"time"
 )
 
 type LocalFileRef struct {
 	filePath   string
 	bufferSize int64
-	rateLimit  float64
+	rateLimit  int
 }
 
 func (f *LocalFileRef) CreateInputStream() (io.Reader, error) {
@@ -34,7 +35,9 @@ func (f *LocalFileRef) CreateInputStream() (io.Reader, error) {
 		if err != nil {
 			return nil, err
 		}
-		return ratelimit.Reader(fileReader, ratelimit.NewBucketWithRate(f.rateLimit, f.bufferSize)), nil
+		lr := limio.NewReader(fileReader)
+		lr.SimpleLimit(f.rateLimit*limio.B, time.Second)
+		return lr, nil
 	}
 }
 
@@ -47,7 +50,7 @@ func (f *LocalFileRef) CloseInputStream(reader io.Reader) error {
 	return nil
 }
 
-func NewLocalFileRef(filePath string, bufferSize int64, rateLimit float64) api.FileRef {
+func NewLocalFileRef(filePath string, bufferSize int64, rateLimit int) api.FileRef {
 	return &LocalFileRef{
 		filePath:   filePath,
 		bufferSize: bufferSize,
