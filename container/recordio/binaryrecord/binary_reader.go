@@ -22,6 +22,7 @@ import (
 )
 
 type BinaryReaderFactoryImpl struct {
+	recordio.AbstractRecordReaderFactory
 	BinaryMaxObjectLen int
 	Compression        string
 }

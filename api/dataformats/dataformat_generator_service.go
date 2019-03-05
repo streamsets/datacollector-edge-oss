@@ -23,6 +23,11 @@ const (
 
 type DataFormatGeneratorService interface {
 	GetGenerator(writer io.Writer) (RecordWriter, error)
+	IsWholeFileFormat() bool
+	GetWholeFileName(record api.Record) (string, error)
+	GetWholeFileExistsAction() string
+	GetIncludeChecksumInTheEvents() bool
+	GetChecksumAlgorithm() string
 }
 
 type RecordWriter interface {

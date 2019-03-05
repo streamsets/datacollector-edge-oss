@@ -15,8 +15,10 @@
 package s3
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/streamsets/datacollector-edge/api"
+	"io"
 )
 
 const (
@@ -29,4 +31,33 @@ const (
 
 type FileHelper interface {
 	Handle(records []api.Record, bucket string, keyPrefix string) (*s3manager.UploadOutput, error)
+}
+
+func getUploadInput(
+	s3TargetConfigBean TargetConfigBean,
+	bucket string,
+	fileName string,
+	body io.Reader,
+) *s3manager.UploadInput {
+	uploadInput := &s3manager.UploadInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(fileName),
+		Body:   body,
+	}
+
+	if s3TargetConfigBean.SseConfig.UseSSE {
+		switch s3TargetConfigBean.SseConfig.Encryption {
+		case SseS3:
+			uploadInput.ServerSideEncryption = aws.String(AES256)
+		case SseKMS:
+			uploadInput.ServerSideEncryption = aws.String(KMS)
+			uploadInput.SSEKMSKeyId = aws.String(s3TargetConfigBean.SseConfig.KmsKeyId)
+		case SseCustomer:
+			uploadInput.SSECustomerAlgorithm = aws.String(AES256)
+			uploadInput.SSECustomerKey = aws.String(s3TargetConfigBean.SseConfig.CustomerKey)
+			uploadInput.SSECustomerKeyMD5 = aws.String(s3TargetConfigBean.SseConfig.CustomerKeyMd5)
+		}
+	}
+
+	return uploadInput
 }

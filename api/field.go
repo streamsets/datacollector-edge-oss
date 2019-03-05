@@ -133,6 +133,8 @@ func CreateField(value interface{}) (*Field, error) {
 		return CreateListMapField(value.(*linkedhashmap.Map))
 	case time.Time:
 		return CreateDateTimeField(value.(time.Time))
+	case FileRef:
+		return CreateFileRefField(value.(FileRef))
 	default:
 		err = errors.New(fmt.Sprintf("Unsupported Field Type %s", reflect.TypeOf(value)))
 	}
@@ -203,34 +205,38 @@ func CreateStringField(value string) (*Field, error) {
 	return &Field{Type: fieldtype.STRING, Value: value}, nil
 }
 
+func CreateFileRefField(value FileRef) (*Field, error) {
+	return &Field{Type: fieldtype.FILE_REF, Value: value}, nil
+}
+
 func CreateStringListField(listStringValue []string) (*Field, error) {
-	listFieldValue := []*Field{}
-	for _, value := range listStringValue {
+	listFieldValue := make([]*Field, len(listStringValue))
+	for i, value := range listStringValue {
 		valField, err := CreateField(value)
 		if err != nil {
 			return nil, err
 		}
-		listFieldValue = append(listFieldValue, valField)
+		listFieldValue[i] = valField
 	}
 	listField := Field{Type: fieldtype.LIST, Value: listFieldValue}
 	return &listField, nil
 }
 
 func CreateFloatListField(listFloatValue []float64) (*Field, error) {
-	listFieldValue := []*Field{}
-	for _, value := range listFloatValue {
+	listFieldValue := make([]*Field, len(listFloatValue))
+	for i, value := range listFloatValue {
 		valField, err := CreateField(value)
 		if err != nil {
 			return nil, err
 		}
-		listFieldValue = append(listFieldValue, valField)
+		listFieldValue[i] = valField
 	}
 	listField := Field{Type: fieldtype.LIST, Value: listFieldValue}
 	return &listField, nil
 }
 
 func CreateMapField(mapValue map[string]interface{}) (*Field, error) {
-	mapFieldValue := make(map[string](*Field))
+	mapFieldValue := make(map[string]*Field)
 	for key, value := range mapValue {
 		valField, err := CreateField(value)
 		if err != nil {

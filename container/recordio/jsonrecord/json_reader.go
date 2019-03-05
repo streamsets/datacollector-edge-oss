@@ -22,6 +22,7 @@ import (
 )
 
 type JsonReaderFactoryImpl struct {
+	recordio.AbstractRecordReaderFactory
 	// TODO: Add needed configs
 }
 

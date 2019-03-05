@@ -60,7 +60,6 @@ func getBinaryFieldRecord(binaryFieldName string, val string) interface{} {
 	return map[string]interface{}{binaryFieldName: []byte(val)}
 }
 
-
 func TestWriteBinaryRecordInvalidFieldPath(t *testing.T) {
 	stageContext := CreateStageContext()
 	record1, err := stageContext.CreateRecord("Id1", getBinaryFieldRecord("", "log line 1"))

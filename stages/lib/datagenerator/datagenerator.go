@@ -64,7 +64,7 @@ type DataGeneratorFormatConfig struct {
 	MessageType         string `ConfigDef:"type=STRING,required=true"`
 
 	/** For Whole File Content **/
-	FileNameEL                 string `ConfigDef:"type=STRING,required=true"`
+	FileNameEL                 string `ConfigDef:"type=STRING,required=true,evaluation=EXPLICIT"`
 	WholeFileExistsAction      string `ConfigDef:"type=STRING,required=true"`
 	IncludeChecksumInTheEvents bool   `ConfigDef:"type=BOOLEAN,required=true"`
 	ChecksumAlgorithm          string `ConfigDef:"type=STRING,required=true"`
@@ -90,6 +90,8 @@ func (d *DataGeneratorFormatConfig) Init(
 		d.RecordWriterFactory = &jsonrecord.JsonWriterFactoryImpl{Mode: d.JsonMode}
 	case "BINARY":
 		d.RecordWriterFactory = &binaryrecord.BinaryWriterFactoryImpl{BinaryFieldPath: d.BinaryFieldPath}
+	case "WHOLE_FILE":
+		// Supported format
 	case "SDC_JSON":
 		d.RecordWriterFactory = &sdcrecord.SDCRecordWriterFactoryImpl{}
 	default:

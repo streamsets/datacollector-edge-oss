@@ -30,6 +30,7 @@ const (
 var NewLineBytes = []byte("\n")
 
 type SDCRecordReaderFactoryImpl struct {
+	recordio.AbstractRecordReaderFactory
 	//TODO: Add needed configs
 }
 

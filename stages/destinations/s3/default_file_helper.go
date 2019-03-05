@@ -17,7 +17,6 @@ package s3
 import (
 	"bytes"
 	"compress/gzip"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
@@ -61,12 +60,12 @@ func (f *DefaultFileHelper) Handle(
 			f.stageContext.ToError(err, record)
 		}
 	}
-	f.flushAndCloseWriter(recordWriter)
+	flushAndCloseWriter(recordWriter)
 
 	keyPrefix += strconv.FormatInt(util.ConvertTimeToLong(time.Now()), 10) + "-"
 	fileName := f.getUniqueDateWithIncrementalFileName(keyPrefix)
 
-	return f.uploader.Upload(f.getUploadInput(bucket, fileName, batchBuffer))
+	return f.uploader.Upload(getUploadInput(f.s3TargetConfigBean, bucket, fileName, batchBuffer))
 }
 
 func (f *DefaultFileHelper) getUniqueDateWithIncrementalFileName(keyPrefix string) string {
@@ -84,7 +83,7 @@ func (f *DefaultFileHelper) getUniqueDateWithIncrementalFileName(keyPrefix strin
 	return fileName
 }
 
-func (f *DefaultFileHelper) flushAndCloseWriter(recordWriter dataformats.RecordWriter) {
+func flushAndCloseWriter(recordWriter dataformats.RecordWriter) {
 	err := recordWriter.Flush()
 	if err != nil {
 		logrus.WithError(err).Error("Error flushing record writer")
@@ -94,32 +93,4 @@ func (f *DefaultFileHelper) flushAndCloseWriter(recordWriter dataformats.RecordW
 	if err != nil {
 		logrus.WithError(err).Error("Error closing record writer")
 	}
-}
-
-func (f *DefaultFileHelper) getUploadInput(
-	bucket string,
-	fileName string,
-	body io.Reader,
-) *s3manager.UploadInput {
-	uploadInput := &s3manager.UploadInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(fileName),
-		Body:   body,
-	}
-
-	if f.s3TargetConfigBean.SseConfig.UseSSE {
-		switch f.s3TargetConfigBean.SseConfig.Encryption {
-		case SseS3:
-			uploadInput.ServerSideEncryption = aws.String(AES256)
-		case SseKMS:
-			uploadInput.ServerSideEncryption = aws.String(KMS)
-			uploadInput.SSEKMSKeyId = aws.String(f.s3TargetConfigBean.SseConfig.KmsKeyId)
-		case SseCustomer:
-			uploadInput.SSECustomerAlgorithm = aws.String(AES256)
-			uploadInput.SSECustomerKey = aws.String(f.s3TargetConfigBean.SseConfig.CustomerKey)
-			uploadInput.SSECustomerKeyMD5 = aws.String(f.s3TargetConfigBean.SseConfig.CustomerKeyMd5)
-		}
-	}
-
-	return uploadInput
 }

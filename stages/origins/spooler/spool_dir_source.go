@@ -360,22 +360,26 @@ func (s *SpoolDirSource) Produce(
 			return lastSourceOffset, nil
 		}
 
-		err = s.initializeBuffReaderIfNeeded()
+		if s.Conf.DataFormat == "WHOLE_FILE" {
+			s.produceWholeFileRecord(batchMaker)
+		} else {
+			err = s.initializeBuffReaderIfNeeded()
 
-		if err != nil {
-			s.GetStageContext().ReportError(err)
-			if len(s.Conf.ErrorArchiveDir) > 0 {
-				s.handleErrorFile(s.spooler.getCurrentFileInfo())
+			if err != nil {
+				s.GetStageContext().ReportError(err)
+				if len(s.Conf.ErrorArchiveDir) > 0 {
+					s.handleErrorFile(s.spooler.getCurrentFileInfo())
+				}
+				return lastSourceOffset, nil
 			}
-			return lastSourceOffset, nil
+			offset, err := s.readAndCreateRecords(maxBatchSize, batchMaker)
+
+			if offset == InvalidOffset && err != nil {
+				s.GetStageContext().ReportError(err)
+				return lastSourceOffset, err
+			}
 		}
 
-		offset, err := s.readAndCreateRecords(maxBatchSize, batchMaker)
-
-		if offset == InvalidOffset && err != nil {
-			s.GetStageContext().ReportError(err)
-			return lastSourceOffset, err
-		}
 		newOffset := s.spooler.getCurrentFileInfo().createOffset()
 		return &newOffset, nil
 	}
