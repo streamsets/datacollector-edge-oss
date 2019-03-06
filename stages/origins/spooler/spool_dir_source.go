@@ -227,7 +227,10 @@ func (s *SpoolDirSource) initCurrentFileIfNeeded(lastSourceOffset *string) (bool
 	}
 
 	// End of the file or empty offset, let's get a new file
-	if currentFilePath == "" || currentStartOffset == -1 {
+	if currentFilePath == "" || currentStartOffset == EOFOffset {
+		if currentFilePath != "" && s.Conf.PostProcessing != None {
+			s.postProcessFile(currentFilePath)
+		}
 		nextFileInfoToProcess := s.spooler.NextFile()
 		// No more files to process at the moment
 		if nextFileInfoToProcess == nil {
@@ -313,9 +316,6 @@ func (s *SpoolDirSource) readAndCreateRecords(
 		if isEof {
 			log.WithField("File Name", s.spooler.getCurrentFileInfo().getFullPath()).
 				Debug("Reached End of File")
-			if s.Conf.PostProcessing != None {
-				s.postProcessFile(s.spooler.getCurrentFileInfo())
-			}
 			s.spooler.getCurrentFileInfo().setOffsetToRead(EOFOffset)
 			s.resetFileAndBuffReader()
 			break
@@ -484,19 +484,20 @@ func (s *SpoolDirSource) scannerSplitFunc(data []byte, atEOF bool) (advance int,
 	return
 }
 
-func (s *SpoolDirSource) postProcessFile(fileInfo *AtomicFileInformation) {
-	log.WithField("File Name", s.spooler.getCurrentFileInfo().getFullPath()).
+func (s *SpoolDirSource) postProcessFile(fileFullPath string) {
+	log.WithField("File Name", fileFullPath).
 		WithField("option", s.Conf.PostProcessing).
 		Debug("post processing file")
 	if s.Conf.PostProcessing == Archive {
-		archiveFilePath := filepath.Join(s.Conf.ArchiveDir, s.spooler.getCurrentFileInfo().getName())
-		err := os.Rename(s.spooler.getCurrentFileInfo().getFullPath(), archiveFilePath)
+		fileName := filepath.Base(fileFullPath)
+		archiveFilePath := filepath.Join(s.Conf.ArchiveDir, fileName)
+		err := os.Rename(fileFullPath, archiveFilePath)
 		if err != nil {
 			log.WithError(err).Error("failed to archive file")
 			s.GetStageContext().ReportError(err)
 		}
 	} else if s.Conf.PostProcessing == Delete {
-		err := os.Remove(s.spooler.getCurrentFileInfo().getFullPath())
+		err := os.Remove(fileFullPath)
 		if err != nil {
 			log.WithError(err).Error("failed to delete file")
 			s.GetStageContext().ReportError(err)

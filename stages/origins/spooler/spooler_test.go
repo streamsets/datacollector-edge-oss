@@ -515,6 +515,9 @@ func testLexicographical(t *testing.T, compression string) {
 
 	checkRecord(t, records[0], "/text", "117118119", expectedHeaders)
 
+	// call another batch for post processing
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
+
 	// validate post processing
 	files, _ := ioutil.ReadDir(testDir)
 	if len(files) != 0 {
@@ -752,6 +755,9 @@ func testLexicographical_JSON_FORMAT(t *testing.T, compression string) {
 	}
 
 	checkRecord(t, records[1], "/text", "117118119", expectedHeaders)
+
+	// call another batch for post processing
+	offset, records = createSpoolerAndRun(t, stageContext, offset, 2)
 
 	// validate post processing
 	files, _ := ioutil.ReadDir(testDir)
