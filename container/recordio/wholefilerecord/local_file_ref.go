@@ -14,8 +14,8 @@
 package wholefilerecord
 
 import (
-	"github.com/andrewstuart/limio"
 	"github.com/streamsets/datacollector-edge/api"
+	"github.com/streamsets/datacollector-edge/container/recordio/wholefilerecord/limio"
 	"io"
 	"os"
 	"time"
@@ -36,7 +36,7 @@ func (f *LocalFileRef) CreateInputStream() (io.Reader, error) {
 			return nil, err
 		}
 		lr := limio.NewReader(fileReader)
-		lr.SimpleLimit(f.rateLimit*limio.B, time.Second)
+		lr.SimpleLimit(f.rateLimit, time.Second)
 		return lr, nil
 	}
 }

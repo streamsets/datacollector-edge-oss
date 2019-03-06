@@ -57,7 +57,6 @@ dependencies {
     build name: 'github.com/golang/protobuf', tag: 'v1.2.0', transitive: false
     build name: 'github.com/fullstorydev/grpcurl', commit: '1e8e50f4f86c755c1a1147a929d9d51058f3bd1d'
     build name: 'github.com/aws/aws-sdk-go', tag: 'v1.15.81'
-    build name: 'github.com/andrewstuart/limio', commit: '17c081b6f2f52a76cab8cef648c65f0d5e13e92c'
   }
 }
 
@@ -70,9 +69,9 @@ def getLdFlags() {
   final X_CONTAINER_COMMON_PATH = " -X ${gitPath}/container/common"
 
   "\"" + X_CONTAINER_COMMON_PATH + ".Version=${version}" +
-      X_CONTAINER_COMMON_PATH + ".BuiltBy=" + System.properties['user.name'].replaceAll("\\s", "") +
-      X_CONTAINER_COMMON_PATH + ".BuiltDate=" + buildDate +
-      X_CONTAINER_COMMON_PATH + ".BuiltRepoSha=" + gitVersion() + additionalFlag + "\""
+          X_CONTAINER_COMMON_PATH + ".BuiltBy=" + System.properties['user.name'].replaceAll("\\s", "") +
+          X_CONTAINER_COMMON_PATH + ".BuiltDate=" + buildDate +
+          X_CONTAINER_COMMON_PATH + ".BuiltRepoSha=" + gitVersion() + additionalFlag + "\""
 }
 
 def getTagsParameter() {
