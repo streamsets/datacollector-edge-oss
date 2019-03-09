@@ -488,19 +488,21 @@ func (s *SpoolDirSource) postProcessFile(fileFullPath string) {
 	log.WithField("File Name", fileFullPath).
 		WithField("option", s.Conf.PostProcessing).
 		Debug("post processing file")
-	if s.Conf.PostProcessing == Archive {
-		fileName := filepath.Base(fileFullPath)
-		archiveFilePath := filepath.Join(s.Conf.ArchiveDir, fileName)
-		err := os.Rename(fileFullPath, archiveFilePath)
-		if err != nil {
-			log.WithError(err).Error("failed to archive file")
-			s.GetStageContext().ReportError(err)
-		}
-	} else if s.Conf.PostProcessing == Delete {
-		err := os.Remove(fileFullPath)
-		if err != nil {
-			log.WithError(err).Error("failed to delete file")
-			s.GetStageContext().ReportError(err)
+	if _, err := os.Stat(fileFullPath); !os.IsNotExist(err) {
+		if s.Conf.PostProcessing == Archive {
+			fileName := filepath.Base(fileFullPath)
+			archiveFilePath := filepath.Join(s.Conf.ArchiveDir, fileName)
+			err := os.Rename(fileFullPath, archiveFilePath)
+			if err != nil {
+				log.WithError(err).Error("failed to archive file")
+				s.GetStageContext().ReportError(err)
+			}
+		} else if s.Conf.PostProcessing == Delete {
+			err := os.Remove(fileFullPath)
+			if err != nil {
+				log.WithError(err).Error("failed to delete file")
+				s.GetStageContext().ReportError(err)
+			}
 		}
 	}
 }
