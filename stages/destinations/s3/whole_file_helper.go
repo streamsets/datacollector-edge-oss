@@ -16,6 +16,9 @@ package s3
 
 import (
 	"errors"
+	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/dataformats"
@@ -26,6 +29,7 @@ type WholeFileHelper struct {
 	stageContext         api.StageContext
 	dataGeneratorService dataformats.DataFormatGeneratorService
 	uploader             *s3manager.Uploader
+	s3Service            *s3.S3
 	s3TargetConfigBean   TargetConfigBean
 }
 
@@ -74,7 +78,11 @@ func (f *WholeFileHelper) Handle(
 }
 
 func (f *WholeFileHelper) checkForWholeFileExistence(bucket string, fileName string) error {
-	// TODO: validate for whole file existence
-	// SDCE-459 - S3 Whole File Data Format - validate for whole file existence
+	if listOutput, err := f.s3Service.ListObjects(&s3.ListObjectsInput{
+		Bucket: aws.String(bucket),
+		Prefix: aws.String(fileName),
+	}); err == nil && len(listOutput.Contents) > 0 && f.dataGeneratorService.GetWholeFileExistsAction() == "TO_ERROR" {
+		return fmt.Errorf("object Key %s already exists", fileName)
+	}
 	return nil
 }
