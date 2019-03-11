@@ -17,6 +17,7 @@ package s3
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cast"
@@ -127,10 +128,12 @@ func (dest *Destination) Init(stageContext api.StageContext) []validation.Issue 
 			))
 			return issues
 		}
+		s3Service := s3.New(awsSession)
 		dest.fileHelper = &WholeFileHelper{
 			stageContext:         dest.GetStageContext(),
 			dataGeneratorService: dataGeneratorService,
 			uploader:             uploader,
+			s3Service:            s3Service,
 			s3TargetConfigBean:   dest.S3TargetConfigBean,
 		}
 	} else {
