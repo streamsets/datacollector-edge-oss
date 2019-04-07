@@ -52,7 +52,7 @@ type DataGeneratorFormatConfig struct {
 	SchemaRegistryUrls                []string `ConfigDef:"type=LIST,required=true"`
 	SchemaLookupMode                  string   `ConfigDef:"type=STRING,required=true"`
 	SubjectToRegister                 string   `ConfigDef:"type=STRING,required=true"`
-	SchemaId                          float64  `ConfigDef:"type=STRING,required=true"`
+	SchemaId                          float64  `ConfigDef:"type=NUMBER,required=true"`
 	IncludeSchema                     bool     `ConfigDef:"type=BOOLEAN,required=true"`
 	AvroCompression                   string   `ConfigDef:"type=STRING,required=true"`
 
