@@ -54,7 +54,7 @@ dependencies {
     build name: 'github.com/spf13/cast', tag: 'v1.2.0', transitive: false
     build name: 'github.com/Workiva/go-datastructures', tag: 'v1.0.50', transitive: false
     build name: 'github.com/grpc/grpc-go', tag: 'v1.16.0', transitive: false
-    build name: 'github.com/golang/protobuf', tag: 'v1.2.0', transitive: false
+    build name: 'github.com/golang/protobuf', commit: '8d0c54c1246661d9a51ca0ba455d22116d485eaa', transitive: false
     build name: 'github.com/fullstorydev/grpcurl', commit: '1e8e50f4f86c755c1a1147a929d9d51058f3bd1d'
     build name: 'github.com/aws/aws-sdk-go', tag: 'v1.15.81'
   }
