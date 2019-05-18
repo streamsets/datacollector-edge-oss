@@ -15,6 +15,7 @@ package httpcommon
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -47,6 +48,11 @@ type ClientConfigBean struct {
 type TlsConfigBean struct {
 	TlsEnabled         bool   `ConfigDef:"type=BOOLEAN,required=true"`
 	TrustStoreFilePath string `ConfigDef:"type=STRING,required=true"`
+	TrustStoreType     string `ConfigDef:"type=STRING,required=true"`
+	TrustStorePassword string `ConfigDef:"type=STRING,required=true"`
+	KeyStoreFilePath   string `ConfigDef:"type=STRING,required=true"`
+	KeyStoreType       string `ConfigDef:"type=STRING,required=true"`
+	KeyStorePassword   string `ConfigDef:"type=STRING,required=true"`
 }
 
 type OAuthConfigBean struct {
@@ -80,7 +86,9 @@ func (h *HttpCommon) InitializeClient(clientConfig ClientConfigBean) error {
 		if err != nil {
 			return err
 		}
-		caCertPool.AppendCertsFromPEM(caCert)
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return fmt.Errorf("failed to add TrustStoreFile to CA Cert pool")
+		}
 	}
 
 	// creates a clean transport using sane defaults, but one

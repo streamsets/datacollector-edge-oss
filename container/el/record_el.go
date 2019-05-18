@@ -151,7 +151,7 @@ func (r *RecordEL) GetAttributeOrDefault(args ...interface{}) (interface{}, erro
 
 func (r *RecordEL) Exists(args ...interface{}) (interface{}, error) {
 	if len(args) < 1 {
-		return "", errors.New(
+		return false, errors.New(
 			fmt.Sprintf("The function 'record:exists' requires 1 arguments but was passed %d",
 				len(args),
 			),
@@ -167,7 +167,7 @@ func (r *RecordEL) Exists(args ...interface{}) (interface{}, error) {
 
 	field, err := record.Get(fieldPath)
 
-	if len(field.Type) > 0 {
+	if field != nil && len(field.Type) > 0 {
 		return true, nil
 	}
 	return false, nil

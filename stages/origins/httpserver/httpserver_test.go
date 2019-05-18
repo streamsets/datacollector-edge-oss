@@ -14,15 +14,21 @@ package httpserver
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/container/creation"
 	"github.com/streamsets/datacollector-edge/container/execution/runner"
 	"github.com/streamsets/datacollector-edge/stages/lib"
+	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"testing"
+	"time"
 )
 
 func getStageContext(
@@ -161,7 +167,7 @@ func TestOrigin_Produce_JSON(t *testing.T) {
 		t.Error("Expected 'world' but got - ", helloField.Value)
 	}
 
-	stageInstance.Destroy()
+	_ = stageInstance.Destroy()
 }
 
 func TestOrigin_Produce_Text_WithQueryAppId(t *testing.T) {
@@ -230,7 +236,7 @@ func TestOrigin_Produce_Text_WithQueryAppId(t *testing.T) {
 		t.Error("Expected 'Hello World' but got - ", textField.Value)
 	}
 
-	stageInstance.Destroy()
+	_ = stageInstance.Destroy()
 }
 
 func TestOrigin_Produce_InvalidAppId(t *testing.T) {
@@ -273,5 +279,125 @@ func TestOrigin_Produce_InvalidAppId(t *testing.T) {
 		t.Fatal("Excepted 403 status code for invalid app Id")
 	}
 
-	stageInstance.Destroy()
+	_ = stageInstance.Destroy()
+}
+
+func TestOrigin_Produce_HTTPS(t *testing.T) {
+	keyStoreFilePath, _ := filepath.Abs("test/myp12.p12")
+	freePort, _ := lib.GetFreePort()
+	configs := []common.Config{
+		{
+			Name:  "httpConfigs.port",
+			Value: float64(freePort),
+		},
+		{
+			Name:  "httpConfigs.appId",
+			Value: "edge",
+		},
+		{
+			Name:  "dataFormat",
+			Value: "JSON",
+		},
+		{
+			Name:  "httpConfigs.tlsConfigBean.tlsEnabled",
+			Value: true,
+		},
+		{
+			Name:  "httpConfigs.tlsConfigBean.keyStoreFilePath",
+			Value: keyStoreFilePath,
+		},
+		{
+			Name:  "httpConfigs.tlsConfigBean.keyStoreType",
+			Value: "PKCS12",
+		},
+		{
+			Name:  "httpConfigs.tlsConfigBean.keyStorePassword",
+			Value: "password",
+		},
+	}
+
+	stageContext, _ := getStageContext(configs, nil)
+	stageBean, err := creation.NewStageBean(stageContext.StageConfig, stageContext.Parameters, nil)
+	if err != nil {
+		t.Error(err)
+	}
+
+	stageInstance := stageBean.Stage
+
+	issues := stageInstance.Init(stageContext)
+	if len(issues) > 0 {
+		t.Fatal(issues[0].Message)
+	}
+
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		httpServerUrl := fmt.Sprintf("https://localhost:%d", freePort)
+		message := map[string]interface{}{
+			"hello": "world",
+			"life":  42,
+			"embedded": map[string]string{
+				"yes": "of course!",
+			},
+		}
+
+		bytesRepresentation, err := json.Marshal(message)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var caCertPool *x509.CertPool
+		certPemFilePath, _ := filepath.Abs("test/mypem.pem")
+
+		caCert, err := ioutil.ReadFile(certPemFilePath)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// appending to the system cert pool rather than replacing it
+		caCertPool, err = x509.SystemCertPool()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			t.Fatal("Error adding ca certificate")
+		}
+
+		httpTransport := cleanhttp.DefaultTransport()
+		httpTransport.TLSClientConfig = &tls.Config{
+			RootCAs: caCertPool,
+		}
+		httpClient := &http.Client{
+			Transport: httpTransport,
+		}
+
+		req, err := http.NewRequest("POST", httpServerUrl, bytes.NewBuffer(bytesRepresentation))
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set(X_SDC_APPLICATION_ID_HEADER, "edge")
+		_, err = httpClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	batchMaker := runner.NewBatchMakerImpl(runner.StagePipe{}, false)
+	_, err = stageInstance.(api.Origin).Produce(&stringOffset, 1, batchMaker)
+	if err != nil {
+		t.Error("Err :", err)
+		return
+	}
+
+	records := batchMaker.GetStageOutput()
+	if len(records) != 1 {
+		t.Fatal("Expected 1 records but got - ", len(records))
+	}
+
+	helloField, _ := records[0].Get("/hello")
+	if helloField.Value != "world" {
+		t.Error("Expected 'world' but got - ", helloField.Value)
+	}
+
+	_ = stageInstance.Destroy()
 }

@@ -13,14 +13,22 @@
 package httpserver
 
 import (
+	"bytes"
 	"context"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/streamsets/datacollector-edge/api"
 	"github.com/streamsets/datacollector-edge/api/validation"
 	"github.com/streamsets/datacollector-edge/container/common"
 	"github.com/streamsets/datacollector-edge/stages/lib/dataparser"
+	"github.com/streamsets/datacollector-edge/stages/lib/httpcommon"
 	"github.com/streamsets/datacollector-edge/stages/stagelibrary"
+	"golang.org/x/crypto/pkcs12"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 )
@@ -30,6 +38,7 @@ const (
 	StageName                      = "com_streamsets_pipeline_stage_origin_httpserver_HttpServerDPushSource"
 	X_SDC_APPLICATION_ID_HEADER    = "X-SDC-APPLICATION-ID"
 	SDC_APPLICATION_ID_QUERY_PARAM = "sdcApplicationId"
+	PKCS12                         = "PKCS12"
 )
 
 var stringOffset = "http-server-offset"
@@ -44,9 +53,10 @@ type Origin struct {
 }
 
 type RawHttpConfigs struct {
-	Port                      float64 `ConfigDef:"type=NUMBER,required=true"`
-	AppId                     string  `ConfigDef:"type=STRING,required=true"`
-	AppIdViaQueryParamAllowed bool    `ConfigDef:"type=BOOLEAN,required=true"`
+	Port                      float64                  `ConfigDef:"type=NUMBER,required=true"`
+	AppId                     string                   `ConfigDef:"type=STRING,required=true"`
+	AppIdViaQueryParamAllowed bool                     `ConfigDef:"type=BOOLEAN,required=true"`
+	TlsConfigBean             httpcommon.TlsConfigBean `ConfigDefBean:"tlsConfigBean"`
 }
 
 func init() {
@@ -57,9 +67,33 @@ func init() {
 
 func (h *Origin) Init(stageContext api.StageContext) []validation.Issue {
 	issues := h.BaseStage.Init(stageContext)
-	h.httpServer = h.startHttpServer()
-	h.incomingRecords = make(chan []api.Record)
-	return h.DataFormatConfig.Init(h.DataFormat, h.GetStageContext(), issues)
+
+	if h.HttpConfigs.TlsConfigBean.TlsEnabled {
+		if len(h.HttpConfigs.TlsConfigBean.KeyStoreFilePath) == 0 {
+			issues = append(issues, stageContext.CreateConfigIssue(
+				"Keystore File path is missing",
+				"TLS",
+				"httpConfigs.tlsConfigBean.keyStoreFilePath",
+			))
+		}
+
+		if h.HttpConfigs.TlsConfigBean.KeyStoreType != PKCS12 {
+			issues = append(issues, stageContext.CreateConfigIssue(
+				"Edge supports only PKCS-12 (p12 file) Key Type",
+				"TLS",
+				"httpConfigs.tlsConfigBean.keyStoreType",
+			))
+		}
+	}
+
+	h.DataFormatConfig.Init(h.DataFormat, h.GetStageContext(), issues)
+
+	if len(issues) == 0 {
+		h.httpServer = h.startHttpServer()
+		h.incomingRecords = make(chan []api.Record)
+	}
+
+	return issues
 }
 
 func (h *Origin) Destroy() error {
@@ -132,7 +166,7 @@ func (h *Origin) validateAppId(w http.ResponseWriter, r *http.Request) bool {
 	if reqAppId != h.HttpConfigs.AppId {
 		log.Warnf("Request from '%s' invalid appId '%s', rejected", r.RemoteAddr, reqAppId)
 		w.WriteHeader(http.StatusForbidden)
-		fmt.Fprintf(w, "Invalid 'appId'")
+		_, _ = fmt.Fprintf(w, "Invalid 'appId'")
 	} else {
 		valid = true
 	}
@@ -147,10 +181,60 @@ func (h *Origin) startHttpServer() *http.Server {
 	}
 
 	go func() {
-		log.Debug("HTTP Server - Running on URI : http://localhost:", h.HttpConfigs.Port)
-		if err := srv.ListenAndServe(); err != nil {
-			log.WithError(err).Error("HttpServer: ListenAndServe() error")
-			h.GetStageContext().ReportError(err)
+		if h.HttpConfigs.TlsConfigBean.TlsEnabled {
+			log.Info("HTTP Server Origin - Running on URI : https://localhost:", h.HttpConfigs.Port)
+			tlsConfig := h.HttpConfigs.TlsConfigBean
+
+			data, err := ioutil.ReadFile(tlsConfig.KeyStoreFilePath)
+			if err != nil {
+				log.WithError(err).Error("Failed to KeyStoreFilePath")
+				h.GetStageContext().ReportError(err)
+				return
+			}
+
+			privateKey, certificate, err := pkcs12.Decode(data, tlsConfig.KeyStorePassword)
+			if err != nil {
+				log.WithError(err).Error("Failed to decode pkcs12 file")
+				h.GetStageContext().ReportError(err)
+				return
+			}
+
+			var certPemBlockBuffer bytes.Buffer
+			err = pem.Encode(&certPemBlockBuffer, &pem.Block{Type: "CERTIFICATE", Bytes: certificate.Raw})
+			if err != nil {
+				log.WithError(err).Error("Failed during pem encoding of certificate")
+				h.GetStageContext().ReportError(err)
+				return
+			}
+
+			pk := privateKey.(*rsa.PrivateKey)
+			var keyPemBlockBuffer bytes.Buffer
+			err = pem.Encode(&keyPemBlockBuffer, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(pk)})
+			if err != nil {
+				log.WithError(err).Error("Failed during pem encoding of private key")
+				h.GetStageContext().ReportError(err)
+				return
+			}
+
+			srv.TLSConfig = &tls.Config{}
+			srv.TLSConfig.Certificates = make([]tls.Certificate, 1)
+			srv.TLSConfig.Certificates[0], err = tls.X509KeyPair(certPemBlockBuffer.Bytes(), keyPemBlockBuffer.Bytes())
+			if err != nil {
+				log.WithError(err).Error("Failed during loading key and certificate to TLS Config")
+				h.GetStageContext().ReportError(err)
+				return
+			}
+
+			if err := srv.ListenAndServeTLS("", ""); err != nil {
+				log.WithError(err).Error("HttpServer: ListenAndServe() error")
+				h.GetStageContext().ReportError(err)
+			}
+		} else {
+			log.Debug("HTTP Server - Running on URI : http://localhost:", h.HttpConfigs.Port)
+			if err := srv.ListenAndServe(); err != nil {
+				log.WithError(err).Error("HttpServer: ListenAndServe() error")
+				h.GetStageContext().ReportError(err)
+			}
 		}
 	}()
 
