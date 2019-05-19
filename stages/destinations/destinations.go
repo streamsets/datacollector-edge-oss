@@ -13,6 +13,8 @@
 package destinations
 
 import (
+	_ "github.com/streamsets/datacollector-edge/stages/destinations/azure/eventhubs"
+	_ "github.com/streamsets/datacollector-edge/stages/destinations/azure/iothub"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/coap"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/firehose"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/http"

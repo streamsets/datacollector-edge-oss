@@ -118,6 +118,11 @@ func (dest *Destination) WriteInBatches(records []api.Record) error {
 	for i, record := range records {
 		recordBuffer := bytes.NewBuffer([]byte{})
 		recordWriter, err := recordWriterFactory.CreateWriter(dest.GetStageContext(), recordBuffer)
+		if err != nil {
+			logrus.WithError(err).Error("Error creating writer")
+			dest.GetStageContext().ToError(err, record)
+			break
+		}
 		err = recordWriter.WriteRecord(record)
 		if err != nil {
 			logrus.WithError(err).Error("Error writing record")
@@ -166,6 +171,11 @@ func (dest *Destination) WriteRecord(record api.Record) {
 
 	recordBuffer := bytes.NewBuffer([]byte{})
 	recordWriter, err := recordWriterFactory.CreateWriter(dest.GetStageContext(), recordBuffer)
+	if err != nil {
+		logrus.WithError(err).Error("Error creating writer")
+		dest.GetStageContext().ToError(err, record)
+		return
+	}
 	err = recordWriter.WriteRecord(record)
 	if err != nil {
 		logrus.WithError(err).Error("Error writing record")
