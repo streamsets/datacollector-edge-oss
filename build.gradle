@@ -65,6 +65,8 @@ dependencies {
     build name: 'github.com/dgrijalva/jwt-go', tag: 'v3.1.0', transitive: false
     build name: 'github.com/jpillora/backoff', tag: 'v1.0.0', transitive: false
     build name: 'pack.ag/amqp', tag: 'v0.11.0', transitive: false
+    build name: 'github.com/mitchellh/mapstructure', tag: 'v1.1.2', transitive: false
+    build name: 'go.opencensus.io', tag: 'v0.18.0', transitive: false
     build name: 'github.com/Azure/azure-event-hubs-go', tag: 'v1.3.0', transitive: false
     build name: 'github.com/amenzhinsky/iothub', commit: 'dbe5ff5f148f9eff39c72c43eab6e6f4c9ed3575', transitive: false
   }
