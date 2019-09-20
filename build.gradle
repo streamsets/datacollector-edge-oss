@@ -69,6 +69,7 @@ dependencies {
     build name: 'go.opencensus.io', tag: 'v0.18.0', transitive: false
     build name: 'github.com/Azure/azure-event-hubs-go', tag: 'v1.3.0', transitive: false
     build name: 'github.com/amenzhinsky/iothub', commit: 'dbe5ff5f148f9eff39c72c43eab6e6f4c9ed3575', transitive: false
+    build name: 'golang.org/x/build', commit: 'e707fb0ed35eab3beb48321e5ee37ff7ca438f28', transitive: false
   }
 }
 
