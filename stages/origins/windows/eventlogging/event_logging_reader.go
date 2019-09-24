@@ -344,7 +344,7 @@ func (elreader *eventLoggingReader) read(flags uint32, offset uint32, maxRecords
 					event.RecordNumber, event.UserSidOffset, event.UserSidLength)
 				sidOffset := event.UserSidOffset - EventSize
 				sidPtr := (*syswin.SID)(unsafe.Pointer(&eventData[sidOffset]))
-				sidString, err := sidPtr.String()
+				sidString := sidPtr.String()
 				if err != nil {
 					log.WithError(err).Errorf(
 						"Error extracting sid from Sid Offset:%d and Length:%d for record Number %d",

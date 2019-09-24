@@ -720,7 +720,7 @@ func (evtVariant *EvtVariant) GetData() interface{} {
 			}
 		} else {
 			previousError := err
-			returnVal, err = sidPtr.String()
+			returnVal = sidPtr.String()
 			if err != nil {
 				log.WithError(err).Error("Error decoding SID")
 				returnVal = nil
