@@ -18,6 +18,7 @@ import (
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/coap"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/firehose"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/http"
+	_ "github.com/streamsets/datacollector-edge/stages/destinations/influxdb"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/kafka"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/kinesis"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/mqtt"

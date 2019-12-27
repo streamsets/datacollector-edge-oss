@@ -69,10 +69,20 @@ func (r *RecordImpl) gatherPaths(prefix string, currentField *api.Field) map[str
 			}
 		}
 	case fieldtype.MAP:
-		fallthrough
-	case fieldtype.LIST_MAP:
 		mapField := currentField.Value.(map[string]*api.Field)
 		for fieldKey, fieldValue := range mapField {
+			childGatheredPaths := r.gatherPaths(fmt.Sprintf(prefix+"/%s", fieldKey), fieldValue)
+			for k, v := range childGatheredPaths {
+				gatheredPaths[k] = v
+			}
+		}
+	case fieldtype.LIST_MAP:
+		listMapValue := currentField.Value.(*linkedhashmap.Map)
+		it := listMapValue.Iterator()
+		for it.HasNext() {
+			entry := it.Next()
+			fieldKey := entry.GetKey()
+			fieldValue := entry.GetValue().(*api.Field)
 			childGatheredPaths := r.gatherPaths(fmt.Sprintf(prefix+"/%s", fieldKey), fieldValue)
 			for k, v := range childGatheredPaths {
 				gatheredPaths[k] = v

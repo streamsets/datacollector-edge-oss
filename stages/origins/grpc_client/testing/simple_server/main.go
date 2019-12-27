@@ -68,6 +68,6 @@ func main() {
 	fmt.Println("  method - simple.SimpleService/ServerStreamingRPC")
 	fmt.Printf("  request data - %s \n", `{"msg": "world", "delay": 1, "totalMessages": 200000}`)
 	if err := s.Serve(lis); err != nil {
-		logrus.Fatal("failed to serve: %v", err)
+		logrus.Fatalf("failed to serve: %v", err)
 	}
 }

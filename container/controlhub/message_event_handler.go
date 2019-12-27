@@ -288,7 +288,7 @@ func (m *MessageEventHandler) createPipelineStatusEvent(
 }
 
 func (m *MessageEventHandler) handleDPMEvent(serverEvent ServerEvent) *ClientEvent {
-	log.Debug("Handling Control Hub Events: %d", serverEvent.EventTypeId)
+	log.Debugf("Handling Control Hub Events: %d", serverEvent.EventTypeId)
 
 	var ackEventMessage string
 	ackEventStatus := ACK_EVENT_SUCCESS
