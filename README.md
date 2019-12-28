@@ -67,6 +67,7 @@ If you need help with production systems, you can check out the variety of suppo
 * [Azure IoT Hub](https://streamsets.com/documentation/datacollector/latest/help//datacollector/UserGuide/Destinations/AzureIoTHub.html#concept_pnd_jkq_1bb)
 * [CoAP](https://streamsets.com/documentation/datacollector/latest/help/datacollector/UserGuide/Destinations/CoAPClient.html#concept_hw5_s3n_sz)
 * [HTTP Client](https://streamsets.com/documentation/datacollector/latest/help/datacollector/UserGuide/Destinations/HTTPClient.html#concept_khl_sg5_lz)
+* [InfluxDB](https://streamsets.com/documentation/datacollector/latest/help/datacollector/UserGuide/Destinations/InfluxDB.html#concept_inf_db_sr)
 * [MQTT](https://streamsets.com/documentation/datacollector/latest/help/datacollector/UserGuide/Destinations/MQTTPublisher.html#concept_odz_txt_lz)
 * [WebSocket Client](https://streamsets.com/documentation/datacollector/latest/help/datacollector/UserGuide/Destinations/WebSocketClient.html#concept_l4d_mjn_lz)
 
