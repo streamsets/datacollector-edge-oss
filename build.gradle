@@ -114,6 +114,10 @@ goClean {
   delete 'dist'
 }
 
+goVet {
+  continueOnFailure = true
+}
+
 CopySpec standardDistribution(String platform) {
   copySpec {
     from("$projectDir/resources") {
