@@ -27,7 +27,7 @@ e.g. `./gradlew darwinAmd64DistTar`
 
 ## Building distribution archives for all platforms
 
-    ./gradlew clean dist
+    ./gradlew goClean dist
 
 ## Install an unarchived distribution into the dist folder
 
@@ -44,7 +44,7 @@ e.g. `./gradlew installDarwinAmd64`
 
 ## Publishing Binaries to Maven Repo for all platforms
 
-    ./gradlew clean dist publishToMavenLocal
+    ./gradlew goClean dist publishToMavenLocal
 
 ## Building Docker image
 
