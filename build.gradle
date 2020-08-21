@@ -71,6 +71,7 @@ dependencies {
     build name: 'golang.org/x/build', commit: 'e707fb0ed35eab3beb48321e5ee37ff7ca438f28', transitive: false
     build name: 'golang.org/x/sys', commit: 'b397fe3ad8ed895c98fa54584f61835a88e65ff5', transitive: false
     build name: 'github.com/influxdata/influxdb1-client', commit: '8bf82d3c094dc06be9da8e5bf9d3589b6ea032ae', transitive: false
+    build name: 'k8s.io/client-go', tag: 'v0.17.0', transitive: false
   }
 }
 
