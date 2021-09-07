@@ -5,6 +5,11 @@ plugins {
 }
 
 repositories {
+  golang {
+    root 'bitbucket.org/pkg/inflect'
+    vcs 'git' // optional, git by default
+    url 'https://github.com/volatiletech/inflect.git'
+  }
   jcenter()
   mavenCentral()
   mavenLocal()
@@ -15,6 +20,7 @@ repositories {
 }
 
 golang {
+  
   goVersion = '1.13.5'
   packagePath = gitPath
   ignoredPackages = [
