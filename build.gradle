@@ -20,7 +20,8 @@ golang {
   ignoredPackages = [
           'a',
           'cloud.google.com',
-          'common'
+          'common',
+          'github.com/envoyproxy/go-control-plane'
   ]
 }
 
@@ -32,7 +33,7 @@ dependencies {
     build name: 'github.com/AllenDang/w32', commit: '9a4ee0f7d224efbff75947fa7060daadccc4741c'
     build name: 'github.com/BurntSushi/toml', commit: 'b26d9c308763d68093482582cea63d69be07a0f0'
     build name: 'github.com/dustin/go-coap', commit: 'ddcc80675fa42611359d91a6dfa5aa57fb90e72b'
-    build name: 'github.com/eclipse/paho.mqtt.golang', tag: 'v1.2.0'
+    build name: 'github.com/eclipse/paho.mqtt.golang', tag: 'v1.2.0', transitive: false
     build name: 'github.com/gorilla/websocket', commit: 'ea4d1f681babbce9545c9c5f3d5194a789c89f5b'
     build name: 'github.com/hpcloud/tail', commit: 'a1dbeea552b7c8df4b542c66073e393de198a800'
     build name: 'github.com/julienschmidt/httprouter', commit: '8c199fb6259ffc1af525cc3ad52ee60ba8359669'
@@ -53,9 +54,6 @@ dependencies {
     build name: 'github.com/tensorflow/tensorflow/tensorflow/go', tag: '1.10.0', transitive: false
     build name: 'github.com/spf13/cast', tag: 'v1.2.0', transitive: false
     build name: 'github.com/Workiva/go-datastructures', tag: 'v1.0.50', transitive: false
-    build name: 'github.com/grpc/grpc-go', tag: 'v1.16.0', transitive: false
-    build name: 'github.com/golang/protobuf', commit: 'd04d7b157bb510b1e0c10132224b616ac0e26b17', transitive: false
-    build name: 'github.com/fullstorydev/grpcurl', commit: '1e8e50f4f86c755c1a1147a929d9d51058f3bd1d'
     build name: 'github.com/aws/aws-sdk-go', tag: 'v1.15.81'
     build name: 'github.com/Azure/azure-amqp-common-go', tag: 'v1.1.4', transitive: false
     build name: 'github.com/Azure/azure-pipeline-go', tag: 'v0.1.8', transitive: false
