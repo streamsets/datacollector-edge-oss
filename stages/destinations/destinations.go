@@ -13,18 +13,10 @@
 package destinations
 
 import (
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/azure/eventhubs"
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/azure/iothub"
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/coap"
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/firehose"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/http"
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/influxdb"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/kafka"
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/kinesis"
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/mqtt"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/s3"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/toerror"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/toevent"
 	_ "github.com/streamsets/datacollector-edge/stages/destinations/trash"
-	_ "github.com/streamsets/datacollector-edge/stages/destinations/websocket"
 )

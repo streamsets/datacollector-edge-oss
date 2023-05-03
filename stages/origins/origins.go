@@ -13,16 +13,6 @@
 package origins
 
 import (
-	_ "github.com/streamsets/datacollector-edge/stages/origins/dev_data_generator"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/dev_random"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/dev_rawdata"
 	_ "github.com/streamsets/datacollector-edge/stages/origins/filetail"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/httpclient"
 	_ "github.com/streamsets/datacollector-edge/stages/origins/httpserver"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/mqtt"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/sensor_reader"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/spooler"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/system_metrics"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/websocketclient"
-	_ "github.com/streamsets/datacollector-edge/stages/origins/windows"
 )
